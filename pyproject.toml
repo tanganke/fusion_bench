@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+
+[project]
+name = "fusion_bench"
+description = "A Comprehensive Benchmark of Deep Model Fusion"
+readme = "README.md"
+version = "0.1.0"
+authors = [{ name = "Anke Tang", email = "tang.anke@foxmail.com" }]
+license = { file = 'LICENSE' }
+dependencies = [
+    "torch>=2.0.0",
+    "transformers",
+    "datasets",
+    "huggingface_hub",
+    "peft",
+]
+keywords = ["deep learning", "model fusion", "benchmark"]
+
+
+[project.urls]
+Repository = "https://github.com/tanganke/fusion_bench"
+Issues = "https://github.com/tanganke/fusion_bench/issues"
+
+[project.scripts]
+fusion_bench = "fusion_bench.scripts.cli:main"
+
+[tool.setuptools]
+packages = ["fusion_bench"]
