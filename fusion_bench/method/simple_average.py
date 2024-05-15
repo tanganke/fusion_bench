@@ -42,6 +42,18 @@ def simple_average(modules: List[Union[nn.Module, _StateDict]]):
 
 class SimpleAverageAlgorithm(ModelFusionAlgorithm):
     def fuse(self, modelpool):
+        """
+        Fuse the models in the given model pool using simple averaging.
+
+        This method iterates over the names of the models in the model pool, loads each model, and appends it to a list.
+        It then returns the simple average of the models in the list.
+
+        Args:
+            modelpool: The pool of models to fuse.
+
+        Returns:
+            The fused model obtained by simple averaging.
+        """
         models = []
         for model_name in modelpool.model_names:
             model = modelpool.load_model(model_name)

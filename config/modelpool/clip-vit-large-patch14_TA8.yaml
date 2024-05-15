@@ -1,0 +1,20 @@
+type: huggingface_clip_vision
+models:
+  - name: _pretrained_
+    path: openai/clip-vit-large-patch14
+  - name: sun397
+    path: tanganke/clip-vit-large-patch14_sun397
+  - name: stanford_cars
+    path: tanganke/clip-vit-large-patch14_stanford-cars
+  - name: resisc45
+    path: tanganke/clip-vit-large-patch14_resisc45
+  - name: eurosat
+    path: tanganke/clip-vit-large-patch14_eurosat
+  - name: svhn
+    path: tanganke/clip-vit-large-patch14_svhn
+  - name: gtsrb
+    path: tanganke/clip-vit-large-patch14_gtsrb
+  - name: mnist
+    path: tanganke/clip-vit-large-patch14_mnist
+  - name: dtd
+    path: tanganke/clip-vit-large-patch14_dtd
