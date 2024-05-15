@@ -1,7 +1,7 @@
 # AdaMerging
 
 <figure markdown="span">
-    ![alt text](../_figure_sources/adamerging.png){ width="750" }
+    ![alt text](images/adamerging.png){ width="750" }
     <figcaption>Task Vector, Task Arithmetic, and AdaMerging. Credit to <sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup></figcaption>
 </figure>
 
@@ -27,4 +27,4 @@ where the merging coefficient $\lambda^{l}_{i}$ and task vector $\tau^{l}_{i}$ a
 
 By leveraging this adaptive learning approach, AdaMerging significantly enhances the model's ability to generalize across tasks and layers, resulting in a more robust and finely-tuned performance profile. The method’s reliance on entropy minimization ensures that the merging process continually seeks the most informative and stable configuration, adapting to the specific needs of the dataset and tasks at hand.
 
-[^1]: (ICLR 2024) AdaMerging: Adaptive Model Merging for Multi-Task Learning. http://arxiv.org/abs/2310.02575
+[^1]: (ICLR 2024) AdaMerging: Adaptive Model Merging for Multi-Task Learning. https://openreview.net/pdf?id=nZP6NgD3QY
