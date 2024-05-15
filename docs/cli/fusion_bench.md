@@ -1,6 +1,6 @@
 # fusion_bench
 
-`fusion_bench` is the command line interface for running the benchmark. 
+`fusion_bench` is the command line interface for running the benchmark.
 It takes a configuration file as input, which specifies the models, fusion method to be used, and the datasets to be evaluated. 
 
 ```
@@ -23,5 +23,3 @@ merge multiple CLIP models using simple averaging:
 ```bash
 fusion_bench method=simple_average modelpool=clip-vit-base-patch32_TA8.yaml
 ```
-
-

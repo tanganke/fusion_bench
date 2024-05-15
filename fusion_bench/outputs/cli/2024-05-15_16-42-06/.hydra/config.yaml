@@ -1,7 +1,8 @@
-type: huggingface_clip_vision
-models:
+modelpool:
+  type: huggingface_clip_vision
+  models:
   - name: _pretrained_
-    path: openai/clip-vit-base-patch32
+    path: tanganke/clip-vit-base-patch32
   - name: sun397
     path: tanganke/clip-vit-base-patch32_sun397
   - name: stanford_cars
@@ -18,3 +19,9 @@ models:
     path: tanganke/clip-vit-base-patch32_mnist
   - name: dtd
     path: tanganke/clip-vit-base-patch32_dtd
+method:
+  name: dummy
+taskpool:
+  type: dummy
+fast_dev_run: false
+print_config: true

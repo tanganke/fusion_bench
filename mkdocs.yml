@@ -2,14 +2,19 @@ site_name: "FusionBench"
 
 nav:
   - Home: index.md
-  - ModelPool:
-      - Introduction: modelpool/index.md
-      - CLIP-ViT: modelpool/clip_vit.md
   - Algorithms:
+      - Dummy: algorithms/dummy.md
       - Simple Averaging: algorithms/simple_averaging.md
       - Task Arithmetic: algorithms/task_arithmetic.md
   - Command Line Interface:
     - fusion_bench: cli/fusion_bench.md
+  - References:
+    - ModelPool:
+        - Introduction: modelpool/index.md
+        - CLIP-ViT: modelpool/clip_vit.md
+    - TaskPool:
+        - Introduction: taskpool/index.md
+        - Dummy: taskpool/dummy.md
 
 plugins:
   - search

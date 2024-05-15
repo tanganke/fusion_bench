@@ -6,9 +6,9 @@ While for more complex methods, such as AdaMerging [^1], each model is paired wi
 
 A modelpool is specified by a `yaml` configuration file, which often contains the following fields:
 
-- `model_type`: The name of the modelpool.
+- `type`: The name of the modelpool.
 - `models`: A list of models, each model is dict with the following fields:
-    - `name`: The name of the model.
+    - `name`: The name of the model. There are some special names that are reserved for specific purposes, such as `_pretrained_` for the pretrained model.
     - `path`: The path to the model file.
     - `type`: The type of the model. If this field is not specified, the type is inferred from the `model_type`.
   
@@ -16,7 +16,7 @@ For more complex model fusion techniques that requires data, the modelpool confi
 
 - `dataset_type`: The type of the dataset used for training the models in the modelpool.
 - `datasets`: A list of datasets, each dataset is dict with the following fields:
-    - `name`: The name of the dataset.
+    - `name`: The name of the dataset, which is used to pair the dataset with the corresponding model. The name of the dataset should match the name of the model.
     - `path`: The path to the dataset file.
     - `type`: The type of the dataset. If this field is not specified, the type is inferred from the `dataset_type`.
 

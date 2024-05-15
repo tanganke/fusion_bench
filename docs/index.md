@@ -35,9 +35,9 @@ pip install -e . # install the package in editable mode
 
 `fusion_bench` is the command line interface for running the benchmark. 
 It takes a configuration file as input, which specifies the models, fusion method to be used, and the datasets to be evaluated. 
+To run the benchmark, you can use the following command:
 
 ```
 fusion_bench [--config-path CONFIG_PATH] [--config-name CONFIG_NAME] \
     OPTION_1=VALUE_1 OPTION_2=VALUE_2 ...
 ```
-

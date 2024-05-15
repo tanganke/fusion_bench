@@ -1,3 +1,8 @@
+"""
+This is the CLI script that is executed when the user runs the `fusion-bench` command.
+The script is responsible for parsing the command-line arguments, loading the configuration file, and running the fusion algorithm.
+"""
+
 import importlib
 import importlib.resources
 import os
@@ -7,8 +12,9 @@ from omegaconf import DictConfig, OmegaConf
 from rich import print as rich_print
 from rich.syntax import Syntax
 
-from ..modelpool import load_modelpool
 from ..method import load_algorithm
+from ..modelpool import load_modelpool
+from ..taskpool import load_taskpool
 
 
 @hydra.main(
@@ -32,6 +38,9 @@ def main(cfg: DictConfig) -> None:
     modelpool = load_modelpool(cfg.modelpool)
     algorithm = load_algorithm(cfg.method)
     merged_model = algorithm.fuse(modelpool)
+
+    taskpool = load_taskpool(cfg.taskpool)
+    taskpool.evaluate(merged_model)
 
 
 if __name__ == "__main__":

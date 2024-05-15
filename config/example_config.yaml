@@ -1,7 +1,8 @@
 defaults:
   - hydra: default
   - modelpool: clip-vit-base-patch32_TA8
-  - method: simple_average
+  - method: dummy
+  - taskpool: dummy
   - _self_
 
 fast_dev_run: false # Run a single batch of data to test the model or method

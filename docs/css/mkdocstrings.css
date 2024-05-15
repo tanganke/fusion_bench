@@ -1,6 +1,6 @@
 /* Indentation. */
 div.doc-contents:not(.first) {
-    padding-left: 25px;
+    padding-left: 15px;
     border-left: .05rem solid var(--md-typeset-table-color);
 }
 
