@@ -12,9 +12,9 @@ from omegaconf import DictConfig, OmegaConf
 from rich import print as rich_print
 from rich.syntax import Syntax
 
-from ..method import load_algorithm
-from ..modelpool import load_modelpool
-from ..taskpool import load_taskpool
+from ..method import load_algorithm_from_config
+from ..modelpool import load_modelpool_from_config
+from ..taskpool import load_taskpool_from_config
 
 
 def run_model_fusion(cfg: DictConfig):
@@ -25,13 +25,13 @@ def run_model_fusion(cfg: DictConfig):
     2. It then uses the algorithm to fuse the models in the model pool into a single model.
     3. If a task pool is specified in the configuration, it loads the task pool and uses it to evaluate the merged model.
     """
-    modelpool = load_modelpool(cfg.modelpool)
+    modelpool = load_modelpool_from_config(cfg.modelpool)
 
-    algorithm = load_algorithm(cfg.method)
+    algorithm = load_algorithm_from_config(cfg.method)
     merged_model = algorithm.fuse(modelpool)
 
     if hasattr(cfg, "taskpool") and cfg.taskpool is not None:
-        taskpool = load_taskpool(cfg.taskpool)
+        taskpool = load_taskpool_from_config(cfg.taskpool)
         taskpool.evaluate(merged_model)
     else:
         print("No task pool specified. Skipping evaluation.")

@@ -19,6 +19,7 @@ It can be used to improve the performance and rubustness of model or to combine 
 For a more detailed introduction to deep model fusion, you can refer to [W. Li, 2023, 'Deep Model Fusion: A Survey'](http://arxiv.org/abs/2303.16203).
 In this benchmark, we evaluate the performance of different fusion methods on a variety of datasets and tasks.
 
+
 ## Getting Started
 
 ### Installation
@@ -41,3 +42,5 @@ To run the benchmark, you can use the following command:
 fusion_bench [--config-path CONFIG_PATH] [--config-name CONFIG_NAME] \
     OPTION_1=VALUE_1 OPTION_2=VALUE_2 ...
 ```
+
+For detailed information on the options available, you can refer to this [page](/cli/fusion_bench/).

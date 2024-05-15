@@ -47,7 +47,9 @@ def _load_hf_dataset(dataset_name):
         return dataset
     elif dataset_name == "cifar100":
         dataset = load_dataset(dataset_name)
-        dataset = dataset.remove_columns(["coarse_label"]).rename_columns({"img": "image", "fine_label": "label"})
+        dataset = dataset.remove_columns(["coarse_label"]).rename_columns(
+            {"img": "image", "fine_label": "label"}
+        )
         return dataset
     elif dataset_name == "timm/oxford-iiit-pet":
         dataset = load_dataset(dataset_name)

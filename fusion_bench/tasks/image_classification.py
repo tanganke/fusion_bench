@@ -1,10 +1,12 @@
-from tqdm.autonotebook import tqdm
-from .base_task import BaseTask
-from torch import nn, Tensor
+from abc import abstractmethod
+
+from torch import Tensor, nn
 from torch.nn import functional as F
 from torchmetrics import Accuracy, MeanMetric
 from torchmetrics.classification.accuracy import MulticlassAccuracy
-from abc import abstractmethod
+from tqdm.autonotebook import tqdm
+
+from .base_task import BaseTask
 
 
 class ImageClassificationTask(BaseTask):

@@ -5,7 +5,6 @@ from omegaconf import DictConfig
 
 
 class TaskPool(ABC):
-
     def __init__(self, taskpool_config: DictConfig):
         super().__init__()
         self.config = taskpool_config

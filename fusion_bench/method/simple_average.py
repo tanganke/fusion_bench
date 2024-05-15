@@ -41,7 +41,6 @@ def simple_average(modules: List[Union[nn.Module, _StateDict]]):
 
 
 class SimpleAverageAlgorithm(ModelFusionAlgorithm):
-
     def fuse(self, modelpool):
         models = []
         for model_name in modelpool.model_names:

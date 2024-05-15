@@ -3,8 +3,7 @@ from typing import Callable, Iterable, List
 import torch
 from torch import Tensor, nn
 from torch.types import _device
-from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel, CLIPTextModel
-
+from transformers import CLIPModel, CLIPProcessor, CLIPTextModel, CLIPVisionModel
 
 default_templates = [
     lambda c: f"a photo of a {c}",

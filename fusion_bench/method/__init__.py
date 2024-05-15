@@ -1,9 +1,10 @@
 from omegaconf import DictConfig
-from .simple_average import SimpleAverageAlgorithm
+
 from .dummy import DummyAlgorithm
+from .simple_average import SimpleAverageAlgorithm
 
 
-def load_algorithm(method_config: DictConfig):
+def load_algorithm_from_config(method_config: DictConfig):
     if method_config.name == "dummy":
         return DummyAlgorithm(method_config)
     elif method_config.name == "simple_average":

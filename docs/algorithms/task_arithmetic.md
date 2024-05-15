@@ -10,7 +10,7 @@ $$\tau_i = \theta_i - \theta_0$$
 
 This representation is crucial for methods like Task Arithmetic, where multiple task vectors are aggregated and scaled to form a comprehensive multi-task model.
 
-**Task Arithmetic** begins by computing a task vector $\tau_i$ for each individual task, using the set of model parameters $\theta_0 \cup \{\theta_i\}_i$ where $\theta_0$ is the pre-trained model and $\theta_i$ are the fine-tuned parameters for i-th task.
+**Task Arithmetic**[^1] begins by computing a task vector $\tau_i$ for each individual task, using the set of model parameters $\theta_0 \cup \{\theta_i\}_i$ where $\theta_0$ is the pre-trained model and $\theta_i$ are the fine-tuned parameters for i-th task.
 These task vectors are then aggregated to form a multi-task vector.
 Subsequently, the multi-task vector is combined with the pre-trained model parameters to obtain the final multi-task model.
 This process involves scaling the combined vector element-wise by a scaling coefficient (denoted as $\lambda$), before adding it to the initial pre-trained model parameters. 
@@ -20,3 +20,10 @@ $$ \theta = \theta_0 + \lambda \sum_{i} \tau_i. $$
 
 The choice of the scaling coefficient $\lambda$ plays a crucial role in the final model performance. Typically, $\lambda$ is chosen based on validation set performance. 
 
+<figure markdown="span">
+  ![Image title](images/Task Arithmetic.png){ width="450" }
+  <figcaption>Task Arithmetic. Credit to <sup id="fnref:2"><a class="footnote-ref" href="#fn:2">2</a></sup></figcaption>
+</figure>
+
+[^1]: (ICLR 2023) Editing Models with Task Arithmetic. http://arxiv.org/abs/2212.04089
+[^2]: (ICLR 2024) AdaMerging: Adaptive Model Merging for Multi-Task Learning. http://arxiv.org/abs/2310.02575

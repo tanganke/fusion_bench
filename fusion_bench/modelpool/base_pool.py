@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
+from typing import List, Union
 
 from omegaconf import DictConfig
-from typing import Union, List
 
 
 class ModelPool(ABC):
