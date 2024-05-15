@@ -1,10 +1,14 @@
+import importlib
 import importlib.resources
 import os
+
 import hydra
 from omegaconf import DictConfig, OmegaConf
 from rich import print as rich_print
 from rich.syntax import Syntax
-import importlib
+
+from ..modelpool import load_modelpool
+from ..method import load_algorithm
 
 
 @hydra.main(
@@ -24,6 +28,10 @@ def main(cfg: DictConfig) -> None:
                 line_numbers=True,
             )
         )
+
+    modelpool = load_modelpool(cfg.modelpool)
+    algorithm = load_algorithm(cfg.method)
+    merged_model = algorithm.fuse(modelpool)
 
 
 if __name__ == "__main__":

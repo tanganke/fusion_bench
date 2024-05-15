@@ -1,6 +1,6 @@
-type: huggingface_clip_vision
+model_type: huggingface_clip_vision
 models:
-  - name: pretrained
+  - name: _pretrained_
     path: tanganke/clip-vit-base-patch32
   - name: sun397
     path: tanganke/clip-vit-base-patch32_sun397

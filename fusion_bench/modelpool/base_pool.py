@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from omegaconf import DictConfig
 
 
-class BasePool(ABC):
+class ModelPool(ABC):
     models = {}
 
     def __init__(self, modelpool_config: DictConfig):
@@ -14,6 +14,15 @@ class BasePool(ABC):
         model_names = [model["name"] for model in self.config["models"]]
         assert len(model_names) == len(set(model_names))
         self.model_names = model_names
+
+    @property
+    def model_names(self):
+        names = [
+            model["name"]
+            for model in self.config["models"]
+            if model["name"][0] != "_" and model["name"][-1] != "_"
+        ]
+        return names
 
     def get_model_config(self, model_name: str):
         """

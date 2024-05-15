@@ -3,10 +3,10 @@ from functools import cached_property
 from omegaconf import DictConfig
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 
-from .base_pool import BasePool
+from .base_pool import ModelPool
 
 
-class HuggingFaceClipVisionPool(BasePool):
+class HuggingFaceClipVisionPool(ModelPool):
     def __init__(self, modelpool_config: DictConfig):
         super().__init__(modelpool_config)
 

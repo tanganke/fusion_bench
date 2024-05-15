@@ -1,0 +1,8 @@
+numpy
+matplotlib
+scipy
+torch
+lightning
+transformers
+datasets
+peft

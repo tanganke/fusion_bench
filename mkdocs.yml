@@ -1,0 +1,67 @@
+site_name: "FusionBench"
+
+nav:
+  - Home: index.md
+  - ModelPool:
+      - Introduction: modelpool/index.md
+      - CLIP-ViT: modelpool/clip_vit.md
+  - Algorithms:
+      - Simple Averaging: algorithms/simple_averaging.md
+      - Task Arithmetic: algorithms/task_arithmetic.md
+  - Command Line Interface:
+    - fusion_bench: cli/fusion_bench.md
+
+plugins:
+  - search
+  - autorefs
+  - mkdocstrings:
+      enabled: !ENV [ENABLE_MKDOCSTRINGS, true]
+      default_handler: python
+      handlers:
+        python:
+          options:
+            show_source: true
+            show_root_heading: true
+            show_root_toc_entry: false
+            show_root_full_path: true
+            show_root_members_full_path: true
+            show_object_full_path: true
+            group_by_category: true
+            show_submodules: true
+            parameter_headings: true
+            show_bases: true
+            docstring_section_style: list
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+
+markdown_extensions:
+  - toc:
+      permalink: true
+      toc_depth: 6
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: true
+  - tables
+  - footnotes
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+extra_css:
+  - css/mkdocstrings.css
+theme:
+  name: material
+  features:
+    - toc.follow
+
+repo_url: https://github.com/tanganke/fusion_bench
+

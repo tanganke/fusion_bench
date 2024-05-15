@@ -1,8 +1,10 @@
 from omegaconf import DictConfig
+
+from .base_pool import ModelPool
 from .huggingface_clip_vision import HuggingFaceClipVisionPool
 
 
-def load_model_pool(config: DictConfig):
+def load_modelpool(config: DictConfig):
     if hasattr(config, "type"):
         if config.type == "huggingface_clip_vision":
             return HuggingFaceClipVisionPool(config)
