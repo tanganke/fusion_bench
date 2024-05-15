@@ -22,4 +22,4 @@ class DummyTaskPool(TaskPool):
         Args:
             model: The model to evaluate.
         """
-        print_parameters(model, human_readable=True)
+        print_parameters(model, is_human_readable=True)

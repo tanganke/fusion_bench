@@ -23,4 +23,17 @@ For more complex model fusion techniques that requires data, the modelpool confi
 We provide a list of modelpools that contain models trained on different datasets and with different architectures.
 Each modelpool is described in a separate document.
 
+## Basic Usage
+
+The model is not loaded by default when you initialize a modelpool, you can load a model from a modelpool by calling the `load_model` method:
+
+```python
+model = modelpool.load_model('model_name')
+```
+
+
+## References
+
+::: fusion_bench.modelpool.ModelPool
+
 [^1]: AdaMerging: Adaptive Model Merging for Multi-Task Learning. http://arxiv.org/abs/2310.02575

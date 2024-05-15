@@ -2,6 +2,8 @@
 
 > Stay tuned. Working in progress.
 
+Documentation is available at [tanganke.github.io/fusion_bench/](https://tanganke.github.io/fusion_bench/).
+
 ## Installation
 
 ```bash

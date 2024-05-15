@@ -10,11 +10,11 @@ fusion_bench [--config-path CONFIG_PATH] [--config-name CONFIG_NAME] \
 
 `fusion_bench` has the following options:
 
-| **Option**   | **Default**               | **Description**                                    |
-| ------------ | ------------------------- | -------------------------------------------------- |
-| method       | `simple_average`          | The fusion method to be used.                      |
-| modelpool    | `huggingface_clip_vision` | The pool of models to be fused.                    |
-| print_config | `true`                    | Whether to print the configuration to the console. |
+| **Option**   | **Default**               | **Description**                                                                    |
+| ------------ | ------------------------- | ---------------------------------------------------------------------------------- |
+| method       | `simple_average`          | The fusion method to be used.                                                      |
+| modelpool    | `huggingface_clip_vision` | The pool of models to be fused. See [modelpool](/modelpool/) for more information. |
+| print_config | `true`                    | Whether to print the configuration to the console.                                 |
 
 ## Basic Examples
 
@@ -23,3 +23,5 @@ merge multiple CLIP models using simple averaging:
 ```bash
 fusion_bench method=simple_average modelpool=clip-vit-base-patch32_TA8.yaml
 ```
+
+::: fusion_bench.scripts.cli.run_model_fusion

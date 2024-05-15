@@ -5,6 +5,10 @@ from typing import Union, List
 
 
 class ModelPool(ABC):
+    """
+    This is the base class for all modelpools.
+    """
+
     models = {}
 
     def __init__(self, modelpool_config: DictConfig):
@@ -20,6 +24,7 @@ class ModelPool(ABC):
     def model_names(self) -> List[str]:
         """
         This property returns a list of model names from the configuration, excluding any names that start or end with an underscore.
+        To obtain all model names, including those starting or ending with an underscore, use the `_model_names` attribute.
 
         Returns:
             list: A list of model names.
@@ -60,6 +65,8 @@ class ModelPool(ABC):
     @abstractmethod
     def load_model(self, model_config: Union[str, DictConfig]):
         """
+        The models are load lazily, so this method should be implemented to load the model from the model pool.
+
         Load the model from the model pool.
 
         Args:
