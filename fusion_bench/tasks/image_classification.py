@@ -1,5 +1,6 @@
 from abc import abstractmethod
 
+import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
 from torchmetrics import Accuracy, MeanMetric
@@ -29,7 +30,8 @@ class ImageClassificationTask(BaseTask):
         """
         pass
 
-    def evaluate(self, classifier: nn.Module):
+    @torch.inference_mode()
+    def evaluate(self, classifier: nn.Module, device=None):
         self.accuracy: MulticlassAccuracy = Accuracy(
             task="multiclass", num_classes=self.num_classes
         )
@@ -41,11 +43,13 @@ class ImageClassificationTask(BaseTask):
             )
         ):
             inputs, targets = batch
+            if device is not None:
+                inputs, targets = inputs.to(device), targets.to(device)
             logits: Tensor = classifier(inputs)
 
             loss = F.cross_entropy(logits, targets)
-            self.loss_metric.update(loss)
-            acc = self.accuracy(logits, targets)
+            self.loss_metric.update(loss.detach().cpu())
+            acc = self.accuracy(logits.detach().cpu(), targets.detach().cpu())
             pbar.set_postfix({"accuracy": acc.item(), "loss": loss.item()})
 
         acc = self.accuracy.compute().item()

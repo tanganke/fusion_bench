@@ -35,3 +35,5 @@ tasks:
       split: test
 
 clip_model: openai/clip-vit-base-patch32
+batch_size: 32
+num_workers: 16

@@ -4,11 +4,12 @@ from functools import cached_property
 from typing import Callable, List, cast
 
 import lightning as L
+import torch
 from omegaconf import DictConfig, open_dict
 from torch.utils.data import DataLoader
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 
-from ..dataset import load_dataset_from_config
+from ..dataset import CLIPDataset, load_dataset_from_config
 from ..models.hf_clip import HFCLIPClassifier
 from ..tasks.clip_classification import get_classnames_and_templates
 from ..tasks.image_classification import ImageClassificationTask
@@ -40,7 +41,9 @@ class CLIPImageClassificationTask(ImageClassificationTask):
         dataset_config = self.config["dataset"]
         dataset_config = self._taskpool.prepare_dataset_config(dataset_config)
         log.info(f"Loading test dataset: {dataset_config.name}")
-        return load_dataset_from_config(self.config["dataset"])
+        dataset = load_dataset_from_config(self.config["dataset"])
+        dataset = CLIPDataset(dataset, self._clip_processor)
+        return dataset
 
     @property
     def num_classes(self):
@@ -48,12 +51,15 @@ class CLIPImageClassificationTask(ImageClassificationTask):
 
     @property
     def test_loader(self):
-        return DataLoader(
+        loader = DataLoader(
             self.test_dataset,
             batch_size=self.config["batch_size"],
             num_workers=self.config["num_workers"],
             shuffle=False,
         )
+        if self._fabric is not None:
+            loader = self._fabric.setup_dataloaders(loader)
+        return loader
 
     def evaluate(self, clip_model: CLIPModel):
         """
@@ -63,10 +69,16 @@ class CLIPImageClassificationTask(ImageClassificationTask):
             clip_model=clip_model, processor=self._clip_processor
         )
         classifier.set_classification_task(self.classnames, self.templates)
-        super().evaluate(classifier)
+        if self._fabric is not None:
+            classifier = self._fabric.setup_module(classifier)
+        results = super().evaluate(classifier)
+        log.info(f"Results for task {self.config.name}: {results}")
+        return results
 
 
 class CLIPImageClassificationTaskPool(TaskPool):
+    _fabric: L.Fabric = None
+
     # CLIP forward model and processor
     _clip_model: CLIPModel = None
     _clip_processor: CLIPProcessor = None
@@ -74,11 +86,23 @@ class CLIPImageClassificationTaskPool(TaskPool):
     def __init__(self, taskpool_config: DictConfig):
         super().__init__(taskpool_config)
 
+        # if the fabric is not set, and we have a GPU, create a fabric instance
+        if self._fabric is None and torch.cuda.is_available():
+            self._fabric = L.Fabric(devices=1)
+
     def prepare_dataset_config(self, dataset_config: DictConfig):
         if not hasattr(dataset_config, "type"):
             with open_dict(dataset_config):
                 dataset_config["type"] = self.config.dataset_type
         return dataset_config
+
+    def prepare_task_config(self, task_config: DictConfig):
+        # set default values for keys that are not present in per task configuration
+        for key in ["num_workers", "batch_size"]:
+            if not hasattr(task_config, key):
+                with open_dict(task_config):
+                    task_config[key] = self.config[key]
+        return task_config
 
     @property
     def clip_model(self):
@@ -99,11 +123,14 @@ class CLIPImageClassificationTaskPool(TaskPool):
             task_config = self.get_task_config(task_name_or_config)
         else:
             task_config = task_name_or_config
+        task_config = self.prepare_task_config(task_config)
 
         # load the task from the configuration
         task = CLIPImageClassificationTask(task_config)
+        task._fabric = self._fabric
         task._taskpool = self
         task._clip_processor = self.clip_processor
+
         return task
 
     def evaluate(self, model: CLIPVisionModel):
@@ -116,4 +143,5 @@ class CLIPImageClassificationTaskPool(TaskPool):
             task = self.load_task(task_name)
             result = task.evaluate(self.clip_model)
             report[task_name] = result
+        log.info(f"Results for taskpool {self.config.name}: {report}")
         return report
