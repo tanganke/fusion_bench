@@ -1,7 +1,7 @@
 # AdaMerging
 
 <figure markdown="span">
-    ![alt text](../_figure_sources/adamerging.png){ width="750" }
+    ![alt text](images/adamerging.png){ width="750" }
     <figcaption>Task Vector, Task Arithmetic, and AdaMerging. Credit to <sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup></figcaption>
 </figure>
 
