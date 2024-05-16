@@ -1,5 +1,10 @@
 # Ties Merging
 
+<figure markdown="span">
+  ![Image title](images/ties_merging.jpg){ width="750" }
+  <figcaption>Ties-Merging. Credit to <sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup></figcaption>
+</figure>
+
 Ties-Merging[^1] represents a novel and structured approach to consolidating multiple task-specific models into a single, efficient multi-task model. This method employs a sequence of deliberate steps to systematically merge task vectors, ensuring that the final model effectively integrates the strengths of each individual task-specific model and resolves potential conflicts between them.
 
 The Ties-Merging algorithm operates through three primary steps:

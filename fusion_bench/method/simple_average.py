@@ -77,4 +77,4 @@ class SimpleAverageAlgorithm(ModelFusionAlgorithm):
 
         sd = state_dict_mul(sd, 1 / len(modelpool.model_names))
         forward_model.load_state_dict(sd)
-        return simple_average(forward_model)
+        return forward_model
