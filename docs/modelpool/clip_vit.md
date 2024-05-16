@@ -151,6 +151,14 @@ do
 done
 ```
 
+merge CLIP-ViT-L/14 models using task arithmetic and evaluate on the eight tasks
+
+```bash
+fusion_bench method=task_arithmetic method.scaling_factor=0.3\
+  modelpool=clip-vit-large-patch14_TA8 \
+  taskpool=clip-vit-classification_TA8 taskpool.clip_model=openai/clip-vit-large-patch14
+```
+
 #### Ties-Merging
 
 merge CLIP-ViT-B/32 models using Ties-Merging and evaluate on the eight tasks
@@ -174,23 +182,113 @@ do
 done
 ```
 
+merge CLIP-ViT-L/14 models using Ties-Merging and evaluate on the eight tasks
+
+```bash
+fusion_bench method=ties_merging method.scaling_factor=0.3 method.threshold=20 \
+  modelpool=clip-vit-large-patch14_TA8 \
+  taskpool=clip-vit-classification_TA8 taskpool.clip_model=openai/clip-vit-large-patch14
+```
+
+
+#### AdaMerging
+
+merge CLIP-ViT-B/32 models using task-wise AdaMerging and evaluate on the eight tasks, and save the merging weights by specifying the `method.save_merging_weights` parameter
+
+```bash
+fusion_bench \
+  method=adamerging \
+    method.name=clip_task_wise_adamerging \
+    method.save_merging_weights=outputs/clip-vit-base-patch32_TA8_task_wise_adamerging_weights.pt \
+  modelpool=clip-vit-base-patch32_TA8 \
+  taskpool=clip-vit-classification_TA8
+```
+
+merge CLIP-ViT-L/14 models using task-wise AdaMerging and evaluate on the eight tasks, and save the merging weights by specifying the `method.save_merging_weights` parameter.
+Here we split the training process into two stages, the first stage is to train the merging weights, and the second stage is to evaluate the model with the learned merging weights.
+
+```bash
+# learn the merging weights.
+# the per-device batch size is 4, and the total batch size is 4*4=16
+fusion_bench print_config=false \
+  method=adamerging \
+    method.name=clip_task_wise_adamerging \
+    method.save_merging_weights=outputs/clip-vit-large-patch14_TA8_task_wise_adamerging_weights.pt \
+    method.devices=4 method.batch_size=4 \
+  modelpool=clip-vit-large-patch14_TA8 \
+  taskpool=dummy # dummy taskpool is used to skip the evaluation process
+
+# by specifying the learned merging weights, we skip the training process and directly evaluate the model
+fusion_bench print_config=false \
+  method=adamerging \
+    method.name=clip_task_wise_adamerging \
+    method.weights=outputs/clip-vit-large-patch14_TA8_task_wise_adamerging_weights.pt \
+  modelpool=clip-vit-large-patch14_TA8 \
+  taskpool=clip-vit-classification_TA8 taskpool.clip_model=openai/clip-vit-large-patch14
+```
+
+merge CLIP-ViT-B/32 models using layer-wise AdaMerging and evaluate on the eight tasks
+
+```bash
+fusion_bench \
+  method=adamerging \
+    method.name=clip_layer_wise_adamerging \
+    method.save_merging_weights=outputs/clip-vit-base-patch32_TA8_layer_wise_adamerging_weights.pt \
+  modelpool=clip-vit-base-patch32_TA8 \
+  taskpool=clip-vit-classification_TA8
+```
+
+merge CLIP-ViT-L/14 models using layer-wise AdaMerging and evaluate on the eight tasks
+
+```bash
+# learn the merging weights.
+# the per-device batch size is 4, and the total batch size is 4*4=16
+fusion_bench \
+  method=adamerging \
+    method.name=clip_layer_wise_adamerging \
+    method.save_merging_weights=outputs/clip-vit-large-patch14_TA8_layer_wise_adamerging_weights.pt \
+    method.devices=4 method.batch_size=4 \
+  modelpool=clip-vit-large-patch14_TA8 \
+  taskpool=dummy # dummy taskpool is used to skip the evaluation process
+
+# by specifying the learned merging weights, we skip the training process and directly evaluate the model
+fusion_bench \
+  method=adamerging \
+    method.name=clip_layer_wise_adamerging \
+    method.weights=outputs/clip-vit-large-patch14_TA8_layer_wise_adamerging_weights.pt \
+  modelpool=clip-vit-large-patch14_TA8 \
+  taskpool=clip-vit-classification_TA8 taskpool.clip_model=openai/clip-vit-large-patch14
+```
+
+
 ### Experimental Results
 
 We provide the experimental results of the CLIP-ViT models for open vocabulary image classification on the eight tasks in the following table.
 
-| Model (CLIP-ViT-B/32)           | SUN397 | Cars | RESISC45 | EuroSAT | SVHN | GTSRB | MNIST | DTD  | Average |
-| ------------------------------- | ------ | ---- | -------- | ------- | ---- | ----- | ----- | ---- | ------- |
-| Pre-trained                     | 63.2   | 59.9 | 60.5     | 45.6    | 23.5 | 30.4  | 47.6  | 43.9 | 46.8    |
-| Fine-tuned (STL)                | 75.0   | 78.2 | 95.2     | 99.1    | 97.1 | 98.8  | 99.6  | 79.7 | 90.3    |
-| Simple Averaging                | 65.4   | 62.6 | 70.8     | 76.9    | 64.5 | 54.9  | 86.3  | 50.9 | 66.5    |
-| Task Arithmetic ($\lambda=0.3$) |
-| Ties-Merging ($\lambda=0.3$)    |
 
-| Model (CLIP-ViT-L/14)           | SUN397 | Cars | RESISC45 | EuroSAT | SVHN | GTSRB | MNIST | DTD  | Average |
-| ------------------------------- | ------ | ---- | -------- | ------- | ---- | ----- | ----- | ---- | ------- |
-| Pre-trained                     | 68.3   | 77.7 | 71.0     | 61.5    | 58.8 | 43.8  | 76.0  | 55.5 | 64.1    |
-| Fine-tuned (STL)                | 82.8   | 92.7 | 97.4     | 99.2    | 97.9 | 99.3  | 99.8  | 85.5 | 94.3    |
-| Simple Averaging                |
-| Task Arithmetic ($\lambda=0.3$) |
-| Ties-Merging ($\lambda=0.3$)    |
+=== "Table: Mutli-task model merging methods using CLIP-ViT-B/32 models."
+    
+    | Model                                 | SUN397 | Cars | RESISC45 | EuroSAT | SVHN | GTSRB | MNIST | DTD  | Average |
+    | ------------------------------------- | ------ | ---- | -------- | ------- | ---- | ----- | ----- | ---- | ------- |
+    | Reference Results                     |        |      |          |         |      |       |       |      |         |
+    | Pre-trained                           | 63.2   | 59.9 | 60.5     | 45.6    | 23.5 | 30.4  | 47.6  | 43.9 | 46.8    |
+    | Fine-tuned (STL)                      | 75.0   | 78.2 | 95.2     | 99.1    | 97.1 | 98.8  | 99.6  | 79.7 | 90.3    |
+    | Model Merging                         |        |      |          |         |      |       |       |      |         |
+    | Simple Averaging                      | 65.4   | 62.6 | 70.8     | 76.9    | 64.5 | 54.9  | 86.3  | 50.9 | 66.5    |
+    | Task Arithmetic ($\lambda=0.3$)       | 57.1   | 55.7 | 64.9     | 76.7    | 77.9 | 68.5  | 96.1  | 47.2 | 68.0    |
+    | Ties-Merging ($\lambda=0.3$)          | 67.1   | 64.2 | 74.1     | 76.8    | 77.7 | 69.4  | 94.1  | 54.0 | 72.2    |
+    | Task-wise AdaMerging ($\lambda=0.3$)  | 58.6   | 56.9 | 69.8     | 82.4    | 70.3 | 58.9  | 97.2  | 55.3 | 68.7    |
+    | Layer-wise AdaMerging ($\lambda=0.3$) | 67.9   | 71.3 | 83.5     | 92.7    | 87.4 | 92.9  | 98.2  | 67.0 | 82.6    |
+
+=== "Table: Mutli-task model merging methods using CLIP-ViT-L/14 models."
+
+    | Model                           | SUN397 | Cars | RESISC45 | EuroSAT | SVHN | GTSRB | MNIST | DTD  | Average |
+    | ------------------------------- | ------ | ---- | -------- | ------- | ---- | ----- | ----- | ---- | ------- |
+    | Reference Results               |        |      |          |         |      |       |       |      |         |
+    | Pre-trained                     | 68.3   | 77.7 | 71.0     | 61.5    | 58.8 | 43.8  | 76.0  | 55.5 | 64.1    |
+    | Fine-tuned (STL)                | 82.8   | 92.7 | 97.4     | 99.2    | 97.9 | 99.3  | 99.8  | 85.5 | 94.3    |
+    | Model Merging                   |        |      |          |         |      |       |       |      |         |
+    | Simple Averaging                | 72.5   | 81.5 | 82.2     | 90.0    | 81.6 | 74.0  | 96.6  | 61.8 | 80.0    |
+    | Task Arithmetic ($\lambda=0.3$) | 72.0   | 79.0 | 80.5     | 86.0    | 87.5 | 83.5  | 98.0  | 58.8 | 80.7    |
+    | Ties-Merging ($\lambda=0.3$)    | 74.7   | 83.3 | 86.4     | 91.3    | 89.7 | 85.2, | 97.8  | 63.9 | 84.0    |
 
