@@ -1,7 +1,7 @@
 name: ties_merging
 # Scaling factor $\lambda$
 scaling_factor: 0.5
-threshold: 0.5
+threshold: 20
 # List of keys to remove from the state dict, default is empty
 remove_keys: []
 # Function to merge the models, default is sum. Options are 'sum', 'mean', and 'max'

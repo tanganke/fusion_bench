@@ -12,12 +12,13 @@ fusion_bench [--config-path CONFIG_PATH] [--config-name CONFIG_NAME] \
 
 `fusion_bench` has the following options, `method`, `modelpool`, and `taskpool` are the most important ones ammong these options:
 
-| **Option**    | **Default**                 | **Description**                                                                     |
-| ------------- | --------------------------- | ----------------------------------------------------------------------------------- |
-| **modelpool** | `clip-vit-base-patch32_TA8` | The pool of models to be fused. See [modelpool](../modelpool/index.md) for more information.  |
-| **method**    | `dummy`                     | The fusion method to be used.                                                       |
-| **taskpool**  | `dummy`                     | The pool of tasks to be evaluated. See [taskpool](../taskpool/index.md) for more information. |
-| print_config  | `true`                      | Whether to print the configuration to the console.                                  |
+| **Option**    | **Default**                 | **Description**                                                                                                                   |
+| ------------- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **modelpool** | `clip-vit-base-patch32_TA8` | The pool of models to be fused. See [modelpool](../modelpool/index.md) for more information.                                      |
+| **method**    | `dummy`                     | The fusion method to be used. See [fusion algorithms](../algorithms/index.md) for more information.                               |
+| **taskpool**  | `dummy`                     | The pool of tasks to be evaluated. See [taskpool](../taskpool/index.md) for more information.                                     |
+| print_config  | `true`                      | Whether to print the configuration to the console.                                                                                |
+| save_report   | `false`                     | the path to save the report. If not specified or is `false`, the report will not be saved. The report will be saved as json file. |
 
 ## Basic Examples
 

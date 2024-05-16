@@ -12,7 +12,7 @@ nav:
       - AdaMerging: algorithms/adamerging.md
   - Model Pool:
       - Introduction: modelpool/index.md
-      - CLIP-ViT: modelpool/clip_vit.md
+      - CLIP-ViT Models: modelpool/clip_vit.md
   - Task Pool:
       - Introduction: taskpool/index.md
       - Dummy: taskpool/dummy.md

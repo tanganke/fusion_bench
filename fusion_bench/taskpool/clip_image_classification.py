@@ -23,6 +23,10 @@ log = logging.getLogger(__name__)
 
 
 class CLIPImageClassificationTask(ImageClassificationTask):
+    """
+    This class is used to define the image classification task for CLIP models.
+    """
+
     _fabric: L.Fabric = None
     _clip_processor: CLIPProcessor = None
     #
@@ -40,6 +44,10 @@ class CLIPImageClassificationTask(ImageClassificationTask):
 
     @cached_property
     def test_dataset(self):
+        """
+        Load the test dataset for the task.
+        This method is cached, so the dataset is loaded only once.
+        """
         dataset_config = self.config["dataset"]
         dataset_config = self._taskpool.prepare_dataset_config(dataset_config)
         log.info(f"Loading test dataset: {dataset_config.name}")
