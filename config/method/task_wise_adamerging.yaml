@@ -1,0 +1,22 @@
+name: ??? # one of "clip_task_wise_adamerging"
+
+# this weights can be a list of float, or a string that points to a *.np, *.pt file containing the weights
+# if weights is specified, skip the test-time adaptation training
+weights: null
+
+# learning rate
+lr: 0.0001
+optimizer: adam
+
+init_values: 0.3
+# if `clamp_weights` is true, the weights will be clamped to [0, 1]
+clamp_weights: false
+
+# arguments of `functional_call`
+tie_weights: true
+strict: false
+
+devices: 1
+batch_size: 16
+num_workers: 4
+max_steps: 1000

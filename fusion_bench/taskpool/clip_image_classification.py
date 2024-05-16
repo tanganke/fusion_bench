@@ -51,7 +51,7 @@ class CLIPImageClassificationTask(ImageClassificationTask):
         dataset_config = self.config["dataset"]
         dataset_config = self._taskpool.prepare_dataset_config(dataset_config)
         log.info(f"Loading test dataset: {dataset_config.name}")
-        dataset = load_dataset_from_config(self.config["dataset"])
+        dataset = load_dataset_from_config(dataset_config)
         dataset = CLIPDataset(dataset, self._clip_processor)
         return dataset
 
