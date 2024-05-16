@@ -11,6 +11,7 @@ import hydra
 from omegaconf import DictConfig, OmegaConf
 from rich import print as rich_print
 from rich.syntax import Syntax
+import json
 
 from ..method import load_algorithm_from_config
 from ..modelpool import load_modelpool_from_config
@@ -32,7 +33,12 @@ def run_model_fusion(cfg: DictConfig):
 
     if hasattr(cfg, "taskpool") and cfg.taskpool is not None:
         taskpool = load_taskpool_from_config(cfg.taskpool)
-        taskpool.evaluate(merged_model)
+        report = taskpool.evaluate(merged_model)
+        if cfg.get("save_report", False):
+            # save report (Dict) to a file
+            # if the directory of `save_report` does not exists, create it
+            os.makedirs(os.path.dirname(cfg.save_report), exist_ok=True)
+            json.dump(report, open(cfg.save_report, "w"))
     else:
         print("No task pool specified. Skipping evaluation.")
 

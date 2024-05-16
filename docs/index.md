@@ -7,7 +7,7 @@
 !!! note
     
     - Any questions or comments can be directed to the [GitHub Issues](https://github.com/tanganke/fusion_bench/issues) page for this project.
-    - Any contributions or pull requests are welcome.
+    - Any contributions or pull requests are welcome. If you find any mistakes or have suggestions for improvements, please feel free to raise an issue or submit a pull request.
 
 
 ## Introduction to Deep Model Fusion
