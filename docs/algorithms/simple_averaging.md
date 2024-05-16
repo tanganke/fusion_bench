@@ -9,6 +9,13 @@ $$ \theta = \frac{1}{n} \sum_{i=1}^{n} \theta_i $$
 
 ## Code Integration
 
+Configuration template for the Simple Averaging algorithm:
+
+```yaml title="config/method/simple_average.yaml"
+name: simple_average
+```
+
+use the following command to run the Simple Averaging algorithm:
 
 ```bash
 fusion_bench method=simple_average ...

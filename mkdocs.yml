@@ -6,6 +6,7 @@ nav:
       - Introduction: algorithms/index.md
       - Dummy: algorithms/dummy.md
       - Simple Averaging: algorithms/simple_averaging.md
+      - Weighted Averaging: algorithms/weighted_averaging
       - Task Arithmetic: algorithms/task_arithmetic.md
       - Ties-Merging: algorithms/ties_merging.md
       - AdaMerging: algorithms/adamerging.md

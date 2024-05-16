@@ -14,9 +14,9 @@ fusion_bench [--config-path CONFIG_PATH] [--config-name CONFIG_NAME] \
 
 | **Option**    | **Default**                 | **Description**                                                                     |
 | ------------- | --------------------------- | ----------------------------------------------------------------------------------- |
-| **modelpool** | `clip-vit-base-patch32_TA8` | The pool of models to be fused. See [modelpool](/modelpool/) for more information.  |
+| **modelpool** | `clip-vit-base-patch32_TA8` | The pool of models to be fused. See [modelpool](../modelpool/index.md) for more information.  |
 | **method**    | `dummy`                     | The fusion method to be used.                                                       |
-| **taskpool**  | `dummy`                     | The pool of tasks to be evaluated. See [taskpool](/taskpool/) for more information. |
+| **taskpool**  | `dummy`                     | The pool of tasks to be evaluated. See [taskpool](../taskpool/index.md) for more information. |
 | print_config  | `true`                      | Whether to print the configuration to the console.                                  |
 
 ## Basic Examples

@@ -20,6 +20,24 @@ class WeightedAverageAlgorithm(ModelFusionAlgorithm):
 
     @torch.no_grad()
     def fuse(self, modelpool: ModelPool):
+        """
+        Fuses the models in the model pool using a weighted average approach.
+
+        Parameters
+        ----------
+        modelpool : ModelPool
+            The pool of models to be fused.
+
+        Raises
+        ------
+        ValueError
+            If the number of weights does not match the number of models in the model pool.
+
+        Returns
+        -------
+        forward_model : torch.nn.Module
+            The resulting model after fusion.
+        """
         log.info("Fusing models using weighted average.")
         weights = self.config.weights
         if len(weights) != len(modelpool.model_names):
