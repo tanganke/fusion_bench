@@ -4,6 +4,8 @@ A modelpool is a collection of models that are utilized in the process of model 
 In the context of straightforward model fusion techniques, like averaging, only models with the same architecture are used.
 While for more complex methods, such as AdaMerging [^1], each model is paired with a unique set of unlabeled test data. This data is used during the test-time adaptation phase.
 
+## Yaml Configuration
+
 A modelpool is specified by a `yaml` configuration file, which often contains the following fields:
 
 - `type`: The name of the modelpool.

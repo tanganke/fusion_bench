@@ -6,3 +6,16 @@ In the context of full fine-tuned models, the weights are averaged directly. Con
 
 $$ \theta = \frac{1}{n} \sum_{i=1}^{n} \theta_i $$
 
+
+## Code Integration
+
+
+```bash
+fusion_bench method=simple_average ...
+```
+
+## References
+
+::: fusion_bench.method.SimpleAverageAlgorithm
+    options:
+        members: true

@@ -12,12 +12,12 @@ fusion_bench [--config-path CONFIG_PATH] [--config-name CONFIG_NAME] \
 
 `fusion_bench` has the following options, `method`, `modelpool`, and `taskpool` are the most important ones ammong these options:
 
-| **Option**   | **Default**               | **Description**                                                                     |
-| ------------ | ------------------------- | ----------------------------------------------------------------------------------- |
-| **method**       | `simple_average`          | The fusion method to be used.                                                       |
-| **modelpool**    | `huggingface_clip_vision` | The pool of models to be fused. See [modelpool](/modelpool/) for more information.  |
-| **taskpool**     | `dummy`                   | The pool of tasks to be evaluated. See [taskpool](/taskpool/) for more information. |
-| print_config | `true`                    | Whether to print the configuration to the console.                                  |
+| **Option**    | **Default**                 | **Description**                                                                     |
+| ------------- | --------------------------- | ----------------------------------------------------------------------------------- |
+| **modelpool** | `clip-vit-base-patch32_TA8` | The pool of models to be fused. See [modelpool](/modelpool/) for more information.  |
+| **method**    | `dummy`                     | The fusion method to be used.                                                       |
+| **taskpool**  | `dummy`                     | The pool of tasks to be evaluated. See [taskpool](/taskpool/) for more information. |
+| print_config  | `true`                      | Whether to print the configuration to the console.                                  |
 
 ## Basic Examples
 

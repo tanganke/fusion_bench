@@ -48,6 +48,18 @@ class SimpleAverageAlgorithm(ModelFusionAlgorithm):
 
     @torch.no_grad()
     def fuse(self, modelpool: ModelPool):
+        """
+        Fuse the models in the given model pool using simple averaging.
+
+        This method iterates over the names of the models in the model pool, loads each model, and appends it to a list.
+        It then returns the simple average of the models in the list.
+
+        Args:
+            modelpool: The pool of models to fuse.
+
+        Returns:
+            The fused model obtained by simple averaging.
+        """
         log.info(
             f"Fusing models using simple average on {len(modelpool.model_names)} models."
             f"models: {modelpool.model_names}"

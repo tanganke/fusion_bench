@@ -2,19 +2,20 @@ site_name: "FusionBench"
 
 nav:
   - Home: index.md
-  - Algorithms:
+  - Fusion Algorithms:
       - Introduction: algorithms/index.md
       - Dummy: algorithms/dummy.md
       - Simple Averaging: algorithms/simple_averaging.md
       - Task Arithmetic: algorithms/task_arithmetic.md
       - Ties-Merging: algorithms/ties_merging.md
       - AdaMerging: algorithms/adamerging.md
-  - ModelPool:
+  - Model Pool:
       - Introduction: modelpool/index.md
       - CLIP-ViT: modelpool/clip_vit.md
-  - TaskPool:
+  - Task Pool:
       - Introduction: taskpool/index.md
       - Dummy: taskpool/dummy.md
+      - Classification Tasks for CLIP: taskpool/clip_vit_classification 
   - Command Line Interface:
     - fusion_bench: cli/fusion_bench.md
 
@@ -30,9 +31,9 @@ plugins:
             show_source: true
             show_root_heading: true
             show_root_toc_entry: false
-            show_root_full_path: true
-            show_root_members_full_path: true
-            show_object_full_path: true
+            show_root_full_path: false
+            show_root_members_full_path: false
+            show_object_full_path: false
             group_by_category: true
             show_submodules: true
             parameter_headings: true
@@ -40,6 +41,7 @@ plugins:
             docstring_section_style: list
             show_symbol_type_heading: true
             show_symbol_type_toc: true
+            heading_level: 4
 
 markdown_extensions:
   - attr_list

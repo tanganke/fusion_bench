@@ -1,11 +1,25 @@
 from abc import ABC, abstractmethod
+from typing import Optional
+
+from omegaconf import DictConfig
 
 
 class ModelFusionAlgorithm(ABC):
-    def __init__(self, algorithm_config):
+    def __init__(self, algorithm_config: Optional[DictConfig] = None):
         super().__init__()
         self.config = algorithm_config
 
     @abstractmethod
     def fuse(self, modelpool):
+        """
+        Fuse the models in the given model pool.
+
+        Examples:
+            >>> algorithm = SimpleAverageAlgorithm()
+            >>> modelpool = ModelPool()
+            >>> merged_model = algorithm.fuse(modelpool)
+
+        Args:
+            modelpool (_type_): _description_
+        """
         pass
