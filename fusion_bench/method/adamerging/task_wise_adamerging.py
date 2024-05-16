@@ -101,7 +101,7 @@ class TaskWiseAdaMergingAlgorithm(ModelFusionAlgorithm):
 
         if self.config.weights is not None:
             # skip the test-time adaptation
-            return module.merge_and_unload(module)
+            return module.merge_and_unload()
         else:
             module = self.test_time_adaptation(module)
             if self.config.get("save_merging_weights", False):
