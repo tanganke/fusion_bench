@@ -5,11 +5,20 @@ nav:
   - Fusion Algorithms:
       - Introduction: algorithms/index.md
       - Dummy: algorithms/dummy.md
-      - Simple Averaging: algorithms/simple_averaging.md
-      - Weighted Averaging: algorithms/weighted_averaging.md
-      - Task Arithmetic: algorithms/task_arithmetic.md
-      - Ties-Merging: algorithms/ties_merging.md
-      - AdaMerging: algorithms/adamerging.md
+      - Model Ensemble: 
+        - Simple Ensemble: algorithms/ensemble.md
+        - Model Specification: algorithms/specification_ensemble.md
+      - Model Merging:
+        - Simple Averaging: algorithms/simple_averaging.md
+        - Weighted Averaging: algorithms/weighted_averaging.md
+        - Task Arithmetic: algorithms/task_arithmetic.md
+        - Ties-Merging: algorithms/ties_merging.md
+        - AdaMerging: algorithms/adamerging.md
+      - Model Mixing:
+        - Depth Upscaling: algorithms/depth_upscaling.md
+        - Mixture of Experts: algorithms/mixture_of_experts.md
+        - Model Stitching: algorithms/model_stitching.md
+        - Model Recombination: algorithms/model_recombination.md
   - Model Pool:
       - Introduction: modelpool/index.md
       - CLIP-ViT Models: modelpool/clip_vit.md
