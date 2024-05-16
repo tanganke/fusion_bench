@@ -1,11 +1,12 @@
-name: ??? # one of "clip_task_wise_adamerging"
+# this option can be "clip_task_wise_adamerging"
+name: ??? 
 
 # this weights can be a list of float, or a string that points to a *.np, *.pt file containing the weights
 # if weights is specified, skip the test-time adaptation training
 weights: null
 
 # learning rate
-lr: 0.0001
+lr: 1e-3
 optimizer: adam
 
 init_values: 0.3
@@ -20,3 +21,8 @@ devices: 1
 batch_size: 16
 num_workers: 4
 max_steps: 1000
+fast_dev_run: ${fast_dev_run}
+
+# the path for saving the merging weights
+save_merging_weights: false
+cache_dir: outputs

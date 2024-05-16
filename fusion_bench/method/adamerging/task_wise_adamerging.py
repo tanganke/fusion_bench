@@ -44,7 +44,7 @@ class TaskWiseAdaMergingAlgorithm(ModelFusionAlgorithm):
     def __init__(self, algorithm_config: DictConfig):
         super().__init__(algorithm_config)
 
-        if self._fabric is not None and torch.cuda.is_available():
+        if self._fabric is None and torch.cuda.is_available():
             self._fabric = L.Fabric(devices=self.config.devices)
             self._fabric.launch()
 
@@ -103,7 +103,9 @@ class TaskWiseAdaMergingAlgorithm(ModelFusionAlgorithm):
             # skip the test-time adaptation
             return module.merge_and_unload(module)
         else:
-            module = self.test_time_adaptation()
+            module = self.test_time_adaptation(module)
+            if self.config.get("save_merging_weights", False):
+                torch.save(module.task_wise_weight, self.config.save_merging_weights)
             return module.merge_and_unload()
 
     def on_test_time_adaptation_start(self):
@@ -122,9 +124,7 @@ class TaskWiseAdaMergingAlgorithm(ModelFusionAlgorithm):
 
         # configure optimizer
         if self.config.optimizer == "adam":
-            optimizer = torch.optim.Adam(
-                [self.module.task_wise_weight], lr=self.config.lr
-            )
+            optimizer = torch.optim.Adam([module.task_wise_weight], lr=self.config.lr)
         else:
             raise ValueError(f"Unsupported optimizer: {self.config.optimizer}")
 
@@ -133,20 +133,34 @@ class TaskWiseAdaMergingAlgorithm(ModelFusionAlgorithm):
 
         module.train()
         module.merge_weights()
-        for step_idx in tqdm(
-            self.config.max_steps, "AdaMerging Test-time adaptation", dynamic_ncols=True
-        ):
-            loss = 0
+
+        if self.config.get("fast_dev_run", False):
+            log.info("Running fast_dev_run, only one step")
+            pbar = tqdm(
+                range(1),
+                "AdaMerging Test-time adaptation",
+                dynamic_ncols=True,
+            )
+        else:
+            pbar = tqdm(
+                range(self.config.max_steps),
+                "AdaMerging Test-time adaptation",
+                dynamic_ncols=True,
+            )
+        for step_idx in pbar:
             for task in self.modelpool.model_names:
                 batch = next(self.get_shuffled_test_loader_iter(task))
                 logits = self.compute_logits(module, batch, task)
                 assert (
                     logits.dim() == 2
                 ), f"Expected logits to be 2D, got {logits.dim()}"
-                loss = loss + entropy_loss(logits)
-            optimizer.zero_grad()
-            self._fabric.backward(loss)
+                loss = entropy_loss(logits)
+                # .backward() accumulates when .zero_grad() wasn't called
+                # this can save memory
+                self._fabric.backward(loss, retain_graph=True)
+
             optimizer.step()
+            optimizer.zero_grad()
             module.merge_weights()
 
         return module

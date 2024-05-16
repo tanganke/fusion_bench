@@ -15,8 +15,26 @@ from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.utils import timeit_context
 
 from .task_wise_adamerging import TaskWiseAdaMergingAlgorithm
+import os
 
 log = logging.getLogger(__name__)
+
+
+class InfiniteDataLoader:
+    def __init__(self, data_loader):
+        self.data_loader = data_loader
+        self.data_iter = iter(data_loader)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        try:
+            data = next(self.data_iter)
+        except StopIteration:
+            self.data_iter = iter(self.data_loader)  # Reset the data loader
+            data = next(self.data_iter)
+        return data
 
 
 class CLIPTaskWiseAdaMergingAlgorithm(TaskWiseAdaMergingAlgorithm):
@@ -28,7 +46,7 @@ class CLIPTaskWiseAdaMergingAlgorithm(TaskWiseAdaMergingAlgorithm):
         super().__init__(algorithm_config)
 
     def get_task_config(self, task):
-        for task_config in self.config.tta_datasets:
+        for task_config in self.modelpool.config.tta_datasets:
             if task_config.name == task:
                 return task_config
         raise ValueError(f"Task {task} not found in config")
@@ -36,10 +54,10 @@ class CLIPTaskWiseAdaMergingAlgorithm(TaskWiseAdaMergingAlgorithm):
     def prepare_dataset_config(self, dataset_config: DictConfig):
         if not hasattr(dataset_config, "type"):
             with open_dict(dataset_config):
-                dataset_config["type"] = self.config.dataset_type
+                dataset_config["type"] = self.modelpool.config.dataset_type
         return dataset_config
 
-    @functools.cache()
+    @functools.cache
     def get_test_dataset(self, task: str):
         """
         Load the test dataset for the task.
@@ -52,7 +70,7 @@ class CLIPTaskWiseAdaMergingAlgorithm(TaskWiseAdaMergingAlgorithm):
         dataset = CLIPDataset(dataset, self._clip_processor)
         return dataset
 
-    @functools.cache()
+    @functools.cache
     def get_shuffled_test_loader_iter(self, task: str):
         loader = DataLoader(
             self.get_test_dataset(task),
@@ -63,9 +81,12 @@ class CLIPTaskWiseAdaMergingAlgorithm(TaskWiseAdaMergingAlgorithm):
         )
         if self._fabric is not None:
             loader = self._fabric.setup_dataloaders(loader)
-        return iter(itertools.cycle(loader))
+        return iter(InfiniteDataLoader(loader))
 
     def on_test_time_adaptation_start(self):
+        """
+        Here we load the CLIP processor and construct the zero-shot classification head for each task.
+        """
         clip_model_config = self.modelpool.get_model_config("_pretrained_")
 
         with timeit_context("Loading CLIP processor and pretrained CLIP model."):
@@ -74,17 +95,29 @@ class CLIPTaskWiseAdaMergingAlgorithm(TaskWiseAdaMergingAlgorithm):
 
             clip_classifier = HFCLIPClassifier(clip_model, self._clip_processor)
             self.visual_projection = clip_model.visual_projection.requires_grad_(False)
+            self.logit_scale = clip_model.logit_scale.exp()
             if self._fabric is not None:
                 self.visual_projection = self._fabric.to_device(self.visual_projection)
-                self.logit_scale = self._fabric.to_device(clip_model.logit_scale.exp())
+                self.logit_scale = self._fabric.to_device(self.logit_scale)
 
-        for task in self.modelpool.model_names():
-            log.info(f"Construct zero shot classification head for task {task}")
-            classnames, templates = get_classnames_and_templates(
-                self.get_task_config(task)["dataset"].name
+        for task in self.modelpool.model_names:
+            cache_file = os.path.join(
+                self.config.cache_dir,
+                f"{os.path.basename(clip_model_config.path)}_{task}_zeroshot_weights.pt",
             )
-            clip_classifier.set_classification_task(classnames, templates)
-            self.zeroshot_weights[task] = clip_classifier.zeroshot_weights
+            if os.path.exists(cache_file):
+                log.info(f"Loading cached zeroshot weights for task: {task}")
+                zeroshot_weights = torch.load(cache_file, map_location="cpu")
+            else:
+                log.info(f"Construct zero shot classification head for task: {task}")
+                classnames, templates = get_classnames_and_templates(
+                    self.get_task_config(task)["dataset"].name
+                )
+                clip_classifier.set_classification_task(classnames, templates)
+                zeroshot_weights = clip_classifier.zeroshot_weights
+                log.info(f"save zeroshot weights to {cache_file}")
+                torch.save(zeroshot_weights, cache_file)
+            self.zeroshot_weights[task] = zeroshot_weights
             if self._fabric is not None:
                 self.zeroshot_weights[task] = self._fabric.to_device(
                     self.zeroshot_weights[task]

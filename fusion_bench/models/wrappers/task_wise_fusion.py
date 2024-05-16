@@ -184,12 +184,12 @@ class TaskWiseMergedModel(nn.Module):
                     del_attr(m, name.split("."))
             else:
                 for m in finetuned_models:
-                    set_attr(
-                        m,
-                        name.split("."),
-                        get_attr(pretrained_model, name.split(".")) - param,
+                    get_attr(m, name.split(".")).data = (
+                        get_attr(m, name.split(".")) - param
                     )
         self.pretrained_model = pretrained_model.requires_grad_(False)
+        for m in finetuned_models:
+            m.requires_grad_(False)
         self.task_vectors = nn.ModuleList(finetuned_models)
 
     @property
@@ -224,19 +224,19 @@ class TaskWiseMergedModel(nn.Module):
             self.merge_weights()
         return self.forward_model(args=args, kwargs=kwargs)
 
-    def __getattr__(self, name: str) -> Any:
-        try:
-            return super().__getattr__(name)
-        except AttributeError:
-            attr = getattr(self.model, name)
-            if isinstance(attr, Callable):
-                warnings.warn(
-                    f"forwarding `{name}` to the underlying model", UserWarning
-                )
-            return attr
+    # def __getattr__(self, name: str) -> Any:
+    #     try:
+    #         return super().__getattr__(name)
+    #     except AttributeError:
+    #         attr = getattr(self.pretrained_model, name)
+    #         if isinstance(attr, Callable):
+    #             warnings.warn(
+    #                 f"forwarding `{name}` to the underlying model", UserWarning
+    #             )
+    #         return attr
 
-    def __setattr__(self, name: str, value: Any) -> None:
-        try:
-            super().__setattr__(name, value)
-        except AttributeError:
-            setattr(self.model, name, value)
+    # def __setattr__(self, name: str, value: Any) -> None:
+    #     try:
+    #         super().__setattr__(name, value)
+    #     except AttributeError:
+    #         setattr(self.pretrained_model, name, value)
