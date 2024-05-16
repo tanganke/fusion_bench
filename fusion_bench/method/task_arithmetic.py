@@ -7,7 +7,6 @@ from torch import Tensor, nn
 
 from ..utils.state_dict_arithmetic import (
     state_dict_add,
-    state_dict_avg,
     state_dict_mul,
     state_dict_sub,
 )

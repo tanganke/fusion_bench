@@ -6,7 +6,7 @@ nav:
       - Introduction: algorithms/index.md
       - Dummy: algorithms/dummy.md
       - Simple Averaging: algorithms/simple_averaging.md
-      - Weighted Averaging: algorithms/weighted_averaging
+      - Weighted Averaging: algorithms/weighted_averaging.md
       - Task Arithmetic: algorithms/task_arithmetic.md
       - Ties-Merging: algorithms/ties_merging.md
       - AdaMerging: algorithms/adamerging.md
@@ -16,7 +16,7 @@ nav:
   - Task Pool:
       - Introduction: taskpool/index.md
       - Dummy: taskpool/dummy.md
-      - Classification Tasks for CLIP: taskpool/clip_vit_classification 
+      - Classification Tasks for CLIP: taskpool/clip_vit_classification.md
   - Command Line Interface:
     - fusion_bench: cli/fusion_bench.md
 
