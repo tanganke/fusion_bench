@@ -1,19 +1,3 @@
-R"""
-```python
-# Get the task-wise weights
-task_wise_weights = get_task_wise_weights(num_models)
-
-# Define the task vectors (in this case, we'll use the state_dict of the pretrained model)
-task_vectors = ...
-
-# Initialize the TaskWiseMergedModel
-merged_model = TaskWiseMergedModel(pretrained_model, task_wise_weights, task_vectors)
-
-# Now you can use the merged_model like a regular PyTorch model
-outputs = merged_model(inputs)
-```
-"""
-
 import functools
 import logging
 import types
@@ -28,9 +12,9 @@ from torch.func import functional_call
 from fusion_bench.utils.timer import timeit_context
 from fusion_bench.utils.type import _StateDict
 
-log = logging.getLogger(__name__)
+__all__ = ["get_layer_wise_weights", "fuse_weights", "LayerWiseMergedModel"]
 
-__all__ = ["get_task_wise_weights", "fuse_weights", "TaskWiseMergedModel"]
+log = logging.getLogger(__name__)
 
 
 def del_attr(obj, names: List[str]):
@@ -79,92 +63,78 @@ def get_attr(obj, names: List[str]):
         return get_attr(getattr(obj, names[0]), names[1:])
 
 
-def check_parameterNamesMatch(checkpoints: List[_StateDict]) -> None:
+def get_layer_wise_weights(num_models: int, num_layers: int, init_values: float = None):
     """
-    Checks that the parameter names of the given checkpoints match.
+    Return a tensor of layer-wise weights for the given number of models and layers.
 
     Args:
-        checkpoints (List[Dict[str, float]]): A list of checkpoints, where each checkpoint is a dictionary of parameter names and their corresponding values.
-
-    Raises:
-        ValueError: If the number of checkpoints is less than 2 or if the parameter names of any two checkpoints differ.
-
-    """
-    parameter_names = set(checkpoints[0].keys())
-
-    if len(checkpoints) >= 2:
-        # raise ValueError("Number of models is less than 2.")
-        for checkpoint in checkpoints[1:]:
-            current_parameterNames = set(checkpoint.keys())
-            if current_parameterNames != parameter_names:
-                raise ValueError(
-                    "Differing parameter names in models. "
-                    f"The different parameters are {parameter_names.symmetric_difference(current_parameterNames)}"
-                )
-
-
-def get_task_wise_weights(num_models: int, init_values: float = None):
-    """
-    This function generates a tensor of weights for each model.
-
-    Args:
-        num_models (int): The number of models.
-        init_values (float, optional): The initial value for each weight. Defaults to None.
+        num_models (int): The number of models to fuse.
+        num_layers (int): The number of layers in each model.
+        init_values (float, optional): The initial value for each weight. Defaults to 1.0 / num_models.
 
     Returns:
-        Tensor: A tensor of weights for each model.
+        Tensor: A tensor of shape (num_models, num_layers) containing the layer-wise weights.
     """
     assert num_models >= 1, f"num_models must be >= 1, got {num_models}"
+    assert num_layers >= 1, f"num_layers must be >= 1, got {num_layers}"
     if init_values is None:
         init_values = 1.0 / num_models
-    return torch.full((num_models,), init_values, dtype=torch.float32)
+    return torch.full((num_models, num_layers), init_values, dtype=torch.float32)
 
 
-def _fuse_weights(task_wise_weight: Tensor, tensors: List[Tensor]):
+def _fuse_weights(layer_wise_weight: Tensor, tensors: List[Tensor]):
     """
-    This function fuses the weights of the models.
+    Fuse the layer-wise weights with the given state dictionaries.
 
     Args:
-        task_wise_weight (Tensor): The weights for each model.
-        tensors (List[Tensor]): The list of tensors to be fused.
+        layer_wise_weight (Tensor): A tensor of shape (num_models,) containing the layer-wise weights.
+        state_dicts (List[Tensor]): A list of state dictionaries, each containing the weights for a single layer.
 
     Returns:
-        Tensor: The fused weights.
+        Tensor: A tensor of shape (num_params,) containing the fused weights.
     """
-    device = task_wise_weight.device
-    return sum(task_wise_weight[i] * w.to(device) for i, w in enumerate(tensors))
+    assert len(layer_wise_weight) == len(
+        tensors
+    ), f"layer_wise_weight.shape={layer_wise_weight.shape}, len(tensors)={len(tensors)}"
+    return sum(
+        layer_wise_weight[i] * w.to(layer_wise_weight.device)
+        for i, w in enumerate(tensors)
+    )
 
 
-def fuse_weights(task_wise_weight: Tensor, state_dicts: List[_StateDict]) -> _StateDict:
+def fuse_weights(
+    layer_wise_weight: Tensor, state_dicts: List[_StateDict]
+) -> _StateDict:
     """
-    This function fuses the weights of the models and returns a state dictionary.
+    Fuse the weights of multiple models using layer-wise fusion.
 
     Args:
-        task_wise_weight (Tensor): The weights for each model. on cuda or cpu.
-        state_dicts (List[_StateDict]): The list of state dictionaries. on cpu.
+        layer_wise_weight (Tensor): A tensor of shape (num_models, num_layers) representing the weight of each layer for each model.
+        state_dicts (List[StateDict]): A list of state dictionaries, one for each model.
 
     Returns:
-        _StateDict: The fused state dictionary.
+        A dictionary mapping each weight tensor key to the fused weight tensor.
     """
     num_models = len(state_dicts)
-    assert (
-        task_wise_weight.dim() == 1
-    ), f"task_wise_weight must be a 1D tensor, got {task_wise_weight.dim()}"
-    assert num_models == task_wise_weight.size(
-        0
-    ), f"num_models must be equal to the number of state_dicts, got {num_models} and {task_wise_weight.size(0)}"
+    num_layers = len(state_dicts[0])
+    assert layer_wise_weight.shape == (
+        num_models,
+        num_layers,
+    ), f"layer_wise_weight.shape={layer_wise_weight.shape}, expected (num_models, num_layers): ({num_models}, {num_layers})"
     return {
-        k: _fuse_weights(task_wise_weight, [sd[k] for sd in state_dicts])
-        for k in state_dicts[0].keys()
+        k: _fuse_weights(
+            layer_wise_weight[:, i], [state_dict[k] for state_dict in state_dicts]
+        )
+        for i, k in enumerate(state_dicts[0].keys())
     }
 
 
-class TaskWiseMergedModel(nn.Module):
+class LayerWiseMergedModel(nn.Module):
     _merged_state_dict: _StateDict = None
 
     def __init__(
         self,
-        task_wise_weight: Tensor,
+        layer_wise_weight: Tensor,
         pretrained_model: nn.Module,
         finetuned_models: List[nn.Module],
         clamp_weights: bool = True,
@@ -176,7 +146,7 @@ class TaskWiseMergedModel(nn.Module):
         self.tie_weights = tie_weights
         self.strict = strict
 
-        self.task_wise_weight = nn.Parameter(task_wise_weight, requires_grad=True)
+        self.merge_weight = nn.Parameter(layer_wise_weight, requires_grad=True)
 
         for name, param in pretrained_model.named_parameters():
             if not param.requires_grad:
@@ -202,22 +172,27 @@ class TaskWiseMergedModel(nn.Module):
             strict=self.strict,
         )
 
-    def merge_weights(self):
-        if self.clamp_weights:
-            merge_weight = self.task_wise_weight.clamp(0, 1)
-        else:
-            merge_weight = self.task_wise_weight
-
-        state_dict = self.pretrained_model.state_dict(keep_vars=True)
-        for weight, task_vector in zip(merge_weight, self.task_vectors):
-            for name, param in task_vector.named_parameters():
-                state_dict[name] = state_dict[name] + param * weight
-        self._merged_state_dict = state_dict
-
     def merge_and_unload(self):
         self.merge_weights()
         self.pretrained_model.load_state_dict(self._merged_state_dict)
         return self.pretrained_model
+
+    def merge_weights(self):
+        """
+        Merges the weights of the model.
+        Call this after each update step.
+        """
+        if self.clamp_weights:
+            layer_wise_weight = self.merge_weight.clamp(0, 1)
+        else:
+            layer_wise_weight = self.merge_weight
+
+        state_dict = self.pretrained_model.state_dict(keep_vars=True)
+        for weight, task_vector in zip(layer_wise_weight, self.task_vectors):
+            assert len(list(task_vector.named_parameters())) == weight.size(0)
+            for w, (name, param) in zip(weight, task_vector.named_parameters()):
+                state_dict[name] = state_dict[name] + param * w
+        self._merged_state_dict = state_dict
 
     def forward(self, *args, **kwargs):
         if self._merged_state_dict is None:
@@ -228,7 +203,7 @@ class TaskWiseMergedModel(nn.Module):
     #     try:
     #         return super().__getattr__(name)
     #     except AttributeError:
-    #         attr = getattr(self.pretrained_model, name)
+    #         attr = getattr(self.model, name)
     #         if isinstance(attr, Callable):
     #             warnings.warn(
     #                 f"forwarding `{name}` to the underlying model", UserWarning
@@ -239,4 +214,4 @@ class TaskWiseMergedModel(nn.Module):
     #     try:
     #         super().__setattr__(name, value)
     #     except AttributeError:
-    #         setattr(self.pretrained_model, name, value)
+    #         setattr(self.model, name, value)
