@@ -5,9 +5,10 @@ from typing import List, Mapping, Union
 import torch
 from torch import Tensor, nn
 
-from ..utils.state_dict_arithmetic import state_dict_avg
+from ..utils.state_dict_arithmetic import state_dict_add, state_dict_avg, state_dict_mul
 from ..utils.type import _StateDict
 from .base_algorithm import ModelFusionAlgorithm
+from ..modelpool import ModelPool
 
 log = logging.getLogger(__name__)
 
@@ -44,13 +45,24 @@ def simple_average(modules: List[Union[nn.Module, _StateDict]]):
 
 
 class SimpleAverageAlgorithm(ModelFusionAlgorithm):
-    def fuse(self, modelpool):
-        log.info("Fusing models using simple average.")
-        log.info("Loading models.")
-        models = []
+
+    @torch.no_grad()
+    def fuse(self, modelpool: ModelPool):
+        log.info(
+            f"Fusing models using simple average on {len(modelpool.model_names)} models."
+            f"models: {modelpool.model_names}"
+        )
+        sd: _StateDict = None
+        forward_model = None
+
         for model_name in modelpool.model_names:
             model = modelpool.load_model(model_name)
-            models.append(model)
+            if sd is None:
+                sd = model.state_dict(keep_vars=True)
+                forward_model = model
+            else:
+                sd = state_dict_add(sd, model.state_dict(keep_vars=True))
 
-        log.info("Fusing models.")
-        return simple_average(models)
+        sd = state_dict_mul(sd, 1 / len(modelpool.model_names))
+        forward_model.load_state_dict(sd)
+        return simple_average(forward_model)

@@ -14,6 +14,8 @@ from ..models.hf_clip import HFCLIPClassifier
 from ..tasks.clip_classification import get_classnames_and_templates
 from ..tasks.image_classification import ImageClassificationTask
 from .base_pool import TaskPool
+from copy import deepcopy
+from tqdm.autonotebook import tqdm
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -70,7 +72,7 @@ class CLIPImageClassificationTask(ImageClassificationTask):
         )
         classifier.set_classification_task(self.classnames, self.templates)
         if self._fabric is not None:
-            classifier = self._fabric.setup_module(classifier)
+            classifier = self._fabric.setup_module(deepcopy(classifier))
         results = super().evaluate(classifier)
         log.info(f"Results for task {self.config.name}: {results}")
         return results
@@ -98,7 +100,7 @@ class CLIPImageClassificationTaskPool(TaskPool):
 
     def prepare_task_config(self, task_config: DictConfig):
         # set default values for keys that are not present in per task configuration
-        for key in ["num_workers", "batch_size"]:
+        for key in ["num_workers", "batch_size", "fast_dev_run"]:
             if not hasattr(task_config, key):
                 with open_dict(task_config):
                     task_config[key] = self.config[key]
@@ -139,7 +141,7 @@ class CLIPImageClassificationTaskPool(TaskPool):
         """
         self.clip_model.vision_model = model
         report = {}
-        for task_name in self.task_names:
+        for task_name in tqdm(self.task_names, desc="Evaluating tasks"):
             task = self.load_task(task_name)
             result = task.evaluate(self.clip_model)
             report[task_name] = result

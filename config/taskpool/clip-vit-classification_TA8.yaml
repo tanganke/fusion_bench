@@ -1,13 +1,21 @@
 type: clip_vit_classification
+name: clip-vit-classification_TA8
+
 dataset_type: huggingface_image_classification
 tasks:
-  - name: sun397
+  - name: svhn
     dataset:
-      name: tanganke/sun397
-      split: test
+      type: instantiate
+      name: svhn
+      object: 
+        _target_: datasets.load_dataset
+        _args_:
+          - svhn
+          - cropped_digits
+        split: test
   - name: stanford_cars
     dataset:
-      name: tanganke/stanford-cars
+      name: tanganke/stanford_cars
       split: test
   - name: resisc45
     dataset:
@@ -16,10 +24,6 @@ tasks:
   - name: eurosat
     dataset:
       name: tanganke/eurosat
-      split: test
-  - name: svhn
-    dataset:
-      name: svhn
       split: test
   - name: gtsrb
     dataset:
@@ -33,7 +37,12 @@ tasks:
     dataset:
       name: tanganke/dtd
       split: test
+  - name: sun397
+    dataset:
+      name: tanganke/sun397
+      split: test
 
 clip_model: openai/clip-vit-base-patch32
-batch_size: 32
+batch_size: 128
 num_workers: 16
+fast_dev_run: ${fast_dev_run}

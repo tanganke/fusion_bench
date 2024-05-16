@@ -1,3 +1,5 @@
+import functools
+import itertools
 from abc import abstractmethod
 
 import torch
@@ -8,6 +10,9 @@ from torchmetrics.classification.accuracy import MulticlassAccuracy
 from tqdm.autonotebook import tqdm
 
 from .base_task import BaseTask
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class ImageClassificationTask(BaseTask):
@@ -37,9 +42,16 @@ class ImageClassificationTask(BaseTask):
         )
         self.loss_metric = MeanMetric()
 
+        # if fast_dev_run is set, we only evaluate on a batch of the data
+        if self.config.get("fast_dev_run", False):
+            log.info("Running under fast_dev_run mode, evaluating on a single batch.")
+            test_loader = itertools.islice(self.test_loader, 1)
+        else:
+            test_loader = self.test_loader
+
         for batch in (
             pbar := tqdm(
-                self.test_loader, desc="Evaluating", leave=False, dynamic_ncols=True
+                test_loader, desc="Evaluating", leave=False, dynamic_ncols=True
             )
         ):
             inputs, targets = batch
@@ -54,4 +66,5 @@ class ImageClassificationTask(BaseTask):
 
         acc = self.accuracy.compute().item()
         loss = self.loss_metric.compute().item()
-        return {"accuracy": acc, "loss": loss}
+        results = {"accuracy": acc, "loss": loss}
+        return results

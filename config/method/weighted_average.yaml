@@ -1,0 +1,5 @@
+name: weighted_average
+weights:
+  - 0.5
+  - 0.5
+

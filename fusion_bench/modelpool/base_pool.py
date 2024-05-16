@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Union
 
 from omegaconf import DictConfig
+from torch import nn
 
 
 class ModelPool(ABC):
@@ -63,7 +64,7 @@ class ModelPool(ABC):
         raise ValueError(f"Model {model_name} not found in model pool")
 
     @abstractmethod
-    def load_model(self, model_config: Union[str, DictConfig]):
+    def load_model(self, model_config: Union[str, DictConfig]) -> nn.Module:
         """
         The models are load lazily, so this method should be implemented to load the model from the model pool.
 

@@ -2,6 +2,8 @@ from datasets import load_dataset
 from omegaconf import DictConfig, open_dict
 from .clip_dataset import CLIPDataset
 
+from hydra.utils import instantiate
+
 
 def load_dataset_from_config(dataset_config: DictConfig):
     """
@@ -20,5 +22,7 @@ def load_dataset_from_config(dataset_config: DictConfig):
         if hasattr(dataset_config, "split"):
             dataset = dataset[dataset_config.split]
         return dataset
+    if dataset_config.type == "instantiate":
+        return instantiate(dataset_config.object)
     else:
         raise ValueError(f"Unknown dataset type: {dataset_config.type}")
