@@ -77,6 +77,7 @@ class CLIPWeightEnsemblingMoEAlgorithm(WeightEnsemblingMoEAlgorithm):
 
     @functools.cache
     def get_shuffled_test_loader_iter(self, tta_dataset: str):
+        log.info("get_shuffled_test_loader_iter")
         loader = DataLoader(
             self.modelpool.get_tta_test_dataset(
                 tta_dataset, clip_processor=self._clip_processor
