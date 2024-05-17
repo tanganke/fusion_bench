@@ -54,7 +54,7 @@ fusion_bench \
     method.checkpoint=outputs/clip-vit-large-patch14_TA8_weight_ensembling_moe_checkpoint.ckpt \
   modelpool=clip-vit-large-patch14_TA8 \
   taskpool=clip-vit-classification_TA8 \
-    taskpool.clip_model: openai/clip-vit-large-patch14
+    taskpool.clip_model=openai/clip-vit-large-patch14
 ```
 
 

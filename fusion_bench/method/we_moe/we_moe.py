@@ -162,9 +162,9 @@ class WeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
         else:
             with self.profiler.profile("test-time adaptation"):
                 moe_model = self.test_time_adaptation(moe_model)
-            if self.config.get("save_checkpoints", False):
-                log.info(f"save checkpoint to {self.config.save_checkpoints}")
-                self.save_checkpoint(moe_model, self.config.save_checkpoints)
+            if self.config.get("save_checkpoint", False):
+                log.info(f"save checkpoint to {self.config.save_checkpoint}")
+                self.save_checkpoint(moe_model, self.config.save_checkpoint)
 
             if lightning.fabric.wrappers.is_wrapped(moe_model):
                 moe_model = lightning.fabric.wrappers._unwrap_objects(moe_model)
