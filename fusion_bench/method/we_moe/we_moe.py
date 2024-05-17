@@ -45,6 +45,7 @@ class WeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
             self._fabric = L.Fabric(
                 devices=self.config.devices,
             )
+            self._fabric.launch()
         else:
             assert "No CUDA device available."
         self.profiler = SimpleProfiler(self.config.cache_dir, "we_moe_profiler.txt")
