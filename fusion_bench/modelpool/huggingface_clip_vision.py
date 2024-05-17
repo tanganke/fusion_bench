@@ -1,9 +1,13 @@
+import functools
 import logging
 from functools import cached_property
+from typing import Optional
 
-from omegaconf import DictConfig
+from omegaconf import DictConfig, open_dict
+from torch.utils.data import DataLoader
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 
+from fusion_bench.dataset import CLIPDataset, load_dataset_from_config
 from fusion_bench.utils import timeit_context
 
 from .base_pool import ModelPool
@@ -24,9 +28,12 @@ class HuggingFaceClipVisionPool(ModelPool):
 
         self._clip_processor = None
 
+    @property
     def clip_processor(self):
         if self._clip_processor is None:
-            self._clip_processor = CLIPProcessor.from_pretrained(self.config["models"])
+            self._clip_processor = CLIPProcessor.from_pretrained(
+                self.get_model_config("_pretrained_")["path"]
+            )
         return self._clip_processor
 
     def load_model(self, model_config: str | DictConfig) -> CLIPVisionModel:
@@ -47,3 +54,33 @@ class HuggingFaceClipVisionPool(ModelPool):
         ):
             vision_model = CLIPVisionModel.from_pretrained(model_config.path)
         return vision_model
+
+    def get_tta_dataset_config(self, task: str):
+        for task_config in self.config.tta_datasets:
+            if task_config.name == task:
+                return task_config
+        raise ValueError(f"Task {task} not found in config")
+
+    def prepare_dataset_config(self, dataset_config: DictConfig):
+        if not hasattr(dataset_config, "type"):
+            with open_dict(dataset_config):
+                dataset_config["type"] = self.config.dataset_type
+        return dataset_config
+
+    @functools.cache
+    def get_tta_test_dataset(
+        self, tta_dataset: str, clip_processor: Optional[CLIPProcessor] = None
+    ):
+        """
+        Load the test dataset for the task.
+        This method is cached, so the dataset is loaded only once.
+        """
+        if clip_processor is None:
+            # if clip_processor is not provided, try to load the clip_processor from pre-trained model
+            clip_processor = self.clip_processor
+        dataset_config = self.get_tta_dataset_config(tta_dataset)["dataset"]
+        dataset_config = self.prepare_dataset_config(dataset_config)
+        with timeit_context(f"Loading test dataset: {dataset_config.name}"):
+            dataset = load_dataset_from_config(dataset_config)
+        dataset = CLIPDataset(dataset, self.clip_processor)
+        return dataset

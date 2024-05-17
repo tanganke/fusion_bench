@@ -14,6 +14,8 @@ class timeit_context:
     ```
     """
 
+    nest_level = -1
+
     def _log(self, msg):
         log.log(self.loglevel, msg, stacklevel=3)
 
@@ -29,8 +31,9 @@ class timeit_context:
             msg: str, optional message to log
         """
         self.start_time = time.time()
+        timeit_context.nest_level += 1
         if self.msg is not None:
-            self._log("[BEGIN] " + str(self.msg))
+            self._log("  " * timeit_context.nest_level + "[BEGIN] " + str(self.msg))
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """
@@ -38,4 +41,9 @@ class timeit_context:
         """
         end_time = time.time()
         elapsed_time = end_time - self.start_time
-        self._log("[END]   " + str(f"Elapsed time: {elapsed_time:.2f}s"))
+        self._log(
+            "  " * timeit_context.nest_level
+            + "[END]   "
+            + str(f"Elapsed time: {elapsed_time:.2f}s")
+        )
+        timeit_context.nest_level -= 1

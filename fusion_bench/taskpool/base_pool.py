@@ -8,11 +8,13 @@ class TaskPool(ABC):
     def __init__(self, taskpool_config: DictConfig):
         super().__init__()
         self.config = taskpool_config
-        task_names = [task["name"] for task in self.config["tasks"]]
-        assert len(task_names) == len(
-            set(task_names)
-        ), "Duplicate task names found in the task pool"
-        self._all_task_names = task_names
+
+        if self.config.get("tasks", None) is not None:
+            task_names = [task["name"] for task in self.config["tasks"]]
+            assert len(task_names) == len(
+                set(task_names)
+            ), "Duplicate task names found in the task pool"
+            self._all_task_names = task_names
 
     def evaluate(self, model):
         """
@@ -56,6 +58,5 @@ class TaskPool(ABC):
                 return task
         raise ValueError(f"Task {task_name} not found in the task pool")
 
-    @abstractmethod
     def load_task(self, task_name_or_config: Union[str, DictConfig]):
         raise NotImplementedError

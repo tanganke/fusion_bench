@@ -17,6 +17,7 @@ nav:
       - Model Mixing:
         - Depth Upscaling: algorithms/depth_upscaling.md
         - Mixture of Experts: algorithms/mixture_of_experts.md
+          - Weight Ensembling MoE: algorithms/weight_ensembling_moe.md
         - Model Stitching: algorithms/model_stitching.md
         - Model Recombination: algorithms/model_recombination.md
   - Model Pool:

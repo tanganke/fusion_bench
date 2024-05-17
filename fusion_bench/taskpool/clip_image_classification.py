@@ -96,10 +96,6 @@ class CLIPImageClassificationTaskPool(TaskPool):
     def __init__(self, taskpool_config: DictConfig):
         super().__init__(taskpool_config)
 
-        # if the fabric is not set, and we have a GPU, create a fabric instance
-        if self._fabric is None and torch.cuda.is_available():
-            self._fabric = L.Fabric(devices=1)
-
     def prepare_dataset_config(self, dataset_config: DictConfig):
         if not hasattr(dataset_config, "type"):
             with open_dict(dataset_config):
@@ -147,6 +143,11 @@ class CLIPImageClassificationTaskPool(TaskPool):
         """
         Evaluate the model on the image classification task.
         """
+        # if the fabric is not set, and we have a GPU, create a fabric instance
+        if self._fabric is None and torch.cuda.is_available():
+            self._fabric = L.Fabric(devices=1)
+            self._fabric.launch()
+
         self.clip_model.vision_model = model
         report = {}
         for task_name in tqdm(self.task_names, desc="Evaluating tasks"):

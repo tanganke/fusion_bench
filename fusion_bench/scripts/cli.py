@@ -33,6 +33,8 @@ def run_model_fusion(cfg: DictConfig):
 
     if hasattr(cfg, "taskpool") and cfg.taskpool is not None:
         taskpool = load_taskpool_from_config(cfg.taskpool)
+        if hasattr(modelpool, "_fabric") and hasattr(taskpool, "_fabric"):
+            taskpool._fabric = modelpool._fabric
         report = taskpool.evaluate(merged_model)
         if cfg.get("save_report", False):
             # save report (Dict) to a file

@@ -7,6 +7,7 @@ from .task_arithmetic import TaskArithmeticAlgorithm
 from .ties_merging.ties_merging import TiesMergingAlgorithm
 from .adamerging.clip_task_wise_adamerging import CLIPTaskWiseAdaMergingAlgorithm
 from .adamerging.clip_layer_wise_adamerging import CLIPLayerWiseAdaMergingAlgorithm
+from .we_moe.clip_we_moe import CLIPWeightEnsemblingMoEAlgorithm
 
 
 def load_algorithm_from_config(method_config: DictConfig):
@@ -24,5 +25,7 @@ def load_algorithm_from_config(method_config: DictConfig):
         return CLIPTaskWiseAdaMergingAlgorithm(method_config)
     elif method_config.name == "clip_layer_wise_adamerging":
         return CLIPLayerWiseAdaMergingAlgorithm(method_config)
+    elif method_config.name == "clip_weight_ensembling_moe":
+        return CLIPWeightEnsemblingMoEAlgorithm(method_config)
     else:
         raise ValueError(f"Unknown algorithm: {method_config.name}")

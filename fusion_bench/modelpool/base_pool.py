@@ -17,9 +17,10 @@ class ModelPool(ABC):
         self.config = modelpool_config
 
         # check for duplicate model names
-        model_names = [model["name"] for model in self.config["models"]]
-        assert len(model_names) == len(set(model_names))
-        self._model_names = model_names
+        if self.config.get("models", None) is not None:
+            model_names = [model["name"] for model in self.config["models"]]
+            assert len(model_names) == len(set(model_names))
+            self._model_names = model_names
 
     @property
     def model_names(self) -> List[str]:
@@ -63,7 +64,6 @@ class ModelPool(ABC):
                 return model
         raise ValueError(f"Model {model_name} not found in model pool")
 
-    @abstractmethod
     def load_model(self, model_config: Union[str, DictConfig]) -> nn.Module:
         """
         The models are load lazily, so this method should be implemented to load the model from the model pool.

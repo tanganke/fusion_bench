@@ -213,6 +213,7 @@ class TaskWiseMergedModel(nn.Module):
             for name, param in task_vector.named_parameters():
                 state_dict[name] = state_dict[name] + param * weight
         self._merged_state_dict = state_dict
+        return state_dict
 
     def merge_and_unload(self):
         self.merge_weights()

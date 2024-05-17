@@ -1,79 +1,86 @@
 import functools
-import itertools
 import logging
 import os
+from abc import abstractmethod
+from copy import deepcopy
+from typing import List
 
+import lightning as L
 import torch
-from omegaconf import DictConfig, open_dict
-from torch import Tensor
+from omegaconf import DictConfig
+from torch import Tensor, nn
 from torch.utils.data import DataLoader
-from transformers import CLIPModel, CLIPProcessor
+from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
+from transformers.models.clip.modeling_clip import CLIPEncoder, CLIPEncoderLayer
 
-from fusion_bench.dataset import CLIPDataset, load_dataset_from_config
+from fusion_bench.method.base_algorithm import ModelFusionAlgorithm
+from fusion_bench.method.task_arithmetic import task_arithmetic_merge
+from fusion_bench.modelpool import ModelPool
 from fusion_bench.modelpool.huggingface_clip_vision import HuggingFaceClipVisionPool
 from fusion_bench.models.hf_clip import HFCLIPClassifier
+from fusion_bench.models.we_moe import WeightEnsemblingMoE
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.utils import timeit_context
+from fusion_bench.utils.data import InfiniteDataLoader
 
-from .layer_wise_adamerging import LayerWiseAdaMergingAlgorithm
+from .we_moe import WeightEnsemblingMoEAlgorithm
 
 log = logging.getLogger(__name__)
 
 
-class InfiniteDataLoader:
-    def __init__(self, data_loader):
-        self.data_loader = data_loader
-        self.data_iter = iter(data_loader)
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        try:
-            data = next(self.data_iter)
-        except StopIteration:
-            self.data_iter = iter(self.data_loader)  # Reset the data loader
-            data = next(self.data_iter)
-        return data
-
-
-class CLIPLayerWiseAdaMergingAlgorithm(LayerWiseAdaMergingAlgorithm):
+class CLIPWeightEnsemblingMoEAlgorithm(WeightEnsemblingMoEAlgorithm):
     modelpool: HuggingFaceClipVisionPool = None
     _clip_processor: CLIPProcessor = None
     zeroshot_weights = {}
 
-    def __init__(self, algorithm_config: DictConfig):
-        super().__init__(algorithm_config)
+    def load_checkpoint(self, model, checkpoint):
+        self._fabric.load(checkpoint, model)
 
-    def get_task_config(self, task):
-        for task_config in self.modelpool.config.tta_datasets:
-            if task_config.name == task:
-                return task_config
-        raise ValueError(f"Task {task} not found in config")
+    def save_checkpoint(self, model, checkpoint):
+        self._fabric.save(checkpoint, model)
 
-    def prepare_dataset_config(self, dataset_config: DictConfig):
-        if not hasattr(dataset_config, "type"):
-            with open_dict(dataset_config):
-                dataset_config["type"] = self.modelpool.config.dataset_type
-        return dataset_config
+    def construct_moe_model(self) -> WeightEnsemblingMoE:
+        base_model = self.modelpool.load_model("_pretrained_")
+        expert_models = [
+            self.modelpool.load_model(m) for m in self.modelpool.model_names
+        ]
+
+        # merge the models using task arithmetic
+        moe_model = task_arithmetic_merge(
+            # this function modifies the model in place, so we need to pass a deepcopy
+            deepcopy(base_model),
+            expert_models,
+            scaling_factor=self.config.init_lambda,
+        ).requires_grad_(False)
+
+        # up-scale MLP modules
+        base_encoder: CLIPEncoder = base_model.vision_model.encoder
+        moe_encoder: CLIPEncoder = moe_model.vision_model.encoder
+        expert_encoders = [m.vision_model.encoder for m in expert_models]
+
+        num_layers = len(base_encoder.layers)
+        for layer_idx in range(num_layers):
+            base_mlp = base_encoder.layers[layer_idx].mlp
+            expert_mlps = [e.layers[layer_idx].mlp for e in expert_encoders]
+
+            moe_encoder.layers[layer_idx].mlp = WeightEnsemblingMoE(
+                hidden_size=base_encoder.config.hidden_size,
+                base_model=base_mlp,
+                expert_models=expert_mlps,
+                init_lambda=self.config.init_lambda,
+                batch_first=True,  # for open_clip models this is False
+                router_hidden_layers=self.config.router_hidden_layers,
+                batch_reduce=self.config.batch_reduce,
+            )
+
+        return moe_model
 
     @functools.cache
-    def get_test_dataset(self, task: str):
-        """
-        Load the test dataset for the task.
-        This method is cached, so the dataset is loaded only once.
-        """
-        dataset_config = self.get_task_config(task)["dataset"]
-        dataset_config = self.prepare_dataset_config(dataset_config)
-        log.info(f"Loading test dataset: {dataset_config.name}")
-        dataset = load_dataset_from_config(dataset_config)
-        dataset = CLIPDataset(dataset, self._clip_processor)
-        return dataset
-
-    @functools.cache
-    def get_shuffled_test_loader_iter(self, task: str):
+    def get_shuffled_test_loader_iter(self, tta_dataset: str):
         loader = DataLoader(
-            self.get_test_dataset(task),
+            self.modelpool.get_tta_test_dataset(
+                tta_dataset, clip_processor=self._clip_processor
+            ),
             batch_size=self.config.batch_size,
             shuffle=True,
             num_workers=self.config.num_workers,
@@ -111,7 +118,7 @@ class CLIPLayerWiseAdaMergingAlgorithm(LayerWiseAdaMergingAlgorithm):
             else:
                 log.info(f"Construct zero shot classification head for task: {task}")
                 classnames, templates = get_classnames_and_templates(
-                    self.get_task_config(task)["dataset"].name
+                    self.modelpool.get_tta_dataset_config(task)["dataset"].name
                 )
                 clip_classifier.set_classification_task(classnames, templates)
                 zeroshot_weights = clip_classifier.zeroshot_weights

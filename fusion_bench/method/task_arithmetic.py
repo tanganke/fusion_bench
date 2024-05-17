@@ -1,6 +1,6 @@
 import logging
 from copy import deepcopy
-from typing import List, Mapping, Union
+from typing import List, Mapping, Union, TypeVar
 
 import torch
 from torch import Tensor, nn
@@ -14,7 +14,44 @@ from ..utils.type import _StateDict
 from .base_algorithm import ModelFusionAlgorithm
 from ..modelpool import ModelPool
 
+Module = TypeVar("Module")
+
 log = logging.getLogger(__name__)
+
+
+@torch.no_grad()
+def task_arithmetic_merge(
+    pretrained_model: Module,
+    finetuned_models: List[Module],
+    scaling_factor: float,
+) -> Module:
+    """
+    Attention: This function changes the pretrained_model in place.
+    """
+    task_vector = None
+    # Calculate the total task vector
+    for model in finetuned_models:
+        if task_vector is None:
+            task_vector = state_dict_sub(
+                model.state_dict(keep_vars=True),
+                pretrained_model.state_dict(keep_vars=True),
+            )
+        else:
+            task_vector = state_dict_add(
+                task_vector,
+                state_dict_sub(
+                    model.state_dict(keep_vars=True),
+                    pretrained_model.state_dict(keep_vars=True),
+                ),
+            )
+    # scale the task vector
+    task_vector = state_dict_mul(task_vector, scaling_factor)
+    # add the task vector to the pretrained model
+    state_dict = state_dict_add(
+        pretrained_model.state_dict(keep_vars=True), task_vector
+    )
+    pretrained_model.load_state_dict(state_dict)
+    return pretrained_model
 
 
 class TaskArithmeticAlgorithm(ModelFusionAlgorithm):
