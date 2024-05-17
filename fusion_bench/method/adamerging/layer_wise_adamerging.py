@@ -98,7 +98,7 @@ class LayerWiseAdaMergingAlgorithm(ModelFusionAlgorithm):
         )
         return module
 
-    def fuse(self, modelpool: ModelPool):
+    def run(self, modelpool: ModelPool):
         log.info("Fusing models using layer-wise adaptive merging.")
         self.modelpool = modelpool
 

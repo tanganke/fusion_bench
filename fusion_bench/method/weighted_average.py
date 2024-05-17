@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 class WeightedAverageAlgorithm(ModelFusionAlgorithm):
 
     @torch.no_grad()
-    def fuse(self, modelpool: ModelPool):
+    def run(self, modelpool: ModelPool):
         """
         Fuses the models in the model pool using a weighted average approach.
 

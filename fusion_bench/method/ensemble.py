@@ -19,5 +19,5 @@ log = logging.getLogger(__name__)
 class EnsembleAlgorithm(ModelFusionAlgorithm):
 
     @torch.no_grad()
-    def fuse(self, modelpool: ModelPool):
+    def run(self, modelpool: ModelPool):
         pass

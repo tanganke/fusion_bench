@@ -93,7 +93,7 @@ class TaskWiseAdaMergingAlgorithm(ModelFusionAlgorithm):
         )
         return module
 
-    def fuse(self, modelpool: ModelPool):
+    def run(self, modelpool: ModelPool):
         log.info("Fusing models using task-wise adaptive merging.")
         self.modelpool = modelpool
 

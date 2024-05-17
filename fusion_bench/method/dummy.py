@@ -16,7 +16,7 @@ class DummyAlgorithm(ModelFusionAlgorithm):
     def __init__(self, algorithm_config: DictConfig):
         super().__init__(algorithm_config)
 
-    def fuse(self, modelpool: ModelPool):
+    def run(self, modelpool: ModelPool):
         """
         This method returns the pretrained model from the model pool.
         If the pretrained model is not available, it returns the first model from the model pool.

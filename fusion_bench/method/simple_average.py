@@ -47,7 +47,7 @@ def simple_average(modules: List[Union[nn.Module, _StateDict]]):
 class SimpleAverageAlgorithm(ModelFusionAlgorithm):
 
     @torch.no_grad()
-    def fuse(self, modelpool: ModelPool):
+    def run(self, modelpool: ModelPool):
         """
         Fuse the models in the given model pool using simple averaging.
 

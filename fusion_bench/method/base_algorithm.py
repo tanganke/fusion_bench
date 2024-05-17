@@ -10,7 +10,7 @@ class ModelFusionAlgorithm(ABC):
         self.config = algorithm_config
 
     @abstractmethod
-    def fuse(self, modelpool):
+    def run(self, modelpool):
         """
         Fuse the models in the given model pool.
 

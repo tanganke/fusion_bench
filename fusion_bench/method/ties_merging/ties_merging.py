@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 class TiesMergingAlgorithm(ModelFusionAlgorithm):
 
     @torch.no_grad()
-    def fuse(self, modelpool: ModelPool):
+    def run(self, modelpool: ModelPool):
         log.info("Fusing models using ties merging.")
         remove_keys = self.config.get("remove_keys", [])
         merge_func = self.config.get("merge_func", "sum")

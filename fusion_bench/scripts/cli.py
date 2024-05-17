@@ -29,7 +29,7 @@ def run_model_fusion(cfg: DictConfig):
     modelpool = load_modelpool_from_config(cfg.modelpool)
 
     algorithm = load_algorithm_from_config(cfg.method)
-    merged_model = algorithm.fuse(modelpool)
+    merged_model = algorithm.run(modelpool)
 
     if hasattr(cfg, "taskpool") and cfg.taskpool is not None:
         taskpool = load_taskpool_from_config(cfg.taskpool)

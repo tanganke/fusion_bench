@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 class TaskArithmeticAlgorithm(ModelFusionAlgorithm):
 
     @torch.no_grad()
-    def fuse(self, modelpool: ModelPool):
+    def run(self, modelpool: ModelPool):
         log.info("Fusing models using task arithmetic.")
         task_vector = None
         pretrained_model = modelpool.load_model("_pretrained_")
