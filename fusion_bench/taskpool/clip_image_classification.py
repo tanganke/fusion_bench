@@ -148,6 +148,7 @@ class CLIPImageClassificationTaskPool(TaskPool):
             self._fabric = L.Fabric(devices=1)
             self._fabric.launch()
 
+        # CLIPVisionModel works the same with CLIPVisonTransformer, so we can use it directly
         self.clip_model.vision_model = model
         report = {}
         for task_name in tqdm(self.task_names, desc="Evaluating tasks"):

@@ -22,6 +22,9 @@ class ModelPool(ABC):
             assert len(model_names) == len(set(model_names))
             self._model_names = model_names
 
+    def __len__(self):
+        return len(self.model_names)
+
     @property
     def model_names(self) -> List[str]:
         """

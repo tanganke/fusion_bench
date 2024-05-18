@@ -8,11 +8,20 @@ from .ties_merging.ties_merging import TiesMergingAlgorithm
 from .adamerging.clip_task_wise_adamerging import CLIPTaskWiseAdaMergingAlgorithm
 from .adamerging.clip_layer_wise_adamerging import CLIPLayerWiseAdaMergingAlgorithm
 from .we_moe.clip_we_moe import CLIPWeightEnsemblingMoEAlgorithm
+from .ensemble import EnsembleAlgorithm, MaxPredictorAlgorithm
 
 
 def load_algorithm_from_config(method_config: DictConfig):
     if method_config.name == "dummy":
         return DummyAlgorithm(method_config)
+    # model ensemble methods
+    elif method_config.name == "simple_ensemble":
+        return EnsembleAlgorithm(method_config)
+    elif method_config.name == "weighted_ensemble":
+        return WeightedAverageAlgorithm(method_config)
+    elif method_config.name == "max_predictor":
+        return MaxPredictorAlgorithm(method_config)
+    # model merging methods
     elif method_config.name == "simple_average":
         return SimpleAverageAlgorithm(method_config)
     elif method_config.name == "weighted_average":
@@ -25,6 +34,7 @@ def load_algorithm_from_config(method_config: DictConfig):
         return CLIPTaskWiseAdaMergingAlgorithm(method_config)
     elif method_config.name == "clip_layer_wise_adamerging":
         return CLIPLayerWiseAdaMergingAlgorithm(method_config)
+    # model mixing methods
     elif method_config.name == "clip_weight_ensembling_moe":
         return CLIPWeightEnsemblingMoEAlgorithm(method_config)
     else:

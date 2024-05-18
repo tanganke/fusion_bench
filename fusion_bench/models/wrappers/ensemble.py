@@ -12,9 +12,10 @@ def aggregate_tensors(outputs, aggregate_fn) -> Tensor:
 
     # If the output is a dict, take the mean of each value
     elif isinstance(outputs[0], Dict):
-        return {
-            key: aggregate_fn([output[key] for output in outputs]) for key in outputs[0]
-        }
+        result = type(outputs[0])()
+        for key in outputs[0]:
+            result[key] = aggregate_fn([output[key] for output in outputs])
+        return result
 
     # If the output is a tuple or list, take the mean of each element
     elif isinstance(outputs[0], (tuple, list)):
@@ -25,12 +26,13 @@ def aggregate_tensors(outputs, aggregate_fn) -> Tensor:
 
     # If the output is none of the above, return as is
     else:
-        return outputs
+        raise ValueError("Unsupported type for outputs")
 
 
 class EnsembleModule(nn.Module):
-    def __init__(self, models):
+    def __init__(self, models: List[nn.Module]):
         super().__init__()
+        # TODO: distribute models to devices
         self.model_list = nn.ModuleList(models)
 
     def _aggregate_tensors(self, outputs: List[Tensor]) -> Tensor:
@@ -43,7 +45,9 @@ class EnsembleModule(nn.Module):
 
 class WeightedEnsembleModule(nn.Module):
     def __init__(
-        self, models: List[nn.Module], weights: List[float] | Tensor | np.ndarray
+        self,
+        models: List[nn.Module],
+        weights: List[float] | Tensor | np.ndarray,
     ):
         super().__init__()
         self.model_list = nn.ModuleList(models)
@@ -68,3 +72,8 @@ class WeightedEnsembleModule(nn.Module):
     def forward(self, *args, **kwargs):
         outputs = [model(*args, **kwargs) for model in self.model_list]
         return aggregate_tensors(outputs, self._aggregate_tensors)
+
+
+class MaxPredictor(EnsembleModule):
+    def _aggregate_tensors(self, outputs: List[Tensor]) -> Tensor:
+        return torch.stack(outputs).max(dim=0).values
