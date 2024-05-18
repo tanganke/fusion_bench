@@ -75,7 +75,8 @@ class HFCLIPClassifier(nn.Module):
             raise ValueError("Must set classification task before forward pass")
         text_embeds = self.zeroshot_weights
 
-        image_embeds = self.vision_model(images)[1]
+        image_embeds = self.vision_model(images)
+        image_embeds = image_embeds[1]
         image_embeds = self.clip_model.visual_projection(image_embeds)
 
         # normalize embeddings

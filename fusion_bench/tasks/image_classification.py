@@ -35,7 +35,7 @@ class ImageClassificationTask(BaseTask):
         """
         pass
 
-    @torch.inference_mode()
+    @torch.no_grad()
     def evaluate(self, classifier: nn.Module, device=None):
         self.accuracy: MulticlassAccuracy = Accuracy(
             task="multiclass", num_classes=self.num_classes
