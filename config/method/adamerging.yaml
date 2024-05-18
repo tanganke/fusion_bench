@@ -19,7 +19,7 @@ strict: false
 
 devices: 1
 batch_size: 16
-num_workers: 4
+num_workers: 8
 max_steps: 1000
 fast_dev_run: ${fast_dev_run}
 

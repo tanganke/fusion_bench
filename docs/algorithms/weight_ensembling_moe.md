@@ -1,4 +1,4 @@
-# Weight-Ensenbling Mixture of Experts
+# Weight-Ensembling Mixture of Experts
 
 <figure markdown="span">
     ![alt text](images/wemoe.png){ width="90%" }
