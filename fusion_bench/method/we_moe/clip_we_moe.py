@@ -34,10 +34,11 @@ class CLIPWeightEnsemblingMoEAlgorithm(WeightEnsemblingMoEAlgorithm):
     zeroshot_weights = {}
 
     def load_checkpoint(self, model, checkpoint):
-        self._fabric.load(checkpoint, model)
+        state = {"model": model}
+        self._fabric.load(checkpoint, state)
 
     def save_checkpoint(self, model, checkpoint):
-        self._fabric.save(checkpoint, model)
+        self._fabric.save(checkpoint, {"model": model})
 
     def construct_moe_model(self) -> WeightEnsemblingMoE:
         base_model = self.modelpool.load_model("_pretrained_")
