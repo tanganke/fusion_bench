@@ -1,6 +1,7 @@
 import functools
 import itertools
 import logging
+import os
 
 import torch
 from omegaconf import DictConfig, open_dict
@@ -15,7 +16,6 @@ from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.utils import timeit_context
 
 from .task_wise_adamerging import TaskWiseAdaMergingAlgorithm
-import os
 
 log = logging.getLogger(__name__)
 

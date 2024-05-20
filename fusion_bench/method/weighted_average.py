@@ -5,19 +5,15 @@ from typing import List, Mapping, Union
 import torch
 from torch import Tensor, nn
 
-from ..utils.state_dict_arithmetic import (
-    state_dict_add,
-    state_dict_mul,
-)
+from ..modelpool import ModelPool, to_modelpool
+from ..utils.state_dict_arithmetic import state_dict_add, state_dict_mul
 from ..utils.type import _StateDict
 from .base_algorithm import ModelFusionAlgorithm
-from ..modelpool import ModelPool
 
 log = logging.getLogger(__name__)
 
 
 class WeightedAverageAlgorithm(ModelFusionAlgorithm):
-
     @torch.no_grad()
     def run(self, modelpool: ModelPool):
         """
@@ -38,6 +34,7 @@ class WeightedAverageAlgorithm(ModelFusionAlgorithm):
         forward_model : torch.nn.Module
             The resulting model after fusion.
         """
+        modelpool = to_modelpool(modelpool)
         log.info("Fusing models using weighted average.")
         weights = self.config.weights
         if len(weights) != len(modelpool.model_names):

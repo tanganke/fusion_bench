@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from omegaconf import DictConfig
 from torch import nn
@@ -118,3 +118,37 @@ class ListModelPool(ModelPool):
         if copy:
             model = deepcopy(model)
         return model
+
+
+class DictModelPool(ModelPool):
+    """
+    ModelPool from a dictionary of models.
+    """
+
+    def __init__(self, model_dict: Dict[str, nn.Module]):
+        modelpool_config = {}
+        modelpool_config["models"] = []
+        for model_name, model in model_dict.items():
+            modelpool_config["models"].append({"name": model_name})
+        self.model_dict = model_dict
+        super().__init__(DictConfig(modelpool_config))
+
+    def load_model(self, model_config: str | DictConfig, copy=True) -> nn.Module:
+        if isinstance(model_config, str):
+            model_config = self.get_model_config(model_config)
+        model_name = model_config["name"]
+        model = self.model_dict[model_name]
+        if copy:
+            model = deepcopy(model)
+        return model
+
+
+def to_modelpool(obj: List[nn.Module], **kwargs):
+    if isinstance(obj, ModelPool):
+        return obj
+    elif isinstance(obj, (list, tuple)) and all(isinstance(m, nn.Module) for m in obj):
+        return ListModelPool(models=obj, **kwargs)
+    elif isinstance(obj, Dict) and all(isinstance(m, nn.Module) for m in obj.values()):
+        return DictModelPool(model_dict=obj, **kwargs)
+    else:
+        raise ValueError(f"Invalid modelpool object: {obj}")

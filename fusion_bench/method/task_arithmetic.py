@@ -1,18 +1,14 @@
 import logging
 from copy import deepcopy
-from typing import List, Mapping, Union, TypeVar
+from typing import List, Mapping, TypeVar, Union
 
 import torch
 from torch import Tensor, nn
 
-from ..utils.state_dict_arithmetic import (
-    state_dict_add,
-    state_dict_mul,
-    state_dict_sub,
-)
+from ..modelpool import ModelPool, to_modelpool
+from ..utils.state_dict_arithmetic import state_dict_add, state_dict_mul, state_dict_sub
 from ..utils.type import _StateDict
 from .base_algorithm import ModelFusionAlgorithm
-from ..modelpool import ModelPool
 
 Module = TypeVar("Module")
 
@@ -55,9 +51,9 @@ def task_arithmetic_merge(
 
 
 class TaskArithmeticAlgorithm(ModelFusionAlgorithm):
-
     @torch.no_grad()
     def run(self, modelpool: ModelPool):
+        modelpool = to_modelpool(modelpool)
         log.info("Fusing models using task arithmetic.")
         task_vector = None
         pretrained_model = modelpool.load_model("_pretrained_")

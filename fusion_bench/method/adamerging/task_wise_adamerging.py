@@ -8,6 +8,8 @@ import numpy as np
 import torch
 from omegaconf import DictConfig
 from torch import Tensor, nn
+from torch.utils.data import DataLoader
+from tqdm.autonotebook import tqdm
 
 from fusion_bench.models.wrappers.task_wise_fusion import (
     TaskWiseMergedModel,
@@ -18,8 +20,6 @@ from fusion_bench.utils.state_dict_arithmetic import state_dict_sub
 from ...modelpool import ModelPool
 from ...utils.type import _StateDict
 from ..base_algorithm import ModelFusionAlgorithm
-from tqdm.autonotebook import tqdm
-from torch.utils.data import DataLoader
 
 log = logging.getLogger(__name__)
 

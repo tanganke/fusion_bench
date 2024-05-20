@@ -1,5 +1,6 @@
 import logging
 import os
+from copy import deepcopy
 from functools import cached_property
 from typing import Callable, List, cast
 
@@ -7,15 +8,14 @@ import lightning as L
 import torch
 from omegaconf import DictConfig, open_dict
 from torch.utils.data import DataLoader
+from tqdm.autonotebook import tqdm
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 
 from ..dataset import CLIPDataset, load_dataset_from_config
 from ..models.hf_clip import HFCLIPClassifier
-from ..tasks.clip_classification import get_classnames_and_templates
 from ..tasks.classification import ClassificationTask
+from ..tasks.clip_classification import get_classnames_and_templates
 from .base_pool import TaskPool
-from copy import deepcopy
-from tqdm.autonotebook import tqdm
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 

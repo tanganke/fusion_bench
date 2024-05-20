@@ -1,6 +1,6 @@
 from omegaconf import DictConfig
 
-from .base_pool import ModelPool, ListModelPool
+from .base_pool import ListModelPool, ModelPool, to_modelpool
 from .huggingface_clip_vision import HuggingFaceClipVisionPool
 
 

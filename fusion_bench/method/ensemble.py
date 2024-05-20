@@ -2,6 +2,7 @@ import logging
 from copy import deepcopy
 from typing import List, Mapping, Union
 
+import numpy as np
 import torch
 from torch import Tensor, nn
 
@@ -15,13 +16,11 @@ from ..modelpool import ModelPool
 from ..utils.state_dict_arithmetic import state_dict_add, state_dict_mul
 from ..utils.type import _StateDict
 from .base_algorithm import ModelFusionAlgorithm
-import numpy as np
 
 log = logging.getLogger(__name__)
 
 
 class EnsembleAlgorithm(ModelFusionAlgorithm):
-
     @torch.no_grad()
     def run(self, modelpool: ModelPool):
         log.info(f"Running ensemble algorithm with {len(modelpool)} models")
@@ -32,7 +31,6 @@ class EnsembleAlgorithm(ModelFusionAlgorithm):
 
 
 class WeightedEnsembleAlgorithm(ModelFusionAlgorithm):
-
     @torch.no_grad()
     def run(self, modelpool: ModelPool):
         log.info(f"Running weighted ensemble algorithm with {len(modelpool)} models")
@@ -47,7 +45,6 @@ class WeightedEnsembleAlgorithm(ModelFusionAlgorithm):
 
 
 class MaxPredictorAlgorithm(ModelFusionAlgorithm):
-
     @torch.no_grad()
     def run(self, modelpool: ModelPool):
         log.info(f"Running max predictor algorithm with {len(modelpool)} models")

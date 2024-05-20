@@ -1,14 +1,14 @@
 from omegaconf import DictConfig
 
+from .adamerging.clip_layer_wise_adamerging import CLIPLayerWiseAdaMergingAlgorithm
+from .adamerging.clip_task_wise_adamerging import CLIPTaskWiseAdaMergingAlgorithm
 from .dummy import DummyAlgorithm
+from .ensemble import EnsembleAlgorithm, MaxPredictorAlgorithm
 from .simple_average import SimpleAverageAlgorithm
-from .weighted_average import WeightedAverageAlgorithm
 from .task_arithmetic import TaskArithmeticAlgorithm
 from .ties_merging.ties_merging import TiesMergingAlgorithm
-from .adamerging.clip_task_wise_adamerging import CLIPTaskWiseAdaMergingAlgorithm
-from .adamerging.clip_layer_wise_adamerging import CLIPLayerWiseAdaMergingAlgorithm
 from .we_moe.clip_we_moe import CLIPWeightEnsemblingMoEAlgorithm
-from .ensemble import EnsembleAlgorithm, MaxPredictorAlgorithm
+from .weighted_average import WeightedAverageAlgorithm
 
 
 def load_algorithm_from_config(method_config: DictConfig):

@@ -5,13 +5,13 @@ The script is responsible for parsing the command-line arguments, loading the co
 
 import importlib
 import importlib.resources
+import json
 import os
 
 import hydra
 from omegaconf import DictConfig, OmegaConf
 from rich import print as rich_print
 from rich.syntax import Syntax
-import json
 
 from ..method import load_algorithm_from_config
 from ..modelpool import load_modelpool_from_config

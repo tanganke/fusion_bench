@@ -1,8 +1,8 @@
 from datasets import load_dataset
-from omegaconf import DictConfig, open_dict
-from .clip_dataset import CLIPDataset
-
 from hydra.utils import instantiate
+from omegaconf import DictConfig, open_dict
+
+from .clip_dataset import CLIPDataset
 
 
 def load_dataset_from_config(dataset_config: DictConfig):

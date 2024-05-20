@@ -1,8 +1,8 @@
+from typing import Dict, List, cast
+
+import numpy as np
 import torch
 from torch import Tensor, nn
-from typing import Dict, List
-import numpy as np
-from typing import cast
 
 
 def aggregate_tensors(outputs, aggregate_fn) -> Tensor:

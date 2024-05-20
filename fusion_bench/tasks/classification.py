@@ -1,5 +1,6 @@
 import functools
 import itertools
+import logging
 from abc import abstractmethod
 
 import torch
@@ -10,7 +11,6 @@ from torchmetrics.classification.accuracy import MulticlassAccuracy
 from tqdm.autonotebook import tqdm
 
 from .base_task import BaseTask
-import logging
 
 log = logging.getLogger(__name__)
 

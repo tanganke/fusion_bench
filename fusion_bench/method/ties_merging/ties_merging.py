@@ -8,13 +8,12 @@ from torch import Tensor, nn
 from ...modelpool import ModelPool
 from ...utils.type import _StateDict
 from ..base_algorithm import ModelFusionAlgorithm
-from .ties_merging_utils import state_dict_to_vector, vector_to_state_dict, ties_merging
+from .ties_merging_utils import state_dict_to_vector, ties_merging, vector_to_state_dict
 
 log = logging.getLogger(__name__)
 
 
 class TiesMergingAlgorithm(ModelFusionAlgorithm):
-
     @torch.no_grad()
     def run(self, modelpool: ModelPool):
         log.info("Fusing models using ties merging.")
