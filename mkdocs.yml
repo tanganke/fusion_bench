@@ -23,6 +23,8 @@ nav:
   - Model Pool:
       - Introduction: modelpool/index.md
       - CLIP-ViT Models: modelpool/clip_vit.md
+      - GPT2 Models for Text Classification: modelpool/gpt2_classification.md
+      - Flan-T5 Models for Text Generation: modelpool/flan-t5_generation.md
   - Task Pool:
       - Introduction: taskpool/index.md
       - Dummy: taskpool/dummy.md

@@ -12,7 +12,7 @@ from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 from ..dataset import CLIPDataset, load_dataset_from_config
 from ..models.hf_clip import HFCLIPClassifier
 from ..tasks.clip_classification import get_classnames_and_templates
-from ..tasks.image_classification import ImageClassificationTask
+from ..tasks.classification import ClassificationTask
 from .base_pool import TaskPool
 from copy import deepcopy
 from tqdm.autonotebook import tqdm
@@ -22,7 +22,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 log = logging.getLogger(__name__)
 
 
-class CLIPImageClassificationTask(ImageClassificationTask):
+class CLIPImageClassificationTask(ClassificationTask):
     """
     This class is used to define the image classification task for CLIP models.
     """

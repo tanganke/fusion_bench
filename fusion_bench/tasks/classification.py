@@ -15,7 +15,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class ImageClassificationTask(BaseTask):
+class ClassificationTask(BaseTask):
     def __init__(self, task_config):
         super().__init__(task_config)
 
