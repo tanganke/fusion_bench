@@ -8,7 +8,7 @@ from torch import Tensor, nn
 from ..utils.state_dict_arithmetic import state_dict_add, state_dict_avg, state_dict_mul
 from ..utils.type import _StateDict
 from .base_algorithm import ModelFusionAlgorithm
-from ..modelpool import ModelPool
+from ..modelpool import ModelPool, ListModelPool
 
 log = logging.getLogger(__name__)
 
@@ -60,6 +60,10 @@ class SimpleAverageAlgorithm(ModelFusionAlgorithm):
         Returns:
             The fused model obtained by simple averaging.
         """
+        if isinstance(modelpool, (list, tuple)) and all(
+            isinstance(m, nn.Module) for m in modelpool
+        ):
+            modelpool = ListModelPool(modelpool)
         log.info(
             f"Fusing models using simple average on {len(modelpool.model_names)} models."
             f"models: {modelpool.model_names}"

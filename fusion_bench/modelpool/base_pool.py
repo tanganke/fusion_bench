@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import List, Union
+from copy import deepcopy
+from typing import List, Optional, Union
 
 from omegaconf import DictConfig
 from torch import nn
@@ -12,12 +13,12 @@ class ModelPool(ABC):
 
     models = {}
 
-    def __init__(self, modelpool_config: DictConfig):
+    def __init__(self, modelpool_config: Optional[DictConfig] = None):
         super().__init__()
         self.config = modelpool_config
 
         # check for duplicate model names
-        if self.config.get("models", None) is not None:
+        if self.config is not None and self.config.get("models", None) is not None:
             model_names = [model["name"] for model in self.config["models"]]
             assert len(model_names) == len(set(model_names))
             self._model_names = model_names
@@ -80,3 +81,40 @@ class ModelPool(ABC):
             Any: The loaded model.
         """
         raise NotImplementedError
+
+
+class ListModelPool(ModelPool):
+    """
+    ModelPool from a list of models.
+    """
+
+    def __init__(
+        self,
+        models: List[nn.Module],
+        has_pretraned: bool = False,
+    ):
+        modelpool_config = {}
+        modelpool_config["models"] = []
+        model_dict = {}
+        if has_pretraned:
+            model_dict["_pretrained_"] = models[0]
+            modelpool_config["models"].append({"name": "_pretrained_"})
+            for i, model in enumerate(models[1:]):
+                model_dict[f"model_{i}"] = model
+                modelpool_config["models"].append({"name": f"model_{i}"})
+        else:
+            for i, model in enumerate(models):
+                model_dict[f"model_{i}"] = model
+                modelpool_config["models"].append({"name": f"model_{i}"})
+
+        self.model_dict = model_dict
+        super().__init__(DictConfig(modelpool_config))
+
+    def load_model(self, model_config: str | DictConfig, copy=True) -> nn.Module:
+        if isinstance(model_config, str):
+            model_config = self.get_model_config(model_config)
+        model_name = model_config["name"]
+        model = self.model_dict[model_name]
+        if copy:
+            model = deepcopy(model)
+        return model
