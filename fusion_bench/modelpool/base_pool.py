@@ -82,6 +82,13 @@ class ModelPool(ABC):
         """
         raise NotImplementedError
 
+    def setup_taskpool(self, taskpool):
+        """
+        Setup the taskpool before evaluation.
+        Such as setting the fabric, processor, tokenizer, etc.
+        """
+        pass
+
 
 class ListModelPool(ModelPool):
     """

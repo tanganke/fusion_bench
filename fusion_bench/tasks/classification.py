@@ -37,10 +37,10 @@ class ClassificationTask(BaseTask):
 
     @torch.no_grad()
     def evaluate(self, classifier: nn.Module, device=None):
-        self.accuracy: MulticlassAccuracy = Accuracy(
+        accuracy: MulticlassAccuracy = Accuracy(
             task="multiclass", num_classes=self.num_classes
         )
-        self.loss_metric = MeanMetric()
+        loss_metric = MeanMetric()
 
         # if fast_dev_run is set, we only evaluate on a batch of the data
         if self.config.get("fast_dev_run", False):
@@ -60,11 +60,11 @@ class ClassificationTask(BaseTask):
             logits: Tensor = classifier(inputs)
 
             loss = F.cross_entropy(logits, targets)
-            self.loss_metric.update(loss.detach().cpu())
-            acc = self.accuracy(logits.detach().cpu(), targets.detach().cpu())
+            loss_metric.update(loss.detach().cpu())
+            acc = accuracy(logits.detach().cpu(), targets.detach().cpu())
             pbar.set_postfix({"accuracy": acc.item(), "loss": loss.item()})
 
-        acc = self.accuracy.compute().item()
-        loss = self.loss_metric.compute().item()
+        acc = accuracy.compute().item()
+        loss = loss_metric.compute().item()
         results = {"accuracy": acc, "loss": loss}
         return results

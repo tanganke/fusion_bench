@@ -35,14 +35,14 @@ def cache_dataset(
             dataset = load_from_disk(str(cache_path))
         else:
             dataset = func(*args, **kwargs)
-            dataset.save_to_disk(cache_path)
+            dataset.save_to_disk(str(cache_path.absolute()))
         return dataset
 
     return wrapper
 
 
 # Tokenize and convert examples to features
-def mrpc_tokenize_function(tokenizer, examples):
+def mrpc_tokenize_function(examples, tokenizer):
     inputs = tokenizer(
         examples["sentence1"],
         examples["sentence2"],
@@ -53,7 +53,7 @@ def mrpc_tokenize_function(tokenizer, examples):
     return inputs
 
 
-def mnli_tokenize_function(tokenizer, examples):
+def mnli_tokenize_function(examples, tokenizer):
     inputs = tokenizer(
         examples["premise"],
         examples["hypothesis"],
@@ -64,7 +64,7 @@ def mnli_tokenize_function(tokenizer, examples):
     return inputs
 
 
-def cola_tokenize_function(tokenizer, examples):
+def cola_tokenize_function(examples, tokenizer):
     inputs = tokenizer(
         examples["sentence"],
         padding="max_length",
@@ -74,7 +74,7 @@ def cola_tokenize_function(tokenizer, examples):
     return inputs
 
 
-def qnli_tokenize_function(tokenizer, examples):
+def qnli_tokenize_function(examples, tokenizer):
     inputs = tokenizer(
         examples["question"],
         examples["sentence"],
@@ -85,7 +85,7 @@ def qnli_tokenize_function(tokenizer, examples):
     return inputs
 
 
-def qqp_tokenize_function(tokenizer, examples):
+def qqp_tokenize_function(examples, tokenizer):
     inputs = tokenizer(
         examples["question1"],
         examples["question2"],

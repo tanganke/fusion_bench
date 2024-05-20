@@ -1,0 +1,38 @@
+type: GPT2TextClassificationTaskPool
+name: gpt2_classification_on_glue
+
+dataset_type: GPT2ClassificationGLUETask
+tasks:
+  - name: cola
+    dataset:
+      name: cola
+      split: validation
+  - name: mnli
+    dataset:
+      name: mnli
+      split: validation_matched
+  - name: mrpc
+    dataset:
+      name: mrpc
+      split: validation
+  - name: qnli
+    dataset:
+      name: qnli
+      split: validation
+  - name: qqp
+    dataset:
+      name: qqp
+      split: validation
+  - name: rte
+    dataset:
+      name: rte
+      split: validation
+  - name: sst2
+    dataset:
+      name: sst2
+      split: validation
+
+tokenizer: gpt2
+batch_size: 8
+num_workers: 0
+fast_dev_run: ${fast_dev_run}
