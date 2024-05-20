@@ -7,7 +7,17 @@ They combine the outputs of multiple models to create a stronger model.
 ## Examples
 
 ```python
-from fusion_bench.method.
+from fusion_bench.method import EnsembleAlgorithm
+
+# Instantiate the EnsembleAlgorithm
+algorithm = EnsembleAlgorithm()
+
+# Assume we have a list of PyTorch models (nn.Module instances) that we want to ensemble.
+models = [...]
+
+# Run the algorithm on the models.
+merged_model = algorithm.run(models)
+```
 
 ## Code Integration
 
