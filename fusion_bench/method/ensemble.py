@@ -12,9 +12,7 @@ from fusion_bench.models.wrappers.ensemble import (
     WeightedEnsembleModule,
 )
 
-from ..modelpool import ModelPool
-from ..utils.state_dict_arithmetic import state_dict_add, state_dict_mul
-from ..utils.type import _StateDict
+from ..modelpool import ModelPool, to_modelpool
 from .base_algorithm import ModelFusionAlgorithm
 
 log = logging.getLogger(__name__)
@@ -23,6 +21,7 @@ log = logging.getLogger(__name__)
 class EnsembleAlgorithm(ModelFusionAlgorithm):
     @torch.no_grad()
     def run(self, modelpool: ModelPool):
+        modelpool = to_modelpool(modelpool)
         log.info(f"Running ensemble algorithm with {len(modelpool)} models")
 
         models = [modelpool.load_model(m) for m in modelpool.model_names]
@@ -33,6 +32,7 @@ class EnsembleAlgorithm(ModelFusionAlgorithm):
 class WeightedEnsembleAlgorithm(ModelFusionAlgorithm):
     @torch.no_grad()
     def run(self, modelpool: ModelPool):
+        modelpool = to_modelpool(modelpool)
         log.info(f"Running weighted ensemble algorithm with {len(modelpool)} models")
 
         models = [modelpool.load_model(m) for m in modelpool.model_names]
@@ -47,6 +47,7 @@ class WeightedEnsembleAlgorithm(ModelFusionAlgorithm):
 class MaxPredictorAlgorithm(ModelFusionAlgorithm):
     @torch.no_grad()
     def run(self, modelpool: ModelPool):
+        modelpool = to_modelpool(modelpool)
         log.info(f"Running max predictor algorithm with {len(modelpool)} models")
 
         models = [modelpool.load_model(m) for m in modelpool.model_names]

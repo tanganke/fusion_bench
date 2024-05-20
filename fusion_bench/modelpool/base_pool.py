@@ -11,7 +11,7 @@ class ModelPool(ABC):
     This is the base class for all modelpools.
     """
 
-    models = {}
+    _model_names = None
 
     def __init__(self, modelpool_config: Optional[DictConfig] = None):
         super().__init__()

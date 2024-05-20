@@ -1,10 +1,8 @@
 import functools
 import logging
-from functools import cached_property
 from typing import Optional
 
 from omegaconf import DictConfig, open_dict
-from torch.utils.data import DataLoader
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 
 from fusion_bench.dataset import CLIPDataset, load_dataset_from_config
@@ -31,9 +29,17 @@ class HuggingFaceClipVisionPool(ModelPool):
     @property
     def clip_processor(self):
         if self._clip_processor is None:
-            self._clip_processor = CLIPProcessor.from_pretrained(
-                self.get_model_config("_pretrained_")["path"]
-            )
+            if "_pretrained_" in self._model_names:
+                self._clip_processor = CLIPProcessor.from_pretrained(
+                    self.get_model_config("_pretrained_")["path"]
+                )
+            else:
+                log.warning(
+                    "No pretrained model found in the model pool. Returning the first model."
+                )
+                self._clip_processor = CLIPProcessor.from_pretrained(
+                    self.get_model_config(self.model_names[0])["path"]
+                )
         return self._clip_processor
 
     def load_model(self, model_config: str | DictConfig) -> CLIPVisionModel:

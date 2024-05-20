@@ -6,7 +6,7 @@ import logging
 
 from omegaconf import DictConfig
 
-from ..modelpool import ModelPool
+from ..modelpool import ModelPool, to_modelpool
 from .base_algorithm import ModelFusionAlgorithm
 
 log = logging.getLogger(__name__)
@@ -24,6 +24,7 @@ class DummyAlgorithm(ModelFusionAlgorithm):
         Raises:
             AssertionError: If the model is not found in the model pool.
         """
+        modelpool = to_modelpool(modelpool)
         if "_pretrained_" in modelpool._model_names:
             model = modelpool.load_model("_pretrained_")
         else:

@@ -1,0 +1,18 @@
+type: HF_GPT2ForSequenceClassification
+models:
+  - name: _pretrained_
+    path: gpt2
+  - name: cola
+    path: tanganke/gpt2_cola
+  - name: mnli
+    path: tanganke/gpt2_mnli
+  - name: mrpc
+    path: tanganke/gpt2_mrpc
+  - name: qnli
+    path: tanganke/gpt2_qnli
+  - name: qqp
+    path: tanganke/gpt2_qqp
+  - name: rte
+    path: tanganke/gpt2_rte
+  - name: sst2
+    path: tanganke/gpt2_sst2
