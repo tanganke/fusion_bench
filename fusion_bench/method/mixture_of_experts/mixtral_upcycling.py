@@ -3,6 +3,7 @@ from typing import Optional
 
 import torch
 from torch import nn
+from tqdm.autonotebook import tqdm
 from transformers import (
     LlamaConfig,
     LlamaForCausalLM,
@@ -14,12 +15,14 @@ from transformers import (
     MixtralForCausalLM,
     MixtralModel,
 )
+from transformers.modeling_utils import no_init_weights
 from transformers.models.llama.modeling_llama import LlamaDecoderLayer, LlamaMLP
 from transformers.models.mistral.modeling_mistral import MistralDecoderLayer, MistralMLP
 from transformers.models.mixtral.modeling_mixtral import (
     MixtralBlockSparseTop2MLP,
     MixtralDecoderLayer,
 )
+from transformers.utils import ContextManagers
 
 from fusion_bench.method import ModelFusionAlgorithm
 from fusion_bench.modelpool import ModelPool
@@ -103,7 +106,11 @@ def upscale_to_mixtral_model(
     # copy the weights from the pretrained model
     output_model.embed_tokens.load_state_dict(input_model.embed_tokens.state_dict())
     output_model.norm.load_state_dict(input_model.norm.state_dict())
-    for input_layer, output_layer in zip(input_model.layers, output_model.layers):
+    for input_layer, output_layer in tqdm(
+        zip(input_model.layers, output_model.layers),
+        desc="Upscaling layers",
+        total=len(input_model.layers),
+    ):
         _upscale_decoder_layer(input_layer, output_layer)
 
 
@@ -122,7 +129,7 @@ def upscale_to_mixtral_for_causal_lm(
     Returns:
         None
     """
-    output_model.lm_head.load_state_dict(input_model.state_dict())
+    output_model.lm_head.load_state_dict(input_model.lm_head.state_dict())
     upscale_to_mixtral_model(input_model.model, output_model.model)
 
 
@@ -133,16 +140,8 @@ class MixtralUpscalingAlgorithm(ModelFusionAlgorithm):
     """
 
     @torch.no_grad()
-    def run(self, modelpool: ModelPool | LlamaModel | MistralModel) -> MixtralModel:
-        """
-        Runs the upscaling process.
+    def _run(self, modelpool: ModelPool | LlamaModel | MistralModel) -> MixtralModel:
 
-        Args:
-            modelpool (ModelPool | LlamaModel | MistralModel): The model to be upscaled.
-
-        Returns:
-            MixtralModel: The upscaled model.
-        """
         if isinstance(modelpool, ModelPool):
             assert modelpool.has_pretrained, "ModelPool must have pretrained model."
             pretrained_model = modelpool.load_model("_pretrained_")
@@ -157,9 +156,28 @@ class MixtralUpscalingAlgorithm(ModelFusionAlgorithm):
             self.config.experts_per_token,
         )
 
-        mixtral_model = MixtralModel(mixtral_config)
+        with ContextManagers([no_init_weights(True)]):
+            for _ in tqdm(range(1), desc="Initializing Mixtral model"):
+                mixtral_model = MixtralModel(mixtral_config)
         upscale_to_mixtral_model(pretrained_model, mixtral_model)
 
+        return mixtral_model
+
+    @torch.no_grad()
+    def run(self, modelpool: ModelPool | LlamaModel | MistralModel) -> MixtralModel:
+        """
+        Runs the upscaling process.
+
+        Args:
+            modelpool (ModelPool | LlamaModel | MistralModel): The model to be upscaled.
+
+        Returns:
+            MixtralModel: The upscaled model.
+        """
+        mixtral_model = self._run(modelpool)
+
+        if self.config.get("save_checkpoint", None) is not None:
+            mixtral_model.save_pretrained(self.config.save_checkpoint)
         return mixtral_model
 
 
@@ -170,18 +188,9 @@ class MixtralForCausalLMUpscalingAlgorithm(ModelFusionAlgorithm):
     """
 
     @torch.no_grad()
-    def run(
+    def _run(
         self, modelpool: ModelPool | LlamaForCausalLM | MistralForCausalLM
     ) -> MixtralForCausalLM:
-        """
-        Runs the upscaling process.
-
-        Args:
-            modelpool (ModelPool | LlamaForCausalLM | MistralForCausalLM): The model to be upscaled.
-
-        Returns:
-            MixtralForCausalLM: The upscaled model.
-        """
         if isinstance(modelpool, ModelPool):
             assert modelpool.has_pretrained, "ModelPool must have pretrained model."
             pretrained_model = modelpool.load_model("_pretrained_")
@@ -196,7 +205,28 @@ class MixtralForCausalLMUpscalingAlgorithm(ModelFusionAlgorithm):
             self.config.experts_per_token,
         )
 
-        mixtral_model = MixtralForCausalLM(mixtral_config)
+        with ContextManagers([no_init_weights(True)]):
+            for _ in tqdm(range(1), desc="Initializing Mixtral model"):
+                mixtral_model = MixtralForCausalLM(mixtral_config)
         upscale_to_mixtral_for_causal_lm(pretrained_model, mixtral_model)
 
+        return mixtral_model
+
+    @torch.no_grad()
+    def run(
+        self, modelpool: ModelPool | LlamaForCausalLM | MistralForCausalLM
+    ) -> MixtralForCausalLM:
+        """
+        Runs the upscaling process.
+
+        Args:
+            modelpool (ModelPool | LlamaForCausalLM | MistralForCausalLM): The model to be upscaled.
+
+        Returns:
+            MixtralForCausalLM: The upscaled model.
+        """
+        mixtral_model = self._run(modelpool)
+
+        if self.config.get("save_checkpoint", None) is not None:
+            mixtral_model.save_pretrained(self.config.save_checkpoint)
         return mixtral_model

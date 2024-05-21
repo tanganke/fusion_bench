@@ -10,6 +10,14 @@ from .ensemble import (
     MaxModelPredictorAlgorithm,
     WeightedEnsembleAlgorithm,
 )
+from .mixture_of_experts.mixtral_merging import (
+    MixtralForCausalLMMergingAlgorithm,
+    MixtralMoEMergingAlgorithm,
+)
+from .mixture_of_experts.mixtral_upcycling import (
+    MixtralForCausalLMUpscalingAlgorithm,
+    MixtralUpscalingAlgorithm,
+)
 from .model_recombination import ModelRecombinationAlgorithm
 from .simple_average import SimpleAverageAlgorithm
 from .task_arithmetic import TaskArithmeticAlgorithm
@@ -25,7 +33,7 @@ def load_algorithm_from_config(method_config: DictConfig):
     elif method_config.name == "simple_ensemble":
         return EnsembleAlgorithm(method_config)
     elif method_config.name == "weighted_ensemble":
-        return WeightedAverageAlgorithm(method_config)
+        return WeightedEnsembleAlgorithm(method_config)
     elif method_config.name == "max_model_predictor":
         return MaxModelPredictorAlgorithm(method_config)
     # model merging methods
@@ -42,8 +50,16 @@ def load_algorithm_from_config(method_config: DictConfig):
     elif method_config.name == "clip_layer_wise_adamerging":
         return CLIPLayerWiseAdaMergingAlgorithm(method_config)
     # model mixing methods
-    elif method_config.name == 'depth_upscaling':
+    elif method_config.name == "depth_upscaling":
         return DepthUpscalingAlgorithm(method_config)
+    elif method_config.name == "mixtral_moe_upscaling":
+        return MixtralUpscalingAlgorithm(method_config)
+    elif method_config.name == "mixtral_for_causal_lm_moe_upscaling":
+        return MixtralForCausalLMUpscalingAlgorithm(method_config)
+    elif method_config.name == "mixtral_moe_merging":
+        return MixtralMoEMergingAlgorithm(method_config)
+    elif method_config.name == "mixtral_for_causal_lm_merging":
+        return MixtralForCausalLMMergingAlgorithm(method_config)
     elif method_config.name == "clip_weight_ensembling_moe":
         return CLIPWeightEnsemblingMoEAlgorithm(method_config)
     elif method_config.name == "model_recombination":

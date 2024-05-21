@@ -58,13 +58,15 @@ class MixtralMoEMergingAlgorithm(MixtralUpscalingAlgorithm):
             self.config.num_experts = len(modelpool)
 
         # firstly, we upscale the models to MixtralModel
-        mixtral_model = super().run(modelpool)
+        mixtral_model = super()._run(modelpool)
 
         # then we substitute the experts of the MixtralModel with the models from the modelpool
         for model_idx, model_name in enumerate(modelpool.model_names):
             expert_model: MistralModel | LlamaModel = modelpool.load_model(model_name)
             _substitute_experts(model_idx, expert_model, mixtral_model)
 
+        if self.config.get("save_checkpoint", None) is not None:
+            mixtral_model.save_pretrained(self.config.save_checkpoint)
         return mixtral_model
 
 
@@ -86,7 +88,7 @@ class MixtralForCausalLMMergingAlgorithm(MixtralForCausalLMUpscalingAlgorithm):
             self.config.num_experts = len(modelpool)
 
         # firstly, we upscale the models to MixtralForCausalLM
-        mixtral_model = super().run(modelpool)
+        mixtral_model = super()._run(modelpool)
 
         # then we substitute the experts of the MixtralForCausalLM with the models from the modelpool
         for model_idx, model_name in enumerate(modelpool.model_names):
@@ -95,4 +97,6 @@ class MixtralForCausalLMMergingAlgorithm(MixtralForCausalLMUpscalingAlgorithm):
             )
             _substitute_experts(model_idx, expert_model.model, mixtral_model.model)
 
+        if self.config.get("save_checkpoint", None) is not None:
+            mixtral_model.save_pretrained(self.config.save_checkpoint)
         return mixtral_model
