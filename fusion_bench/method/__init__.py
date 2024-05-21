@@ -3,6 +3,7 @@ from omegaconf import DictConfig
 from .adamerging.clip_layer_wise_adamerging import CLIPLayerWiseAdaMergingAlgorithm
 from .adamerging.clip_task_wise_adamerging import CLIPTaskWiseAdaMergingAlgorithm
 from .base_algorithm import ModelFusionAlgorithm
+from .depth_upscaling import DepthUpscalingAlgorithm
 from .dummy import DummyAlgorithm
 from .ensemble import (
     EnsembleAlgorithm,
@@ -41,6 +42,8 @@ def load_algorithm_from_config(method_config: DictConfig):
     elif method_config.name == "clip_layer_wise_adamerging":
         return CLIPLayerWiseAdaMergingAlgorithm(method_config)
     # model mixing methods
+    elif method_config.name == 'depth_upscaling':
+        return DepthUpscalingAlgorithm(method_config)
     elif method_config.name == "clip_weight_ensembling_moe":
         return CLIPWeightEnsemblingMoEAlgorithm(method_config)
     elif method_config.name == "model_recombination":

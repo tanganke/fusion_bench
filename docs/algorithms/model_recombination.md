@@ -67,7 +67,9 @@ return_modelpool: null
 Construct a model recombination using our CLI tool `fusion_bench`:
 
 ```bash
-fusion_bench method=model_recombination \
+fusion_bench \
+    method=model_recombination \
+        method.return_modelpool=false \
     modelpool=... \
     taskpool=...
 ```

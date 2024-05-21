@@ -93,6 +93,7 @@ class ModelRecombinationAlgorithm(ModelFusionAlgorithm):
 
         log.info(f"Running model recombination algorithm with {len(modelpool)} models")
 
+        # TODO: optimize the `recombine_*` functions, if `return_modelpool` is False, we don't need to create the new modelpool, just the first model
         models = [modelpool.load_model(m) for m in modelpool.model_names]
         if isinstance(models[0], nn.ModuleList):
             new_models = recombine_modellist(models)

@@ -169,5 +169,7 @@ def to_modelpool(obj: List[nn.Module], **kwargs):
         return ListModelPool(models=obj, **kwargs)
     elif isinstance(obj, Dict) and all(isinstance(m, nn.Module) for m in obj.values()):
         return DictModelPool(model_dict=obj, **kwargs)
+    elif isinstance(obj, nn.Module):
+        return ListModelPool(models=[obj], **kwargs)
     else:
         raise ValueError(f"Invalid modelpool object: {obj}")

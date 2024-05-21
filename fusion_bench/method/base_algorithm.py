@@ -7,6 +7,8 @@ from omegaconf import DictConfig
 class ModelFusionAlgorithm(ABC):
     def __init__(self, algorithm_config: Optional[DictConfig] = None):
         super().__init__()
+        if algorithm_config is None:
+            algorithm_config = DictConfig({})
         self.config = algorithm_config
 
     @abstractmethod
