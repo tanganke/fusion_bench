@@ -1,5 +1,6 @@
 name: weighted_ensemble
 
+nomalize: true
 # this should be a list of floats, one for each model in the ensemble
 # If weights is null, the ensemble will use the default weights, which are equal weights for all models.
 weights: null 

@@ -2,8 +2,14 @@ from omegaconf import DictConfig
 
 from .adamerging.clip_layer_wise_adamerging import CLIPLayerWiseAdaMergingAlgorithm
 from .adamerging.clip_task_wise_adamerging import CLIPTaskWiseAdaMergingAlgorithm
+from .base_algorithm import ModelFusionAlgorithm
 from .dummy import DummyAlgorithm
-from .ensemble import EnsembleAlgorithm, MaxPredictorAlgorithm
+from .ensemble import (
+    EnsembleAlgorithm,
+    MaxPredictorAlgorithm,
+    WeightedEnsembleAlgorithm,
+)
+from .model_recombination import ModelRecombinationAlgorithm
 from .simple_average import SimpleAverageAlgorithm
 from .task_arithmetic import TaskArithmeticAlgorithm
 from .ties_merging.ties_merging import TiesMergingAlgorithm
@@ -37,5 +43,7 @@ def load_algorithm_from_config(method_config: DictConfig):
     # model mixing methods
     elif method_config.name == "clip_weight_ensembling_moe":
         return CLIPWeightEnsemblingMoEAlgorithm(method_config)
+    elif method_config.name == "model_recombination":
+        return ModelRecombinationAlgorithm(method_config)
     else:
         raise ValueError(f"Unknown algorithm: {method_config.name}")

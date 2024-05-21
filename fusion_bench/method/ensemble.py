@@ -40,7 +40,11 @@ class WeightedEnsembleAlgorithm(ModelFusionAlgorithm):
             weights = np.ones(len(models)) / len(models)
         else:
             weights = self.config.weights
-        ensemble = WeightedEnsembleModule(models, weights=weights)
+        ensemble = WeightedEnsembleModule(
+            models,
+            weights=weights,
+            normalize=self.config.get("normalize", True),
+        )
         return ensemble
 
 

@@ -18,7 +18,7 @@ This module provides the mechanisms necessary to combine multiple models from th
 ### Code Integration
 
 The module is typically invoked through a configuration-driven approach in CLI scripts, enabling users to specify fusion algorithms and parameters via YAML configuration files. This method ensures reproducibility and ease of use.
-For more information, see [the document of fusion_bench CLI](/cli/fusion_bench).
+For more information, see [the document of fusion_bench CLI](../cli/fusion_bench.md).
 
 `ModelFusionAlgorithm` is the base class for all fusion algorithms in the Fusion Algorithm module. 
 It provides a common interface for different fusion techniques, allowing for seamless integration and execution of various algorithms.

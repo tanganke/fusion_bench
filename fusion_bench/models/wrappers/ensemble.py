@@ -2,6 +2,7 @@ from typing import Dict, List, cast
 
 import numpy as np
 import torch
+from omegaconf import ListConfig
 from torch import Tensor, nn
 
 
@@ -14,15 +15,21 @@ def aggregate_tensors(outputs, aggregate_fn) -> Tensor:
     elif isinstance(outputs[0], Dict):
         result = type(outputs[0])()
         for key in outputs[0]:
-            result[key] = aggregate_fn([output[key] for output in outputs])
+            result[key] = aggregate_tensors(
+                [output[key] for output in outputs], aggregate_fn
+            )
         return result
 
     # If the output is a tuple or list, take the mean of each element
     elif isinstance(outputs[0], (tuple, list)):
         return tuple(
-            aggregate_fn([output[i] for output in outputs])
+            aggregate_tensors([output[i] for output in outputs], aggregate_fn)
             for i in range(len(outputs[0]))
         )
+
+    # If the output is None, return None
+    elif all(output is None for output in outputs):
+        return None
 
     # If the output is none of the above, return as is
     else:
@@ -48,21 +55,25 @@ class WeightedEnsembleModule(nn.Module):
         self,
         models: List[nn.Module],
         weights: List[float] | Tensor | np.ndarray,
+        normalize: bool = True,
     ):
         super().__init__()
         self.model_list = nn.ModuleList(models)
-        if isinstance(weights, list):
+        if isinstance(weights, (list, tuple, ListConfig)):
             weights = torch.tensor(weights)
         elif isinstance(weights, Tensor):
             weights = weights
         elif isinstance(weights, np.ndarray):
             weights = torch.from_numpy(weights)
         else:
-            raise ValueError("Unsupported type for weights")
+            raise ValueError(f"Unsupported type for weights: {type(weights)=}")
 
-        assert (
-            len(models) == len(weights) and weights.dim() == 1
-        ), "weights must be a 1D tensor of the same length as models."
+        assert len(models) == len(weights) and weights.dim() == 1, (
+            "weights must be a 1D tensor of the same length as models."
+            f"But got {len(models)=}, {weights.dim()=}"
+        )
+        if normalize:
+            weights = weights / weights.sum()
         self.register_buffer("weights", weights)
 
     def _aggregate_tensors(self, outputs: List[Tensor]) -> Tensor:

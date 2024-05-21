@@ -6,7 +6,8 @@ nav:
       - Introduction: algorithms/index.md
       - Dummy: algorithms/dummy.md
       - Model Ensemble: 
-        - Simple Ensemble: algorithms/ensemble.md
+        - Simple Ensemble: algorithms/simple_ensemble.md
+        - Weighted Ensemble: algorithms/weighted_ensemble.md
         - Model Specification: algorithms/specification_ensemble.md
       - Model Merging:
         - Simple Averaging: algorithms/simple_averaging.md
@@ -23,7 +24,7 @@ nav:
   - Model Pool:
       - Introduction: modelpool/index.md
       - CLIP-ViT Models: modelpool/clip_vit.md
-      - GPT2 Models for Text Classification: modelpool/gpt2_classification.md
+      - GPT-2 Models for Text Classification: modelpool/gpt2_classification.md
       - Flan-T5 Models for Text Generation: modelpool/flan-t5_generation.md
   - Task Pool:
       - Introduction: taskpool/index.md

@@ -5,7 +5,7 @@ from typing import List, Mapping, Union
 import torch
 from torch import Tensor, nn
 
-from ..modelpool import ListModelPool, ModelPool, to_modelpool
+from ..modelpool import ModelPool, to_modelpool
 from ..utils.state_dict_arithmetic import state_dict_add, state_dict_avg, state_dict_mul
 from ..utils.type import _StateDict
 from .base_algorithm import ModelFusionAlgorithm

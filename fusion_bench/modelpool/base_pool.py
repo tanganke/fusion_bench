@@ -89,6 +89,18 @@ class ModelPool(ABC):
         """
         pass
 
+    def to_modellist(self) -> List[nn.Module]:
+        """
+        Convert the model pool to a list of models.
+        """
+        return [self.load_model(m) for m in self.model_names]
+
+    def to_modeldict(self) -> Dict[str, nn.Module]:
+        """
+        Convert the model pool to a dictionary of models.
+        """
+        return {m: self.load_model(m) for m in self.model_names}
+
 
 class ListModelPool(ModelPool):
     """
