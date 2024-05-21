@@ -93,6 +93,24 @@ upscaled_model = algorithm.run(model.model.layers)
 model.model.layers = upscaled_model
 ```
 
+## Code Integration
+
+The `DepthUpscalingAlgorithm` is integrated into the `fusion_bench` package. You can use it by specifying `"depth_upscaling"` as the method name in the command line or configuration file.
+
+```yaml title="config/method/depth_upscaling.yaml"
+name: depth_upscaling
+# this should be a list of integers or string, indicating the sequence of layers. If the entry is an integer, it will use the n-th layer of the model. If the entry is a string, it will use the layers specified by the string. The string should be a valid python expression that evaluates to a list of integers.
+# for example, ["range(0,12)", "range(6,12)"] will use the first 12 layers and the last 6 layers of the model to construct the new model
+# [0, 2, 4, "range(6,12)"] will use the 1st, 3rd, 5th, and the 7th to 12th layers of the model to construct the new model
+layer_indices: null
+```
+
+You can then run the `fusion_bench` command with the specified configuration file:
+
+```bash
+fusion_bench method=depth_upscaling ...
+```
+
 ## References
 
 ::: fusion_bench.method.DepthUpscalingAlgorithm
