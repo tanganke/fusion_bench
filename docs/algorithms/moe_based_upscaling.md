@@ -63,18 +63,18 @@ The first code block is a YAML configuration file for the upscaling method. The 
 
 
 ```yaml title="config/method/mixtral_moe_upscaling.yaml"
-# or "mixtral_for_causal_lm_moe_upscaling"
-name: mixtral_moe_upscaling 
-num_experts: 4
-expert_per_token: 2
+name: mixtral_for_causal_lm_moe_upscaling # or "mixtral_moe_upscaling"
 
+num_experts: 4
+experts_per_token: 2
 # path to save the upscaled model
 save_checkpoint: null
+
 ```
 
 The second code block is another YAML configuration file, this time for the model pool. The `type` field specifies the type of model pool to use. The `models` field is a list of models to include in the pool. Each model should have a `name` and a `path`, and the model is loaded from the `path`.
 
-```yaml title="config/modelpool/mixtral_moe_upsacling.yaml"
+```yaml title="config/modelpool/mixtral_moe_upscaling.yaml"
 type: AutoModelForCausalLMPool
 # each model should have a name and a path, and the model is loaded from the path
 # this is equivalent to `AutoModelForCausalLM.from_pretrained(path)`

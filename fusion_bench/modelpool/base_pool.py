@@ -45,8 +45,8 @@ class ModelPool(ABC):
         """
         Check if the pretrained model is available in the model pool.
         """
-        for model in self.config["models"]:
-            if "pretrained" in model:
+        for model_config in self.config["models"]:
+            if model_config.get("name", None) == "_pretrained_":
                 return True
         return False
 

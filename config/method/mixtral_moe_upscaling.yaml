@@ -1,6 +1,6 @@
-name: mixtral_moe_upscaling # or "mixtral_for_causal_lm_moe_upscaling"
+name: mixtral_for_causal_lm_moe_upscaling # or "mixtral_moe_upscaling"
 
 num_experts: 4
-expert_per_token: 2
+experts_per_token: 2
 # path to save the upscaled model
 save_checkpoint: null
