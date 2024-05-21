@@ -59,7 +59,7 @@ mixtral_for_causal_lm_model.save_pretrained("path_to_save_mixtral_model")
 
 This is a guide on how to use the `fusion_bench` command-line interface to upscale a Mistral model to a Mixtral model.
 
-The first code block is a YAML configuration file for the upscaling method. The name field specifies the name of the upscaling method. The `num_experts` field specifies the number of experts to use in the upscaling process. The `expert_per_token` field specifies the number of experts to use per token. The `save_checkpoint` field specifies the path where the upscaled model will be saved, if provided.
+The first code block is a YAML configuration file for the upscaling method. The name field specifies the name of the upscaling method. The `num_experts` field specifies the number of experts to use in the upscaling process. The `experts_per_token` field specifies the number of experts to use per token. The `save_checkpoint` field specifies the path where the upscaled model will be saved, if provided.
 
 
 ```yaml title="config/method/mixtral_moe_upscaling.yaml"
