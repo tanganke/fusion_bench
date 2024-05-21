@@ -8,7 +8,7 @@ from torch import Tensor, nn
 
 from fusion_bench.models.wrappers.ensemble import (
     EnsembleModule,
-    MaxPredictor,
+    MaxModelPredictor,
     WeightedEnsembleModule,
 )
 
@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 
 class EnsembleAlgorithm(ModelFusionAlgorithm):
     @torch.no_grad()
-    def run(self, modelpool: ModelPool):
+    def run(self, modelpool: ModelPool | List[nn.Module]):
         modelpool = to_modelpool(modelpool)
         log.info(f"Running ensemble algorithm with {len(modelpool)} models")
 
@@ -31,7 +31,7 @@ class EnsembleAlgorithm(ModelFusionAlgorithm):
 
 class WeightedEnsembleAlgorithm(ModelFusionAlgorithm):
     @torch.no_grad()
-    def run(self, modelpool: ModelPool):
+    def run(self, modelpool: ModelPool | List[nn.Module]):
         modelpool = to_modelpool(modelpool)
         log.info(f"Running weighted ensemble algorithm with {len(modelpool)} models")
 
@@ -48,12 +48,12 @@ class WeightedEnsembleAlgorithm(ModelFusionAlgorithm):
         return ensemble
 
 
-class MaxPredictorAlgorithm(ModelFusionAlgorithm):
+class MaxModelPredictorAlgorithm(ModelFusionAlgorithm):
     @torch.no_grad()
-    def run(self, modelpool: ModelPool):
+    def run(self, modelpool: ModelPool | List[nn.Module]):
         modelpool = to_modelpool(modelpool)
         log.info(f"Running max predictor algorithm with {len(modelpool)} models")
 
         models = [modelpool.load_model(m) for m in modelpool.model_names]
-        ensemble = MaxPredictor(models=models)
+        ensemble = MaxModelPredictor(models=models)
         return ensemble

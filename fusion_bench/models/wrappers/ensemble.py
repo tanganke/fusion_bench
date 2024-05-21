@@ -85,6 +85,6 @@ class WeightedEnsembleModule(nn.Module):
         return aggregate_tensors(outputs, self._aggregate_tensors)
 
 
-class MaxPredictor(EnsembleModule):
+class MaxModelPredictor(EnsembleModule):
     def _aggregate_tensors(self, outputs: List[Tensor]) -> Tensor:
         return torch.stack(outputs).max(dim=0).values

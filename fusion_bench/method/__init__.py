@@ -7,7 +7,7 @@ from .depth_upscaling import DepthUpscalingAlgorithm
 from .dummy import DummyAlgorithm
 from .ensemble import (
     EnsembleAlgorithm,
-    MaxPredictorAlgorithm,
+    MaxModelPredictorAlgorithm,
     WeightedEnsembleAlgorithm,
 )
 from .model_recombination import ModelRecombinationAlgorithm
@@ -26,8 +26,8 @@ def load_algorithm_from_config(method_config: DictConfig):
         return EnsembleAlgorithm(method_config)
     elif method_config.name == "weighted_ensemble":
         return WeightedAverageAlgorithm(method_config)
-    elif method_config.name == "max_predictor":
-        return MaxPredictorAlgorithm(method_config)
+    elif method_config.name == "max_model_predictor":
+        return MaxModelPredictorAlgorithm(method_config)
     # model merging methods
     elif method_config.name == "simple_average":
         return SimpleAverageAlgorithm(method_config)

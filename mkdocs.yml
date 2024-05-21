@@ -8,6 +8,7 @@ nav:
       - Model Ensemble: 
         - Simple Ensemble: algorithms/simple_ensemble.md
         - Weighted Ensemble: algorithms/weighted_ensemble.md
+        - Max-Model Predictor: algorithms/max-model_predictor.md
         - Model Specification: algorithms/specification_ensemble.md
       - Model Merging:
         - Simple Averaging: algorithms/simple_averaging.md
