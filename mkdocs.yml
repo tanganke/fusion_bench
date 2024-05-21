@@ -18,7 +18,8 @@ nav:
         - AdaMerging: algorithms/adamerging.md
       - Model Mixing:
         - Depth Upscaling: algorithms/depth_upscaling.md
-        - Mixture of Experts: algorithms/mixture_of_experts.md
+        - MoE-based Upscaling: algorithms/moe_based_upscaling.md
+        - MoE-based Merging: algorithms/moe_based_merging.md
         - Weight-Ensembling MoE: algorithms/weight_ensembling_moe.md
         - Model Stitching: algorithms/model_stitching.md
         - Model Recombination: algorithms/model_recombination.md
