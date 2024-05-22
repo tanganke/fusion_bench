@@ -25,6 +25,29 @@ $$ \theta = \theta_0 + \lambda \sum_{i} \tau_i. $$
 
 The choice of the scaling coefficient $\lambda$ plays a crucial role in the final model performance. Typically, $\lambda$ is chosen based on validation set performance. 
 
+## Examples
+
+To use the Task Arithmetic algorithm, you can use the `TaskArithmeticAlgorithm` class from the `fusion_bench.method` module.
+
+```python
+from fusion_bench.method import TaskArithmeticAlgorithm
+from omegaconf import DictConfig
+
+# Instantiate the TaskArithmeticAlgorithm
+method_config = {'name': 'task_arithmetic', 'scaling_factor': 0.5}
+algorithm = TaskArithmeticAlgorithm(DictConfig(method_config))
+
+# Assume we have a dict of PyTorch models (nn.Module instances) that we want to merge.
+# The models should all have the same architecture.
+# the dict must contain the pre-trained model with the key '_pretrained_', and arbitrary number of fine-tuned models.
+models = {'_pretrained_': nn.Linear(10,10), 'model_1': nn.Linear(10,10), 'model_2': nn.Linear(10,10)}
+
+# Run the algorithm on the models.
+# This will return a new model that is the result of task arithmetic on the input models.
+merged_model = algorithm.run(models)
+```
+
+
 ## Code Integration
 
 Configuration template for the Task Arithmetic algorithm:
@@ -39,6 +62,60 @@ Use the following command to run the Task Arithmetic algorithm:
 ```bash
 fusion_bench method=task_arithmetic ...
 ```
+
+For example, to run the Task Arithmetic algorithm on two models with scaling factor 0.5:
+
+```bash
+fusion_bench method=task_arithmetic \
+    method.scaling_factor=0.5 \
+  modelpool=clip-vit-base-patch32_svhn_and_mnist \
+  taskpool=clip-vit-base-patch32_svhn_and_mnist
+```
+
+where the configuration for the model pool is:
+
+```yaml title="config/modelpool/clip-vit-base-patch32_svhn_and_mnist.yaml"
+type: huggingface_clip_vision
+# the modelpool must contain the pre-trained model with the name '_pretrained_', 
+# and arbitrary number of fine-tuned models.
+models:
+  - name: _pretrained_
+    path: google/flan-t5-base
+  - name: _pretrained_
+    path: openai/clip-vit-base-patch32
+  - name: svhn
+    path: tanganke/clip-vit-base-patch32_svhn
+  - name: mnist
+    path: tanganke/clip-vit-base-patch32_mnist
+```
+
+and the configuration for the task pool:
+
+```yaml title="config/taskpool/clip-vit-base-patch32_svhn_and_mnist.yaml"
+type: clip_vit_classification
+
+dataset_type: huggingface_image_classification
+tasks:
+  - name: svhn
+    dataset:
+      type: instantiate
+      name: svhn
+      object: 
+        _target_: datasets.load_dataset
+        _args_:
+          - svhn
+          - cropped_digits
+        split: test
+  - name: mnist
+    dataset:
+      name: mnist
+      split: test
+
+...
+```
+
+
+## References
 
 ::: fusion_bench.method.TaskArithmeticAlgorithm
     options:

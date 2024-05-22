@@ -48,7 +48,9 @@ def evaluate_accuracy(model, val_loader: DataLoader, tokenizer):
 
     model = model.eval()
     for batch_idx, batch in enumerate(
-        tqdm(val_loader, desc="Evaluate Exact Accuracy", leave=False)
+        tqdm(
+            val_loader, desc="Evaluate Exact Accuracy", leave=False, dynamic_ncols=True
+        )
     ):
         with torch.no_grad():
             outputs = model.generate(batch["input_ids"], max_length=10)
@@ -85,7 +87,7 @@ def evaluate_spearman_rho(model, val_loader: DataLoader, tokenizer):
     all_preds: List[str] = []
     all_labels: List[str] = []
     for batch_idx, batch in enumerate(
-        tqdm(val_loader, desc="Evaluate Spearman Rho", leave=False)
+        tqdm(val_loader, desc="Evaluate Spearman Rho", leave=False, dynamic_ncols=True)
     ):
         with torch.no_grad():
             outputs = model.generate(batch["input_ids"], max_length=10)

@@ -109,12 +109,14 @@ class GPT2ClassificationTask(BaseTask):
 
 
 class GPT2TextClassificationTaskPool(TaskPool):
+    """
+    A task pool for GPT2 text classification tasks.
+    This class manages the tasks and provides methods for loading test dataset and evaluation.
+    """
+
     _fabric: L.Fabric = None
     _tokenizer: GPT2Tokenizer = None
     _modelpool: "fusion_bench.modelpool.HuggingFaceGPT2ClassificationPool" = None
-
-    def __init__(self, taskpool_config: DictConfig):
-        super().__init__(taskpool_config)
 
     @property
     def fabric(self):
@@ -133,12 +135,18 @@ class GPT2TextClassificationTaskPool(TaskPool):
             raise ValueError("Tokenizer not set")
 
     def prepare_dataset_config(self, dataset_config: DictConfig):
+        """
+        Set default values for dataset configuration.
+        """
         if not hasattr(dataset_config, "type"):
             with open_dict(dataset_config):
                 dataset_config["type"] = self.config.dataset_type
         return dataset_config
 
     def prepare_task_config(self, task_config: DictConfig):
+        """
+        Set default values for task configuration.
+        """
         for key in ["num_workers", "batch_size", "fast_dev_run"]:
             if not hasattr(task_config, key):
                 with open_dict(task_config):
@@ -146,6 +154,9 @@ class GPT2TextClassificationTaskPool(TaskPool):
         return task_config
 
     def load_task(self, task_name_or_config: str | DictConfig):
+        """
+        Loads a task given a task name or config. It prepares the task configuration and loads the task from it.
+        """
         if isinstance(task_name_or_config, str):
             task_config = self.get_task_config(task_name_or_config)
         else:

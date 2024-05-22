@@ -9,7 +9,12 @@ import torch.nn.functional as F
 from omegaconf import DictConfig, open_dict
 from torch.utils.data import DataLoader
 from tqdm.autonotebook import tqdm
-from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, default_data_collator
+from transformers import (
+    AutoModelForSeq2SeqLM,
+    AutoTokenizer,
+    T5ForConditionalGeneration,
+    default_data_collator,
+)
 
 from fusion_bench.tasks import BaseTask
 from fusion_bench.tasks.flan_t5_text_generation.glue_evaluation import (
@@ -98,11 +103,18 @@ class FlanT5GLUETextGenerationRegressionTask(FlanT5GLUETextGenerationTask):
 
 
 class FlanT5GLUETextGenerationTaskPool(TaskPool):
+    """
+    A task pool for FlanT5 GLUE text generation tasks. 
+    This class manages the tasks and provides methods for loading and evaluating tasks.
+    """
     _fabric: L.Fabric = None
     _tokenizer = None
 
     @property
     def tokenizer(self):
+        """
+        Returns the tokenizer. If it's not already initialized, it initializes it using the config's tokenizer.
+        """
         if self._tokenizer is None:
             self._tokenizer = AutoTokenizer.from_pretrained(self.config.tokenizer)
         return self._tokenizer
@@ -117,6 +129,10 @@ class FlanT5GLUETextGenerationTaskPool(TaskPool):
             return self._fabric
 
     def load_task(self, task_name_or_config: str | DictConfig):
+        """
+        Loads a task given a task name or config. If the task name is in `CLASSIFICATION_TASKS`, it creates a `FlanT5GLUETextGenerationClassificationTask`.
+        If the task name is in `REGRESSION_TASKS`, it creates a `FlanT5GLUETextGenerationRegressionTask`. Otherwise, it raises a `ValueError`.
+        """
         if isinstance(task_name_or_config, str):
             task_config = self.get_task_config(task_name_or_config)
         else:
@@ -133,6 +149,12 @@ class FlanT5GLUETextGenerationTaskPool(TaskPool):
         else:
             raise ValueError(f"Unknown task {task_config.name}")
 
-    def evaluate(self, model):
+    def evaluate(self, model: T5ForConditionalGeneration):
+        if not isinstance(model, T5ForConditionalGeneration):
+            log.warning(
+                f"Model is not an instance of T5ForConditionalGeneration, but {type(model)}"
+            )
         model = self.fabric.setup(model)
-        return super().evaluate(model)
+        report = super().evaluate(model)
+        log.info(f"evaluation report: {report}")
+        return report
