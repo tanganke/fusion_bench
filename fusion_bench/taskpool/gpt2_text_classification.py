@@ -7,7 +7,6 @@ import lightning as L
 import torch
 import torch.nn.functional as F
 from omegaconf import DictConfig, open_dict
-from torch.nn.modules import Module
 from torch.utils.data import DataLoader
 from torchmetrics import Accuracy, MeanMetric
 from tqdm.autonotebook import tqdm

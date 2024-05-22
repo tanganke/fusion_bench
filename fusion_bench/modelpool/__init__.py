@@ -4,6 +4,7 @@ from .base_pool import DictModelPool, ListModelPool, ModelPool, to_modelpool
 from .huggingface_clip_vision import HuggingFaceClipVisionPool
 from .huggingface_gpt2_classification import HuggingFaceGPT2ClassificationPool
 from .huggingface_llm import AutoModelForCausalLMPool
+from .PeftModeForSeq2SeqLM import PeftModelForSeq2SeqLMPool
 
 
 def load_modelpool_from_config(modelpool_config: DictConfig):
@@ -14,6 +15,8 @@ def load_modelpool_from_config(modelpool_config: DictConfig):
             return HuggingFaceGPT2ClassificationPool(modelpool_config)
         elif modelpool_config.type == "AutoModelForCausalLMPool":
             return AutoModelForCausalLMPool(modelpool_config)
+        elif modelpool_config.type == "PeftModelForSeq2SeqLMPool":
+            return PeftModelForSeq2SeqLMPool(modelpool_config)
         else:
             raise ValueError(f"Unknown model pool type: {modelpool_config.type}")
     else:

@@ -19,7 +19,7 @@ def _load_glue_dataset(name, tokenizer):
         tokenizer=tokenizer,
         tokenizer_kwargs={
             "padding": "max_length",
-            "truncate": True,
+            "truncation": True,
             "return_tensors": "pt",
         },
     )

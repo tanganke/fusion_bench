@@ -1,0 +1,42 @@
+name: flan-t5_glue_text_generation # whatever you want to name your task pool
+type: FlanT5GLUETextGenerationTaskPool
+
+tasks:
+  - name: cola
+    dataset:
+      name: cola
+      split: validation
+  - name: mnli
+    dataset:
+      name: mnli
+      split: validation_matched
+  - name: mrpc
+    dataset:
+      name: mrpc
+      split: validation
+  - name: qnli
+    dataset:
+      name: qnli
+      split: validation
+  - name: qqp
+    dataset:
+      name: qqp
+      split: validation
+  - name: rte
+    dataset:
+      name: rte
+      split: validation
+  - name: sst2
+    dataset:
+      name: sst2
+      split: validation
+  - name: stsb
+    dataset:
+      name: stsb
+      split: validation
+
+tokenizer: google/flan-t5-base
+cache_dir: outputs
+batch_size: 8
+num_workers: 0
+fast_dev_run: ${fast_dev_run}

@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Union
 
 from omegaconf import DictConfig
+from tqdm.autonotebook import tqdm
 
 
 class TaskPool(ABC):
@@ -42,7 +43,7 @@ class TaskPool(ABC):
             dict: A dictionary containing the results of the evaluation for each task.
         """
         report = {}
-        for task_name in self.task_names:
+        for task_name in tqdm(self.task_names, desc="Evaluating tasks"):
             task = self.load_task(task_name)
             result = task.evaluate(model)
             report[task_name] = result

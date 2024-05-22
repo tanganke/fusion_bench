@@ -55,6 +55,8 @@ print_parameters(mixtral_for_causal_lm_model)
 mixtral_for_causal_lm_model.save_pretrained("path_to_save_mixtral_model")
 ```
 
+A Jupyter notebook example is also available at [our repo](https://github.com/tanganke/fusion_bench/blob/main/examples/moe_based_upscaling.ipynb).
+
 ## Code Integration
 
 This is a guide on how to use the `fusion_bench` command-line interface to upscale a Mistral model to a Mixtral model.
