@@ -7,7 +7,7 @@ Here we provide a series of GPT-2 models fine-tuned for text classification task
 We provide seven GPT-2 models fine-tuned on the following tasks from GLUE Benchmark:
 CoLA, SST-2, MRPC, QQP, MNLI, RTE, and QNLI.
 These models are fine-tuned with the learning rate of 5e-5 for 3 epochs.
-The models are available on [HuggingFace](https://huggingface.co/collections/tanganke/gpt2-models-fine-tuned-on-tasks-from-glue-benchmark-664ab37d9e33e622679f541b) as Pytorch models.
+The models are available on [HuggingFace](https://huggingface.co/collections/tanganke/gpt-2-models-fine-tuned-on-tasks-from-glue-benchmark-664ab37d9e33e622679f541b) as Pytorch models.
 
 Evaluation results of these single-task models on the GLUE Benchmark are as follows:
 
