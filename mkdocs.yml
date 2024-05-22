@@ -1,9 +1,9 @@
 site_name: "FusionBench"
 
 nav:
-  - Home: index.md
+  - Home: README.md
   - Fusion Algorithms:
-      - Introduction: algorithms/index.md
+      - Introduction: algorithms/README.md
       - Dummy: algorithms/dummy.md
       - Model Ensemble: 
         - Simple Ensemble: algorithms/simple_ensemble.md
@@ -23,15 +23,16 @@ nav:
         - Weight-Ensembling MoE: algorithms/weight_ensembling_moe.md
         - Model Stitching: algorithms/model_stitching.md
         - Model Recombination: algorithms/model_recombination.md
-  - Model Pool:
-      - Introduction: modelpool/index.md
+  - Model Pool (Benchmark):
+      - Introduction: modelpool/README.md
       - CLIP-ViT Models: modelpool/clip_vit.md
       - GPT-2 Models for Text Classification: modelpool/gpt2_classification.md
       - Flan-T5 Models for Text Generation: modelpool/flan-t5_generation.md
-  - Task Pool:
-      - Introduction: taskpool/index.md
+  - Task Pool (Evaluation):
+      - Introduction: taskpool/README.md
       - Dummy: taskpool/dummy.md
       - Classification Tasks for CLIP: taskpool/clip_vit_classification.md
+      - GPT-2 Sequence Classification Tasks: taskpool/gpt2_classification.md
   - Command Line Interface:
     - fusion_bench: cli/fusion_bench.md
 
