@@ -1,0 +1,20 @@
+type: PeftModelForSeq2SeqLMPool
+models:
+  - name: _pretrained_
+    path: google/flan-t5-large
+  - name: cola
+    path: tanganke/flan-t5-large_glue-cola_lora-16
+  - name: mnli
+    path: tanganke/flan-t5-large_glue-mnli_lora-16
+  - name: mrpc
+    path: tanganke/flan-t5-large_glue-mrpc_lora-16
+  - name: qnli
+    path: tanganke/flan-t5-large_glue-qnli_lora-16
+  - name: qqp
+    path: tanganke/flan-t5-large_glue-qqp_lora-16
+  - name: rte
+    path: tanganke/flan-t5-large_glue-rte_lora-16
+  - name: sst2
+    path: tanganke/flan-t5-large_glue-sst2_lora-16
+  - name: stsb
+    path: tanganke/flan-t5-large_glue-stsb_lora-16
