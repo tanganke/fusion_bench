@@ -12,5 +12,8 @@ A taskpool is specified by a `yaml` configuration file, which often contains the
     - `dataset`: The dataset used for the task.
     - `metric`: The metric used to evaluate the performance of the model on the task.
 
+### References
+
+::: fusion_bench.taskpool.load_taskpool_from_config
 
 ::: fusion_bench.taskpool.TaskPool

@@ -4,7 +4,7 @@ In the rapidly advancing field of machine learning, multi-task learning has emer
 
 <figure markdown="span">
   ![Image title](images/Task Arithmetic.png){ width="450" }
-  <figcaption>Task Arithmetic. Credit to <sup id="fnref:2"><a class="footnote-ref" href="#fn:2">2</a></sup></figcaption>
+  <figcaption>Task Arithmetic. This figure credited to <sup id="fnref:2"><a class="footnote-ref" href="#fn:2">2</a></sup></figcaption>
 </figure>
 
 **Task Vector**. A task vector is used to encapsulate the adjustments needed by a model to specialize in a specific task. 

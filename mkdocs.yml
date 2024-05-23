@@ -94,6 +94,7 @@ theme:
   name: material
   features:
     - toc.follow
+    - content.code.annotate
 
 repo_url: https://github.com/tanganke/fusion_bench
 

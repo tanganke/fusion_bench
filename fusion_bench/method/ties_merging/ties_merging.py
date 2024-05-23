@@ -1,11 +1,11 @@
 import logging
 from copy import deepcopy
-from typing import List, Mapping, Union
+from typing import Dict, List, Mapping, Union
 
 import torch
 from torch import Tensor, nn
 
-from ...modelpool import ModelPool
+from ...modelpool import ModelPool, to_modelpool
 from ...utils.type import _StateDict
 from ..base_algorithm import ModelFusionAlgorithm
 from .ties_merging_utils import state_dict_to_vector, ties_merging, vector_to_state_dict
@@ -15,8 +15,9 @@ log = logging.getLogger(__name__)
 
 class TiesMergingAlgorithm(ModelFusionAlgorithm):
     @torch.no_grad()
-    def run(self, modelpool: ModelPool):
+    def run(self, modelpool: ModelPool | Dict[str, nn.Module]):
         log.info("Fusing models using ties merging.")
+        modelpool = to_modelpool(modelpool)
         remove_keys = self.config.get("remove_keys", [])
         merge_func = self.config.get("merge_func", "sum")
         scaling_factor = self.config.scaling_factor

@@ -8,6 +8,21 @@ from .PeftModeForSeq2SeqLM import PeftModelForSeq2SeqLMPool
 
 
 def load_modelpool_from_config(modelpool_config: DictConfig):
+    """
+    Loads a model pool based on the provided configuration.
+
+    The function checks the 'type' attribute of the configuration and returns an instance of the corresponding model pool.
+    If the 'type' attribute is not found or does not match any known model pool types, a ValueError is raised.
+
+    Args:
+        modelpool_config (DictConfig): The configuration for the model pool. Must contain a 'type' attribute that specifies the type of the model pool.
+
+    Returns:
+        An instance of the specified model pool.
+
+    Raises:
+        ValueError: If 'type' attribute is not found in the configuration or does not match any known model pool types.
+    """
     if hasattr(modelpool_config, "type"):
         if modelpool_config.type == "huggingface_clip_vision":
             return HuggingFaceClipVisionPool(modelpool_config)

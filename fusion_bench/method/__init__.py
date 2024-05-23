@@ -27,6 +27,21 @@ from .weighted_average import WeightedAverageAlgorithm
 
 
 def load_algorithm_from_config(method_config: DictConfig):
+    """
+    Loads an algorithm based on the provided configuration.
+
+    The function checks the 'name' attribute of the configuration and returns an instance of the corresponding algorithm.
+    If the 'name' attribute is not found or does not match any known algorithm names, a ValueError is raised.
+
+    Args:
+        method_config (DictConfig): The configuration for the algorithm. Must contain a 'name' attribute that specifies the type of the algorithm.
+
+    Returns:
+        An instance of the specified algorithm.
+
+    Raises:
+        ValueError: If 'name' attribute is not found in the configuration or does not match any known algorithm names.
+    """
     if method_config.name == "dummy":
         return DummyAlgorithm(method_config)
     # model ensemble methods

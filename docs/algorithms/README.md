@@ -44,3 +44,7 @@ def run_model_fusion(cfg: DictConfig):
 ```
 
 In summary, the Fusion Algorithm module is vital for the model merging operations within FusionBench, leveraging sophisticated techniques to ensure optimal fusion and performance evaluation of deep learning models. This capability makes it an indispensable tool for researchers and practitioners focusing on model fusion strategies.
+
+### References
+
+::: fusion_bench.method.load_algorithm_from_config

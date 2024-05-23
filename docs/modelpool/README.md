@@ -36,6 +36,8 @@ model = modelpool.load_model('model_name')
 
 ## References
 
+::: fusion_bench.modelpool.load_modelpool_from_config
+
 ::: fusion_bench.modelpool.ModelPool
 
 [^1]: AdaMerging: Adaptive Model Merging for Multi-Task Learning. http://arxiv.org/abs/2310.02575
