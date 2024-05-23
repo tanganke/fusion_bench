@@ -1,0 +1,20 @@
+type: AutoModelForSeq2SeqLMPool
+models:
+  - name: _pretrained_
+    path: google/flan-t5-base
+  - name: cola
+    path: tanganke/flan-t5-base_glue-cola
+  - name: mnli
+    path: tanganke/flan-t5-base_glue-mnli
+  - name: mrpc
+    path: tanganke/flan-t5-base_glue-mrpc
+  - name: qnli
+    path: tanganke/flan-t5-base_glue-qnli
+  - name: qqp
+    path: tanganke/flan-t5-base_glue-qqp
+  - name: rte
+    path: tanganke/flan-t5-base_glue-rte
+  - name: sst2
+    path: tanganke/flan-t5-base_glue-sst2
+  - name: stsb
+    path: tanganke/flan-t5-base_glue-stsb
