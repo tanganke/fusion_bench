@@ -3,6 +3,8 @@ from typing import Optional
 
 from omegaconf import DictConfig
 
+__all__ = ["ModelFusionAlgorithm"]
+
 
 class ModelFusionAlgorithm(ABC):
     def __init__(self, algorithm_config: Optional[DictConfig] = None):

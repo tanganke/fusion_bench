@@ -13,6 +13,7 @@ nav:
       - Model Merging:
         - Simple Averaging: algorithms/simple_averaging.md
         - Weighted Averaging: algorithms/weighted_averaging.md
+        - Fisher Merging: algorithms/fisher_merging.md
         - Task Arithmetic: algorithms/task_arithmetic.md
         - Ties-Merging: algorithms/ties_merging.md
         - AdaMerging: algorithms/adamerging.md

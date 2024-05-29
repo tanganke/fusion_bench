@@ -5,6 +5,8 @@ from typing import Dict, List, Optional, Union
 from omegaconf import DictConfig
 from torch import nn
 
+__all__ = ["ModelPool", "DictModelPool", "ListModelPool", "to_modelpool"]
+
 
 class ModelPool(ABC):
     """
