@@ -123,7 +123,7 @@ class CLIPTaskWiseAdaMergingAlgorithm(TaskWiseAdaMergingAlgorithm):
                     self.zeroshot_weights[task]
                 )
 
-    def compute_logits(self, module, batch, task) -> Tensor:
+    def compute_logits(self, module, batch, task: str) -> Tensor:
         images, _ = batch
         text_embeds = self.zeroshot_weights[task]
 

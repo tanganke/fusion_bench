@@ -84,6 +84,26 @@ class ModelPool(ABC):
         """
         raise NotImplementedError
 
+    def models(self):
+        for model_name in self.model_names:
+            yield self.load_model(model_name)
+
+    def named_models(self):
+        for model_name in self.model_names:
+            yield model_name, self.load_model(model_name)
+
+    def get_train_dataset(self, model_name: str):
+        """
+        Get the training dataset for the model.
+        """
+        raise NotImplementedError
+
+    def get_test_dataset(self, model_name: str):
+        """
+        Get the testing dataset for the model.
+        """
+        raise NotImplementedError
+
     def setup_taskpool(self, taskpool):
         """
         Setup the taskpool before evaluation.
