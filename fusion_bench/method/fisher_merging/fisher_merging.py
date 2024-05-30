@@ -49,7 +49,7 @@ def get_param_squared_gradients(model: nn.Module, param_names_to_merge: List[str
     """
     param_squared_gradients = {
         param_name: param_value.grad.detach() ** 2
-        for param_name, param_value in model.named_parameters()
+        for param_name, param_value in model.state_dict(keep_vars=True).items()
         if param_name in param_names_to_merge
     }
     return param_squared_gradients
@@ -80,7 +80,7 @@ def get_models_fisher_norm(
         )
         dims = [dim_idx for dim_idx in range(1, models_fisher.dim())]
         # Tensor, shape (num_models_to_merge, ), compute L2 norm for each parameter
-        models_fisher_norm = torch.norm(models_fisher, dim=dims)
+        models_fisher_norm = torch.linalg.vector_norm(models_fisher, dim=dims)
         models_fisher_norm_dict[param_name] = models_fisher_norm
 
     # Tensor, shape (num_models_to_merge, num_parameters)
@@ -94,7 +94,7 @@ def get_models_fisher_norm(
 
 
 def merging_with_fisher_weights(
-    models_to_merge_param_dict: Dict[List[Tensor]],
+    models_to_merge_param_dict: Dict[str, List[Tensor]],
     models_to_merge_fisher_weights_list: list,
     fisher_scaling_coefficients: torch.Tensor,
     normalize_fisher_weight: bool = True,
@@ -364,8 +364,9 @@ class FisherMergingAlgorithm(ModelFusionAlgorithm):
                 models_to_merge_param_dict[param_name].append(param_dict[param_name])
 
             model_to_merge_fisher_weights = self.get_fisher_weights(
+                model_name=name,
                 model=model,
-                train_dataloader=modelpool.get_train_dataset(),
+                train_dataset=modelpool.get_train_dataset(name),
                 param_names_to_merge=param_names_to_merge,
             )
 

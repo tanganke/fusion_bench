@@ -97,11 +97,13 @@ class HuggingFaceClipVisionPool(ModelPool):
                 return dataset_config
         raise ValueError(f"Dataset {model_name} not found in config")
 
-    def get_train_dataset(self, model_name: str):
+    def get_train_dataset(
+        self, model_name: str, clip_processor: Optional[CLIPProcessor] = None
+    ):
         if clip_processor is None:
             # if clip_processor is not provided, try to load the clip_processor from pre-trained model
             clip_processor = self.clip_processor
-        dataset_config = self.get_train_dataset_config(model_name)
+        dataset_config = self.get_train_dataset_config(model_name)["dataset"]
         dataset_config = self.prepare_dataset_config(dataset_config)
         with timeit_context(f"Loading train dataset: {dataset_config.name}"):
             dataset = load_dataset_from_config(dataset_config)

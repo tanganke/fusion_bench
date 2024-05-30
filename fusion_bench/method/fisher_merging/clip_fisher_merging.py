@@ -92,7 +92,6 @@ class FisherMergingAlgorithmForCLIP(FisherMergingAlgorithm):
         param_names_to_merge: List[str],
     ) -> Dict[str, Tensor]:
         # setup dataloader
-        train_dataset = CLIPDataset(train_dataset, self._clip_processor)
         train_dataloader = DataLoader(
             train_dataset,
             batch_size=self.config.batch_size,
@@ -112,7 +111,9 @@ class FisherMergingAlgorithmForCLIP(FisherMergingAlgorithm):
         num_computed_examples = 0
         batches_fisher_weights_list = []
         for step, batch in tqdm(
-            enumerate(train_dataloader), desc=f"computing fisher weights"
+            enumerate(train_dataloader),
+            desc=f"computing fisher weights",
+            total=num_fisher_examples // train_dataloader.batch_size,
         ):
             if num_computed_examples >= num_fisher_examples:
                 break
@@ -151,4 +152,7 @@ class FisherMergingAlgorithmForCLIP(FisherMergingAlgorithm):
         # mean over batches
         for key in model_to_merge_fisher_weights:
             model_to_merge_fisher_weights[key] /= num_computed_examples
+            model_to_merge_fisher_weights[key] = (
+                model_to_merge_fisher_weights[key].detach().cpu()
+            )
         return model_to_merge_fisher_weights
