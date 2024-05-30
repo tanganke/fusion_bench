@@ -21,6 +21,21 @@ $$ \theta^{(j)} = \frac{\sum_{i=1}^{n} \hat{F}_{\theta_i}^{(j)} \theta_i^{(j)}}{
 where $\theta_i$ are the parameters of the individual models, $\hat{F}_{\theta_i}$ are the diagonal Fisher information matrices of the individual models, and $j$ indexes the parameters of the models.
 The Fisher merging algorithm can be considered a per-weight weighed averaging method, where the weights are determined by the Fisher information of each parameter in the models.
 
+## Code Integration
+
+Example of merging eight CLIP-ViT-B/32 models using Fisher merging:
+
+```bash
+fusion_bench method=clip_fisher_merging \
+  modelpool=clip-vit-base-patch32_TA8 \
+  taskpool=clip-vit-classification_TA8
+```
+
+
+## References
+
+::: fusion_bench.method.fisher_merging.fisher_merging.FisherMergingAlgorithm
+
 [^1]: M. Matena, C. Raffel. "Merging Models with Fisher-Weighted Averaging" http://arxiv.org/abs/2111.09832
 [^2]: C. Wu, et al. "Pi-Tuning: Transferring Multimodal Foundation Models with Optimal Multi-task Interpolation". https://github.com/TencentARC/pi-Tuning
 

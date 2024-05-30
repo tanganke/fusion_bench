@@ -116,6 +116,16 @@ fusion_bench method=simple_average \
   taskpool=clip-vit-classification_TA8 taskpool.clip_model=openai/clip-vit-large-patch14 # because when evaluate the model, we need text encoder, so we need to specify the clip model
 ```
 
+#### Fisher Merging
+
+merge CLIP-ViT-B/32 models using Fisher Merging and evaluate on the eight tasks
+
+```bash
+fusion_bench method=clip_fisher_merging \
+  modelpool=clip-vit-base-patch32_TA8 \
+  taskpool=clip-vit-classification_TA8
+```
+
 #### Task Arithmetic
 
 merge CLIP-ViT-B/32 models using task arithmetic and evaluate on the eight tasks
@@ -317,6 +327,7 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
     | Fine-tuned (STL)                      | 75.0   | 78.2 | 95.2     | 99.1    | 97.1 | 98.8  | 99.6  | 79.7 | 90.3    |
     | Model Merging                         |        |      |          |         |      |       |       |      |         |
     | Simple Averaging                      | 65.4   | 62.6 | 70.8     | 76.9    | 64.5 | 54.9  | 86.3  | 50.9 | 66.5    |
+    | Fisher Merging                        | 66.7   | 64.0 | 72.2     | 91.6    | 69.0 | 64.3  | 83.5  | 53.7 | 70.6    |
     | Task Arithmetic ($\lambda=0.3$)       | 57.1   | 55.7 | 64.9     | 76.7    | 77.9 | 68.5  | 96.1  | 47.2 | 68.0    |
     | Ties-Merging ($\lambda=0.3$)          | 67.1   | 64.2 | 74.1     | 76.8    | 77.7 | 69.4  | 94.1  | 54.0 | 72.2    |
     | Task-wise AdaMerging ($\lambda=0.3$)  | 58.6   | 56.9 | 69.8     | 82.4    | 70.3 | 58.9  | 97.2  | 55.3 | 68.7    |
@@ -339,3 +350,4 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
     | Layer-wise AdaMerging ($\lambda=0.3$) | 78.1   | 90.7 | 90.8     | 96.5    | 94.8 | 97.5  | 98.6  | 81.3 | 91.0    |
     | Model Mixing                          |
     | Weight-Ensembling MoE                 | 81.5   | 92.3 | 96.5     | 98.8    | 97.6 | 99.4  | 99.6  | 84.5 | 93.8    |
+

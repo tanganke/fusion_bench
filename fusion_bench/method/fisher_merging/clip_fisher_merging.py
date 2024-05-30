@@ -2,7 +2,7 @@ import logging
 import os
 from copy import deepcopy
 from functools import cache
-from typing import Dict, List
+from typing import Dict, List, cast
 
 import lightning as L
 import torch
@@ -19,6 +19,7 @@ from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.utils import timeit_context
 
 from .fisher_merging import FisherMergingAlgorithm, get_param_squared_gradients
+from fusion_bench.modelpool.huggingface_clip_vision import HuggingFaceClipVisionPool
 
 log = logging.getLogger(__name__)
 
@@ -59,9 +60,16 @@ class FisherMergingAlgorithmForCLIP(FisherMergingAlgorithm):
                 log.info(f"Loading cached zeroshot weights for task: {task}")
                 zeroshot_weights = torch.load(cache_file, map_location="cpu")
             else:
-                # TODO: Construct zero shot classification head for task
-                raise NotImplementedError
-
+                log.info(f"Construct zero shot classification head for task: {task}")
+                classnames, templates = get_classnames_and_templates(
+                    cast(HuggingFaceClipVisionPool, self.modelpool)
+                    .get_train_dataset_config(task)["dataset"]
+                    .name
+                )
+                clip_classifier.set_classification_task(classnames, templates)
+                zeroshot_weights = clip_classifier.zeroshot_weights
+                log.info(f"save zeroshot weights to {cache_file}")
+                torch.save(zeroshot_weights, cache_file)
             self.zeroshot_weights[task] = zeroshot_weights
             if self._fabric is not None:
                 self.zeroshot_weights[task] = self._fabric.to_device(

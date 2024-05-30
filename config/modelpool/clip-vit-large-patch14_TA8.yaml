@@ -61,6 +61,7 @@ tta_datasets:
       name: tanganke/sun397
       split: test
 
+# the following datasets are used for Fisher Merging, RegMean
 train_datasets:
   - name: svhn
     dataset:
