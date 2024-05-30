@@ -6,6 +6,7 @@ from .huggingface_gpt2_classification import HuggingFaceGPT2ClassificationPool
 from .huggingface_llm import AutoModelForCausalLMPool
 from .PeftModelForSeq2SeqLM import PeftModelForSeq2SeqLMPool
 from .AutoModelForSeq2SeqLM import AutoModelForSeq2SeqLMPool
+from .openclip_modelpool import OpenCLIPModelPool
 
 
 def load_modelpool_from_config(modelpool_config: DictConfig):
@@ -27,6 +28,8 @@ def load_modelpool_from_config(modelpool_config: DictConfig):
     if hasattr(modelpool_config, "type"):
         if modelpool_config.type == "huggingface_clip_vision":
             return HuggingFaceClipVisionPool(modelpool_config)
+        elif modelpool_config.type == "OpenCLIPModelPool":
+            return OpenCLIPModelPool(modelpool_config)
         elif modelpool_config.type == "HF_GPT2ForSequenceClassification":
             return HuggingFaceGPT2ClassificationPool(modelpool_config)
         elif modelpool_config.type == "AutoModelForCausalLMPool":

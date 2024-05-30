@@ -1,0 +1,13 @@
+type: OpenCLIPModelPool
+cache_dir: downloads
+model_name: ViT-B-32
+models:
+  - name: _pretrained_
+  - name: Cars
+  - name: DTD
+  - name: EuroSAT
+  - name: GTSRB
+  - name: MNIST
+  - name: RESISC45
+  - name: SUN397
+  - name: SVHN

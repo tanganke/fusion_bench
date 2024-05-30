@@ -1,3 +1,6 @@
+"""
+tasks for HuggingFace CLIP models
+"""
 import logging
 import os
 from copy import deepcopy
