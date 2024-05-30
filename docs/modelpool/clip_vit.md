@@ -126,6 +126,16 @@ fusion_bench method=clip_fisher_merging \
   taskpool=clip-vit-classification_TA8
 ```
 
+#### RegMean
+
+merge CLIP-ViT-B/32 models using RegMean and evaluate on the eight tasks
+
+```bash
+fusion_bench method=clip_regmean \
+  modelpool=clip-vit-base-patch32_TA8 \
+  taskpool=clip-vit-classification_TA8
+```
+
 #### Task Arithmetic
 
 merge CLIP-ViT-B/32 models using task arithmetic and evaluate on the eight tasks
@@ -319,7 +329,7 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
 
 
 === "Table: Mutli-task model merging methods using CLIP-ViT-B/32 models."
-    
+
     | Model                                 | SUN397 | Cars | RESISC45 | EuroSAT | SVHN | GTSRB | MNIST | DTD  | Average |
     | ------------------------------------- | ------ | ---- | -------- | ------- | ---- | ----- | ----- | ---- | ------- |
     | Reference Results                     |        |      |          |         |      |       |       |      |         |
@@ -328,6 +338,7 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
     | Model Merging                         |        |      |          |         |      |       |       |      |         |
     | Simple Averaging                      | 65.4   | 62.6 | 70.8     | 76.9    | 64.5 | 54.9  | 86.3  | 50.9 | 66.5    |
     | Fisher Merging                        | 66.7   | 64.0 | 72.2     | 91.6    | 69.0 | 64.3  | 83.5  | 53.7 | 70.6    |
+    | RegMean                               | 67.8   | 68.9 | 82.5     | 94.4    | 90.6 | 79.2  | 97.6  | 63.2 | 80.5    |
     | Task Arithmetic ($\lambda=0.3$)       | 57.1   | 55.7 | 64.9     | 76.7    | 77.9 | 68.5  | 96.1  | 47.2 | 68.0    |
     | Ties-Merging ($\lambda=0.3$)          | 67.1   | 64.2 | 74.1     | 76.8    | 77.7 | 69.4  | 94.1  | 54.0 | 72.2    |
     | Task-wise AdaMerging ($\lambda=0.3$)  | 58.6   | 56.9 | 69.8     | 82.4    | 70.3 | 58.9  | 97.2  | 55.3 | 68.7    |

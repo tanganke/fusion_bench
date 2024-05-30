@@ -13,18 +13,17 @@ from torch.utils.data import DataLoader
 from tqdm.autonotebook import tqdm
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 
-from fusion_bench.dataset import CLIPDataset, load_dataset_from_config
+from fusion_bench.modelpool.huggingface_clip_vision import HuggingFaceClipVisionPool
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.utils import timeit_context
 
-from .fisher_merging import FisherMergingAlgorithm, get_param_squared_gradients
-from fusion_bench.modelpool.huggingface_clip_vision import HuggingFaceClipVisionPool
+from .regmean import RegMeanAlgorithm
 
 log = logging.getLogger(__name__)
 
 
-class FisherMergingAlgorithmForCLIP(FisherMergingAlgorithm):
+class RegMeanAlgorithmForCLIP(RegMeanAlgorithm):
     _fabric: L.Fabric = None
     _clip_processor: CLIPProcessor = None
     zeroshot_weights = {}
@@ -37,7 +36,7 @@ class FisherMergingAlgorithmForCLIP(FisherMergingAlgorithm):
             self._fabric = L.Fabric(devices=self.config.devices)
             self._fabric.launch()
 
-    def on_fisher_merging_start(self):
+    def on_regmean_start(self):
         clip_model_config = self.modelpool.get_model_config("_pretrained_")
 
         with timeit_context("Loading CLIP processor and pretrained CLIP model."):
@@ -92,13 +91,14 @@ class FisherMergingAlgorithmForCLIP(FisherMergingAlgorithm):
 
         return logits_per_image
 
-    def get_fisher_weights(
+    def get_regmean_weights(
         self,
         model_name: str,
         model: Module,
         train_dataset,
         param_names_to_merge: List[str],
-    ) -> Dict[str, Tensor]:
+        linear_modules_to_merge: Dict[str, Module],
+    ):
         # setup dataloader
         train_dataloader = DataLoader(
             train_dataset,
@@ -110,57 +110,69 @@ class FisherMergingAlgorithmForCLIP(FisherMergingAlgorithm):
         if self._fabric is not None:
             train_dataloader = self._fabric.setup_dataloaders(train_dataloader)
             model = self._fabric.setup(model)
-        num_fisher_examples = self.config.num_fisher_examples
-        if num_fisher_examples % train_dataloader.batch_size != 0:
-            print(
-                f"warning: the number of examples for computing fisher cannot be fully divided by the batch size for model, "
-                "which may lead to a slightly different number of the actually used examples."
+
+        def compute_regmean_weights(module_name: str):
+            """
+            compute the regmean weights, a hook function to deal with each module's input
+            :param module_name: str, module name
+            :return:
+            """
+
+            def hook(module: nn.Module, input: tuple, output: torch.Tensor):
+                # Tensor, shape (batch_size, sequence_length, hidden_dim)
+                x = cast(Tensor, input[0]).detach()
+                batch_num_actual_examples = x.shape[0]
+                # Tensor, shape (batch_size * sequence_length, hidden_dim)
+                x = x.reshape(-1, x.shape[-1])
+                # Tensor, shape (hidden_dim, hidden_dim)
+                xtx = torch.matmul(x.transpose(0, 1), x)
+                # store the averaged weights in regmean_weights
+                if module_name not in regmean_weights.keys():
+                    regmean_weights[module_name] = xtx / x.shape[0]
+                    num_computed_examples[module_name] = x.shape[0]
+                    num_actual_examples[module_name] = batch_num_actual_examples
+                else:
+                    regmean_weights[module_name] = (
+                        regmean_weights[module_name]
+                        * num_computed_examples[module_name]
+                        + xtx
+                    ) / (num_computed_examples[module_name] + x.shape[0])
+                    num_computed_examples[module_name] += x.shape[0]
+                    num_actual_examples[module_name] += batch_num_actual_examples
+
+            return hook
+
+        handles = []
+        # dictionary, regmean matrices for each linear module inputs
+        regmean_weights = {}
+        # dictionary, number of examples (multiplied the sequence length) used for computing regmean matrices
+        num_computed_examples = {}
+        # dictionary, number of actual examples used for computing regmean matrices
+        num_actual_examples = {}
+
+        for module_name, linear_module_to_merge in linear_modules_to_merge.items():
+            # register a hook in the forward process
+            handle = linear_module_to_merge.register_forward_hook(
+                compute_regmean_weights(module_name=module_name)
             )
-        num_computed_examples = 0
-        batches_fisher_weights_list = []
+            handles.append(handle)
         for step, batch in tqdm(
             enumerate(train_dataloader),
-            desc=f"computing fisher weights",
-            total=num_fisher_examples // train_dataloader.batch_size,
+            desc=f"computing regmean weights for model {model_name}",
         ):
-            if num_computed_examples >= num_fisher_examples:
+            if (
+                len(num_actual_examples) > 0
+                and list(num_actual_examples.values())[0]
+                >= self.config.num_regmean_examples
+            ):
                 break
             logits = self.compute_logits(model, batch, model_name)
-            # Tensor, shape (batch_size, num_label_classes)
 
-            # compute fisher weights for classifxication task
-            # use detach() to detach from the computation graph
-            # Tensor, shape (batch_size, num_label_classes)
-            labels_probabilities = torch.softmax(logits, dim=-1).detach()
-            labels_log_probabilities = torch.log_softmax(logits, dim=-1)
-            # sqrt labels_probabilities, since torch.sqrt(labels_probabilities) would be squared in the following squared gradients
-            labels_expectations = (
-                torch.sqrt(labels_probabilities) * labels_log_probabilities
-            )
-            # sum over label classes and batch dimension
-            sum_labels_expectations = labels_expectations.sum(dim=-1).sum(dim=0)
-            model.zero_grad()
-            sum_labels_expectations.backward()
-            # dict, fisher weights of a batch
-            batch_fisher_weights = get_param_squared_gradients(
-                model=model, param_names_to_merge=param_names_to_merge
-            )
+        # remove the added hook
+        for handle in handles:
+            handle.remove()
 
-            batches_fisher_weights_list.append(batch_fisher_weights)
-            num_computed_examples += batch[0].size(0)
+        for module_name in regmean_weights.keys():
+            regmean_weights[module_name] = regmean_weights[module_name].detach().cpu()
 
-        model_to_merge_fisher_weights = {}
-        for batch_fisher_weights in batches_fisher_weights_list:
-            for key in batch_fisher_weights:
-                if key not in model_to_merge_fisher_weights:
-                    model_to_merge_fisher_weights[key] = batch_fisher_weights[key]
-                else:
-                    model_to_merge_fisher_weights[key] += batch_fisher_weights[key]
-
-        # mean over batches
-        for key in model_to_merge_fisher_weights:
-            model_to_merge_fisher_weights[key] /= num_computed_examples
-            model_to_merge_fisher_weights[key] = (
-                model_to_merge_fisher_weights[key].detach().cpu()
-            )
-        return model_to_merge_fisher_weights
+        return regmean_weights

@@ -17,6 +17,7 @@ nav:
         - Task Arithmetic: algorithms/task_arithmetic.md
         - Ties-Merging: algorithms/ties_merging.md
         - AdaMerging: algorithms/adamerging.md
+        - RegMean: algorithms/regmean.md
       - Model Mixing:
         - Depth Upscaling: algorithms/depth_upscaling.md
         - MoE-based Upscaling: algorithms/moe_based_upscaling.md

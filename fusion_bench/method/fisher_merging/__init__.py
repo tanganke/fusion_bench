@@ -1,0 +1,1 @@
+from .fisher_merging import FisherMergingAlgorithm, get_param_names_to_merge

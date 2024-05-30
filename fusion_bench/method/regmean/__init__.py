@@ -1,0 +1,1 @@
+from .regmean import RegMeanAlgorithm

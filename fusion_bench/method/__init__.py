@@ -25,6 +25,7 @@ from .ties_merging.ties_merging import TiesMergingAlgorithm
 from .we_moe.clip_we_moe import CLIPWeightEnsemblingMoEAlgorithm
 from .weighted_average import WeightedAverageAlgorithm
 from .fisher_merging.clip_fisher_merging import FisherMergingAlgorithmForCLIP
+from .regmean.clip_regmean import RegMeanAlgorithmForCLIP
 
 
 def load_algorithm_from_config(method_config: DictConfig):
@@ -59,6 +60,8 @@ def load_algorithm_from_config(method_config: DictConfig):
         return WeightedAverageAlgorithm(method_config)
     elif method_config.name == "clip_fisher_merging":
         return FisherMergingAlgorithmForCLIP(method_config)
+    elif method_config.name == "clip_regmean":
+        return RegMeanAlgorithmForCLIP(method_config)
     elif method_config.name == "task_arithmetic":
         return TaskArithmeticAlgorithm(method_config)
     elif method_config.name == "ties_merging":
