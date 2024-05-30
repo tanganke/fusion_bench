@@ -9,6 +9,8 @@ import json
 import os
 
 import hydra
+import lightning as L
+import torch
 from omegaconf import DictConfig, OmegaConf
 from rich import print as rich_print
 from rich.syntax import Syntax
@@ -47,6 +49,42 @@ def run_model_fusion(cfg: DictConfig):
         print("No task pool specified. Skipping evaluation.")
 
 
+class FabricProgram:
+    _fabric: L.Fabric = None
+
+    def __init__(self, config: DictConfig):
+        self.config = config
+        if self._fabric is None and torch.cuda.is_available():
+            self._fabric = L.Fabric(**config.fabric)
+            self._fabric.launch()
+
+    def _load_and_setup(self, load_fn, *args, **kwargs):
+        obj = load_fn(*args, **kwargs)
+        obj._program = self
+        if hasattr(obj, "_fabric") and self._fabric is not None:
+            obj._fabric = self._fabric
+        return obj
+
+    def run_model_fusion(self):
+        cfg = self.config
+
+        modelpool = self._load_and_setup(load_modelpool_from_config, cfg.modelpool)
+        algorithm = self._load_and_setup(load_algorithm_from_config, cfg.method)
+        merged_model = algorithm.run(modelpool)
+
+        if hasattr(cfg, "taskpool") and cfg.taskpool is not None:
+            taskpool = self._load_and_setup(load_taskpool_from_config, cfg.taskpool)
+            modelpool.setup_taskpool(taskpool)
+            report = taskpool.evaluate(merged_model)
+            if cfg.get("save_report", False):
+                # save report (Dict) to a file
+                # if the directory of `save_report` does not exists, create it
+                os.makedirs(os.path.dirname(cfg.save_report), exist_ok=True)
+                json.dump(report, open(cfg.save_report, "w"))
+        else:
+            print("No task pool specified. Skipping evaluation.")
+
+
 @hydra.main(
     config_path=os.path.join(
         importlib.import_module("fusion_bench").__path__[0], "../config"
@@ -65,7 +103,11 @@ def main(cfg: DictConfig) -> None:
             )
         )
 
-    run_model_fusion(cfg)
+    if cfg.use_fabric:
+        program = FabricProgram(cfg)
+        program.run_model_fusion()
+    else:
+        run_model_fusion(cfg)
 
 
 if __name__ == "__main__":
