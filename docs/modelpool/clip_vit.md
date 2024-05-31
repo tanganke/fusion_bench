@@ -126,6 +126,17 @@ fusion_bench method=clip_fisher_merging \
   taskpool=clip-vit-classification_TA8
 ```
 
+merge CLIP-ViT-L/14 models using Fisher Merging and evaluate on the eight tasks
+
+```bash
+fusion_bench \
+  method=clip_fisher_merging \
+    method.batch_size=8 method.num_workers=4 \
+  modelpool=clip-vit-large-patch14_TA8 \
+  taskpool=clip-vit-classification_TA8 \
+    taskpool.clip_model=openai/clip-vit-large-patch14
+```
+
 #### RegMean
 
 merge CLIP-ViT-B/32 models using RegMean and evaluate on the eight tasks
@@ -134,6 +145,17 @@ merge CLIP-ViT-B/32 models using RegMean and evaluate on the eight tasks
 fusion_bench method=clip_regmean \
   modelpool=clip-vit-base-patch32_TA8 \
   taskpool=clip-vit-classification_TA8
+```
+
+For CLIP-ViT-L/14 models:
+
+```bash
+fusion_bench \
+  method=clip_regmean \
+    method.batch_size=8 method.num_workers=4 \
+  modelpool=clip-vit-large-patch14_TA8 \
+  taskpool=clip-vit-classification_TA8 \
+    taskpool.clip_model=openai/clip-vit-large-patch14
 ```
 
 #### Task Arithmetic
@@ -355,6 +377,8 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
     | Fine-tuned (STL)                      | 82.8   | 92.7 | 97.4     | 99.2    | 97.9 | 99.3  | 99.8  | 85.5 | 94.3    |
     | Model Merging                         |        |      |          |         |      |       |       |      |         |
     | Simple Averaging                      | 72.5   | 81.5 | 82.2     | 90.0    | 81.6 | 74.0  | 96.6  | 61.8 | 80.0    |
+    | Fisher Merging                        |
+    | RegMean                               | 75.3   | 88.4 | 90.0     | 97.1    | 95.9 | 92.4  | 98.5  | 72.6 | 88.8    |
     | Task Arithmetic ($\lambda=0.3$)       | 72.0   | 79.0 | 80.5     | 86.0    | 87.5 | 83.5  | 98.0  | 58.8 | 80.7    |
     | Ties-Merging ($\lambda=0.3$)          | 74.7   | 83.3 | 86.4     | 91.3    | 89.7 | 85.2, | 97.8  | 63.9 | 84.0    |
     | Task-wise AdaMerging ($\lambda=0.3$)  | 75.8   | 80.1 | 77.2     | 83.6    | 68.4 | 93.5  | 93.1  | 69.0 | 80.1    |
