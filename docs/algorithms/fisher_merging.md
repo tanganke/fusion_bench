@@ -31,6 +31,17 @@ fusion_bench method=clip_fisher_merging \
   taskpool=clip-vit-classification_TA8
 ```
 
+Merge eight CLIP-ViT-L/14 models using Fisher merging:
+
+```bash
+fusion_bench \
+  method=clip_fisher_merging \
+    method.batch_size=8 method.num_workers=4 \
+  modelpool=clip-vit-large-patch14_TA8 \
+  taskpool=clip-vit-classification_TA8 \
+    taskpool.clip_model=openai/clip-vit-large-patch14
+```
+
 
 ## References
 
