@@ -19,6 +19,10 @@ from ..method import load_algorithm_from_config
 from ..modelpool import load_modelpool_from_config
 from ..taskpool import load_taskpool_from_config
 
+import logging
+
+log = logging.getLogger(__name__)
+
 
 def run_model_fusion(cfg: DictConfig):
     """
@@ -54,7 +58,8 @@ class FabricProgram:
 
     def __init__(self, config: DictConfig):
         self.config = config
-        if self._fabric is None and torch.cuda.is_available():
+        if self._fabric is None:
+            log.info("Launching Lightning Fabric")
             self._fabric = L.Fabric(**config.fabric)
             self._fabric.launch()
 
