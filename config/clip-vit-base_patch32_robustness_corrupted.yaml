@@ -1,0 +1,18 @@
+defaults:
+  - hydra: default
+  - modelpool: clip-vit-base-patch32_robustness_corrupted
+  - method: dummy
+  - taskpool: clip-vit-base-patch32_robustness_corrupted
+  - _self_
+
+fast_dev_run: false # Run a single batch of data to test the model or method
+use_fabric: true # Use the fabric to run the experiment
+print_config: true # Print the configuration to the console
+save_report: false # path to save the result report
+
+# `corrption` can be one of:
+# contrast, gaussian_noise, impulse_noise, jpeg_compression, motion_blur, pixelate, spatter
+corruption: ???
+
+fabric:
+  devices: 1
