@@ -11,11 +11,10 @@ from torch import Tensor, nn
 from torch.nn.modules import Module
 from torch.utils.data import DataLoader
 from tqdm.autonotebook import tqdm
-from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
+from transformers import GPT2ForSequenceClassification, GPT2Model
+from transformers.data import default_data_collator
+from transformers.models.gpt2.modeling_gpt2 import Conv1D
 
-from fusion_bench.modelpool.huggingface_clip_vision import HuggingFaceClipVisionPool
-from fusion_bench.models.hf_clip import HFCLIPClassifier
-from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.utils import timeit_context
 
 from .regmean import RegMeanAlgorithm
@@ -23,10 +22,10 @@ from .regmean import RegMeanAlgorithm
 log = logging.getLogger(__name__)
 
 
-class RegMeanAlgorithmForCLIP(RegMeanAlgorithm):
+class RegMeanAlgorithmForGPT2(RegMeanAlgorithm):
     _fabric: L.Fabric = None
-    _clip_processor: CLIPProcessor = None
-    zeroshot_weights = {}
+    _include_module_type = [Conv1D]
+    classifiers = {}
 
     def __init__(self, algorithm_config: DictConfig):
         super().__init__(algorithm_config)
@@ -37,59 +36,25 @@ class RegMeanAlgorithmForCLIP(RegMeanAlgorithm):
             self._fabric.launch()
 
     def on_regmean_start(self):
-        clip_model_config = self.modelpool.get_model_config("_pretrained_")
-
-        with timeit_context("Loading CLIP processor and pretrained CLIP model."):
-            self._clip_processor = CLIPProcessor.from_pretrained(clip_model_config.path)
-            clip_model = CLIPModel.from_pretrained(clip_model_config.path)
-
-            clip_classifier = HFCLIPClassifier(clip_model, self._clip_processor)
-            self.visual_projection = clip_model.visual_projection.requires_grad_(False)
-            self.logit_scale = clip_model.logit_scale.exp()
+        for model_name in self.modelpool.model_names:
+            classifier = cast(
+                GPT2ForSequenceClassification,
+                self.modelpool.load_classifier(model_name),
+            ).requires_grad_(False)
+            classifier.transformer = None
             if self._fabric is not None:
-                self.visual_projection = self._fabric.to_device(self.visual_projection)
-                self.logit_scale = self._fabric.to_device(self.logit_scale)
+                classifier = classifier.to(self._fabric.device)
+            self.classifiers[model_name] = classifier
 
-        for task in self.modelpool.model_names:
-            cache_file = os.path.join(
-                self.config.cache_dir,
-                f"{os.path.basename(clip_model_config.path)}_{task}_zeroshot_weights.pt",
-            )
-            if os.path.exists(cache_file):
-                log.info(f"Loading cached zeroshot weights for task: {task}")
-                zeroshot_weights = torch.load(cache_file, map_location="cpu")
-            else:
-                log.info(f"Construct zero shot classification head for task: {task}")
-                classnames, templates = get_classnames_and_templates(
-                    cast(HuggingFaceClipVisionPool, self.modelpool)
-                    .get_train_dataset_config(task)["dataset"]
-                    .name
-                )
-                clip_classifier.set_classification_task(classnames, templates)
-                zeroshot_weights = clip_classifier.zeroshot_weights
-                log.info(f"save zeroshot weights to {cache_file}")
-                torch.save(zeroshot_weights, cache_file)
-            self.zeroshot_weights[task] = zeroshot_weights
-            if self._fabric is not None:
-                self.zeroshot_weights[task] = self._fabric.to_device(
-                    self.zeroshot_weights[task]
-                )
+    def compute_logits(self, module: GPT2Model, batch, task: str) -> Tensor:
+        self.classifiers[task].transformer = module
+        input_ids = batch["input_ids"]
+        attention_mask = batch["attention_mask"]
 
-    def compute_logits(self, module, batch, task: str) -> Tensor:
-        images, _ = batch
-        text_embeds = self.zeroshot_weights[task]
-
-        image_embeds = module(images)[1]
-        image_embeds = self.visual_projection(image_embeds)
-
-        # normalize embeddings
-        image_embeds = image_embeds / image_embeds.norm(p=2, dim=-1, keepdim=True)
-
-        # cosine similarity
-        logits_per_text = torch.matmul(text_embeds, image_embeds.t()) * self.logit_scale
-        logits_per_image = logits_per_text.t()
-
-        return logits_per_image
+        outputs = self.classifiers[task](input_ids, attention_mask=attention_mask)
+        logits = outputs.logits
+        assert logits.dim() == 2
+        return logits
 
     def get_regmean_weights(
         self,
@@ -104,6 +69,7 @@ class RegMeanAlgorithmForCLIP(RegMeanAlgorithm):
             batch_size=self.config.batch_size,
             shuffle=True,
             num_workers=self.config.num_workers,
+            collate_fn=default_data_collator,
             pin_memory=True,
         )
         if self._fabric is not None:

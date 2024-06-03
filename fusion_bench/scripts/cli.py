@@ -81,6 +81,7 @@ class FabricProgram:
             taskpool = self._load_and_setup(load_taskpool_from_config, cfg.taskpool)
             modelpool.setup_taskpool(taskpool)
             report = taskpool.evaluate(merged_model)
+            print(report)
             if cfg.get("save_report", False):
                 # save report (Dict) to a file
                 # if the directory of `save_report` does not exists, create it
