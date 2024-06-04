@@ -1,4 +1,5 @@
 from omegaconf import DictConfig
+from fusion_bench.utils import import_class
 
 from .adamerging.clip_layer_wise_adamerging import CLIPLayerWiseAdaMergingAlgorithm
 from .adamerging.clip_task_wise_adamerging import CLIPTaskWiseAdaMergingAlgorithm
@@ -28,6 +29,10 @@ from .task_arithmetic import TaskArithmeticAlgorithm
 from .ties_merging.ties_merging import TiesMergingAlgorithm
 from .we_moe.clip_we_moe import CLIPWeightEnsemblingMoEAlgorithm
 from .weighted_average import WeightedAverageAlgorithm
+
+
+def _rel_import_class(rel_class_name: str):
+    return import_class(f"fusion_bench.method.{rel_class_name}")
 
 
 def load_algorithm_from_config(method_config: DictConfig):
