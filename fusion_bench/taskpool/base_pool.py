@@ -7,6 +7,8 @@ from tqdm.autonotebook import tqdm
 
 
 class TaskPool(ABC):
+    _program = None
+
     def __init__(self, taskpool_config: DictConfig):
         super().__init__()
         self.config = taskpool_config

@@ -6,6 +6,11 @@ from .huggingface_gpt2_classification import HuggingFaceGPT2ClassificationPool
 from .huggingface_llm import AutoModelForCausalLMPool
 from .PeftModelForSeq2SeqLM import PeftModelForSeq2SeqLMPool
 from .AutoModelForSeq2SeqLM import AutoModelForSeq2SeqLMPool
+from fusion_bench.utils import import_class
+
+
+def _rel_import_class(rel_class_name: str):
+    return import_class(f"fusion_bench.modelpool.{rel_class_name}")
 
 
 def load_modelpool_from_config(modelpool_config: DictConfig):
@@ -35,6 +40,8 @@ def load_modelpool_from_config(modelpool_config: DictConfig):
             return AutoModelForSeq2SeqLMPool(modelpool_config)
         elif modelpool_config.type == "PeftModelForSeq2SeqLMPool":
             return PeftModelForSeq2SeqLMPool(modelpool_config)
+        elif modelpool_config.type == "NYUv2ModelPool":
+            return _rel_import_class("nyuv2_modelpool.NYUv2ModelPool")(modelpool_config)
         else:
             raise ValueError(f"Unknown model pool type: {modelpool_config.type}")
     else:
