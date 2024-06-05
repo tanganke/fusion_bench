@@ -1,11 +1,16 @@
 from omegaconf import DictConfig
 
+from fusion_bench.utils import import_class
+
 from .base_pool import TaskPool
 from .clip_image_classification import CLIPImageClassificationTaskPool
 from .dummy import DummyTaskPool
 from .flan_t5_glue_text_generation import FlanT5GLUETextGenerationTaskPool
 from .gpt2_text_classification import GPT2TextClassificationTaskPool
 
+
+def _rel_import_class(rel_class_name: str):
+    return import_class(f"fusion_bench.taskpool.{rel_class_name}")
 
 def load_taskpool_from_config(taskpool_config: DictConfig):
     """
@@ -32,6 +37,8 @@ def load_taskpool_from_config(taskpool_config: DictConfig):
             return GPT2TextClassificationTaskPool(taskpool_config)
         elif taskpool_config.type == "FlanT5GLUETextGenerationTaskPool":
             return FlanT5GLUETextGenerationTaskPool(taskpool_config)
+        elif taskpool_config.type == "NYUv2TaskPool":
+            return _rel_import_class("nyuv2_taskpool.NYUv2TaskPool")(taskpool_config)
         else:
             raise ValueError(f"Unknown task pool type: {taskpool_config.type}")
     else:

@@ -82,11 +82,11 @@ The type of the modelpool is `huggingface_clip_vision`, corresponding to the mod
 
 ::: fusion_bench.modelpool.HuggingFaceClipVisionPool
 
-### Basic Examples
+## Basic Examples
 
 Here are some basic examples of using the CLIP-ViT models for open vocabulary image classification with different fusion methods, using the [`fusion_bench`](../cli/fusion_bench.md) command line interface.
 
-#### Simple Averaging
+### Simple Averaging
 
 merge CLIP-ViT-B/32 models using simple average and evaluate on the eight tasks
 
@@ -116,7 +116,7 @@ fusion_bench method=simple_average \
   taskpool=clip-vit-classification_TA8 taskpool.clip_model=openai/clip-vit-large-patch14 # because when evaluate the model, we need text encoder, so we need to specify the clip model
 ```
 
-#### Fisher Merging
+### Fisher Merging
 
 merge CLIP-ViT-B/32 models using Fisher Merging and evaluate on the eight tasks
 
@@ -126,7 +126,18 @@ fusion_bench method=clip_fisher_merging \
   taskpool=clip-vit-classification_TA8
 ```
 
-#### RegMean
+merge CLIP-ViT-L/14 models using Fisher Merging and evaluate on the eight tasks
+
+```bash
+fusion_bench \
+  method=clip_fisher_merging \
+    method.batch_size=8 method.num_workers=4 \
+  modelpool=clip-vit-large-patch14_TA8 \
+  taskpool=clip-vit-classification_TA8 \
+    taskpool.clip_model=openai/clip-vit-large-patch14
+```
+
+### RegMean
 
 merge CLIP-ViT-B/32 models using RegMean and evaluate on the eight tasks
 
@@ -136,7 +147,18 @@ fusion_bench method=clip_regmean \
   taskpool=clip-vit-classification_TA8
 ```
 
-#### Task Arithmetic
+For CLIP-ViT-L/14 models:
+
+```bash
+fusion_bench \
+  method=clip_regmean \
+    method.batch_size=8 method.num_workers=4 \
+  modelpool=clip-vit-large-patch14_TA8 \
+  taskpool=clip-vit-classification_TA8 \
+    taskpool.clip_model=openai/clip-vit-large-patch14
+```
+
+### Task Arithmetic
 
 merge CLIP-ViT-B/32 models using task arithmetic and evaluate on the eight tasks
 
@@ -179,7 +201,7 @@ fusion_bench method=task_arithmetic method.scaling_factor=0.3\
   taskpool=clip-vit-classification_TA8 taskpool.clip_model=openai/clip-vit-large-patch14
 ```
 
-#### Ties-Merging
+### Ties-Merging
 
 merge CLIP-ViT-B/32 models using Ties-Merging and evaluate on the eight tasks
 
@@ -211,7 +233,7 @@ fusion_bench method=ties_merging method.scaling_factor=0.3 method.threshold=20 \
 ```
 
 
-#### AdaMerging
+### AdaMerging
 
 merge CLIP-ViT-B/32 models using task-wise AdaMerging and evaluate on the eight tasks, and save the merging weights by specifying the `method.save_merging_weights` parameter
 
@@ -280,7 +302,7 @@ fusion_bench \
   taskpool=clip-vit-classification_TA8 taskpool.clip_model=openai/clip-vit-large-patch14
 ```
 
-#### Weight-Ensembling MoE
+### Weight-Ensembling MoE
 
 fuse CLIP-ViT-B/32 models using Weight-Ensembling Mixture of Experts and evaluate on the eight tasks
 
@@ -330,11 +352,11 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
 
 === "Table: Mutli-task model merging methods using CLIP-ViT-B/32 models."
 
-    | Model                                 | SUN397 | Cars | RESISC45 | EuroSAT | SVHN | GTSRB | MNIST | DTD  | Average |
+    | Method                                | SUN397 | Cars | RESISC45 | EuroSAT | SVHN | GTSRB | MNIST | DTD  | Average |
     | ------------------------------------- | ------ | ---- | -------- | ------- | ---- | ----- | ----- | ---- | ------- |
     | Reference Results                     |        |      |          |         |      |       |       |      |         |
-    | Pre-trained                           | 63.2   | 59.9 | 60.5     | 45.6    | 23.5 | 30.4  | 47.6  | 43.9 | 46.8    |
-    | Fine-tuned (STL)                      | 75.0   | 78.2 | 95.2     | 99.1    | 97.1 | 98.8  | 99.6  | 79.7 | 90.3    |
+    | Pre-trained                           | 63.2   | 59.8 | 60.7     | 46.0    | 31.6 | 32.5  | 48.2  | 43.9 | 48.2    |
+    | Fine-tuned (STL)                      | 75.0   | 78.3 | 95.2     | 99.0    | 97.3 | 98.9  | 99.6  | 79.7 | 90.3    |
     | Model Merging                         |        |      |          |         |      |       |       |      |         |
     | Simple Averaging                      | 65.4   | 62.6 | 70.8     | 76.9    | 64.5 | 54.9  | 86.3  | 50.9 | 66.5    |
     | Fisher Merging                        | 66.7   | 64.0 | 72.2     | 91.6    | 69.0 | 64.3  | 83.5  | 53.7 | 70.6    |
@@ -348,17 +370,110 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
 
 === "Table: Mutli-task model merging methods using CLIP-ViT-L/14 models."
 
-    | Model                                 | SUN397 | Cars | RESISC45 | EuroSAT | SVHN | GTSRB | MNIST | DTD  | Average |
+    | Method                                | SUN397 | Cars | RESISC45 | EuroSAT | SVHN | GTSRB | MNIST | DTD  | Average |
     | ------------------------------------- | ------ | ---- | -------- | ------- | ---- | ----- | ----- | ---- | ------- |
     | Reference Results                     |        |      |          |         |      |       |       |      |         |
-    | Pre-trained                           | 68.3   | 77.7 | 71.0     | 61.5    | 58.8 | 43.8  | 76.0  | 55.5 | 64.1    |
-    | Fine-tuned (STL)                      | 82.8   | 92.7 | 97.4     | 99.2    | 97.9 | 99.3  | 99.8  | 85.5 | 94.3    |
+    | Pre-trained                           | 68.3   | 77.8 | 71.0     | 58.9    | 58.4 | 50.6  | 76.4  | 55.5 | 64.6    |
+    | Fine-tuned (STL)                      | 82.8   | 92.9 | 97.4     | 99.2    | 97.9 | 99.2  | 99.8  | 85.5 | 94.3    |
     | Model Merging                         |        |      |          |         |      |       |       |      |         |
     | Simple Averaging                      | 72.5   | 81.5 | 82.2     | 90.0    | 81.6 | 74.0  | 96.6  | 61.8 | 80.0    |
+    | Fisher Merging                        | 70.6   | 79.4 | 84.1     | 98.1    | 74.7 | 85.0  | 89.5  | 61.0 | 80.3    |
+    | RegMean                               | 75.3   | 88.4 | 90.0     | 97.1    | 95.9 | 92.4  | 98.5  | 72.6 | 88.8    |
     | Task Arithmetic ($\lambda=0.3$)       | 72.0   | 79.0 | 80.5     | 86.0    | 87.5 | 83.5  | 98.0  | 58.8 | 80.7    |
     | Ties-Merging ($\lambda=0.3$)          | 74.7   | 83.3 | 86.4     | 91.3    | 89.7 | 85.2, | 97.8  | 63.9 | 84.0    |
     | Task-wise AdaMerging ($\lambda=0.3$)  | 75.8   | 80.1 | 77.2     | 83.6    | 68.4 | 93.5  | 93.1  | 69.0 | 80.1    |
     | Layer-wise AdaMerging ($\lambda=0.3$) | 78.1   | 90.7 | 90.8     | 96.5    | 94.8 | 97.5  | 98.6  | 81.3 | 91.0    |
     | Model Mixing                          |
     | Weight-Ensembling MoE                 | 81.5   | 92.3 | 96.5     | 98.8    | 97.6 | 99.4  | 99.6  | 84.5 | 93.8    |
+
+## Scope
+
+### Task Vector Cosine Similarity
+
+Compute the cosine similarities between the task vectors and save the results to a CSV file.
+
+```bash
+# CLIP-ViT-B/32 models
+fusion_bench \
+  method=task_vector_cos_similarity \
+    method.save_to_csv='outputs/clip-vit-base-patch32_cos.csv' \
+  modelpool=clip-vit-base-patch32_TA8 \
+  taskpool=dummy  # do not evaluate the model
+
+# CLIP-ViT-L/14 models
+fusion_bench \
+  method=task_vector_cos_similarity \
+    method.save_to_csv='outputs/clip-vit-large-patch14_cos.csv' \
+  modelpool=clip-vit-large-patch14_TA8 \
+  tsakpool=dummy
+```
+
+<figure markdown="span">
+  ![alt text](clip-vit-cos.png)
+  <figcaption>Cosine similarity matrices of task vectors for CLIP-ViT-B/32 and CLIP-ViT-L/14 models.</figcaption>
+</figure>
+
+### Generalization and Robustness Evaluation
+
+You can also evaluate the generalization and robustness of different multi-task model fusion methods by change the configurations.
+
+### Experimental Results
+
+=== "Table: Results of the generalization experiments (Exp1)."
+
+    |                       | Seen Tasks |      |          |      |      |       |      | Unseen Tasks |         |      |
+    | --------------------- | ---------- | ---- | -------- | ---- | ---- | ----- | ---- | ------------ | ------- | ---- |
+    | Method                | SUN397     | Cars | RESISC45 | DTD  | SVHN | GTSRB | Avg. | MNIST        | EuroSAT | Avg. |
+    | Fisher Merging        | 65.5       | 67.2 | 78.2     | 57.6 | 84.2 | 75.9  | 71.4 | 71.8         | 49.4    | 60.6 |
+    | RegMean               | 68.7       | 70.0 | 86.5     | 65.9 | 93.9 | 86.7  | 78.6 | 82.2         | 49.3    | 65.7 |
+    | Task Arithmetic       | 64.3       | 63.0 | 73.2     | 54.9 | 84.7 | 79.5  | 69.9 | 75.5         | 42.6    | 59.1 |
+    | Ties-Merging          | 68.3       | 65.5 | 76.9     | 54.9 | 75.4 | 72.0  | 68.9 | 73.1         | 47.3    | 60.2 |
+    | Layer-wise AdaMerging | 68.4       | 71.9 | 87.9     | 69.1 | 92.2 | 93.8  | 80.5 | 77.7         | 47.3    | 62.5 |
+    | Weight-Ensembling MoE | 75.4       | 77.5 | 94.3     | 77.0 | 96.8 | 98.7  | 86.6 | 78.3         | 44.0    | 61.1 |
+
+=== "Table: Results of the generalization experiments (Exp2)."
+
+    |                       | Seen Tasks |      |       |         |      |       |      | Unseen Tasks |      |      |
+    | --------------------- | ---------- | ---- | ----- | ------- | ---- | ----- | ---- | ------------ | ---- | ---- |
+    | Method                | SUN397     | Cars | GTSRB | EuroSAT | DTD  | MNIST | Avg. | RESISC45     | SVHN | Avg. |
+    | Fisher Merging        | 68.1       | 67.4 | 67.2  | 86.4    | 58.6 | 81.6  | 71.5 | 60.2         | 42.5 | 51.3 |
+    | RegMean               | 69.4       | 70.5 | 86.9  | 97.0    | 67.1 | 98.3  | 81.5 | 50.2         | 51.5 | 50.8 |
+    | Task Arithmetic       | 65.2       | 63.6 | 76.1  | 87.1    | 56.4 | 94.2  | 73.8 | 52.4         | 45.2 | 48.8 |
+    | Ties-Merging          | 68.2       | 65.9 | 70.0  | 81.2    | 56.0 | 89.0  | 71.7 | 60.3         | 47.3 | 53.8 |
+    | Layer-wise AdaMerging | 69.8       | 72.4 | 95.5  | 95.1    | 70.7 | 98.1  | 83.6 | 48.7         | 60.7 | 54.7 |
+    | Weight-Ensembling MoE | 74.3       | 78.1 | 98.8  | 98.7    | 75.1 | 99.5  | 87.4 | 47.3         | 51.3 | 49.3 |
+
+
+Table: Results of the robustness experiments ($\lambda=0.3$).
+
+| Method                | Cars           | EuroSAT | RESISC45 | GTSRB | Avg. | Cars             | EuroSAT | RESISC45 | GTSRB | Avg. |
+| --------------------- | -------------- | ------- | -------- | ----- | ---- | ---------------- | ------- | -------- | ----- | ---- |
+|                       | Clean Test set |         |          |       |      | Motion Blur      |         |          |       |      |
+| Fisher Merging        | 66.0           | 92.7    | 83.7     | 78.7  | 80.3 | 60.7             | 57.6    | 81.7     | 78.4  | 69.6 |
+| RegMean               | 72.1           | 97.5    | 88.9     | 93.9  | 88.1 | 70.0             | 71.3    | 87.5     | 86.8  | 78.9 |
+| Task Arithmetic       | 64.6           | 91.8    | 80.2     | 74.8  | 77.9 | 62.4             | 59.2    | 78.5     | 63.3  | 65.9 |
+| Ties-Merging          | 65.2           | 83.3    | 78.1     | 67.4  | 73.5 | 64.4             | 53.9    | 76.4     | 57.1  | 62.9 |
+| Layer-wise AdaMerging | 75.2           | 94.3    | 87.6     | 96.7  | 88.5 | 72.4             | 72.7    | 85.3     | 94.3  | 81.2 |
+| Weight-Ensembling MoE | 77.4           | 98.9    | 94.4     | 99.0  | 92.4 | 76.5             | 74.2    | 93.7     | 97.4  | 85.5 |
+|                       | Impulse Noise  |         |          |       |      | Gaussian Noise   |         |          |       |      |
+| Fisher Merging        | 61.5           | 50.0    | 74.7     | 52.6  | 59.7 | 61.6             | 48.1    | 76.0     | 51.3  | 59.3 |
+| RegMean               | 66.9           | 51.0    | 80.6     | 68.7  | 66.8 | 69.4             | 41.8    | 84.0     | 67.7  | 65.7 |
+| Task Arithmetic       | 59.8           | 53.3    | 72.3     | 45.0  | 57.6 | 61.5             | 52.5    | 75.0     | 50.1  | 59.8 |
+| Ties-Merging          | 60.2           | 45.6    | 69.8     | 38.3  | 53.5 | 61.8             | 47.3    | 73.1     | 42.3  | 56.1 |
+| Layer-wise AdaMerging | 69.2           | 40.0    | 79.6     | 83.3  | 68.0 | 70.0             | 53.3    | 82.1     | 80.0  | 71.4 |
+| Weight-Ensembling MoE | 75.1           | 9.7     | 91.5     | 91.8  | 67.0 | 76.5             | 9.6     | 92.7     | 88.7  | 66.8 |
+|                       | Pixelate       |         |          |       |      | Spatter          |         |          |       |      |
+| Fisher Merging        | 2.2            | 34.0    | 17.0     | 63.2  | 29.1 | 61.4             | 64.2    | 74.6     | 47.3  | 61.9 |
+| RegMean               | 2.3            | 38.3    | 18.2     | 89.4  | 37.0 | 67.7             | 60.0    | 81.3     | 81.9  | 72.7 |
+| Task Arithmetic       | 2.3            | 33.2    | 19.1     | 65.6  | 30.0 | 61.0             | 62.5    | 72.8     | 57.0  | 63.3 |
+| Ties-Merging          | 3.3            | 31.8    | 18.0     | 58.5  | 27.9 | 61.3             | 52.9    | 70.3     | 48.1  | 58.2 |
+| Layer-wise AdaMerging | 1.3            | 52.9    | 21.0     | 91.0  | 41.5 | 68.4             | 55.9    | 78.3     | 92.3  | 73.7 |
+| Weight-Ensembling MoE | 0.5            | 11.6    | 2.3      | 97.5  | 28.0 | 75.1             | 9.7     | 91.4     | 96.3  | 68.1 |
+|                       | Contrast       |         |          |       |      | JPEG Compression |         |          |       |      |
+| Fisher Merging        | 63.8           | 58.4    | 75.5     | 70.4  | 67.0 | 66.3             | 67.6    | 82.6     | 58.9  | 68.8 |
+| RegMean               | 69.6           | 64.8    | 84.4     | 90.0  | 77.2 | 71.5             | 72.6    | 88.7     | 82.2  | 78.7 |
+| Task Arithmetic       | 62.3           | 55.7    | 75.3     | 70.8  | 66.0 | 63.9             | 66.1    | 80.1     | 61.0  | 67.8 |
+| Ties-Merging          | 64.2           | 52.4    | 74.8     | 63.5  | 63.7 | 65.0             | 59.5    | 77.9     | 53.2  | 63.9 |
+| Layer-wise AdaMerging | 73.1           | 67.4    | 83.0     | 96.2  | 79.9 | 72.9             | 70.7    | 86.3     | 90.6  | 80.1 |
+| Weight-Ensembling MoE | 77.2           | 34.7    | 93.1     | 98.4  | 75.9 | 77.3             | 61.0    | 94.1     | 95.7  | 82.0 |
 

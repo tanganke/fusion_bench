@@ -9,7 +9,7 @@ nav:
         - Simple Ensemble: algorithms/simple_ensemble.md
         - Weighted Ensemble: algorithms/weighted_ensemble.md
         - Max-Model Predictor: algorithms/max-model_predictor.md
-        - Model Specification: algorithms/specification_ensemble.md
+        # - Model Specification: algorithms/specification_ensemble.md
       - Model Merging:
         - Simple Averaging: algorithms/simple_averaging.md
         - Weighted Averaging: algorithms/weighted_averaging.md
@@ -23,11 +23,12 @@ nav:
         - MoE-based Upscaling: algorithms/moe_based_upscaling.md
         - MoE-based Merging: algorithms/moe_based_merging.md
         - Weight-Ensembling MoE: algorithms/weight_ensembling_moe.md
-        - Model Stitching: algorithms/model_stitching.md
+        # - Model Stitching: algorithms/model_stitching.md
         - Model Recombination: algorithms/model_recombination.md
   - Model Pool (Benchmark):
       - Introduction: modelpool/README.md
       - CLIP-ViT Models: modelpool/clip_vit.md
+      - ResNet Models for Sence Understanding: modelpool/nyuv2.md
       - GPT-2 Models for Text Classification: modelpool/gpt2_classification.md
       - Flan-T5 Models for Text Generation: modelpool/flan-t5_generation.md
   - Task Pool (Evaluation):

@@ -1,4 +1,4 @@
-# Fisher Merging
+# (Diagonal) Fisher Merging
 
 The Fisher merging algorithm [^1] is a per-parameter weighed averaging method that assigns weights to the models based on the Fisher information matrix of the models on some labeled data.
 The Fisher information matrix $F_\theta$ of a model with parameters $\theta$ can be expressed as:
@@ -31,6 +31,26 @@ fusion_bench method=clip_fisher_merging \
   taskpool=clip-vit-classification_TA8
 ```
 
+Merge eight CLIP-ViT-L/14 models using Fisher merging:
+
+```bash
+fusion_bench \
+  method=clip_fisher_merging \
+    method.batch_size=8 method.num_workers=4 \
+  modelpool=clip-vit-large-patch14_TA8 \
+  taskpool=clip-vit-classification_TA8 \
+    taskpool.clip_model=openai/clip-vit-large-patch14
+```
+
+Merge GPT-2 models for text classification tasks:
+
+```bash
+fusion_bench \
+  method=gpt2_fisher_merging \
+    method.num_fisher_examples=512 method.batch_size=8 \
+  modelpool=gpt-2_glue \
+  taskpool=gpt-2_glue
+```
 
 ## References
 
