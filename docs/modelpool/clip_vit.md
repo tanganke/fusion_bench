@@ -388,7 +388,34 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
 
 ## Scope
 
-You can also evaluate the generalization and robustness of different multi-task model fusion methods by change the configurations
+### Task Vector Cosine Similarity
+
+Compute the cosine similarities between the task vectors and save the results to a CSV file.
+
+```bash
+# CLIP-ViT-B/32 models
+fusion_bench \
+  method=task_vector_cos_similarity \
+    method.save_to_csv='outputs/clip-vit-base-patch32_cos.csv' \
+  modelpool=clip-vit-base-patch32_TA8 \
+  taskpool=dummy  # do not evaluate the model
+
+# CLIP-ViT-L/14 models
+fusion_bench \
+  method=task_vector_cos_similarity \
+    method.save_to_csv='outputs/clip-vit-large-patch14_cos.csv' \
+  modelpool=clip-vit-large-patch14_TA8 \
+  tsakpool=dummy
+```
+
+<figure markdown="span">
+  ![alt text](clip-vit-cos.png)
+  <figcaption>Cosine similarity matrices of task vectors for CLIP-ViT-B/32 and CLIP-ViT-L/14 models.</figcaption>
+</figure>
+
+### Generalization and Robustness Evaluation
+
+You can also evaluate the generalization and robustness of different multi-task model fusion methods by change the configurations.
 
 ### Experimental Results
 
