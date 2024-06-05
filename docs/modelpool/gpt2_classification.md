@@ -70,6 +70,29 @@ fusion_bench method=simple_average \
   taskpool=gpt-2_glue
 ```
 
+### Fisher merging
+
+merge GPT-2 models using [Fisher Merging](../algorithms/fisher_merging.md) and evluate the merged model
+
+```bash
+fusion_bench \
+  method=gpt2_fisher_merging \
+    method.batch_size=8 method.num_fisher_examples=512 \
+  modelpool=gpt-2_glue \
+  taskpool=gpt-2_glue
+```
+
+### RegMean
+
+merge GPT-2 models using [RegMean](../algorithms/regmean.md) and evaluate the merged model
+
+```bash
+fusion_bench \
+  method=gpt2_regmean \
+  modelpool=gpt-2_glue \
+  taskpool=gpt-2_glue
+```
+
 ### Task Arithmetic
 
 merge using [Task Arithmetic](../algorithms/task_arithmetic.md) on the seven tasks
@@ -159,5 +182,7 @@ Table: Multi-task model merging methods using GPT-2 models
 | Fine-tuned (STL)                | 76.8 | 82.1 | 80.4 | 88.3 | 89.6 | 65.3 | 91.2  | 82.0 |
 | Model Merging                   |
 | Simple Average                  | 55.0 | 55.1 | 51.0 | 57.6 | 76.7 | 44.8 | 52.5  | 56.1 |
+| Fisher Merging                  | 54.8 | 58.0 | 39.5 | 63.3 | 81.5 | 49.1 | 64.7  | 58.7 |
+| RegMean                         | 61.7 | 70.4 | 65.4 | 69.7 | 78.8 | 56.0 | 79.7  | 68.8 |
 | Task Arithmetic ($\lambda=0.5$) | 68.7 | 68.6 | 69.6 | 70.5 | 81.8 | 47.3 | 83.6  | 70.0 |
 | Ties-Merging ($\lambda=0.6$)    | 68.4 | 71.4 | 68.4 | 69.6 | 82.4 | 47.7 | 81.8  | 70.0 |

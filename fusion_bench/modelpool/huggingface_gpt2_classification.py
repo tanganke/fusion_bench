@@ -6,6 +6,7 @@ from transformers import GPT2ForSequenceClassification, GPT2Model, GPT2Tokenizer
 from fusion_bench.modelpool import ModelPool
 from fusion_bench.utils import timeit_context
 from torch import nn
+from fusion_bench.dataset.gpt2_glue import TokenizedGLUE
 
 log = logging.getLogger(__name__)
 
@@ -62,3 +63,11 @@ class HuggingFaceGPT2ClassificationPool(ModelPool):
         if getattr(taskpool, "_tokenizer", None) is None:
             taskpool._tokenizer = self.tokenizer
         taskpool._modelpool = self
+
+    def get_train_dataset(self, model_name: str):
+        log.info('Loading train dataset: "{}"'.format(model_name))
+        for dataset_config in self.config.train_datasets:
+            if dataset_config.name == model_name:
+                return TokenizedGLUE(tokenizer=self.tokenizer).load_dataset(
+                    dataset_config.dataset.name
+                )[dataset_config.dataset.split]

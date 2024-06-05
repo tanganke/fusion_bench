@@ -28,6 +28,7 @@ nav:
   - Model Pool (Benchmark):
       - Introduction: modelpool/README.md
       - CLIP-ViT Models: modelpool/clip_vit.md
+      - ResNet Models for Sence Understanding: modelpool/nyuv2.md
       - GPT-2 Models for Text Classification: modelpool/gpt2_classification.md
       - Flan-T5 Models for Text Generation: modelpool/flan-t5_generation.md
   - Task Pool (Evaluation):

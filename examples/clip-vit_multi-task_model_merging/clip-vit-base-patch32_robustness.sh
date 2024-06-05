@@ -8,7 +8,7 @@ fusion_bench \
 
 for corruption in contrast gaussian_noise impulse_noise jpeg_compression motion_blur pixelate spatter
 do
-    fusion_bench --config-name clip-vit-base_patch32_robustness_corrupted \
+    fusion_bench --config-name clip-vit-base-patch32_robustness_corrupted \
         corruption=$corruption \
         method=task_arithmetic \
             method.scaling_factor=0.3 \
@@ -25,7 +25,7 @@ fusion_bench \
 
 for corruption in contrast gaussian_noise impulse_noise jpeg_compression motion_blur pixelate spatter
 do
-    fusion_bench --config-name clip-vit-base_patch32_robustness_corrupted \
+    fusion_bench --config-name clip-vit-base-patch32_robustness_corrupted \
         corruption=$corruption \
         method=ties_merging \
             method.scaling_factor=0.3 \
@@ -41,7 +41,7 @@ fusion_bench \
 
 for corruption in contrast gaussian_noise impulse_noise jpeg_compression motion_blur pixelate spatter
 do
-    fusion_bench --config-name clip-vit-base_patch32_robustness_corrupted \
+    fusion_bench --config-name clip-vit-base-patch32_robustness_corrupted \
         corruption=$corruption \
         method=clip_fisher_merging \
         save_report=outputs/clip-vit-base-patch32_robustness_corrupted_${corruption}_clip_fisher_merging.json
@@ -56,7 +56,7 @@ fusion_bench \
 
 for corruption in contrast gaussian_noise impulse_noise jpeg_compression motion_blur pixelate spatter
 do
-    fusion_bench --config-name clip-vit-base_patch32_robustness_corrupted \
+    fusion_bench --config-name clip-vit-base-patch32_robustness_corrupted \
         corruption=$corruption \
         method=clip_regmean \
         save_report=outputs/clip-vit-base-patch32_robustness_corrupted_${corruption}_clip_regmean.json
@@ -73,7 +73,7 @@ fusion_bench \
 
 for corruption in contrast gaussian_noise impulse_noise jpeg_compression motion_blur pixelate spatter
 do
-    fusion_bench --config-name clip-vit-base_patch32_robustness_corrupted \
+    fusion_bench --config-name clip-vit-base-patch32_robustness_corrupted \
         corruption=$corruption \
         method=adamerging \
             method.name=clip_layer_wise_adamerging \
@@ -93,7 +93,7 @@ fusion_bench \
 
 for corruption in contrast gaussian_noise impulse_noise jpeg_compression motion_blur pixelate spatter
 do
-    fusion_bench --config-name clip-vit-base_patch32_robustness_corrupted \
+    fusion_bench --config-name clip-vit-base-patch32_robustness_corrupted \
         corruption=$corruption \
         method=weight_ensembling_moe \
             method.name=clip_weight_ensembling_moe \
