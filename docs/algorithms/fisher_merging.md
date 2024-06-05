@@ -1,4 +1,4 @@
-# Fisher Merging
+# (Diagonal) Fisher Merging
 
 The Fisher merging algorithm [^1] is a per-parameter weighed averaging method that assigns weights to the models based on the Fisher information matrix of the models on some labeled data.
 The Fisher information matrix $F_\theta$ of a model with parameters $\theta$ can be expressed as:
