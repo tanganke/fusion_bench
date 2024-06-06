@@ -10,3 +10,5 @@ devices: 1
 cache_dir: outputs
 batch_size: 32
 num_workers: 0
+
+merge_dtype: null

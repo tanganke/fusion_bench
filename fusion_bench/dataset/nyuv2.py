@@ -80,7 +80,7 @@ class NYUv2(Dataset):
         ).float()
         semantic = torch.from_numpy(
             np.load(self.data_path + "/label/{:d}.npy".format(index))
-        ).float()
+        ).long()
         depth = torch.from_numpy(
             np.moveaxis(
                 np.load(self.data_path + "/depth/{:d}.npy".format(index)), -1, 0

@@ -88,7 +88,7 @@ class SimpleAverageAlgorithm(ModelFusionAlgorithm):
 
 class SimpleAverageAlgorithmFP64(ModelFusionAlgorithm):
     """
-    This class is similar to SimpleAverageAlgorithm, but it uses float64 for the state dict arithmetic.
+    This class is similar to `SimpleAverageAlgorithm`, but it uses `float64` for the state dict arithmetic.
     """
 
     @torch.no_grad()
@@ -131,7 +131,7 @@ class SimpleAverageAlgorithmFP64(ModelFusionAlgorithm):
                 )
 
         sd = state_dict_mul(sd, 1 / len(modelpool.model_names))
-        for name, param in forward_model.state_dict():
+        for name, param in forward_model.named_parameters():
             sd[name] = sd[name].to(param.dtype)
         forward_model.load_state_dict(sd)
         return forward_model

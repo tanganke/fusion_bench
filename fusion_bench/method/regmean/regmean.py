@@ -81,9 +81,10 @@ def reduce_non_diagonal_elements(
 
 def merging_with_regmean_weights(
     models_to_merge_param_dict: dict,
-    models_to_merge_regmean_weights_list: list,
+    models_to_merge_regmean_weights_list: List[Tensor],
     reduce_non_diagonal_ratio: float = 1.0,
     weight_transpose: bool = True,
+    merge_dtype=None,
 ):
     """
     merge parameters of different models with computed regmean weights
@@ -95,7 +96,7 @@ def merging_with_regmean_weights(
     :return:
     """
     # dict, dictionary of model parameters
-    merged_params = {}
+    merged_params: Dict[str, Tensor] = {}
 
     for param_name, param_value_list in models_to_merge_param_dict.items():
         merged_by_regmean = False
@@ -110,6 +111,10 @@ def merging_with_regmean_weights(
                 ):
                     # Tensor, shape (hidden_dim, hidden_dim)
                     module_regmean_weights = model_to_merge_regmean_weights[module_name]
+                    if merge_dtype is not None:
+                        module_regmean_weights = module_regmean_weights.to(
+                            dtype=merge_dtype
+                        )
 
                     # reduce non-diagonal elements
                     module_regmean_weights = reduce_non_diagonal_elements(
@@ -119,6 +124,10 @@ def merging_with_regmean_weights(
                     module_regmean_weights_list.append(module_regmean_weights)
 
                     model_to_merge_param = param_value_list[model_idx]
+                    if merge_dtype is not None:
+                        model_to_merge_param = model_to_merge_param.to(
+                            dtype=merge_dtype
+                        )
                     # since the weight shape of Linear module is (output_size, input_size), we need to transpose it
                     param_multiplied_results.append(
                         torch.matmul(
@@ -287,6 +296,18 @@ class RegMeanAlgorithm(ModelFusionAlgorithm):
         self.modelpool = modelpool
         self.on_regmean_start()
 
+        merge_dtype = self.config.get("merge_dtype", None)
+        if merge_dtype is not None:
+            if merge_dtype == "float16" or merge_dtype == "fp16":
+                merge_dtype = torch.float16
+            elif merge_dtype == "float32" or merge_dtype == "fp32":
+                merge_dtype = torch.float32
+            elif merge_dtype == "float64" or merge_dtype == "fp64":
+                merge_dtype = torch.float64
+            else:
+                raise ValueError(f"Unsupported merge_dtype: {merge_dtype}")
+            log.info(f"Using merge_dtype: {merge_dtype}")
+
         # dictionary of list, where key is the parameter name,
         # value is a list of the corresponding parameters of all the models that need to be merged
         models_to_merge_param_dict = defaultdict(list)
@@ -328,15 +349,24 @@ class RegMeanAlgorithm(ModelFusionAlgorithm):
                 )
                 models_to_merge_regmean_weights_list.append(regmean_weights)
 
+            # delete model to save memory
+            del model
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+
         # merging with regmean weights
         merged_params = merging_with_regmean_weights(
             models_to_merge_param_dict=models_to_merge_param_dict,
             models_to_merge_regmean_weights_list=models_to_merge_regmean_weights_list,
             reduce_non_diagonal_ratio=self.config.reduce_non_diagonal_ratio,
             weight_transpose=self.config.get("weight_transpose", True),
+            merge_dtype=merge_dtype,
         )
 
         merged_model = modelpool.load_model("_pretrained_")
+        for name, param in merged_model.named_parameters():
+            if name in merged_params:
+                merged_params[name] = merged_params[name].to(dtype=param.dtype)
         merged_model.load_state_dict(merged_params, strict=False)
         return merged_model
 
