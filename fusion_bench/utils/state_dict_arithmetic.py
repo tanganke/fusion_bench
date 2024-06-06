@@ -27,6 +27,30 @@ def to_device(
     return ret_state_dict
 
 
+def state_dict_to(
+    state_dict: Dict[str, Tensor],
+    dtype=None,
+    device=None,
+    non_blocking: bool = False,
+    copy: bool = False,
+):
+    """
+    Convert the state dict to the specified dtype and device.
+
+    Args:
+        state_dict (Dict[str, Tensor]): The state dict to convert.
+        dtype (torch.dtype, optional): The desired data type. Defaults to None.
+        device (torch.device, optional): The desired device. Defaults to None.
+
+    Returns:
+        Dict[str, Tensor]: The converted state dict.
+    """
+    return {
+        key: value.to(dtype=dtype, device=device, non_blocking=non_blocking, copy=copy)
+        for key, value in state_dict.items()
+    }
+
+
 def state_dicts_check_keys(state_dicts: List[_StateDict]):
     """
     Checks that the state dictionaries have the same keys.

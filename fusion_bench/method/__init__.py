@@ -68,6 +68,9 @@ def load_algorithm_from_config(method_config: DictConfig):
     # model merging methods
     elif method_config.name == "simple_average":
         return SimpleAverageAlgorithm(method_config)
+    elif method_config.name == "simple_average_fp64":
+        algo_cls = _rel_import_class("simple_average.SimpleAverageAlgorithmFP64")
+        return algo_cls(method_config)
     elif method_config.name == "weighted_average":
         return WeightedAverageAlgorithm(method_config)
     elif method_config.name == "clip_fisher_merging":

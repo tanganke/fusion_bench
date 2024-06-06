@@ -1,12 +1,18 @@
 import logging
 from copy import deepcopy
-from typing import List, Mapping, Union
+from typing import Dict, List, Mapping, Union
 
 import torch
 from torch import Tensor, nn
 
+from fusion_bench.utils.state_dict_arithmetic import (
+    state_dict_add,
+    state_dict_avg,
+    state_dict_mul,
+    state_dict_to,
+)
+
 from ..modelpool import ModelPool, to_modelpool
-from ..utils.state_dict_arithmetic import state_dict_add, state_dict_avg, state_dict_mul
 from ..utils.type import _StateDict
 from .base_algorithm import ModelFusionAlgorithm
 
@@ -76,5 +82,56 @@ class SimpleAverageAlgorithm(ModelFusionAlgorithm):
                 sd = state_dict_add(sd, model.state_dict(keep_vars=True))
 
         sd = state_dict_mul(sd, 1 / len(modelpool.model_names))
+        forward_model.load_state_dict(sd)
+        return forward_model
+
+
+class SimpleAverageAlgorithmFP64(ModelFusionAlgorithm):
+    """
+    This class is similar to SimpleAverageAlgorithm, but it uses float64 for the state dict arithmetic.
+    """
+
+    @torch.no_grad()
+    def run(self, modelpool: ModelPool):
+        """
+        Fuse the models in the given model pool using simple averaging.
+
+        This method iterates over the names of the models in the model pool, loads each model, and appends it to a list.
+        It then returns the simple average of the models in the list.
+
+        Args:
+            modelpool: The pool of models to fuse.
+
+        Returns:
+            The fused model obtained by simple averaging.
+        """
+        modelpool = to_modelpool(modelpool)
+        log.info(
+            f"Fusing models using simple average on {len(modelpool.model_names)} models."
+            f"models: {modelpool.model_names}"
+        )
+        sd: _StateDict = None
+        forward_model = None
+
+        for model_name in modelpool.model_names:
+            model = modelpool.load_model(model_name)
+            if sd is None:
+                sd = state_dict_to(
+                    model.state_dict(keep_vars=True),
+                    dtype=torch.float64,
+                )
+                forward_model = model
+            else:
+                sd = state_dict_add(
+                    sd,
+                    state_dict_to(
+                        model.state_dict(keep_vars=True),
+                        dtype=torch.float64,
+                    ),
+                )
+
+        sd = state_dict_mul(sd, 1 / len(modelpool.model_names))
+        for name, param in forward_model.state_dict():
+            sd[name] = sd[name].to(param.dtype)
         forward_model.load_state_dict(sd)
         return forward_model
