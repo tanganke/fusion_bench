@@ -53,6 +53,11 @@ def load_algorithm_from_config(method_config: DictConfig):
     """
     if method_config.name == "dummy":
         return DummyAlgorithm(method_config)
+    # analysis
+    elif method_config.name == "TaskVectorCosSimilarity":
+        return _rel_import_class(
+            "analysis.task_vector_cos_similarity.TaskVectorCosSimilarity"
+        )(method_config)
     # model ensemble methods
     elif method_config.name == "simple_ensemble":
         return EnsembleAlgorithm(method_config)
