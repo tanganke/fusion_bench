@@ -96,7 +96,6 @@ class RegMeanAlgorithmForCLIP(RegMeanAlgorithm):
         model_name: str,
         model: Module,
         train_dataset,
-        param_names_to_merge: List[str],
         linear_modules_to_merge: Dict[str, Module],
     ):
         # setup dataloader

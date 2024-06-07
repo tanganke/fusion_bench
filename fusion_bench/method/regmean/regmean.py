@@ -83,6 +83,7 @@ def merging_with_regmean_weights(
     models_to_merge_param_dict: dict,
     models_to_merge_regmean_weights_list: list,
     reduce_non_diagonal_ratio: float = 1.0,
+    weight_transpose: bool = True,
 ):
     """
     merge parameters of different models with computed regmean weights
@@ -122,7 +123,11 @@ def merging_with_regmean_weights(
                     param_multiplied_results.append(
                         torch.matmul(
                             module_regmean_weights,
-                            model_to_merge_param.transpose(0, 1),
+                            (
+                                model_to_merge_param.transpose(0, 1)
+                                if weight_transpose
+                                else model_to_merge_param
+                            ),
                         )
                     )
 
@@ -139,7 +144,9 @@ def merging_with_regmean_weights(
                     inv_sum_module_regmean_weights, sum_param_multiplied_results
                 )
                 # transpose to the original shape of "weight" in Linear module
-                merged_params[param_name] = merged_param.transpose(0, 1)
+                merged_params[param_name] = (
+                    merged_param.transpose(0, 1) if weight_transpose else merged_param
+                )
                 merged_by_regmean = True
         # use average merging for parameters whose names are not end with ".weight" or not in Linear module
         if not merged_by_regmean:
@@ -273,6 +280,7 @@ def regmean_merging(
 
 
 class RegMeanAlgorithm(ModelFusionAlgorithm):
+    _include_module_type = [nn.Linear]
 
     def run(self, modelpool: ModelPool):
         modelpool = to_modelpool(modelpool)
@@ -308,14 +316,14 @@ class RegMeanAlgorithm(ModelFusionAlgorithm):
                     )
 
                 linear_modules_to_merge = get_modules_to_merge(
-                    model=model, include_module_types=[nn.Linear]
+                    model=model, include_module_types=self._include_module_type
                 )
+                assert len(linear_modules_to_merge) > 0, "No linear modules to merge"
 
                 regmean_weights = self.get_regmean_weights(
                     name,
                     model,
                     train_dataset=modelpool.get_train_dataset(name),
-                    param_names_to_merge=param_names_to_merge,
                     linear_modules_to_merge=linear_modules_to_merge,
                 )
                 models_to_merge_regmean_weights_list.append(regmean_weights)
@@ -325,6 +333,7 @@ class RegMeanAlgorithm(ModelFusionAlgorithm):
             models_to_merge_param_dict=models_to_merge_param_dict,
             models_to_merge_regmean_weights_list=models_to_merge_regmean_weights_list,
             reduce_non_diagonal_ratio=self.config.reduce_non_diagonal_ratio,
+            weight_transpose=self.config.get("weight_transpose", True),
         )
 
         merged_model = modelpool.load_model("_pretrained_")
@@ -339,7 +348,6 @@ class RegMeanAlgorithm(ModelFusionAlgorithm):
         model_name: str,
         model: nn.Module,
         train_dataset,
-        param_names_to_merge: List[str],
         linear_modules_to_merge: Dict[str, nn.Module],
     ):
         raise NotImplementedError

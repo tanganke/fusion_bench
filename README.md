@@ -18,6 +18,6 @@ pip install -e . # install the package in editable mode
 
 Deep model fusion is a technique that merges, ensemble, or fuse multiple deep neural networks to obtain a unified model.
 It can be used to improve the performance and rubustness of model or to combine the strengths of different models, such as fuse multiple task-specific models to create a multi-task model.
-For a more detailed introduction to deep model fusion, you can refer to [W. Li, 2023, 'Deep Model Fusion: A Survey'](http://arxiv.org/abs/2303.16203).
+For a more detailed introduction to deep model fusion, you can refer to [W. Li, 2023, 'Deep Model Fusion: A Survey'](https://arxiv.org/abs/2309.15698). We also provide a brief overview of deep model fusion in [our documentation](https://tanganke.github.io/fusion_bench/).
 In this benchmark, we evaluate the performance of different fusion methods on a variety of datasets and tasks.
 

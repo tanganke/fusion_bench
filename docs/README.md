@@ -30,7 +30,7 @@ We call this the "learn from data" paradigm. This approach has been very success
 
 <figure markdown="span">
 ![alt text](images/learning_paradiagm.png){ width="800px"}
-<figcaption>Hongling Zheng, Li Shen, et al. "Learn from model beyond fine-tuning: A survey."  arXiv:2310.08184 (2023).</figcaption>
+<figcaption><a href="https://arxiv.org/abs/2310.08184" target="_blank">Hongling Zheng, Li Shen, et al. "Learn from model beyond fine-tuning: A survey."  arXiv:2310.08184 (2023).</a></figcaption>
 </figure>
 
 However, in the past few years, it is obvious that the learning paradigm of deep neural networks has undergone a significant shift. The traditional approach of training deep networks with supervised learning has been complemented with emerging techniques that transfer knowledge from existing models, edit existing models, or leverage unlabeled data to tune the models. Many data-efficient approaches have been proposed, such as model tuning, model distillation, model ensemble, model pruning, model editing and so on. 
@@ -211,3 +211,4 @@ report = taskpool.evaluate(merged_model)
 ```
 
 For detailed information on the options available, you can refer to this [page](cli/fusion_bench.md).
+

@@ -16,3 +16,35 @@ models:
     path: tanganke/gpt2_rte
   - name: sst2
     path: tanganke/gpt2_sst2
+
+# train datasets for RegMean, Fisher Merging ...
+dataset_type: GPT2ClassificationGLUETask
+train_datasets:
+  - name: cola
+    dataset:
+      name: cola
+      split: train
+  - name: mnli
+    dataset:
+      name: mnli
+      split: train
+  - name: mrpc
+    dataset:
+      name: mrpc
+      split: train
+  - name: qnli
+    dataset:
+      name: qnli
+      split: train
+  - name: qqp
+    dataset:
+      name: qqp
+      split: train
+  - name: rte
+    dataset:
+      name: rte
+      split: train
+  - name: sst2
+    dataset:
+      name: sst2
+      split: train

@@ -1,4 +1,5 @@
 from omegaconf import DictConfig
+from fusion_bench.utils import import_class
 
 from .adamerging.clip_layer_wise_adamerging import CLIPLayerWiseAdaMergingAlgorithm
 from .adamerging.clip_task_wise_adamerging import CLIPTaskWiseAdaMergingAlgorithm
@@ -10,6 +11,8 @@ from .ensemble import (
     MaxModelPredictorAlgorithm,
     WeightedEnsembleAlgorithm,
 )
+from .fisher_merging.clip_fisher_merging import FisherMergingAlgorithmForCLIP
+from .fisher_merging.gpt2_fisher_merging import FisherMergingAlgorithmForGPT2
 from .mixture_of_experts.mixtral_merging import (
     MixtralForCausalLMMergingAlgorithm,
     MixtralMoEMergingAlgorithm,
@@ -19,13 +22,17 @@ from .mixture_of_experts.mixtral_upcycling import (
     MixtralUpscalingAlgorithm,
 )
 from .model_recombination import ModelRecombinationAlgorithm
+from .regmean.clip_regmean import RegMeanAlgorithmForCLIP
+from .regmean.gpt2_regmean import RegMeanAlgorithmForGPT2
 from .simple_average import SimpleAverageAlgorithm
 from .task_arithmetic import TaskArithmeticAlgorithm
 from .ties_merging.ties_merging import TiesMergingAlgorithm
 from .we_moe.clip_we_moe import CLIPWeightEnsemblingMoEAlgorithm
 from .weighted_average import WeightedAverageAlgorithm
-from .fisher_merging.clip_fisher_merging import FisherMergingAlgorithmForCLIP
-from .regmean.clip_regmean import RegMeanAlgorithmForCLIP
+
+
+def _rel_import_class(rel_class_name: str):
+    return import_class(f"fusion_bench.method.{rel_class_name}")
 
 
 def load_algorithm_from_config(method_config: DictConfig):
@@ -46,6 +53,11 @@ def load_algorithm_from_config(method_config: DictConfig):
     """
     if method_config.name == "dummy":
         return DummyAlgorithm(method_config)
+    # analysis
+    elif method_config.name == "TaskVectorCosSimilarity":
+        return _rel_import_class(
+            "analysis.task_vector_cos_similarity.TaskVectorCosSimilarity"
+        )(method_config)
     # model ensemble methods
     elif method_config.name == "simple_ensemble":
         return EnsembleAlgorithm(method_config)
@@ -60,8 +72,12 @@ def load_algorithm_from_config(method_config: DictConfig):
         return WeightedAverageAlgorithm(method_config)
     elif method_config.name == "clip_fisher_merging":
         return FisherMergingAlgorithmForCLIP(method_config)
+    elif method_config.name == "gpt2_fisher_merging":
+        return FisherMergingAlgorithmForGPT2(method_config)
     elif method_config.name == "clip_regmean":
         return RegMeanAlgorithmForCLIP(method_config)
+    elif method_config.name == "gpt2_regmean":
+        return RegMeanAlgorithmForGPT2(method_config)
     elif method_config.name == "task_arithmetic":
         return TaskArithmeticAlgorithm(method_config)
     elif method_config.name == "ties_merging":

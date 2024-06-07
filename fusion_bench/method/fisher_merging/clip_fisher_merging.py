@@ -146,6 +146,10 @@ class FisherMergingAlgorithmForCLIP(FisherMergingAlgorithm):
                 model=model, param_names_to_merge=param_names_to_merge
             )
 
+            # move fisher weights to cpu to save GPU memory
+            for key, weights in batch_fisher_weights.items():
+                batch_fisher_weights[key] = weights.detach().cpu()
+
             batches_fisher_weights_list.append(batch_fisher_weights)
             num_computed_examples += batch[0].size(0)
 

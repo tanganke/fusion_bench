@@ -1,0 +1,51 @@
+type: huggingface_clip_vision
+models:
+  - name: _pretrained_
+    path: openai/clip-vit-base-patch32
+  - name: stanford_cars
+    path: tanganke/clip-vit-base-patch32_stanford-cars
+  - name: eurosat
+    path: tanganke/clip-vit-base-patch32_eurosat
+  - name: resisc45
+    path: tanganke/clip-vit-base-patch32_resisc45
+  - name: gtsrb
+    path: tanganke/clip-vit-base-patch32_gtsrb
+
+
+# The following datasets are used for test-time adaptation
+dataset_type: huggingface_image_classification
+tta_datasets:
+  - name: stanford_cars
+    dataset:
+      name: tanganke/stanford_cars
+      split: test
+  - name: eurosat
+    dataset:
+      name: tanganke/eurosat
+      split: test
+  - name: resisc45
+    dataset:
+      name: tanganke/resisc45
+      split: test
+  - name: gtsrb
+    dataset:
+      name: tanganke/gtsrb
+      split: test
+
+train_datasets:
+  - name: stanford_cars
+    dataset:
+      name: tanganke/stanford_cars
+      split: train
+  - name: eurosat
+    dataset:
+      name: tanganke/eurosat
+      split: train
+  - name: resisc45
+    dataset:
+      name: tanganke/resisc45
+      split: train
+  - name: gtsrb
+    dataset:
+      name: tanganke/gtsrb
+      split: train
