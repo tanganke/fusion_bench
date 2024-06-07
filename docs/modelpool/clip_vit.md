@@ -86,6 +86,30 @@ The type of the modelpool is `huggingface_clip_vision`, corresponding to the mod
 
 Here are some basic examples of using the CLIP-ViT models for open vocabulary image classification with different fusion methods, using the [`fusion_bench`](../cli/fusion_bench.md) command line interface.
 
+### Single Model Evaluation
+
+evaluate the CLIP-ViT-B/32 model on the eight tasks
+
+```bash
+fusion_bench method=dummy \
+  modelpool=clip-vit-base-patch32_individual \
+    modelpool.models.0.path="'${path_to_clip_model}'" \
+  taskpool=clip-vit-classification_TA8
+```
+
+Here the `dummy` method is a special method used to skip the model merging process (see [dummy method](../algorithms/dummy.md) for more information), and the `clip-vit-classification_TA8` taskpool is used to evaluate the model on the eight tasks.
+if `$path_to_clip_model` is not specified, the pre-trained model from HuggingFace will be used by default.
+
+evaluate the CLIP-ViT-L/14 model on the eight tasks
+
+```bash
+fusion_bench method=dummy \
+  modelpool=clip-vit-large-patch14_individual \
+    modelpool.models.0.path="'${path_to_clip_model}'" \
+  taskpool=clip-vit-classification_TA8 \
+    taskpool.clip_model=openai/clip-vit-large-patch14
+```
+
 ### Simple Averaging
 
 merge CLIP-ViT-B/32 models using simple average and evaluate on the eight tasks
