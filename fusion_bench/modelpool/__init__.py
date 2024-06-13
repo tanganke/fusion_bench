@@ -34,6 +34,10 @@ def load_modelpool_from_config(modelpool_config: DictConfig):
             return HuggingFaceClipVisionPool(modelpool_config)
         elif modelpool_config.type == "HF_GPT2ForSequenceClassification":
             return HuggingFaceGPT2ClassificationPool(modelpool_config)
+        elif modelpool_config.type == "AutoModelPool":
+            return _rel_import_class("huggingface_automodel.AutoModelPool")(
+                modelpool_config
+            )
         elif modelpool_config.type == "AutoModelForCausalLMPool":
             return AutoModelForCausalLMPool(modelpool_config)
         elif modelpool_config.type == "AutoModelForSeq2SeqLMPool":
