@@ -1,6 +1,6 @@
 # FusionBench: A Comprehensive Benchmark of Deep Model Fusion
 
-> Stay tuned. Working in progress.
+> This project is still in testing phase as the API may be subject to change. Please report any issues you encounter.
 
 Documentation is available at [tanganke.github.io/fusion_bench/](https://tanganke.github.io/fusion_bench/).
 

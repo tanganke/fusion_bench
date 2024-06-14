@@ -1,8 +1,10 @@
 # FusionBench: A Comprehensive Benchmark of Deep Model Fusion
 
-!!! note
+!!! warning "Testing Phase"
     
-    Stay tuned. Working in progress.
+    The documented experiments should be reproducible. 
+    However, this project is still in testing phase as the API may be subject to change. 
+    Please report any issues you encounter.
 
 !!! note
     
