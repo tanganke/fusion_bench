@@ -39,7 +39,9 @@ nav:
       - Flan-T5 Models for Text Generation: taskpool/flan-t5_generation.md
   - Command Line Interface:
     - fusion_bench: cli/fusion_bench.md
-
+  - Programming Guides:
+    - CLIP-ViT Models For Image Classification:
+      - Manage Labels and Templates: guides/clip_vit/classification_templates.md
 plugins:
   - search
   - autorefs
