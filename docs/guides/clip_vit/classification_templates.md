@@ -54,3 +54,8 @@ CLIPTemplaetFactory.register_dataset(
     ]
 )
 ```
+
+## Reference
+
+::: fusion_bench.tasks.clip_classification.CLIPTemplateFactory
+
