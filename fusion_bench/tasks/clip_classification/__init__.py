@@ -42,6 +42,7 @@ class CLIPTemplateFactory:
         "tanganke/resisc45": ".resisc45",
         "tanganke/dtd": ".dtd",
         "tanganke/eurosat": ".eurosat",
+        "tanganke/sun397": ".sun397",
         "cifar10": ".cifar10",
         "svhn": ".svhn",
         "cifar100": {
