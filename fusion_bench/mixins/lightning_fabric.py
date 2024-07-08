@@ -1,10 +1,11 @@
 import logging
 import os
-from typing import Any, TypeVar, Optional
+from typing import Any, Optional, TypeVar
 
 import lightning as L
 import torch
 from lightning.fabric.loggers import TensorBoardLogger
+from lightning.fabric.utilities.rank_zero import rank_zero_only
 from omegaconf import DictConfig, OmegaConf
 
 log = logging.getLogger(__name__)
@@ -74,16 +75,32 @@ class LightningFabricMixin:
             return None
 
     def to_device(self, obj: TensorOrModule) -> TensorOrModule:
+        """
+        Moves a tensor or module to the proper device.
+
+        Args:
+            obj (TensorOrModule): The tensor or module to move to the device.
+
+        Returns:
+            TensorOrModule: the same type of object as the input, moved to the device.
+        """
         return self.fabric.to_device(obj)
 
+    @rank_zero_only
     def log_hyperparams(
         self,
         config: Optional[DictConfig] = None,
         save_dir: Optional[str] = None,
         filename: str = "config.yaml",
     ):
-        """
+        R"""
         Logs the hyperparameters and saves the configuration to a YAML file.
+        The YAML file is saved in the log directory by default with the name `config.yaml`, or in the specified save directory `save_dir`.
+
+        Args:
+            config (Optional[DictConfig]): The configuration to log and save. If not provided, the class's `config` attribute is used.
+            save_dir (Optional[str]): The directory in which to save the configuration file. If not provided, the log directory is used.
+            filename (str): The name of the configuration file. Default is `config.yaml`.
         """
         if config is None:
             config = self.config

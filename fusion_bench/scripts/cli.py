@@ -17,6 +17,9 @@ from omegaconf import DictConfig, OmegaConf
 from rich import print as rich_print
 from rich.syntax import Syntax
 
+from fusion_bench.mixins.lightning_fabric import LightningFabricMixin
+from fusion_bench.utils.rich_utils import print_config_tree
+
 from ..method import load_algorithm_from_config
 from ..modelpool import load_modelpool_from_config
 from ..taskpool import load_taskpool_from_config
@@ -32,7 +35,9 @@ def run_model_fusion(cfg: DictConfig):
     2. It then uses the algorithm to fuse the models in the model pool into a single model.
     3. If a task pool is specified in the configuration, it loads the task pool and uses it to evaluate the merged model.
     """
-    log.warning("This function is deprecated. Use LightningProgram instead.")
+    log.warning(
+        "This function is deprecated. Use LightningProgram instead. This will be removed in future versions."
+    )
     modelpool = load_modelpool_from_config(cfg.modelpool)
 
     algorithm = load_algorithm_from_config(cfg.method)
@@ -54,36 +59,19 @@ def run_model_fusion(cfg: DictConfig):
         print("No task pool specified. Skipping evaluation.")
 
 
-class LightningProgram:
-    _fabric: L.Fabric = None
-    _trainer: L.Trainer = None
+class LightningProgram(LightningFabricMixin):
 
     def __init__(self, config: DictConfig):
         self.config = config
 
-        self._setup_lightning()
-
-    def _setup_lightning(self):
-        config = self.config
-        if self._fabric is None and config.get("fabric", None) is not None:
-            if config.get("fabric_logger", None) is not None:
-                logger = TensorBoardLogger(**config.fabric_logger)
-            else:
-                logger = None
-            log.info("Launching Lightning Fabric")
-            self._fabric = L.Fabric(**config.fabric, loggers=logger)
-            self._fabric.launch()
-        if self._trainer is None and config.get("trainer", None) is not None:
-            log.info("setup lihgtning trainer")
-            self._trainer = L.Trainer(**config.trainer)
-
     def _load_and_setup(self, load_fn, *args, **kwargs):
+        """
+        Load an object using a provided loading function and setup its attributes.
+        """
         obj = load_fn(*args, **kwargs)
         obj._program = self
         if hasattr(obj, "_fabric") and self._fabric is not None:
-            obj._fabric = self._fabric
-        if hasattr(obj, "_trainer") and self._trainer is not None:
-            obj._trainer = self._trainer
+            obj._fabric = self.fabric
         return obj
 
     def run_model_fusion(self):
@@ -122,13 +110,13 @@ class LightningProgram:
 )
 def main(cfg: DictConfig) -> None:
     if cfg.print_config:
-        rich_print(
-            Syntax(
-                OmegaConf.to_yaml(cfg),
-                "yaml",
-                tab_size=2,
-                line_numbers=True,
-            )
+        print_config_tree(
+            cfg,
+            print_order=[
+                "method",
+                "modelpool",
+                "taskpool",
+            ],
         )
     if cfg.use_lightning:
         program = LightningProgram(cfg)
