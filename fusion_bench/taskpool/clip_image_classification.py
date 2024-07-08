@@ -3,7 +3,7 @@ import os
 from copy import deepcopy
 from functools import cached_property
 from typing import Callable, List, cast
-
+import json
 import lightning as L
 import torch
 from omegaconf import DictConfig, open_dict
@@ -156,4 +156,9 @@ class CLIPImageClassificationTaskPool(TaskPool):
             result = task.evaluate(self.clip_model)
             report[task_name] = result
         log.info(f"Results for taskpool {self.config.name}: {report}")
+        if self._fabric.is_global_zero and self._fabric.logger is not None:
+            with open(
+                os.path.join(self._fabric.logger.log_dir, "report.json"), "w"
+            ) as fp:
+                json.dump(report, fp)
         return report

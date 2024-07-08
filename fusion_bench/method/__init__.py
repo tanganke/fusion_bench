@@ -12,14 +12,6 @@ from .ensemble import (
 )
 from .fisher_merging.clip_fisher_merging import FisherMergingAlgorithmForCLIP
 from .fisher_merging.gpt2_fisher_merging import FisherMergingAlgorithmForGPT2
-from .mixture_of_experts.mixtral_merging import (
-    MixtralForCausalLMMergingAlgorithm,
-    MixtralMoEMergingAlgorithm,
-)
-from .mixture_of_experts.mixtral_upcycling import (
-    MixtralForCausalLMUpscalingAlgorithm,
-    MixtralUpscalingAlgorithm,
-)
 from .model_recombination import ModelRecombinationAlgorithm
 from .regmean.clip_regmean import RegMeanAlgorithmForCLIP
 from .regmean.gpt2_regmean import RegMeanAlgorithmForGPT2
@@ -52,10 +44,10 @@ class AlgorithmFactory:
         "clip_layer_wise_adamerging": CLIPLayerWiseAdaMergingAlgorithm,
         # model mixing methods
         "depth_upscaling": DepthUpscalingAlgorithm,
-        "mixtral_moe_upscaling": MixtralUpscalingAlgorithm,
-        "mixtral_for_causal_lm_moe_upscaling": MixtralForCausalLMUpscalingAlgorithm,
-        "mixtral_moe_merging": MixtralMoEMergingAlgorithm,
-        "mixtral_for_causal_lm_merging": MixtralForCausalLMMergingAlgorithm,
+        "mixtral_moe_upscaling": ".mixture_of_experts.mixtral_upcycling.MixtralUpscalingAlgorithm",
+        "mixtral_for_causal_lm_moe_upscaling": ".mixture_of_experts.mixtral_upcycling.MixtralForCausalLMUpscalingAlgorithm",
+        "mixtral_moe_merging": ".mixture_of_experts.mixtral_merging.MixtralMoEMergingAlgorithm",
+        "mixtral_for_causal_lm_merging": ".mixture_of_experts.mixtral_merging.MixtralForCausalLMMergingAlgorithm",
         "clip_weight_ensembling_moe": CLIPWeightEnsemblingMoEAlgorithm,
         "model_recombination": ModelRecombinationAlgorithm,
     }

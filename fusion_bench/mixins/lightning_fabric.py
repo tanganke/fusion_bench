@@ -1,0 +1,96 @@
+import logging
+import os
+from typing import Any, TypeVar, Optional
+
+import lightning as L
+import torch
+from lightning.fabric.loggers import TensorBoardLogger
+from omegaconf import DictConfig, OmegaConf
+
+log = logging.getLogger(__name__)
+
+TensorOrModule = TypeVar("TensorOrModule", torch.Tensor, torch.nn.Module, Any)
+
+
+class LightningFabricMixin:
+    """
+    A mixin class for integrating Lightning Fabric into a project.
+
+    This class provides methods to initialize and manage a Lightning Fabric instance for distributed computing,
+    including setup with optional logging, device management for tensors and modules, and hyperparameter logging.
+    It leverages the Lightning framework to facilitate distributed training and inference across multiple devices
+    and nodes, with support for custom logging via TensorBoard.
+
+    Attributes:
+    - _fabric (L.Fabric): The Lightning Fabric instance used for distributed computing.
+
+    Note:
+    This mixin is designed to be used with classes that require distributed computing capabilities and wish to
+    leverage the Lightning Fabric for this purpose. It assumes the presence of a `config` attribute or parameter
+    in the consuming class for configuration.
+    """
+
+    _fabric: L.Fabric = None
+
+    def setup_lightning_fabric(self, config: DictConfig):
+        """
+        Initializes and launches the Lightning Fabric with optional logging.
+
+        This method sets up the Lightning Fabric for distributed computing based on the provided configuration. If a fabric
+        configuration is not found, it logs a warning and exits. Optionally, if a fabric logger configuration is provided,
+        it initializes a TensorBoardLogger with the specified settings.
+
+        Expected configuration keys:
+        - fabric: The configuration for the Lightning Fabric.
+        - fabric_logger: The configuration for the TensorBoardLogger.
+        """
+        if self._fabric is None:
+            if config.get("fabric", None) is None:
+                log.warning("No fabric configuration found. use default settings.")
+                self._fabric = L.Fabric()
+            else:
+                if config.get("fabric_logger", None) is not None:
+                    logger = TensorBoardLogger(**config.fabric_logger)
+                else:
+                    logger = None
+                log.info("Launching Lightning Fabric")
+                self._fabric = L.Fabric(**config.fabric, loggers=logger)
+            self._fabric.launch()
+
+    @property
+    def fabric(self):
+        if self._fabric is None:
+            self.setup_lightning_fabric(getattr(self, "config", DictConfig({})))
+        return self._fabric
+
+    @property
+    def log_dir(self):
+        """
+        Retrieves the log directory from the fabric's logger.
+        """
+        if self.fabric is not None and self.fabric.logger is not None:
+            return self.fabric.logger.log_dir
+        else:
+            return None
+
+    def to_device(self, obj: TensorOrModule) -> TensorOrModule:
+        return self.fabric.to_device(obj)
+
+    def log_hyperparams(
+        self,
+        config: Optional[DictConfig] = None,
+        save_dir: Optional[str] = None,
+        filename: str = "config.yaml",
+    ):
+        """
+        Logs the hyperparameters and saves the configuration to a YAML file.
+        """
+        if config is None:
+            config = self.config
+        self.fabric.logger.log_hyperparams(
+            OmegaConf.to_container(config, resolve=True, enum_to_str=True)
+        )
+        OmegaConf.save(
+            config,
+            os.path.join(self.log_dir if save_dir is None else save_dir, filename),
+        )

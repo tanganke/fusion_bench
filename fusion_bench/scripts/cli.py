@@ -6,11 +6,13 @@ The script is responsible for parsing the command-line arguments, loading the co
 import importlib
 import importlib.resources
 import json
+import logging
 import os
 
 import hydra
 import lightning as L
 import torch
+from lightning.fabric.loggers import TensorBoardLogger
 from omegaconf import DictConfig, OmegaConf
 from rich import print as rich_print
 from rich.syntax import Syntax
@@ -18,8 +20,6 @@ from rich.syntax import Syntax
 from ..method import load_algorithm_from_config
 from ..modelpool import load_modelpool_from_config
 from ..taskpool import load_taskpool_from_config
-
-import logging
 
 log = logging.getLogger(__name__)
 
@@ -32,6 +32,7 @@ def run_model_fusion(cfg: DictConfig):
     2. It then uses the algorithm to fuse the models in the model pool into a single model.
     3. If a task pool is specified in the configuration, it loads the task pool and uses it to evaluate the merged model.
     """
+    log.warning("This function is deprecated. Use LightningProgram instead.")
     modelpool = load_modelpool_from_config(cfg.modelpool)
 
     algorithm = load_algorithm_from_config(cfg.method)
@@ -59,9 +60,18 @@ class LightningProgram:
 
     def __init__(self, config: DictConfig):
         self.config = config
+
+        self._setup_lightning()
+
+    def _setup_lightning(self):
+        config = self.config
         if self._fabric is None and config.get("fabric", None) is not None:
+            if config.get("fabric_logger", None) is not None:
+                logger = TensorBoardLogger(**config.fabric_logger)
+            else:
+                logger = None
             log.info("Launching Lightning Fabric")
-            self._fabric = L.Fabric(**config.fabric)
+            self._fabric = L.Fabric(**config.fabric, loggers=logger)
             self._fabric.launch()
         if self._trainer is None and config.get("trainer", None) is not None:
             log.info("setup lihgtning trainer")

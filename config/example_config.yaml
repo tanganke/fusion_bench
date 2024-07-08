@@ -12,3 +12,10 @@ save_report: false # path to save the result report
 
 fabric:
   devices: 1
+  strategy: auto
+
+fabric_logger: # log to: /root_dir/name/version/sub_dir/
+  root_dir: outputs/logs
+  name: "lightning_logs"
+  version: null
+  sub_dir: null
