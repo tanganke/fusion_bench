@@ -70,7 +70,7 @@ class LightningProgram(LightningFabricMixin):
         """
         obj = load_fn(*args, **kwargs)
         obj._program = self
-        if hasattr(obj, "_fabric") and self._fabric is not None:
+        if hasattr(obj, "_fabric") and self.fabric is not None:
             obj._fabric = self.fabric
         return obj
 

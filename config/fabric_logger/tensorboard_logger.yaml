@@ -1,0 +1,4 @@
+root_dir: outputs/logs
+name: "lightning_logs"
+version: null
+sub_dir: null

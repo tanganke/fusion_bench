@@ -3,19 +3,11 @@ defaults:
   - modelpool: clip-vit-base-patch32_TA8
   - method: dummy
   - taskpool: dummy
+  - fabric: auto
+  - fabric_logger: tensorboard_logger
   - _self_
 
 fast_dev_run: false # Run a single batch of data to test the model or method
 use_lightning: true # Use the fabric to run the experiment
 print_config: true # Print the configuration to the console
 save_report: false # path to save the result report
-
-fabric:
-  devices: 1
-  strategy: auto
-
-fabric_logger: # log to: /root_dir/name/version/sub_dir/
-  root_dir: outputs/logs
-  name: "lightning_logs"
-  version: null
-  sub_dir: null
