@@ -57,6 +57,14 @@ class LightningFabricMixin:
                 log.info("Launching Lightning Fabric")
                 self._fabric = L.Fabric(**config.fabric, loggers=logger)
             self._fabric.launch()
+            # Set the log directory in config if it is not already set
+            if (
+                self.log_dir is not None
+                and hasattr(config, "log_dir")
+                and config.get("log_dir", None) is None
+            ):
+                log.info(f"Setting log_dir to {self.log_dir}")
+                config.log_dir = self.log_dir
 
     @property
     def fabric(self):
@@ -70,7 +78,10 @@ class LightningFabricMixin:
         Retrieves the log directory from the fabric's logger.
         """
         if self.fabric is not None and self.fabric.logger is not None:
-            return self.fabric.logger.log_dir
+            log_dir = self.fabric.logger.log_dir
+            if self.fabric.is_global_zero and not os.path.exists(log_dir):
+                os.makedirs(log_dir, exist_ok=True)
+            return log_dir
         else:
             return None
 
@@ -104,9 +115,13 @@ class LightningFabricMixin:
         """
         if config is None:
             config = self.config
+        if save_dir is None:
+            save_dir = self.log_dir
         self.fabric.logger.log_hyperparams(
             OmegaConf.to_container(config, resolve=True, enum_to_str=True)
         )
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir, exist_ok=True)
         OmegaConf.save(
             config,
             os.path.join(self.log_dir if save_dir is None else save_dir, filename),
