@@ -42,6 +42,8 @@ nav:
   - Programming Guides:
     - CLIP-ViT Models For Image Classification:
       - Manage Labels and Templates: guides/clip_vit/classification_templates.md
+  - Reading Lists: readinglist/README.md
+
 plugins:
   - search
   - autorefs
@@ -87,6 +89,9 @@ markdown_extensions:
   - footnotes
   - pymdownx.tabbed:
       alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 extra_javascript:
   - javascripts/mathjax.js

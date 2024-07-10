@@ -12,3 +12,6 @@ use_lightning: true # Use the fabric to run the experiment
 print_config: true # Print the configuration to the console
 save_report: false # path to save the result report
 log_dir: null # path to save the logs, if not specified, this will be set during runtime
+# Run the script without actually running the experiment, use with `print_config=true`. 
+# You can also use `--cfg` or `-c` to  show the configuration instead of runing.
+dry_run: false

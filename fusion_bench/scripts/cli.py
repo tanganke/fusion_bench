@@ -118,6 +118,9 @@ def main(cfg: DictConfig) -> None:
                 "taskpool",
             ],
         )
+    if cfg.get("dry_run", False):
+        log.info("The program is running in dry-run mode. Exiting.")
+        return
     if cfg.use_lightning:
         program = LightningProgram(cfg)
         program.run_model_fusion()
