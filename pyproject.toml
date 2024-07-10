@@ -15,6 +15,9 @@ dependencies = [
     "datasets",
     "huggingface_hub",
     "peft",
+    "hydra-core",
+    "lightning",
+    "matplotlib",
 ]
 keywords = ["deep learning", "model fusion", "benchmark"]
 
