@@ -1,18 +1,23 @@
+import functools
 import logging
 import os
 from typing import Any, Dict, List, Tuple, TypeVar, Union, cast
 
 import lightning as L
 import torch
+from omegaconf import DictConfig, open_dict
 from torch import nn
+from torch.utils.data import DataLoader
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 
+from fusion_bench.dataset import CLIPDataset, load_dataset_from_config
 from fusion_bench.mixins.lightning_fabric import LightningFabricMixin
 from fusion_bench.modelpool import ModelPool
 from fusion_bench.modelpool.huggingface_clip_vision import HuggingFaceClipVisionPool
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.utils import timeit_context
+from fusion_bench.utils.data import InfiniteDataLoader
 
 log = logging.getLogger(__name__)
 
@@ -24,12 +29,11 @@ class CLIPClassificationMixin(LightningFabricMixin):
     This mixin provides methods to classify images using the CLIP model.
     """
 
+    # the modelpool is set by inheriting class
+    modelpool: HuggingFaceClipVisionPool = None
     _clip_processor: CLIPProcessor = None
     # a dict of zeroshot weights for each task, each key is the task name
     zeroshot_weights: Dict[str, torch.Tensor] = {}
-
-    def __init__(self):
-        super().__init__()
 
     @property
     def clip_processor(self):
@@ -41,8 +45,44 @@ class CLIPClassificationMixin(LightningFabricMixin):
         else:
             return self._clip_processor
 
+    def get_task_config(self, task):
+        for task_config in self.modelpool.config.tta_datasets:
+            if task_config.name == task:
+                return task_config
+        raise ValueError(f"Task {task} not found in config")
+
+    def prepare_dataset_config(self, dataset_config: DictConfig):
+        if not hasattr(dataset_config, "type"):
+            with open_dict(dataset_config):
+                dataset_config["type"] = self.modelpool.config.dataset_type
+        return dataset_config
+
+    @functools.cache
+    def get_test_dataset(self, task: str):
+        """
+        Load the test dataset for the task.
+        This method is cached, so the dataset is loaded only once.
+        """
+        dataset_config = self.get_task_config(task)["dataset"]
+        dataset_config = self.prepare_dataset_config(dataset_config)
+        log.info(f"Loading test dataset: {dataset_config.name}")
+        dataset = load_dataset_from_config(dataset_config)
+        dataset = CLIPDataset(dataset, self._clip_processor)
+        return dataset
+
+    @functools.cache
+    def get_shuffled_test_loader_iter(self, task: str):
+        loader = DataLoader(
+            self.get_test_dataset(task),
+            batch_size=self.config.batch_size,
+            shuffle=True,
+            num_workers=self.config.num_workers,
+            pin_memory=True,
+        )
+        loader = self.fabric.setup_dataloaders(loader)
+        return iter(InfiniteDataLoader(loader))
+
     def setup_zero_shot_classification_head(self):
-        self.modelpool = cast(HuggingFaceClipVisionPool, self.modelpool)
         clip_model_config = self.modelpool.get_model_config("_pretrained_")
 
         with timeit_context("Loading CLIP processor and pretrained CLIP model."):

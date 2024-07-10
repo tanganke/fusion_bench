@@ -1,12 +1,15 @@
 import logging
 import os
-from typing import Any, Optional, TypeVar
+from typing import Any, Optional, TypeVar, TYPE_CHECKING
 
 import lightning as L
 import torch
 from lightning.fabric.loggers import TensorBoardLogger
 from lightning.fabric.utilities.rank_zero import rank_zero_only
 from omegaconf import DictConfig, OmegaConf
+
+if TYPE_CHECKING:
+    import lightning.fabric.loggers.tensorboard
 
 log = logging.getLogger(__name__)
 
@@ -126,3 +129,19 @@ class LightningFabricMixin:
             config,
             os.path.join(self.log_dir if save_dir is None else save_dir, filename),
         )
+
+    @property
+    def tensorboard_summarywriter(
+        self,
+    ) -> "lightning.fabric.loggers.tensorboard.SummaryWriter":
+        if isinstance(self.fabric.logger, TensorBoardLogger):
+            return self.fabric.logger.experiment
+        else:
+            raise AttributeError("the logger is not a TensorBoardLogger.")
+
+    @property
+    def is_debug_mode(self):
+        if hasattr(self, "config") and self.config.get("fast_dev_run", False):
+            return True
+        else:
+            return False

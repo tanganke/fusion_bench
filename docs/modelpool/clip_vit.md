@@ -257,7 +257,7 @@ fusion_bench method=ties_merging method.scaling_factor=0.3 method.threshold=20 \
 ```
 
 
-### AdaMerging
+### [AdaMerging](../algorithms/adamerging.md)
 
 merge CLIP-ViT-B/32 models using task-wise AdaMerging and evaluate on the eight tasks, and save the merging weights by specifying the `method.save_merging_weights` parameter
 
@@ -297,11 +297,13 @@ merge CLIP-ViT-B/32 models using layer-wise AdaMerging and evaluate on the eight
 
 ```bash
 fusion_bench \
-  method=adamerging \
-    method.name=clip_layer_wise_adamerging \
-    method.save_merging_weights=outputs/clip-vit-base-patch32_TA8_layer_wise_adamerging_weights.pt \
-  modelpool=clip-vit-base-patch32_TA8 \
-  taskpool=clip-vit-classification_TA8
+    method=adamerging \
+        method.name=clip_layer_wise_adamerging \
+        method.save_merging_weights=merging_weights.pt \
+    modelpool=clip-vit-base-patch32_TA8 \
+    taskpool=clip-vit-classification_TA8 \
+    fabric_logger.root_dir=outputs/logs/ViT-B-32 \
+    fabric_logger.name=clip_layer_wise_adamerging_adam
 ```
 
 merge CLIP-ViT-L/14 models using layer-wise AdaMerging and evaluate on the eight tasks
