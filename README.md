@@ -6,8 +6,15 @@ Documentation is available at [tanganke.github.io/fusion_bench/](https://tangank
 
 ## Installation
 
+install from PyPI:
+
 ```bash
-# install from github repository
+pip install fusion-bench
+```
+
+or install the latest version in development from github repository
+
+```bash
 git clone https://github.com/tanganke/fusion_bench.git
 cd fusion_bench
 
