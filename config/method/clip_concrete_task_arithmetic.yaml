@@ -15,6 +15,8 @@ save_interval: 500
 initial_logits: 0
 temperature: 0.5
 
+# "discrete" or "continuous", this is the mask applied for evaluation, not during training
+# the performance of final model are expected to be similar
 eval_mask_type: continuous
 
 mask_checkpoint: null

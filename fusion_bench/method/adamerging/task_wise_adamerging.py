@@ -105,7 +105,7 @@ class TaskWiseAdaMergingAlgorithm(ModelFusionAlgorithm):
         else:
             module = self.test_time_adaptation(module)
             if self.config.get("save_merging_weights", False):
-                torch.save(module.task_wise_weight, self.config.save_merging_weights)
+                torch.save(module.merge_weight, self.config.save_merging_weights)
             return module.merge_and_unload()
 
     def on_test_time_adaptation_start(self):
@@ -124,7 +124,7 @@ class TaskWiseAdaMergingAlgorithm(ModelFusionAlgorithm):
 
         # configure optimizer
         if self.config.optimizer == "adam":
-            optimizer = torch.optim.Adam([module.task_wise_weight], lr=self.config.lr)
+            optimizer = torch.optim.Adam([module.merge_weight], lr=self.config.lr)
         else:
             raise ValueError(f"Unsupported optimizer: {self.config.optimizer}")
 

@@ -62,7 +62,12 @@ class ClassificationTask(BaseTask):
             loss = F.cross_entropy(logits, targets)
             loss_metric.update(loss.detach().cpu())
             acc = accuracy(logits.detach().cpu(), targets.detach().cpu())
-            pbar.set_postfix({"accuracy": acc.item(), "loss": loss.item()})
+            pbar.set_postfix(
+                {
+                    "accuracy": accuracy.compute().item(),
+                    "loss": loss_metric.compute().item(),
+                }
+            )
 
         acc = accuracy.compute().item()
         loss = loss_metric.compute().item()
