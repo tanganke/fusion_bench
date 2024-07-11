@@ -1,0 +1,24 @@
+name: clip_pge_task_arithmetic
+
+batch_size: 16
+num_workers: 4
+mask_sampling_times: 5
+
+optimizer: adam
+lr: 1e-3
+
+scaling_factor: 0.3
+
+max_steps: 5000
+save_interval: 500
+initial_p: 0.9
+
+mask_checkpoint: null
+# if `clamp_weights` is true, the weights will be clamped to [0, 1]
+clamp_weights: false
+
+# arguments of `functional_call`
+tie_weights: true
+strict: false
+
+cache_dir: outputs

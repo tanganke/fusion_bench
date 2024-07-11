@@ -196,3 +196,27 @@ class MaskModel(nn.Module):
         return non_zero / total
 
 
+class PGEMaskModel(MaskModel):
+    def __init__(
+        self,
+        state_dict_or_model: Union[_StateDict, nn.Module],
+        ignore_keys: List[str] = [],
+        ignore_untrained_params: bool = True,
+    ):
+        super().__init__(
+            state_dict_or_model=state_dict_or_model,
+            ignore_keys=ignore_keys,
+            ignore_untrained_params=ignore_untrained_params,
+            parameter_type="probs",
+        )
+
+    def compute_grad(self, loss: float, mask: Dict[str, Tensor]):
+        eps = 1e-6
+        for name, s in self.named_parameters():
+            m = mask[name]
+            g = loss * (m - s) / (s * (1 - s) + eps)
+            # print(f'{g.mean()}, {g.max()=}, {g.min()=}')
+            if s.grad is not None:
+                s.grad = s.grad + g
+            else:
+                s.grad = g

@@ -1,1 +1,1 @@
-from .mask_model import MaskModel, mask_sparsity
+from .mask_model import MaskModel, PGEMaskModel, mask_sparsity
