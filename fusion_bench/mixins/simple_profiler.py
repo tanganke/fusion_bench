@@ -34,6 +34,5 @@ class SimpleProfilerMixin:
     def __del__(self):
         if self._profiler is not None:
             self._profiler.summary()
-            self._profiler.teardown()
             del self._profiler
             self._profiler = None

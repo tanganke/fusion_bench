@@ -10,19 +10,13 @@ import logging
 import os
 
 import hydra
-import lightning as L
-import torch
-from lightning.fabric.loggers import TensorBoardLogger
 from omegaconf import DictConfig, OmegaConf
-from rich import print as rich_print
-from rich.syntax import Syntax
 
+from fusion_bench.method import load_algorithm_from_config
 from fusion_bench.mixins.lightning_fabric import LightningFabricMixin
+from fusion_bench.modelpool import load_modelpool_from_config
+from fusion_bench.taskpool import load_taskpool_from_config
 from fusion_bench.utils.rich_utils import print_config_tree
-
-from ..method import load_algorithm_from_config
-from ..modelpool import load_modelpool_from_config
-from ..taskpool import load_taskpool_from_config
 
 log = logging.getLogger(__name__)
 

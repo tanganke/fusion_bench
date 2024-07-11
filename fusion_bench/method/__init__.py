@@ -42,6 +42,8 @@ class AlgorithmFactory:
         "ties_merging": TiesMergingAlgorithm,
         "clip_task_wise_adamerging": CLIPTaskWiseAdaMergingAlgorithm,
         "clip_layer_wise_adamerging": CLIPLayerWiseAdaMergingAlgorithm,
+        # plug-and-play model merging methods
+        "clip_concrete_task_arithmetic": ".concrete_subspace.clip_concrete_task_arithmetic.ConcreteTaskArithmeticAlgorithmForCLIP",
         # model mixing methods
         "depth_upscaling": DepthUpscalingAlgorithm,
         "mixtral_moe_upscaling": ".mixture_of_experts.mixtral_upcycling.MixtralUpscalingAlgorithm",

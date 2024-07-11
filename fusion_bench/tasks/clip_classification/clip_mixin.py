@@ -105,6 +105,7 @@ class CLIPClassificationMixin(LightningFabricMixin):
             os.makedirs(cache_dir)
         log.info(f"cache directory for zero-shot classification head: {cache_dir}")
         for task in self.modelpool.model_names:
+            zeroshot_weights = None
             if self.fabric.is_global_zero:
                 cache_file = os.path.join(
                     cache_dir, os.path.normpath(f"{task}_zeroshot_weights.pt")
