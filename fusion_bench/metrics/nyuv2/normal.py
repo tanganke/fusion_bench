@@ -1,9 +1,9 @@
 from typing import List, cast
 
+import numpy as np
 import torch
 from torch import Tensor, nn
 from torchmetrics import Metric
-import numpy as np
 
 
 class NormalMetric(Metric):

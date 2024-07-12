@@ -14,12 +14,12 @@ from tqdm.autonotebook import tqdm
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 
 from fusion_bench.dataset import CLIPDataset, load_dataset_from_config
+from fusion_bench.modelpool.huggingface_clip_vision import HuggingFaceClipVisionPool
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.utils import timeit_context
 
 from .fisher_merging import FisherMergingAlgorithm, get_param_squared_gradients
-from fusion_bench.modelpool.huggingface_clip_vision import HuggingFaceClipVisionPool
 
 log = logging.getLogger(__name__)
 

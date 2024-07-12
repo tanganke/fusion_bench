@@ -1,11 +1,11 @@
 from omegaconf import DictConfig
 
+from .AutoModelForSeq2SeqLM import AutoModelForSeq2SeqLMPool
 from .base_pool import DictModelPool, ListModelPool, ModelPool, to_modelpool
 from .huggingface_clip_vision import HuggingFaceClipVisionPool
 from .huggingface_gpt2_classification import HuggingFaceGPT2ClassificationPool
 from .huggingface_llm import AutoModelForCausalLMPool
 from .PeftModelForSeq2SeqLM import PeftModelForSeq2SeqLMPool
-from .AutoModelForSeq2SeqLM import AutoModelForSeq2SeqLMPool
 
 
 class ModelPoolFactory:

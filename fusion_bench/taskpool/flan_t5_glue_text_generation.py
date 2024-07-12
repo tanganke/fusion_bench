@@ -104,9 +104,10 @@ class FlanT5GLUETextGenerationRegressionTask(FlanT5GLUETextGenerationTask):
 
 class FlanT5GLUETextGenerationTaskPool(TaskPool):
     """
-    A task pool for FlanT5 GLUE text generation tasks. 
+    A task pool for FlanT5 GLUE text generation tasks.
     This class manages the tasks and provides methods for loading and evaluating tasks.
     """
+
     _fabric: L.Fabric = None
     _tokenizer = None
 

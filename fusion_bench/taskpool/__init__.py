@@ -1,6 +1,5 @@
 from omegaconf import DictConfig
 
-
 from .base_pool import TaskPool
 from .clip_image_classification import CLIPImageClassificationTaskPool
 from .dummy import DummyTaskPool

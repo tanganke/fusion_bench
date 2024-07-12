@@ -1,6 +1,7 @@
-from .timer import timeit_context
-from .parameters import print_parameters
 import importlib
+
+from .parameters import print_parameters
+from .timer import timeit_context
 
 
 def import_object(abs_obj_name):

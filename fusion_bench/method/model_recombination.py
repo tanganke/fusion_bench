@@ -1,4 +1,5 @@
 import logging
+import random
 from copy import deepcopy
 from typing import List, Mapping, Union
 
@@ -6,8 +7,7 @@ import torch
 from torch import Tensor, nn
 
 from fusion_bench.method import ModelFusionAlgorithm
-from fusion_bench.modelpool import ModelPool, to_modelpool, DictModelPool
-import random
+from fusion_bench.modelpool import DictModelPool, ModelPool, to_modelpool
 
 log = logging.getLogger(__name__)
 
