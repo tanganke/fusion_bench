@@ -1,8 +1,10 @@
-from typing import Dict, List, Any, Callable
-from datasets import load_dataset
 import importlib
-from .clip_dataset import CLIPDataset
 import warnings
+from typing import Any, Callable, Dict, List
+
+from datasets import load_dataset
+
+from .clip_dataset import CLIPDataset
 
 
 def _check_module_name(module_name: str):

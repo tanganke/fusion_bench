@@ -1,7 +1,8 @@
-from lightning.pytorch.profilers import SimpleProfiler
 from contextlib import contextmanager
 from typing import Generator
+
 from lightning.fabric.utilities.rank_zero import rank_zero_only
+from lightning.pytorch.profilers import SimpleProfiler
 
 
 class SimpleProfilerMixin:

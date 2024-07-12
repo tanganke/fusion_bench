@@ -1,9 +1,10 @@
+import json
 import logging
 import os
 from copy import deepcopy
 from functools import cached_property
 from typing import Callable, List, cast
-import json
+
 import lightning as L
 import torch
 from omegaconf import DictConfig, open_dict

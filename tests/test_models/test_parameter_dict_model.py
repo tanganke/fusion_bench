@@ -13,6 +13,8 @@ class TestParameterDictModel(unittest.TestCase):
             "layer2.weight": torch.randn(20, 10),
             "layer2.bias": torch.randn(20),
         }
+        for name, param in self.parameters.items():
+            self.parameters[name] = nn.Parameter(param, requires_grad=False)
         self.model = ParameterDictModel(self.parameters)
 
     def test_repr(self):

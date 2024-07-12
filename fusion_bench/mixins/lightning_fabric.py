@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Any, Optional, TypeVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional, TypeVar
 
 import lightning as L
 import torch

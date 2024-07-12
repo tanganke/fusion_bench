@@ -4,6 +4,7 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
 
+from fusion_bench.models import ParameterDictModel
 from fusion_bench.utils.type import _StateDict
 
 
@@ -14,41 +15,6 @@ def mask_sparsity(mask: Dict[str, Tensor]):
         total += m.numel()
         non_zero += m.sum().item()
     return non_zero / total
-
-
-def set_attr(obj, names: List[str], val, check_parent: bool = False):
-    """
-    Sets an attribute of an object recursively.
-
-    Args:
-        obj (object): Object to set attribute of.
-        names (list): List of attribute names to set recursively.
-        val (object): Value to set the attribute to.
-        check_parent (bool): If True, checks if the parent attribute exists; otherwise, creates it if it does not exist.
-    """
-    if len(names) == 1:
-        setattr(obj, names[0], val)
-    else:
-        if check_parent and not hasattr(obj, names[0]):
-            setattr(obj, names[0], nn.Module())
-        set_attr(getattr(obj, names[0]), names[1:], val, check_parent=check_parent)
-
-
-def has_attr(obj, names: List[str]):
-    """
-    Checks if an attribute exists in an object recursively.
-
-    Args:
-        obj (object): Object to check attribute of.
-        names (list): List of attribute names to check recursively.
-
-    Returns:
-        bool: True if the attribute exists; otherwise, False.
-    """
-    if len(names) == 1:
-        return hasattr(obj, names[0])
-    else:
-        return has_attr(getattr(obj, names[0]), names[1:])
 
 
 def to_state_dict(
@@ -98,7 +64,7 @@ def get_masked_state_dict(
     return masked_state_dict
 
 
-class MaskModel(nn.Module):
+class MaskModel(ParameterDictModel):
 
     def __init__(
         self,
@@ -107,21 +73,20 @@ class MaskModel(nn.Module):
         ignore_untrained_params: bool = True,
         parameter_type: Literal["probs", "logits"] = None,
     ):
-        super().__init__()
-        self.parameter_type = parameter_type
+        # Convert the model or state dictionary to a state dictionary
         state_dict = to_state_dict(
             state_dict_or_model,
             ignore_untrained_params=ignore_untrained_params,
             ignore_keys=ignore_keys,
         )
 
+        # Convert the tensor dictionary to a parameter dictionary
+        parameters = {}
         for name, param in state_dict.items():
-            set_attr(
-                self,
-                name.split("."),
-                nn.Parameter(torch.ones_like(param), requires_grad=True),
-                check_parent=True,
-            )
+            parameters[name] = nn.Parameter(param, requires_grad=True)
+
+        super().__init__(parameters)
+        self.parameter_type = parameter_type
 
     def _param_to_distribution(
         self,
@@ -194,5 +159,3 @@ class MaskModel(nn.Module):
             total += m.numel()
             non_zero += m.sum().item()
         return non_zero / total
-
-

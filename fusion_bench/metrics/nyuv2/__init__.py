@@ -4,8 +4,8 @@ from .normal import NormalMetric
 from .segmentation import SegmentationMertic
 
 metric_classes = {
-    'segmentation': SegmentationMertic,
-    'depth': DepthMetric,
-    'normal': NormalMetric,
-    'noise': NoiseMetric
+    "segmentation": SegmentationMertic,
+    "depth": DepthMetric,
+    "normal": NormalMetric,
+    "noise": NoiseMetric,
 }

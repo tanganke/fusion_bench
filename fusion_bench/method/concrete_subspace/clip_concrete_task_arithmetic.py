@@ -127,7 +127,7 @@ class ConcreteTaskArithmeticAlgorithmForCLIP(
                 module.merge_weights(task_vector_mask=mask)
 
             # ------ inner optimization goes here ------
-            # NOTE: 
+            # NOTE:
             #   Because the algorithmic parameters of task arithmetic are assumed to be chosen on a validation test
             #   set, we do not need to perform inner optimization here. So here we skip the inner optimization step.
             # ------------------------------------------
@@ -137,7 +137,7 @@ class ConcreteTaskArithmeticAlgorithmForCLIP(
                 with self.profile("data loading"):
                     batch = next(self.get_shuffled_test_loader_iter(task))
                     # NOTE: The labels are not allowed to be used during test-time adaptation
-                    images = batch[0] 
+                    images = batch[0]
                 with self.profile("forward pass"):
                     logits = self.compute_logits(module, images, task)
                     loss = entropy_loss(logits)
@@ -152,7 +152,6 @@ class ConcreteTaskArithmeticAlgorithmForCLIP(
 
                 if lr_scheduler is not None:
                     lr_scheduler.step()
-
 
             metrics.update({"train/loss": loss.item()})
             self.fabric.log_dict(metrics, step=step_idx)

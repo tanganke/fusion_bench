@@ -5,10 +5,10 @@ This implementation is largely based on the implementation from  https://github.
 import logging
 import re
 from collections import defaultdict
-from typing import List, Dict
+from typing import Dict, List
 
 import torch
-from torch import nn, Tensor
+from torch import Tensor, nn
 from tqdm.autonotebook import tqdm
 
 from fusion_bench.modelpool import ModelPool, to_modelpool

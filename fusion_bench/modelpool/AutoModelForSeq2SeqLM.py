@@ -19,10 +19,10 @@ class AutoModelForSeq2SeqLMPool(ModelPool):
         Load a Seq2Seq language model based on the provided configuration.
 
         The configuration options are:
-        
+
         - name: The name of the model.
         - path: The path where the model is stored.
-        
+
         Args:
             model_config (str | DictConfig): The configuration for the model. This can be either a string (name of the model) or a DictConfig object containing the model configuration.
 
