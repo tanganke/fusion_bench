@@ -1,12 +1,12 @@
 import logging
 
 from omegaconf import DictConfig
+from torch import nn
 from transformers import GPT2ForSequenceClassification, GPT2Model, GPT2Tokenizer
 
+from fusion_bench.dataset.gpt2_glue import TokenizedGLUE
 from fusion_bench.modelpool import ModelPool
 from fusion_bench.utils import timeit_context
-from torch import nn
-from fusion_bench.dataset.gpt2_glue import TokenizedGLUE
 
 log = logging.getLogger(__name__)
 

@@ -1,17 +1,47 @@
 from omegaconf import DictConfig
 
+from .AutoModelForSeq2SeqLM import AutoModelForSeq2SeqLMPool
 from .base_pool import DictModelPool, ListModelPool, ModelPool, to_modelpool
 from .huggingface_clip_vision import HuggingFaceClipVisionPool
 from .huggingface_gpt2_classification import HuggingFaceGPT2ClassificationPool
 from .huggingface_llm import AutoModelForCausalLMPool
 from .PeftModelForSeq2SeqLM import PeftModelForSeq2SeqLMPool
-from .AutoModelForSeq2SeqLM import AutoModelForSeq2SeqLMPool
-from .openclip_modelpool import OpenCLIPModelPool
-from fusion_bench.utils import import_class
 
 
-def _rel_import_class(rel_class_name: str):
-    return import_class(f"fusion_bench.modelpool.{rel_class_name}")
+class ModelPoolFactory:
+    _modelpool = {
+        "huggingface_clip_vision": HuggingFaceClipVisionPool,
+        "OpenCLIPModelPool": ".openclip_modelpool.OpenCLIPModelPool",
+        "HF_GPT2ForSequenceClassification": HuggingFaceGPT2ClassificationPool,
+        "AutoModelPool": ".huggingface_automodel.AutoModelPool",
+        "AutoModelForCausalLMPool": AutoModelForCausalLMPool,
+        "AutoModelForSeq2SeqLMPool": AutoModelForSeq2SeqLMPool,
+        "PeftModelForSeq2SeqLMPool": PeftModelForSeq2SeqLMPool,
+        "NYUv2ModelPool": ".nyuv2_modelpool.NYUv2ModelPool",
+    }
+
+    @staticmethod
+    def create_modelpool(modelpool_config: DictConfig) -> ModelPool:
+        from fusion_bench.utils import import_object
+
+        modelpool_type = modelpool_config.get("type")
+        if modelpool_type is None:
+            raise ValueError("Model pool type not specified")
+
+        if modelpool_type not in ModelPoolFactory._modelpool:
+            raise ValueError(
+                f"Unknown model pool: {modelpool_type}, available model pools: {ModelPoolFactory._modelpool.keys()}. You can register a new model pool using `ModelPoolFactory.register_modelpool()` method."
+            )
+        modelpool_cls = ModelPoolFactory._modelpool[modelpool_type]
+        if isinstance(modelpool_cls, str):
+            if modelpool_cls.startswith("."):
+                modelpool_cls = f"fusion_bench.modelpool.{modelpool_cls[1:]}"
+            modelpool_cls = import_object(modelpool_cls)
+        return modelpool_cls(modelpool_config)
+
+    @staticmethod
+    def register_modelpool(name: str, modelpool_cls):
+        ModelPoolFactory._modelpool[name] = modelpool_cls
 
 
 def load_modelpool_from_config(modelpool_config: DictConfig):
@@ -30,22 +60,4 @@ def load_modelpool_from_config(modelpool_config: DictConfig):
     Raises:
         ValueError: If 'type' attribute is not found in the configuration or does not match any known model pool types.
     """
-    if hasattr(modelpool_config, "type"):
-        if modelpool_config.type == "huggingface_clip_vision":
-            return HuggingFaceClipVisionPool(modelpool_config)
-        elif modelpool_config.type == "OpenCLIPModelPool":
-            return OpenCLIPModelPool(modelpool_config)
-        elif modelpool_config.type == "HF_GPT2ForSequenceClassification":
-            return HuggingFaceGPT2ClassificationPool(modelpool_config)
-        elif modelpool_config.type == "AutoModelForCausalLMPool":
-            return AutoModelForCausalLMPool(modelpool_config)
-        elif modelpool_config.type == "AutoModelForSeq2SeqLMPool":
-            return AutoModelForSeq2SeqLMPool(modelpool_config)
-        elif modelpool_config.type == "PeftModelForSeq2SeqLMPool":
-            return PeftModelForSeq2SeqLMPool(modelpool_config)
-        elif modelpool_config.type == "NYUv2ModelPool":
-            return _rel_import_class("nyuv2_modelpool.NYUv2ModelPool")(modelpool_config)
-        else:
-            raise ValueError(f"Unknown model pool type: {modelpool_config.type}")
-    else:
-        raise ValueError("Model pool type not specified")
+    return ModelPoolFactory.create_modelpool(modelpool_config)

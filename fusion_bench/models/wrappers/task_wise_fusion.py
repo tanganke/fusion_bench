@@ -18,8 +18,9 @@ import functools
 import logging
 import types
 import warnings
+from collections import defaultdict
 from copy import deepcopy
-from typing import Any, Callable, Dict, Iterator, List
+from typing import Any, Callable, Dict, Iterator, List, Optional
 
 import torch
 from torch import Tensor, nn
@@ -176,7 +177,7 @@ class TaskWiseMergedModel(nn.Module):
         self.tie_weights = tie_weights
         self.strict = strict
 
-        self.task_wise_weight = nn.Parameter(task_wise_weight, requires_grad=True)
+        self.merge_weight = nn.Parameter(task_wise_weight, requires_grad=True)
 
         for name, param in pretrained_model.named_parameters():
             if not param.requires_grad:
@@ -202,21 +203,25 @@ class TaskWiseMergedModel(nn.Module):
             strict=self.strict,
         )
 
-    def merge_weights(self):
+    def merge_weights(self, task_vector_mask: Optional[Dict[str, Tensor]] = None):
         if self.clamp_weights:
-            merge_weight = self.task_wise_weight.clamp(0, 1)
+            merge_weight = self.merge_weight.clamp(0, 1)
         else:
-            merge_weight = self.task_wise_weight
+            merge_weight = self.merge_weight
 
         state_dict = self.pretrained_model.state_dict(keep_vars=True)
         for weight, task_vector in zip(merge_weight, self.task_vectors):
             for name, param in task_vector.named_parameters():
-                state_dict[name] = state_dict[name] + param * weight
+                if task_vector_mask is None:
+                    w = weight
+                else:
+                    w = weight * task_vector_mask[name]
+                state_dict[name] = state_dict[name] + param * w
         self._merged_state_dict = state_dict
         return state_dict
 
-    def merge_and_unload(self):
-        self.merge_weights()
+    def merge_and_unload(self, task_vector_mask: Optional[Dict[str, Tensor]] = None):
+        self.merge_weights(task_vector_mask=task_vector_mask)
         self.pretrained_model.load_state_dict(self._merged_state_dict)
         return self.pretrained_model
 

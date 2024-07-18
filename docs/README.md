@@ -1,8 +1,10 @@
 # FusionBench: A Comprehensive Benchmark of Deep Model Fusion
 
-!!! note
+!!! warning "Testing Phase"
     
-    Stay tuned. Working in progress.
+    The documented experiments should be reproducible. 
+    However, this project is still in testing phase as the API may be subject to change. 
+    Please report any issues you encounter.
 
 !!! note
     
@@ -175,8 +177,15 @@ By organizing these components into a structured and modular codebase, FusionBen
 
 ### Installation
 
+install from PyPI:
+
 ```bash
-# install from github repository
+pip install fusion-bench
+```
+
+or install the latest version in development from github repository
+
+```bash
 git clone https://github.com/tanganke/fusion_bench.git
 cd fusion_bench
 
@@ -212,3 +221,23 @@ report = taskpool.evaluate(merged_model)
 
 For detailed information on the options available, you can refer to this [page](cli/fusion_bench.md).
 
+## Citation
+
+If you find this benchmark useful, please consider citing our work:
+
+```bibtex
+@misc{tangFusionBenchComprehensiveBenchmark2024,
+  title = {{{FusionBench}}: {{A Comprehensive Benchmark}} of {{Deep Model Fusion}}},
+  shorttitle = {{{FusionBench}}},
+  author = {Tang, Anke and Shen, Li and Luo, Yong and Hu, Han and Do, Bo and Tao, Dacheng},
+  year = {2024},
+  month = jun,
+  number = {arXiv:2406.03280},
+  eprint = {2406.03280},
+  publisher = {arXiv},
+  url = {http://arxiv.org/abs/2406.03280},
+  archiveprefix = {arxiv},
+  langid = {english},
+  keywords = {Computer Science - Artificial Intelligence,Computer Science - Computation and Language,Computer Science - Machine Learning}
+}
+```

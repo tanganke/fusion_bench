@@ -1,14 +1,19 @@
 import logging
 from copy import deepcopy
-from typing import List, Mapping, Union
+from typing import List, Mapping, Optional, Union
 
 import torch
 from torch import Tensor, nn
 
-from ..modelpool import ModelPool, to_modelpool
-from ..utils.state_dict_arithmetic import state_dict_add, state_dict_avg, state_dict_mul
-from ..utils.type import _StateDict
-from .base_algorithm import ModelFusionAlgorithm
+from fusion_bench.method.base_algorithm import ModelFusionAlgorithm
+from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
+from fusion_bench.modelpool import ModelPool, to_modelpool
+from fusion_bench.utils.state_dict_arithmetic import (
+    state_dict_add,
+    state_dict_avg,
+    state_dict_mul,
+)
+from fusion_bench.utils.type import _StateDict
 
 log = logging.getLogger(__name__)
 
@@ -44,7 +49,10 @@ def simple_average(modules: List[Union[nn.Module, _StateDict]]):
         return state_dict_avg(modules)
 
 
-class SimpleAverageAlgorithm(ModelFusionAlgorithm):
+class SimpleAverageAlgorithm(
+    ModelFusionAlgorithm,
+    SimpleProfilerMixin,
+):
     @torch.no_grad()
     def run(self, modelpool: ModelPool):
         """
@@ -64,17 +72,21 @@ class SimpleAverageAlgorithm(ModelFusionAlgorithm):
             f"Fusing models using simple average on {len(modelpool.model_names)} models."
             f"models: {modelpool.model_names}"
         )
-        sd: _StateDict = None
+        sd: Optional[_StateDict] = None
         forward_model = None
 
         for model_name in modelpool.model_names:
-            model = modelpool.load_model(model_name)
-            if sd is None:
-                sd = model.state_dict(keep_vars=True)
-                forward_model = model
-            else:
-                sd = state_dict_add(sd, model.state_dict(keep_vars=True))
+            with self.profile("load model"):
+                model = modelpool.load_model(model_name)
+            with self.profile("merge weights"):
+                if sd is None:
+                    sd = model.state_dict(keep_vars=True)
+                    forward_model = model
+                else:
+                    sd = state_dict_add(sd, model.state_dict(keep_vars=True))
+        with self.profile("merge weights"):
+            sd = state_dict_mul(sd, 1 / len(modelpool.model_names))
 
-        sd = state_dict_mul(sd, 1 / len(modelpool.model_names))
+        self.print_profile_summary()
         forward_model.load_state_dict(sd)
         return forward_model

@@ -18,6 +18,7 @@ nav:
         - Ties-Merging: algorithms/ties_merging.md
         - AdaMerging: algorithms/adamerging.md
         - RegMean: algorithms/regmean.md
+        - Concrete Subspace: algorithms/concrete_subspace.md
       - Model Mixing:
         - Depth Upscaling: algorithms/depth_upscaling.md
         - MoE-based Upscaling: algorithms/moe_based_upscaling.md
@@ -39,6 +40,10 @@ nav:
       - Flan-T5 Models for Text Generation: taskpool/flan-t5_generation.md
   - Command Line Interface:
     - fusion_bench: cli/fusion_bench.md
+  - Programming Guides:
+    - CLIP-ViT Models For Image Classification:
+      - Manage Labels and Templates: guides/clip_vit/classification_templates.md
+  - Reading Lists: readinglist/README.md
 
 plugins:
   - search
@@ -85,6 +90,9 @@ markdown_extensions:
   - footnotes
   - pymdownx.tabbed:
       alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 extra_javascript:
   - javascripts/mathjax.js

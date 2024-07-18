@@ -1,0 +1,5 @@
+root_dir: outputs/logs
+name: "lightning_logs"
+version: null
+sub_dir: null
+default_hp_metric: false

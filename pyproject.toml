@@ -1,11 +1,12 @@
 [build-system]
 requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "fusion_bench"
 description = "A Comprehensive Benchmark of Deep Model Fusion"
 readme = "README.md"
-version = "0.1.0"
+version = "0.1.1"
 authors = [{ name = "Anke Tang", email = "tang.anke@foxmail.com" }]
 license = { file = 'LICENSE' }
 dependencies = [
@@ -14,16 +15,20 @@ dependencies = [
     "datasets",
     "huggingface_hub",
     "peft",
+    "hydra-core",
+    "lightning",
+    "matplotlib",
 ]
 keywords = ["deep learning", "model fusion", "benchmark"]
 
 
 [project.urls]
 Repository = "https://github.com/tanganke/fusion_bench"
+Homepage = "https://github.com/tanganke/fusion_bench"
 Issues = "https://github.com/tanganke/fusion_bench/issues"
 
 [project.scripts]
 fusion_bench = "fusion_bench.scripts.cli:main"
 
 [tool.setuptools]
-packages = ["fusion_bench"]
+package-dir = { "fusion_bench" = "fusion_bench" }
