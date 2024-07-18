@@ -1,11 +1,17 @@
+import logging
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import Dict, List, Optional, Union
 
+import torch
 from omegaconf import DictConfig
 from torch import nn
 
+from fusion_bench.utils import timeit_context
+
 __all__ = ["ModelPool", "DictModelPool", "ListModelPool", "to_modelpool"]
+
+log = logging.getLogger(__name__)
 
 
 class ModelPool(ABC):
@@ -83,6 +89,10 @@ class ModelPool(ABC):
             Any: The loaded model.
         """
         raise NotImplementedError
+
+    def save_model(self, model: nn.Module, path: str):
+        with timeit_context(f"Saving the state dict of model to {path}"):
+            torch.save(model.state_dict(), path)
 
     def models(self):
         for model_name in self.model_names:

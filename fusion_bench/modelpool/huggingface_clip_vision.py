@@ -4,6 +4,7 @@ from typing import Optional
 
 from omegaconf import DictConfig, open_dict
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
+from typing_extensions import override
 
 from fusion_bench.dataset import CLIPDataset, load_dataset_from_config
 from fusion_bench.utils import timeit_context
@@ -42,6 +43,7 @@ class HuggingFaceClipVisionPool(ModelPool):
                 )
         return self._clip_processor
 
+    @override
     def load_model(self, model_config: str | DictConfig) -> CLIPVisionModel:
         """
         Load a CLIP Vision model from the given configuration.
@@ -60,6 +62,18 @@ class HuggingFaceClipVisionPool(ModelPool):
         ):
             vision_model = CLIPVisionModel.from_pretrained(model_config.path)
         return vision_model
+
+    @override
+    def save_model(self, model: CLIPVisionModel, path: str):
+        """
+        Save a CLIP Vision model to the given path.
+
+        Args:
+            model (CLIPVisionModel): The model to save.
+            path (str): The path to save the model to.
+        """
+        with timeit_context(f'Saving clip vision model to "{path}"'):
+            model.save_pretrained(path)
 
     def get_tta_dataset_config(self, dataset: str):
         for dataset_config in self.config.tta_datasets:

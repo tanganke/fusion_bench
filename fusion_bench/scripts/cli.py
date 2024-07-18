@@ -68,6 +68,19 @@ class LightningProgram(LightningFabricMixin):
             obj._fabric = self.fabric
         return obj
 
+    def save_merged_model(self, merged_model):
+        if self.config.get("merged_model_save_path", None) is not None:
+            # path to save the merged model, use "{log_dir}" to refer to the logger directory
+            save_path: str = self.config.merged_model_save_path
+            if "{log_dir}" in save_path and self.log_dir is not None:
+                save_path = save_path.format(log_dir=self.log_dir)
+
+            if os.path.dirname(save_path):
+                os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            self.modelpool.save_model(merged_model, save_path)
+        else:
+            print("No save path specified for the merged model. Skipping saving.")
+
     def run_model_fusion(self):
         cfg = self.config
 
@@ -78,6 +91,7 @@ class LightningProgram(LightningFabricMixin):
             load_algorithm_from_config, cfg.method
         )
         merged_model = algorithm.run(modelpool)
+        self.save_merged_model(merged_model)
 
         if hasattr(cfg, "taskpool") and cfg.taskpool is not None:
             self.taskpool = taskpool = self._load_and_setup(
