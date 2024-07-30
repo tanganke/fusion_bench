@@ -4,6 +4,9 @@
 
 Documentation is available at [tanganke.github.io/fusion_bench/](https://tanganke.github.io/fusion_bench/).
 
+[![Downloads](https://static.pepy.tech/badge/fusion-bench/month)](https://pepy.tech/project/fusion-bench)
+[![Downloads](https://static.pepy.tech/badge/fusion-bench/week)](https://pepy.tech/project/fusion-bench)
+
 ## Installation
 
 install from PyPI:
