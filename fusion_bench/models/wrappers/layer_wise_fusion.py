@@ -3,7 +3,7 @@ import logging
 import types
 import warnings
 from copy import deepcopy
-from typing import Any, Callable, Dict, Iterator, List
+from typing import Any, Callable, Dict, Iterator, List, Optional
 
 import torch
 from torch import Tensor, nn
@@ -172,12 +172,12 @@ class LayerWiseMergedModel(nn.Module):
             strict=self.strict,
         )
 
-    def merge_and_unload(self):
-        self.merge_weights()
+    def merge_and_unload(self, task_vector_mask: Optional[Dict[str, Tensor]] = None):
+        self.merge_weights(task_vector_mask=task_vector_mask)
         self.pretrained_model.load_state_dict(self._merged_state_dict)
         return self.pretrained_model
 
-    def merge_weights(self):
+    def merge_weights(self, task_vector_mask: Optional[Dict[str, Tensor]] = None):
         """
         Merges the weights of the model.
         Call this after each update step.
@@ -188,8 +188,14 @@ class LayerWiseMergedModel(nn.Module):
             layer_wise_weight = self.merge_weight
 
         state_dict = self.pretrained_model.state_dict(keep_vars=True)
+        # shape of layer_wise_weight: (num_models, num_layers)
         for weight, task_vector in zip(layer_wise_weight, self.task_vectors):
             assert len(list(task_vector.named_parameters())) == weight.size(0)
+            if task_vector_mask is not None:
+                weight = [
+                    w * task_vector_mask[name]
+                    for w, (name, param) in zip(weight, task_vector.named_parameters())
+                ]
             for w, (name, param) in zip(weight, task_vector.named_parameters()):
                 state_dict[name] = state_dict[name] + param * w
         self._merged_state_dict = state_dict

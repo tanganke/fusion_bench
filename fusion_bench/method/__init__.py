@@ -44,6 +44,7 @@ class AlgorithmFactory:
         "clip_layer_wise_adamerging": CLIPLayerWiseAdaMergingAlgorithm,
         # plug-and-play model merging methods
         "clip_concrete_task_arithmetic": ".concrete_subspace.clip_concrete_task_arithmetic.ConcreteTaskArithmeticAlgorithmForCLIP",
+        "clip_concrete_layer_wise_adamerging": ".concrete_subspace.clip_concrete_adamerging.ConcreteLayerWiseAdaMergingForCLIP",
         # model mixing methods
         "depth_upscaling": DepthUpscalingAlgorithm,
         "mixtral_moe_upscaling": ".mixture_of_experts.mixtral_upcycling.MixtralUpscalingAlgorithm",

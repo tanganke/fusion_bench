@@ -143,5 +143,7 @@ class LightningFabricMixin:
     def is_debug_mode(self):
         if hasattr(self, "config") and self.config.get("fast_dev_run", False):
             return True
+        elif hasattr(self, "_program") and self._program.config.get("fast_dev_run", False):
+            return True
         else:
             return False

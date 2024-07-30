@@ -52,7 +52,15 @@ results
 }
 ```
 
+Concrete AdaMerging (Layer-wise)
 
+```bash
+usion_bench \
+    fabric_logger.name=ViT-B-32/clip_concrete_layer_wise_adamerging \
+    method=clip_concrete_layer_wise_adamerging \
+    modelpool=clip-vit-base-patch32_TA8 \
+    taskpool=clip-vit-classification_TA8
+```
 
 ## Further Reading
 
