@@ -55,7 +55,8 @@ results
 Concrete AdaMerging (Layer-wise)
 
 ```bash
-usion_bench \
+# tensorboard logs and learned checkpoints of the shared mask can be found at https://huggingface.co/tanganke/clip-vit-base-patch32_concrete-layer-wise_adamerging_tblogs
+fusion_bench \
     fabric_logger.name=ViT-B-32/clip_concrete_layer_wise_adamerging \
     method=clip_concrete_layer_wise_adamerging \
     modelpool=clip-vit-base-patch32_TA8 \
