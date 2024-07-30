@@ -5,13 +5,10 @@ Examples:
 
 ```bash
 fusion_bench \
-    method=adamerging \
-        method.name=clip_layer_wise_adamerging \
-        method.save_merging_weights=merging_weights.pt \
+    fabric_logger.name=ViT-B-32/clip_concrete_layer_wise_adamerging \
+    method=clip_concrete_layer_wise_adamerging \
     modelpool=clip-vit-base-patch32_TA8 \
-    taskpool=clip-vit-classification_TA8 \
-    fabric_logger.root_dir=outputs/logs/ViT-B-32 \
-    fabric_logger.name=clip_layer_wise_adamerging_adam
+    taskpool=clip-vit-classification_TA8
 ```
 """
 
