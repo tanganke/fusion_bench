@@ -10,14 +10,17 @@ version = "0.1.2"
 authors = [{ name = "Anke Tang", email = "tang.anke@foxmail.com" }]
 license = { file = 'LICENSE' }
 dependencies = [
+    "hydra-core",
     "torch>=2.0.0",
+    "lightning",
     "transformers",
     "datasets",
-    "huggingface_hub",
     "peft",
-    "hydra-core",
-    "lightning",
+    "huggingface_hub",
     "matplotlib",
+    "tensorboard",
+    "tqdm",
+    "rich"
 ]
 keywords = ["deep learning", "model fusion", "benchmark"]
 
