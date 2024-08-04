@@ -1,0 +1,6 @@
+name: magnitude_diff_pruning
+
+prune_ratio: 0.5
+
+# regular expressions for the names of the parameters to be extracted
+extract_names: null

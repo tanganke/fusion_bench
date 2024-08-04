@@ -54,6 +54,8 @@ class AlgorithmFactory:
         "mixtral_for_causal_lm_merging": ".mixture_of_experts.mixtral_merging.MixtralForCausalLMMergingAlgorithm",
         "clip_weight_ensembling_moe": CLIPWeightEnsemblingMoEAlgorithm,
         "model_recombination": ModelRecombinationAlgorithm,
+        # pruning methods
+        "magnitude_diff_pruning": ".pruning.MagnitudeDiffPruningAlgorithm",
     }
 
     @staticmethod
