@@ -86,6 +86,29 @@ The type of the modelpool is `huggingface_clip_vision`, corresponding to the mod
 
 Here are some basic examples of using the CLIP-ViT models for open vocabulary image classification with different fusion methods, using the [`fusion_bench`](../cli/fusion_bench.md) command line interface.
 
+### Inspection of Model Information
+
+Print the basic information of the CLIP-ViT-B/32 model and CLIP-ViT-L/14 model
+
+```bash
+fusion_bench \
+  method=dummy \
+  modelpool=clip-vit-base-patch32_individual \
+  taskpool=dummy  # a dummy task that just report the basic information of model (e.g., number of parameters)
+
+# Output:
+# {'model_info': {'trainable_params': 87456000, 'all_params': 87456000, 'trainable_percentage': 1.0}}
+
+# or use the following command to inspect the CLIP-ViT-L/14 model
+fusion_bench \
+  method=dummy \
+  modelpool=clip-vit-large-patch14_individual \
+  taskpool=dummy
+
+# Output:
+# {'model_info': {'trainable_params': 303179776, 'all_params': 303179776, 'trainable_percentage': 1.0}}
+```
+
 ### Single Model Evaluation
 
 evaluate the CLIP-ViT-B/32 model on the eight tasks

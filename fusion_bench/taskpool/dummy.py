@@ -4,7 +4,7 @@ This is the dummy task pool that is used for debugging purposes.
 
 from omegaconf import DictConfig
 
-from fusion_bench.utils.parameters import print_parameters
+from fusion_bench.utils.parameters import print_parameters, count_parameters
 
 from .base_pool import TaskPool
 
@@ -23,3 +23,11 @@ class DummyTaskPool(TaskPool):
             model: The model to evaluate.
         """
         print_parameters(model, is_human_readable=True)
+        report = {}
+        training_params, all_params = count_parameters(model)
+        report["model_info"] = {
+            "trainable_params": training_params,
+            "all_params": all_params,
+            "trainable_percentage": training_params / all_params,
+        }
+        return report
