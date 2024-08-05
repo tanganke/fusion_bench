@@ -1,0 +1,16 @@
+name: singular_moe_upscaling
+
+# merge device on cuda can accelerate the SVD computation
+device: cpu
+
+gate_k: 1
+k: 128
+top_k: 1
+
+# set this to True to make the model use the pretrained bias as expert
+pretrained_bias_as_expert: false
+# average the remaining part, if this is set the False, the remaining part will kept as base model (the pretrained model)
+average_experts: false
+
+# path to save/load the model
+model_path: null

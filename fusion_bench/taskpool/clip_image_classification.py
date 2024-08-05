@@ -12,11 +12,12 @@ from torch.utils.data import DataLoader
 from tqdm.autonotebook import tqdm
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 
-from ..dataset import CLIPDataset, load_dataset_from_config
-from ..models.hf_clip import HFCLIPClassifier
-from ..tasks.classification import ClassificationTask
-from ..tasks.clip_classification import get_classnames_and_templates
-from .base_pool import TaskPool
+from fusion_bench.dataset import CLIPDataset, load_dataset_from_config
+from fusion_bench.models.hf_clip import HFCLIPClassifier
+from fusion_bench.taskpool import TaskPool
+from fusion_bench.tasks.classification import ClassificationTask
+from fusion_bench.tasks.clip_classification import get_classnames_and_templates
+from fusion_bench.utils.parameters import count_parameters
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -152,6 +153,12 @@ class CLIPImageClassificationTaskPool(TaskPool):
         # CLIPVisionModel works the same with CLIPVisonTransformer, so we can use it directly
         self.clip_model.vision_model = model
         report = {}
+        training_params, all_params = count_parameters(model)
+        report["model_info"] = {
+            "trainable_params": training_params,
+            "all_params": all_params,
+            "trainable_percentage": training_params / all_params,
+        }
         for task_name in tqdm(self.task_names, desc="Evaluating tasks"):
             task = self.load_task(task_name)
             result = task.evaluate(self.clip_model)
