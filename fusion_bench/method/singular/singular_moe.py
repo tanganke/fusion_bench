@@ -36,7 +36,6 @@ class Router(nn.Module):
         super().__init__()
         self.input_features = input_features
         self.num_experts = len(w_diff_list)
-        self.k = k
         weights = []
         for i, w_diff in enumerate(w_diff_list):
             if svd_list is None:
@@ -49,6 +48,7 @@ class Router(nn.Module):
 
             # weights.append((s * v).T)
             weights.append((v).T)
+        self.k = s.size(0) # k is the actual k after truncation
 
         weights = torch.stack(weights, dim=0)
         self.weights = nn.Parameter(

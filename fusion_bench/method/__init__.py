@@ -42,6 +42,7 @@ class AlgorithmFactory:
         "ties_merging": TiesMergingAlgorithm,
         "clip_task_wise_adamerging": CLIPTaskWiseAdaMergingAlgorithm,
         "clip_layer_wise_adamerging": CLIPLayerWiseAdaMergingAlgorithm,
+        "singular_projection_merging": ".singular.singular_projection_merging.SingularProjectionMergingAlgorithm",
         # plug-and-play model merging methods
         "clip_concrete_task_arithmetic": ".concrete_subspace.clip_concrete_task_arithmetic.ConcreteTaskArithmeticAlgorithmForCLIP",
         "clip_concrete_task_wise_adamerging": ".concrete_subspace.clip_concrete_adamerging.ConcreteTaskWiseAdaMergingForCLIP",

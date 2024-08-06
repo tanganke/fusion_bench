@@ -111,7 +111,7 @@ fusion_bench \
 
 ### Single Model Evaluation
 
-evaluate the CLIP-ViT-B/32 model on the eight tasks
+evaluate a single CLIP-ViT-B/32 model on the eight downstream tasks:
 
 ```bash
 fusion_bench method=dummy \
@@ -120,8 +120,51 @@ fusion_bench method=dummy \
   taskpool=clip-vit-classification_TA8
 ```
 
-Here the `dummy` method is a special method used to skip the model merging process (see [dummy method](../algorithms/dummy.md) for more information), and the `clip-vit-classification_TA8` taskpool is used to evaluate the model on the eight tasks.
-if `$path_to_clip_model` is not specified, the pre-trained model from HuggingFace will be used by default.
+Here:
+
+- The `dummy` method is a special method used to skip the model merging process, it loads the pre-trained model in the modelpool and return the model without any modification (or the first model when a model with the name `_pretrained_` does not exist in modelpool), see [dummy method](../algorithms/dummy.md) for more information. 
+- The `clip-vit-base-patch32_individual` modelpool contains a single model. By passing argument `modelpool.models.0.path=...`, we override the path of the model with the specified path.
+```yaml title="config/modelpool/clip-vit-base-patch32_individual.yaml"
+type: huggingface_clip_vision
+models:
+  - name: _pretrained_
+    path: openai/clip-vit-base-patch32
+```
+- The `clip-vit-classification_TA8` taskpool is used to evaluate the model on the eight tasks.
+  if `$path_to_clip_model` is not specified, the pre-trained model from HuggingFace will be used by default.
+```yaml title="config/taskpool/clip-vit-classification_TA8.yaml"
+type: clip_vit_classification
+name: clip-vit-classification_TA8
+
+dataset_type: huggingface_image_classification
+tasks:
+  - name: svhn
+    dataset:
+      ...
+  - name: stanford_cars
+    dataset:
+      ...
+  - name: resisc45
+    dataset:
+      ...
+  ...
+
+clip_model: openai/clip-vit-base-patch32
+...
+```
+
+Use a for loop to evaluate multiple CLIP-ViT-B/32 model on the eight tasks, and save reports to json files:
+
+```bash
+for task in sun397 stanford-cars resisc45 eurosat svhn gtsrb mnist dtd
+do
+    fusion_bench method=dummy \
+        modelpool=clip-vit-base-patch32_individual \
+            modelpool.models.0.path=tanganke/clip-vit-base-patch32_${task} \
+        taskpool=clip-vit-classification_TA8 \
+        save_report="outputs/ViT-B-32/single-task/clip-vit-base-patch32_${task}.json"
+done
+```
 
 evaluate the CLIP-ViT-L/14 model on the eight tasks
 
