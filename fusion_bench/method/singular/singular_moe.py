@@ -223,7 +223,17 @@ class SingularMoELinear(nn.Module):
         final_hidden_states = pretrained_out + final_hidden_states
         return final_hidden_states
 
-
+    @property
+    def weight(self):
+        """
+        Mimic linear layer. Bacause in some cases, user might indicate the device (or dtype of parameters) of the linear layer using `linear_layer.weight.device`
+        """
+        return self.pretrained_model.weight
+    
+    @property
+    def bias(self):
+        return self.pretrained_model.bias
+    
 class SingularMoEUpscaling(ModelFusionAlgorithm, SimpleProfilerMixin):
     _linear_layer_cls = (nn.Linear,)
 
