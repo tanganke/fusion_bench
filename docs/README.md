@@ -1,5 +1,9 @@
 # FusionBench: A Comprehensive Benchmark of Deep Model Fusion
 
+[![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](http://arxiv.org/abs/2406.03280)
+[![Downloads](https://static.pepy.tech/badge/fusion-bench/month)](https://pepy.tech/project/fusion-bench)
+[![Downloads](https://static.pepy.tech/badge/fusion-bench/week)](https://pepy.tech/project/fusion-bench)
+
 !!! warning "Testing Phase"
     
     The documented experiments should be reproducible. 
@@ -11,6 +15,53 @@
     - Any questions or comments can be directed to the [GitHub Issues](https://github.com/tanganke/fusion_bench/issues) page for this project.
     - Any contributions or pull requests are welcome. If you find any mistakes or have suggestions for improvements, please feel free to raise an issue or submit a pull request.
 
+## Getting Started
+
+### Installation
+
+install from [PyPI](https://pypi.org/project/fusion-bench/):
+
+```bash
+pip install fusion-bench
+```
+
+or install the latest version in development from github repository
+
+```bash
+git clone https://github.com/tanganke/fusion_bench.git
+cd fusion_bench
+
+pip install -e . # install the package in editable mode
+```
+
+### Command Line Interface
+
+`fusion_bench` is the command line interface for running the benchmark. 
+It takes a configuration file as input, which specifies the models, fusion method to be used, and the datasets to be evaluated. 
+To run the benchmark, you can use the following command:
+
+```
+fusion_bench [--config-path CONFIG_PATH] [--config-name CONFIG_NAME] \
+    OPTION_1=VALUE_1 OPTION_2=VALUE_2 ...
+```
+
+This program will load the configuration file specified by `--config-path` and `--config-name`, and run the fusion algorithm on the model pool.
+The pseudocode is as follows:
+
+```python
+# instantiate an algorithm, a modelpool object that manages the models, 
+# and a taskpool object that manages the tasks (dataset + metrics)
+algorithm = load_algorithm(config.algorithm)
+modelpool = load_modelpool(config.modelpool)
+taskpool = load_taskpool(config.taskpool)
+
+# run the fusion algorithm on the model pool
+merged_model = algorithm.run(modelpool)
+# evaluate the merged model on the tasks
+report = taskpool.evaluate(merged_model)
+```
+
+For detailed information on the options available, you can refer to this [page](cli/fusion_bench.md).
 
 ## Introduction to Deep Model Fusion (the learn from model paradigm)
 
@@ -173,53 +224,6 @@ The general structure of the FusionBench project can be visualized through its m
 
 By organizing these components into a structured and modular codebase, FusionBench ensures flexibility, ease of use, and scalability for researchers and developers. The project not only serves as a benchmark but also as a robust platform for innovation in the realm of deep model fusion.
 
-## Getting Started
-
-### Installation
-
-install from PyPI:
-
-```bash
-pip install fusion-bench
-```
-
-or install the latest version in development from github repository
-
-```bash
-git clone https://github.com/tanganke/fusion_bench.git
-cd fusion_bench
-
-pip install -e . # install the package in editable mode
-```
-
-### Command Line Interface
-
-`fusion_bench` is the command line interface for running the benchmark. 
-It takes a configuration file as input, which specifies the models, fusion method to be used, and the datasets to be evaluated. 
-To run the benchmark, you can use the following command:
-
-```
-fusion_bench [--config-path CONFIG_PATH] [--config-name CONFIG_NAME] \
-    OPTION_1=VALUE_1 OPTION_2=VALUE_2 ...
-```
-
-This program will load the configuration file specified by `--config-path` and `--config-name`, and run the fusion algorithm on the model pool.
-The pseudocode is as follows:
-
-```python
-# instantiate an algorithm, a modelpool object that manages the models, 
-# and a taskpool object that manages the tasks (dataset + metrics)
-algorithm = load_algorithm(config.algorithm)
-modelpool = load_modelpool(config.modelpool)
-taskpool = load_taskpool(config.taskpool)
-
-# run the fusion algorithm on the model pool
-merged_model = algorithm.run(modelpool)
-# evaluate the merged model on the tasks
-report = taskpool.evaluate(merged_model)
-```
-
-For detailed information on the options available, you can refer to this [page](cli/fusion_bench.md).
 
 ## Citation
 
