@@ -2,23 +2,85 @@
 
 ## Model Information
 
+Prompt-based fine-tuned Flan-T5 models on GLUE benchmark tasks.
+The models are fine-tuned in a text-to-text setting, and the prompt templates are provided below.
+The source code for the prompt templates can be found [in the repository](https://github.com/tanganke/fusion_bench/blob/main/fusion_bench/tasks/flan_t5_text_generation/glue_prompt_templates.py).
+
+```python title="fusion_bench/tasks/flan_t5_text_generation/glue_prompt_templates.py"
+cola = {
+    "description": "template used by GLUE-CoLA",
+    "input_text": "Indicate if the following sentence is grammatically correct or not: \"{sentence}\". Answere 'acceptable' or 'unacceptable'.",
+    "target_text": {"0": "unacceptable", "1": "acceptable"},
+}
+mnli = {
+    "input_text": "Does the premise: '{premise}' logically imply, contradict, or is neutral to the hypothesis: '{hypothesis}'? Answere with 'entailment', 'contradiction', or 'neutral'.",
+    "target_text": {"0": "entailment", "1": "neutral", "2": "contradiction"},
+}
+mrpc = {
+    "input_text": "Are the following sentences '{sentence1}' and '{sentence2}' conveying the same meaning? Answere with 'yes' or 'no'.",
+    "target_text": {"0": "no", "1": "yes"},
+}
+qnli = {
+    "input_text": "Given the context: '{sentence}', does the question '{question}' have an answer based on the information provided? Answer with 'yes' or 'no'.",
+    "target_text": {"0": "yes", "1": "no"},
+}
+qqp = {
+    "input_text": "Do the questions '{question1}' and '{question2}' have the same intent? Answere with 'yes' or 'no'.",
+    "target_text": {"0": "no", "1": "yes"},
+}
+rte = {
+    "description": "Template used by GLUE-RTE",
+    "input_text": "Does the text: '{sentence1}' entail that '{sentence2}' is true? Provide 'yes' or 'no'.",
+    "target_text": {"0": "yes", "1": "no"},
+}
+sst2 = {
+    "input_text": "Given the sentence '{sentence}', determine the sentiment. Is it positive or negative?",
+    "target_text": {"0": "negative", "1": "positive"},
+}
+stsb = {
+    "input_text": "Consider the sentences '{sentence1}' and '{sentence2}'. On a scale from 1 (completely different) to 5 (completely similar), rate the similarity.",
+    "target_text": "{:.1f}",
+}
+```
+
+
 ### Flan-T5-base
+
+#### Full Fine-tuned Models
+
+[full fine-tuned Flan-T5-base models on tasks from GLUE benchmark](https://huggingface.co/collections/tanganke/flan-t5-base-models-fine-tuned-on-glue-benchmark-664f30d7966303d9a0a90bb6)
+
+| Model       | GLUE-COLA     | GLUE-MNLI     | GLUE-MRPC     | GLUE-QNLI     | GLUE-QQP      | GLUE-RTE      | GLUE-SST2     | GLUE-STSB     | Average   |
+| ----------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | --------- |
+| Pre-trained | 69.127517     | 56.454407     | 76.225490     | 88.449570     | 82.119713     | 80.144404     | 91.169725     | 62.190453     | 75.735160 |
+| GLUE-COLA   | **74.976031** | 37.208355     | 72.794118     | 87.552627     | 80.415533     | 76.895307     | 91.399083     | 63.583974     | 73.103128 |
+| GLUE-MNLI   | 65.867689     | **83.413143** | 75.735294     | 89.236683     | 82.616869     | 77.978339     | 90.596330     | 66.215025     | 78.957422 |
+| GLUE-MRPC   | 63.374880     | 48.293428     | **87.500000** | 85.831960     | 81.100668     | 72.563177     | 88.073394     | 76.062875     | 75.350048 |
+| GLUE-QNLI   | 68.744008     | 39.246052     | 75.490196     | **91.488193** | 81.291120     | 78.339350     | 91.628440     | 68.200428     | 74.303474 |
+| GLUE-QQP    | 59.060403     | 50.412634     | 73.774510     | 88.339740     | **85.369775** | 81.227437     | 90.825688     | 75.948390     | 75.619822 |
+| GLUE-RTE    | 65.388303     | 51.115639     | 69.607843     | 88.705839     | 80.774178     | **85.920578** | 90.252294     | 68.944418     | 75.088636 |
+| GLUE-SST2   | 67.785235     | 53.958227     | 76.470588     | 87.772286     | 83.415780     | 80.505415     | **93.577982** | 63.612718     | 75.887279 |
+| GLUE-STSB   | 69.319271     | 49.302089     | 76.470588     | 88.962109     | 81.662132     | 77.617329     | 90.137615     | **88.695433** | 77.770821 |
+
+#### LoRA Fine-tuned Models (r=16)
 
 [LoRA fine-tuned (r=16) Flan-T5-base models on tasks from GLUE benchmark](https://huggingface.co/collections/tanganke/flan-t5-base-models-fine-tuned-lora-16-on-glue-benchmark-664eb5848e43ee411fa086f4):
 
-| Model      | GLUE-COLA | GLUE-MNLI | GLUE-MRPC | GLUE-QNLI | GLUE-QQP | GLUE-RTE | GLUE-SST2 | GLUE-STSB | Average |
-| ---------- | --------- | --------- | --------- | --------- | -------- | -------- | --------- | --------- | ------- |
-| Pretrained | 69.1      | 56.5      | 76.2      | 88.4      | 82.1     | 80.1     | 91.2      | 62.2      | 75.7    |
-| GLUE-COLA  | 69.1      | 39.9      | 75.2      | 89.1      | 81.1     | 81.9     | 90.7      | 54.0      |         |
-| GLUE-MNLI  | **69.4**  | **82.7**  | 73.8      | 89.3      | 82.0     | 79.4     | 90.9      | 68.1      |         |
-| GLUE-MRPC  | 64.0      | 44.9      | **85.5**  | 82.6      | 81.0     | 69.0     | 88.6      | 73.6      |         |
-| GLUE-QNLI  | 68.9      | 52.7      | 76.7      | **90.9**  | 82.8     | 79.8     | 91.5      | 68.9      |         |
-| GLUE-QQP   | 65.0      | 54.6      | 75.7      | 89.0      | **84.0** | 81.6     | 90.7      | 75.3      |         |
-| GLUE-RTE   | 64.9      | 51.8      | 69.4      | 89.2      | 79.8     | **84.5** | 90.6      | 70.1      |         |
-| GLUE-SST2  | 68.3      | 56.6      | 76.0      | 88.5      | 83.4     | 79.8     | **92.9**  | 62.6      |         |
-| GLUE-STSB  | 65.7      | 1.7       | 67.4      | 89.3      | 80.1     | 79.8     | 90.8      | **87.4**  |         |
+| Model       | GLUE-COLA | GLUE-MNLI | GLUE-MRPC | GLUE-QNLI | GLUE-QQP | GLUE-RTE | GLUE-SST2 | GLUE-STSB | Average |
+| ----------- | --------- | --------- | --------- | --------- | -------- | -------- | --------- | --------- | ------- |
+| Pre-trained | 69.1      | 56.5      | 76.2      | 88.4      | 82.1     | 80.1     | 91.2      | 62.2      | 75.7    |
+| GLUE-COLA   | 69.1      | 39.9      | 75.2      | 89.1      | 81.1     | 81.9     | 90.7      | 54.0      |         |
+| GLUE-MNLI   | **69.4**  | **82.7**  | 73.8      | 89.3      | 82.0     | 79.4     | 90.9      | 68.1      |         |
+| GLUE-MRPC   | 64.0      | 44.9      | **85.5**  | 82.6      | 81.0     | 69.0     | 88.6      | 73.6      |         |
+| GLUE-QNLI   | 68.9      | 52.7      | 76.7      | **90.9**  | 82.8     | 79.8     | 91.5      | 68.9      |         |
+| GLUE-QQP    | 65.0      | 54.6      | 75.7      | 89.0      | **84.0** | 81.6     | 90.7      | 75.3      |         |
+| GLUE-RTE    | 64.9      | 51.8      | 69.4      | 89.2      | 79.8     | **84.5** | 90.6      | 70.1      |         |
+| GLUE-SST2   | 68.3      | 56.6      | 76.0      | 88.5      | 83.4     | 79.8     | **92.9**  | 62.6      |         |
+| GLUE-STSB   | 65.7      | 1.7       | 67.4      | 89.3      | 80.1     | 79.8     | 90.8      | **87.4**  |         |
 
 ### Flan-T5-Large
+
+#### LoRA Fine-tuned Models (r=16)
 
 [LoRA fine-tuned (r=16) Flan-T5-large models on tasks from GLUE benchmark](https://huggingface.co/collections/tanganke/flan-t5-large-models-fine-tuned-lora-16-on-glue-benchmark-664f2c8835234513c563d087):
 
@@ -147,11 +209,11 @@ Flan-T5-Base models:
 
 === "Table: Mutli-task model merging methods using Flan-T5-Base (full fine-tuned) models."
 
-    | Method            | CoLA | MNLI | MRPC | QNLI | QQP | RTE | SST-2 | STSB | Average |
-    | ----------------- | ---- | ---- | ---- | ---- | --- | --- | ----- | ---- | ------- |
-    | Reference Results |      |      |      |      |     |     |       |      |         |
-    | Pre-trained       |
-    | Fine-tuned (STL)  |
+    | Method            | CoLA      | MNLI      | MRPC      | QNLI      | QQP       | RTE       | SST-2     | STSB      | Average   |
+    | ----------------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
+    | Reference Results |           |           |           |           |           |           |           |           |           |
+    | Pre-trained       | 69.127517 | 56.454407 | 76.225490 | 88.449570 | 82.119713 | 80.144404 | 91.169725 | 62.190453 | 75.735160 |
+    | Fine-tuned (STL)  | 74.976031 | 83.413143 | 87.500000 | 91.488193 | 85.369775 | 85.920578 | 93.577982 | 88.695433 | 86.3676   |
 
 === "Table: Mutli-task model merging methods using Flan-T5-Base (LoRA r=16) models."
 
