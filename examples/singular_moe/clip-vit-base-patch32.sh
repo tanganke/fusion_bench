@@ -1,5 +1,5 @@
 # hyperparameter search
-for gate_k in 1 2 4 8 16 32 64 128; do
+for gate_k in 1 2 4 8 16 32 64 128 256 512; do
     for k in 4 8 16 32 64 128 -1; do
         fusion_bench \
             method=singular_moe_upscaling \

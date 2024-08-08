@@ -5,6 +5,7 @@ device: cuda
 
 k: 128
 rank: low # or high
+full_matrices: false
 
 # path to save/load the model
 model_path: null

@@ -17,6 +17,10 @@ from fusion_bench.utils.parameters import print_parameters
 log = logging.getLogger(__name__)
 
 
+class ExpertNotTrainedError(Exception):
+    pass
+
+
 def svd(w: Tensor) -> Tuple[Tensor, Tensor, Tensor]:
     u, s, vh = torch.linalg.svd(
         w, full_matrices=True, driver="gesvd" if w.is_cuda else None
@@ -48,7 +52,7 @@ class Router(nn.Module):
 
             # weights.append((s * v).T)
             weights.append((v).T)
-        self.k = s.size(0) # k is the actual k after truncation
+        self.k = s.size(0)  # k is the actual k after truncation
 
         weights = torch.stack(weights, dim=0)
         self.weights = nn.Parameter(
@@ -102,6 +106,13 @@ class SingularCompressedLinear(nn.Module):
         return F.linear(x, self.u @ self.svh, self.bias)
 
 
+def _is_all_zeros(tensor: Tensor | List[Tensor]) -> bool:
+    if isinstance(tensor, Tensor):
+        return torch.allclose(tensor, torch.zeros_like(tensor))
+    else:
+        return all(_is_all_zeros(t) for t in tensor)
+
+
 class SingularMoELinear(nn.Module):
     @torch.no_grad()
     def __init__(
@@ -125,6 +136,9 @@ class SingularMoELinear(nn.Module):
         for m in finetuned_models:
             m.weight.data = m.weight - pretrained_model.weight
         w_diff_list = [m.weight for m in finetuned_models]
+        if _is_all_zeros(w_diff_list):
+            # All fine-tuned models are identical to the pretrained model
+            raise ExpertNotTrainedError()
         if pretrained_bias_as_expert:
             w_diff_list = [pretrained_model.weight] + w_diff_list
         svd_cache_list = [
@@ -151,10 +165,11 @@ class SingularMoELinear(nn.Module):
             # if k is not set (<0), we use the full fine-tuned model
             experts = experts + finetuned_models
         self.experts = nn.ModuleList(experts)
-
+        if pretrained_model.bias is not None:
+            for m in experts:
+                m.bias.data = m.bias.data - pretrained_model.bias
         # assign the pretrained model (the shared part)
         self.pretrained_model = pretrained_model
-        self.pretrained_model.bias = None
 
     def forward(self, hidden_states: Tensor):
         pretrained_out = self.pretrained_model(hidden_states)
@@ -210,6 +225,7 @@ class SingularMoELinear(nn.Module):
 
 
 class SingularMoEUpscaling(ModelFusionAlgorithm, SimpleProfilerMixin):
+    _linear_layer_cls = (nn.Linear,)
 
     @torch.no_grad()
     def run(self, modelpool: ModelPool):
@@ -274,12 +290,16 @@ class SingularMoEUpscaling(ModelFusionAlgorithm, SimpleProfilerMixin):
             tuple(model.named_modules()),
             "Upscaling Modules",
         ):
-            if isinstance(module, nn.Linear):
+            if isinstance(module, self._linear_layer_cls):
                 name_list = name.split(".")
                 experts = [get_attr(m, name_list) for m in finetuned_models]
-                moe_linear = SingularMoELinear(
-                    module, experts, gate_k=gate_k, k=k, top_k=top_k
-                )
+                try:
+                    moe_linear = SingularMoELinear(
+                        module, experts, gate_k=gate_k, k=k, top_k=top_k
+                    )
+                except ExpertNotTrainedError as e:
+                    print(f"skip {name} because the experts are not trained.")
+                    continue
                 set_attr(model, name_list, moe_linear)
             elif average_experts and len(tuple(module.named_modules())) == 1:
                 # if the module is a leaf module, we perform a parameter average

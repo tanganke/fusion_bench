@@ -16,9 +16,9 @@ from fusion_bench.models.utils import get_attr, set_attr
 log = logging.getLogger(__name__)
 
 
-def svd(w: Tensor) -> Tuple[Tensor, Tensor, Tensor]:
+def svd(w: Tensor, full_matrices: bool) -> Tuple[Tensor, Tensor, Tensor]:
     u, s, vh = torch.linalg.svd(
-        w, full_matrices=True, driver="gesvd" if w.is_cuda else None
+        w, full_matrices=full_matrices, driver="gesvd" if w.is_cuda else None
     )
     v = vh.T
     return u, s, v
@@ -57,9 +57,13 @@ class SingularProjectionMergingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMix
             model = torch.load(self.config.model_path)
 
         with self.profile("load pretrained model"):
-            pretrained_model = modelpool.load_model("_pretrained_")
+            pretrained_model = modelpool.load_model("_pretrained_").to(
+                self.config.device
+            )
         with self.profile("load fine-tuned model"):
-            finetuned_models = modelpool.load_model(modelpool.model_names[0])
+            finetuned_models = modelpool.load_model(modelpool.model_names[0]).to(
+                self.config.device
+            )
 
         with self.profile("merge model"):
             model = self.merge(pretrained_model, finetuned_models)
@@ -102,13 +106,16 @@ class SingularProjectionMergingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMix
     def projection_merge_linear(
         self, pretrained_model: nn.Linear, finetuned_model: nn.Linear, k: int
     ):
-        if k < 0:
-            return deepcopy(finetuned_model)
 
         w = pretrained_model.weight
         w_ft = finetuned_model.weight
 
-        u, s, v = svd(w)
+        u, s, v = svd(w, full_matrices=self.config.full_matrices)
+        if k < 0:
+            # find the position where the sum of singular values is larger than 50% of the total sum
+            cumsum = s.cumsum(0)
+            k = (cumsum < cumsum[-1] * 0.5).sum().item() + 1
+
         if self.config.rank == "low":
             u = u[:, :k]
             s = s[:k]
