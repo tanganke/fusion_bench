@@ -229,7 +229,7 @@ If you find this benchmark useful, please consider citing our work:
 @misc{tangFusionBenchComprehensiveBenchmark2024,
   title = {{{FusionBench}}: {{A Comprehensive Benchmark}} of {{Deep Model Fusion}}},
   shorttitle = {{{FusionBench}}},
-  author = {Tang, Anke and Shen, Li and Luo, Yong and Hu, Han and Do, Bo and Tao, Dacheng},
+  author = {Tang, Anke and Shen, Li and Luo, Yong and Hu, Han and Du, Bo and Tao, Dacheng},
   year = {2024},
   month = jun,
   number = {arXiv:2406.03280},
