@@ -1,0 +1,12 @@
+type: AutoModelForCausalLMPool
+# each model should have a name and a path, and the model is loaded from the path
+# this is equivalent to `AutoModelForCausalLM.from_pretrained(path)`
+models:
+  - name: _pretrained_
+    path: /data/modelscope_models/deepseek-ai/deepseek-llm-7b-base
+  - name: expert_1
+    path: /data/modelscope_models/deepseek-ai/deepseek-llm-7b-chat
+  - name: expert_2
+    path: /data/modelscope_models/deepseek-ai/deepseek-math-7b-rl
+  - name: expert_3
+    path: /data/modelscope_models/maple77/deepseek-coder-7b-instruct-v1.5

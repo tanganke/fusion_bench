@@ -6,7 +6,8 @@ from omegaconf import DictConfig
 from torch.nn.modules import Module
 from transformers import AutoModel, AutoModelForCausalLM
 
-from .base_pool import ModelPool
+from fusion_bench.modelpool.base_pool import ModelPool
+from fusion_bench.utils import timeit_context
 
 log = logging.getLogger(__name__)
 
@@ -18,5 +19,6 @@ class AutoModelForCausalLMPool(ModelPool):
         else:
             model_config = model_config
 
-        model = AutoModelForCausalLM.from_pretrained(model_config.path)
+        with timeit_context(f"loading model from {model_config.path}"):
+            model = AutoModelForCausalLM.from_pretrained(model_config.path)
         return model

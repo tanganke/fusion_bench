@@ -21,12 +21,21 @@ class ExpertNotTrainedError(Exception):
     pass
 
 
-def svd(w: Tensor) -> Tuple[Tensor, Tensor, Tensor]:
+def _svd(w: Tensor) -> Tuple[Tensor, Tensor, Tensor]:
     u, s, vh = torch.linalg.svd(
         w, full_matrices=True, driver="gesvd" if w.is_cuda else None
     )
     v = vh.T
     return u, s, v
+
+
+def svd(w: Tensor, accelerator=None) -> Tuple[Tensor, Tensor, Tensor]:
+    if accelerator is None:
+        return _svd(w)
+    original_device = w.device
+    w = w.to(accelerator)
+    u, s, v = _svd(w)
+    return u.to(original_device), s.to(original_device), v.to(original_device)
 
 
 class Router(nn.Module):
@@ -36,6 +45,7 @@ class Router(nn.Module):
         w_diff_list: List[Tensor],
         k: int,
         svd_list=None,  # cached `svd_list`, pass it to avoid recomputing
+        upscaling_accelerator=None,
     ):
         super().__init__()
         self.input_features = input_features
@@ -43,7 +53,7 @@ class Router(nn.Module):
         weights = []
         for i, w_diff in enumerate(w_diff_list):
             if svd_list is None:
-                u, s, v = svd(w_diff)
+                u, s, v = svd(w_diff, accelerator=upscaling_accelerator)
             else:
                 u, s, v = svd_list[i]
             u = u[:, :k]
@@ -51,7 +61,7 @@ class Router(nn.Module):
             v = v[:, :k]
 
             # weights.append((s * v).T)
-            weights.append((v).T)
+            weights.append(v.T)
         self.k = s.size(0)  # k is the actual k after truncation
 
         weights = torch.stack(weights, dim=0)
@@ -123,6 +133,7 @@ class SingularMoELinear(nn.Module):
         k: int,
         top_k: int = 1,
         pretrained_bias_as_expert: bool = False,
+        upscaling_accelerator=None,
     ):
         super().__init__()
         pretrained_bias_as_expert = (
@@ -142,7 +153,7 @@ class SingularMoELinear(nn.Module):
         if pretrained_bias_as_expert:
             w_diff_list = [pretrained_model.weight] + w_diff_list
         svd_cache_list = [
-            svd(w) for w in w_diff_list
+            svd(w, accelerator=upscaling_accelerator) for w in w_diff_list
         ]  # the svd cache list to avoid recomputing
         # construct the gate network
         self.gate = Router(
@@ -150,6 +161,7 @@ class SingularMoELinear(nn.Module):
             w_diff_list=w_diff_list,
             k=gate_k,
             svd_list=svd_cache_list,
+            upscaling_accelerator=upscaling_accelerator,
         )
         # construct experts
         experts = []
@@ -229,11 +241,12 @@ class SingularMoELinear(nn.Module):
         Mimic linear layer. Bacause in some cases, user might indicate the device (or dtype of parameters) of the linear layer using `linear_layer.weight.device`
         """
         return self.pretrained_model.weight
-    
+
     @property
     def bias(self):
         return self.pretrained_model.bias
-    
+
+
 class SingularMoEUpscaling(ModelFusionAlgorithm, SimpleProfilerMixin):
     _linear_layer_cls = (nn.Linear,)
 
@@ -305,7 +318,12 @@ class SingularMoEUpscaling(ModelFusionAlgorithm, SimpleProfilerMixin):
                 experts = [get_attr(m, name_list) for m in finetuned_models]
                 try:
                     moe_linear = SingularMoELinear(
-                        module, experts, gate_k=gate_k, k=k, top_k=top_k
+                        module,
+                        experts,
+                        gate_k=gate_k,
+                        k=k,
+                        top_k=top_k,
+                        upscaling_accelerator=self.config.upscaling_accelerator,
                     )
                 except ExpertNotTrainedError as e:
                     print(f"skip {name} because the experts are not trained.")
