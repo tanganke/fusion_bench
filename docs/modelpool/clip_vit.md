@@ -510,6 +510,29 @@ fusion_bench \
 
 You can also evaluate the generalization and robustness of different multi-task model fusion methods by change the configurations.
 
+Instruction for running the generalization experiments:
+
+```bash
+fusion_bench \
+    method=... \
+    modelpool=modelpool=clip-vit-base-patch32_generalization_exp1 # or `clip-vit-base-patch32_generalization_exp2`
+```
+
+
+Instruction for running the robustness experiments:
+
+```bash
+# corription can be one of the following values: 
+# contrast, gaussian_noise, impulse_noise, jpeg_compression, motion_blur, pixelate, spatter
+# or pass `taskpool=clip-vit-base-patch32_robustness_clean` to evaluate the model on clean data
+corruption=contrast
+fusion_bench \
+    --config-name clip-vit-base-patch32_robustness_corrupted \
+    corruption=${corruption} \
+    method=... \
+```
+
+
 ### Experimental Results
 
 === "Table: Results of the generalization experiments (Exp1)."
