@@ -80,7 +80,6 @@ models:
 
 The type of the modelpool is `huggingface_clip_vision`, corresponding to the modelpool class `HuggingFaceClipVisionPool`.
 
-::: fusion_bench.modelpool.HuggingFaceClipVisionPool
 
 ## Basic Examples
 
@@ -572,4 +571,9 @@ Table: Results of the robustness experiments ($\lambda=0.3$).
 | Ties-Merging          | 64.2           | 52.4    | 74.8     | 63.5  | 63.7 | 65.0             | 59.5    | 77.9     | 53.2  | 63.9 |
 | Layer-wise AdaMerging | 73.1           | 67.4    | 83.0     | 96.2  | 79.9 | 72.9             | 70.7    | 86.3     | 90.6  | 80.1 |
 | Weight-Ensembling MoE | 77.2           | 34.7    | 93.1     | 98.4  | 75.9 | 77.3             | 61.0    | 94.1     | 95.7  | 82.0 |
+
+
+## References
+
+::: fusion_bench.modelpool.HuggingFaceClipVisionPool
 

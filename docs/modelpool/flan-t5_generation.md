@@ -149,21 +149,33 @@ done
 Merge the Flan-T5 models on GLUE tasks using simple average and evaluate on the Flan-T5 text generation task
 
 ```bash
+# for full fine-tuned models
+fusion_bench \
+    method=simple_average \
+    modelpool=flan-t5-base_glue \
+    taskpool=flan-t5_glue_text_generation
+
+# or using the LoRA fine-tuned models
 fusion_bench \
     method=simple_average \
     modelpool=flan-t5-base_glue_lora16 \
     taskpool=flan-t5_glue_text_generation
 ```
 
-| glue-cola | glue-mnli | glue-mrpc | glue-qnli | glue-qqp | glue-rte | glue-sst2 | glue-stsb |
-| --------- | --------- | --------- | --------- | -------- | -------- | --------- | --------- |
-| 69.7      | 59.7      | 78.9      | 90.1      | 83.8     | 90.5     | 91.2      | 72.0      |
 
 ### Task Arithmetic
 
 Merge the Flan-T5 models on GLUE tasks using task arithmetic and evaluate on the Flan-T5 text generation task, with scaling factor from 0.0 to 1.0
 
 ```bash
+# full fine-tuned models with scaling factor set to 0.3
+fusion_bench \
+    method=task_arithmetic \
+        method.scaling_factor=0.3 \
+    modelpool=flan-t5-base_glue \
+    taskpool=flan-t5_glue_text_generation
+
+# use a for loop to evaluate the performance of task arithmetic with different scaling factors (LoRA fine-tuned models)
 for scaling_factor in $(seq 0.0 0.1 1.0)
 do
     fusion_bench \
@@ -193,6 +205,14 @@ done
 or using ties-merging
 
 ```bash
+# for full fine-tuned models with scaling factor set to 0.3
+fusion_bench \
+    method=ties_merging \
+        method.scaling_factor=0.3 \
+    modelpool=flan-t5-base_glue \
+    taskpool=flan-t5_glue_text_generation
+
+# use a for loop to evaluate the performance of ties-merging with different scaling factors (LoRA fine-tuned models)
 for scaling_factor in $(seq 0.0 0.1 1.0)
 do
     fusion_bench \
@@ -209,11 +229,16 @@ Flan-T5-Base models:
 
 === "Table: Mutli-task model merging methods using Flan-T5-Base (full fine-tuned) models."
 
-    | Method            | CoLA      | MNLI      | MRPC      | QNLI      | QQP       | RTE       | SST-2     | STSB      | Average   |
-    | ----------------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
-    | Reference Results |           |           |           |           |           |           |           |           |           |
-    | Pre-trained       | 69.127517 | 56.454407 | 76.225490 | 88.449570 | 82.119713 | 80.144404 | 91.169725 | 62.190453 | 75.735160 |
-    | Fine-tuned (STL)  | 74.976031 | 83.413143 | 87.500000 | 91.488193 | 85.369775 | 85.920578 | 93.577982 | 88.695433 | 86.3676   |
+    | Method                          | CoLA | MNLI | MRPC | QNLI | QQP  | RTE  | SST-2 | STSB | Average |
+    | ------------------------------- | ---- | ---- | ---- | ---- | ---- | ---- | ----- | ---- | ------- |
+    | Reference Results               |      |      |      |      |      |      |       |      |         |
+    | Pre-trained                     | 69.1 | 56.5 | 76.2 | 88.4 | 82.1 | 80.1 | 91.2  | 62.2 | 75.7    |
+    | Fine-tuned (STL)                | 75.0 | 83.4 | 87.5 | 91.5 | 85.4 | 85.9 | 93.6  | 88.7 | 86.4    |
+    | Model Merging Methods           |      |      |      |      |      |      |       |      |         |
+    | Simple Average                  | 69.1 | 62.6 | 79.4 | 89.8 | 83.9 | 81.2 | 91.7  | 73.2 | 78.9    |
+    | Task Arithmetic ($\lambda=0.3$) | 70.5 | 57.8 | 78.4 | 90.2 | 83.6 | 80.5 | 92.3  | 77.8 | 78.9    |
+    | Ties-Merging ($\lambda=0.3$)    | 70.3 | 65.0 | 78.9 | 90.2 | 83.5 | 81.6 | 91.7  | 78.3 | 79.9    |
+
 
 === "Table: Mutli-task model merging methods using Flan-T5-Base (LoRA r=16) models."
 
@@ -223,8 +248,10 @@ Flan-T5-Base models:
     | Pre-trained                     | 69.1 | 56.5 | 76.2 | 88.4 | 82.1 | 80.1 | 91.2  | 62.2 | 75.7    |
     | Fine-tuned (STL)                | 69.1 | 82.7 | 85.5 | 90.9 | 84.0 | 84.4 | 92.9  | 87.4 | 84.6    |
     | Model Merging Methods           |      |      |      |      |      |      |       |      |         |
+    | Simple Average                  | 69.7 | 59.7 | 78.9 | 90.1 | 83.8 | 90.5 | 91.2  | 72.0 | 78.2    |
     | Task Arithmetic ($\lambda=0.3$) | 68.8 | 55.2 | 78.7 | 89.8 | 83.7 | 79.1 | 91.5  | 72.4 | 77.4    |
     | Ties-Merging ($\lambda=0.3$)    | 68.3 | 56.3 | 79.4 | 89.8 | 83.7 | 79.4 | 91.6  | 71.2 | 77.5    |
+
 
 Flan-T5-Large models:
 
