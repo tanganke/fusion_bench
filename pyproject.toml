@@ -20,7 +20,7 @@ dependencies = [
     "matplotlib",
     "tensorboard",
     "tqdm",
-    "rich"
+    "rich",
 ]
 keywords = ["deep learning", "model fusion", "benchmark"]
 
@@ -34,4 +34,8 @@ Issues = "https://github.com/tanganke/fusion_bench/issues"
 fusion_bench = "fusion_bench.scripts.cli:main"
 
 [tool.setuptools]
+include-package-data = true
 package-dir = { "fusion_bench" = "fusion_bench" }
+
+[tool.setuptools.package-data]
+fusion_bench = ['../fusion_bench_config/**/*']
