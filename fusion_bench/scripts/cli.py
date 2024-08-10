@@ -21,6 +21,16 @@ from fusion_bench.utils.rich_utils import print_config_tree
 log = logging.getLogger(__name__)
 
 
+def _get_default_config_path():
+    for config_dir in ["fusion_bench_config", "config"]:
+        config_path = os.path.join(
+            importlib.import_module("fusion_bench").__path__[0], config_dir
+        )
+        if os.path.exists(config_path):
+            return config_path
+    raise FileNotFoundError("Default config path not found.")
+
+
 def run_model_fusion(cfg: DictConfig):
     """
     Run the model fusion process based on the provided configuration.
@@ -110,9 +120,7 @@ class LightningProgram(LightningFabricMixin):
 
 
 @hydra.main(
-    config_path=os.path.join(
-        importlib.import_module("fusion_bench").__path__[0], "../config"
-    ),
+    config_path=_get_default_config_path(),
     config_name="example_config",
     version_base=None,
 )
