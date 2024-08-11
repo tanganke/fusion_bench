@@ -448,6 +448,7 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
     | Reference Results                              |        |      |          |         |      |       |       |      |         |
     | Pre-trained                                    | 63.2   | 59.8 | 60.7     | 46.0    | 31.6 | 32.5  | 48.2  | 43.9 | 48.2    |
     | Fine-tuned (STL)                               | 75.0   | 78.3 | 95.2     | 99.0    | 97.3 | 98.9  | 99.6  | 79.7 | 90.3    |
+    | Traditional MTL                                | 72.3   | 76.6 | 92.2     | 97.9    | 95.5 | 97.7  | 99.3  | 77.7 | 88.6    |
     | Model Merging                                  |        |      |          |         |      |       |       |      |         |
     | Simple Averaging                               | 65.4   | 62.6 | 70.8     | 76.9    | 64.5 | 54.9  | 86.3  | 50.9 | 66.5    |
     | Fisher Merging                                 | 66.7   | 64.0 | 72.2     | 91.6    | 69.0 | 64.3  | 83.5  | 53.7 | 70.6    |
@@ -468,6 +469,7 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
     | Reference Results                     |        |      |          |         |      |       |       |      |         |
     | Pre-trained                           | 68.3   | 77.8 | 71.0     | 58.9    | 58.4 | 50.6  | 76.4  | 55.5 | 64.6    |
     | Fine-tuned (STL)                      | 82.8   | 92.9 | 97.4     | 99.2    | 97.9 | 99.2  | 99.8  | 85.5 | 94.3    |
+    | Traditional MTL                       | 79.0   | 89.3 | 94.5     | 98.4    | 96.4 | 98.1  | 99.4  | 83.7 | 92.4    |
     | Model Merging                         |        |      |          |         |      |       |       |      |         |
     | Simple Averaging                      | 72.5   | 81.5 | 82.2     | 90.0    | 81.6 | 74.0  | 96.6  | 61.8 | 80.0    |
     | Fisher Merging                        | 70.6   | 79.4 | 84.1     | 98.1    | 74.7 | 85.0  | 89.5  | 61.0 | 80.3    |

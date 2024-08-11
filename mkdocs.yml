@@ -42,9 +42,13 @@ nav:
       - Flan-T5 Models for Text Generation: taskpool/flan-t5_generation.md
   - Command Line Interface:
     - fusion_bench: cli/fusion_bench.md
-  - Programming Guides:
+  - Additional Guides:
+    - Mixins:
+      - LightningFabricMixin: guides/mixins/lightning_fabric.md
+      - SimpleProfilerMixin: guides/mixins/simple_profiler.md
     - CLIP-ViT Models For Image Classification:
       - Manage Labels and Templates: guides/clip_vit/classification_templates.md
+      - guides/clip_vit/finetune.md
   - Reading Lists: readinglist/README.md
 
 plugins:
