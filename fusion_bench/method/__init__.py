@@ -25,6 +25,8 @@ from .weighted_average import WeightedAverageAlgorithm
 class AlgorithmFactory:
     _aglorithms = {
         "dummy": DummyAlgorithm,
+        # single task learning (fine-tuning)
+        "clip_finetune": ".classification.clip_finetune.ImageClassificationFineTuningForCLIP",
         # analysis
         "TaskVectorCosSimilarity": ".analysis.task_vector_cos_similarity.TaskVectorCosSimilarity",
         # model ensemble methods

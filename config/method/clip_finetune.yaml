@@ -1,0 +1,11 @@
+name: clip_finetune
+
+seed: 42
+
+learning_rate: 1e-5
+num_steps: 4000
+
+batch_size: 32
+num_workers: 4
+
+save_interval: 500
