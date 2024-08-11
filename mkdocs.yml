@@ -49,7 +49,9 @@ nav:
     - CLIP-ViT Models For Image Classification:
       - Manage Labels and Templates: guides/clip_vit/classification_templates.md
       - guides/clip_vit/finetune.md
-  - Reading Lists: readinglist/README.md
+  - Reading Lists: 
+    - readinglist/README.md
+    - Mode Connectivity: readinglist/mode_connectivity.md
 
 plugins:
   - search

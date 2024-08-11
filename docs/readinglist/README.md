@@ -29,6 +29,8 @@ This collection is designed to serve as a valuable starting point for those inte
 
 ### Mode Connectivity
 
+Mode connectivity is such an important concept in model merging that it deserves [its own page](mode_connectivity.md).
+
 ### Weight Interpolation
 
 - G. Ilharco et al., “Editing Models with Task Arithmetic,” Mar. 31, 2023, arXiv: arXiv:2212.04089. doi: 10.48550/arXiv.2212.04089.
