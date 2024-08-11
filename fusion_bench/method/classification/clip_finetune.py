@@ -1,10 +1,24 @@
 """
 For example:
 
+Fine-tune CLIP-ViT-B/32:
+
 ```bash
 fusion_bench \
     method=clip_finetune \
     modelpool=clip-vit-base-patch32_mtl \
+    taskpool=dummy
+```
+
+Fine-tune CLIP-ViT-L/14 on eight GPUs with a per-device per-task batch size of 2.
+
+```bash
+fusion_bench \
+    fabric.devices=8 \
+    method=clip_finetune \
+        method.batch_size=2 \
+    modelpool=clip-vit-base-patch32_mtl \
+        modelpool.models.0.path=openai/clip-vit-large-patch14 \
     taskpool=dummy
 ```
 """
@@ -33,7 +47,20 @@ class ImageClassificationFineTuningForCLIP(
     SimpleProfilerMixin,
     ModelFusionAlgorithm,
 ):
+    """
+    A class for fine-tuning CLIP models for image classification tasks.
+    """
+
     def run(self, modelpool: HuggingFaceClipVisionPool):
+        """
+        Executes the fine-tuning process.
+
+        Args:
+            modelpool (HuggingFaceClipVisionPool): The modelpool is responsible for loading the pre-trained model and training datasets.
+
+        Returns:
+            VisionModel: The fine-tuned vision model.
+        """
         self.modelpool = to_modelpool(modelpool)
         config = self.config
         self.log_hyperparams(config, filename="method_config.yaml")
@@ -94,6 +121,7 @@ class ImageClassificationFineTuningForCLIP(
                 self.fabric.backward(loss)
             with self.profile("optimizer step"):
                 optimizer.step()
+                lr_scheduler.step()
 
             metrics = {"train/loss": loss}
 
@@ -114,6 +142,9 @@ class ImageClassificationFineTuningForCLIP(
         return classifier.clip_model.vision_model
 
     def setup_model(self):
+        """
+        Sets up the model, optimizer, and learning rate scheduler.
+        """
         config = self.config
         modelpool = self.modelpool
 

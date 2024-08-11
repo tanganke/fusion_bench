@@ -66,7 +66,8 @@ class LightningFabricMixin:
                 and hasattr(config, "log_dir")
                 and config.get("log_dir", None) is None
             ):
-                log.info(f"Setting log_dir to {self.log_dir}")
+                if self._fabric.is_global_zero:
+                    log.info(f"Setting log_dir to {self.log_dir}")
                 config.log_dir = self.log_dir
 
     @property
@@ -143,7 +144,9 @@ class LightningFabricMixin:
     def is_debug_mode(self):
         if hasattr(self, "config") and self.config.get("fast_dev_run", False):
             return True
-        elif hasattr(self, "_program") and self._program.config.get("fast_dev_run", False):
+        elif hasattr(self, "_program") and self._program.config.get(
+            "fast_dev_run", False
+        ):
             return True
         else:
             return False
