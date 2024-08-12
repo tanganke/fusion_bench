@@ -31,7 +31,7 @@ These task vectors are then added to the pre-trained MLP weights to create input
 
 ## Parameters Comparison
 
-!!! tip "Tip for reducing the parameter"
+!!! tip "Tip for reducing the parameter count"
 
     Here we present the parameter count for the method outlined in the original paper[^1]. 
     An effective strategy to minimize the number of parameters involves employing Singular Value Decomposition (SVD) to compress the task vectors. 
