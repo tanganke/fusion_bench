@@ -29,7 +29,16 @@ These task vectors are then added to the pre-trained MLP weights to create input
 | AdaMerging      | No                                       | No                                  | Yes                  |
 | Ours            | No                                       | No                                  | Yes                  |
 
-**Parameters Overhead**:
+## Parameters Comparison
+
+!!! tip "Tip for reducing the parameter"
+
+    Here we present the parameter count for the method outlined in the original paper[^1]. 
+    An effective strategy to minimize the number of parameters involves employing Singular Value Decomposition (SVD) to compress the task vectors. 
+    This approach significantly cuts down on the number of parameters while only marginally impacting performance. 
+    For additional information, please refer to the Twin-Merging paper[^2]. 
+    Which not only reduces the number of parameters but also conducts extensive experiments to demonstrate the effectiveness of data-adaptive merging on language domain.
+
 
 Here is the number of parameters compared to a single pre-trained model (OpenCLIP CLIP-ViT-B/32):
 
@@ -46,6 +55,7 @@ Here is the number of parameters compared to a single pre-trained model (OpenCLI
 | WEMoE (2-layer, 8 tasks) | 7.16M (1.25%)        | 573.96M          | 8*113.45-573.96=333.64M       |
 
 The number of parameter count of HuggingFace CLIP vision models (of type `transformers.models.clip.modeling_clip.CLIPVisionModel`) are different from the OpenCLIP models downloaded from [the task arithmetic repo](https://github.com/mlfoundations/task_vectors), because the OpenCLIP models (of type `src.modeling.ImageEncoder`) include the embedding layer for text tokens, while the HuggingFace CLIP vision models do not.
+Therefore, the relative parameter count of the upscaled model using Transformer CLIP vision models will be larger than the OpenCLIP models.
 
 === "OpenCLIP models of type `src.modeling.ImageEncoder`"
     
@@ -223,3 +233,4 @@ fusion_bench \
 
 
 [^1]: Anke Tang et.al. ICML 2024. Merging Multi-Task Models via Weight-Ensembling Mixture of Experts. http://arxiv.org/abs/2402.00433
+[^2]: Z. Lu, C. Fan, W. Wei, X. Qu, D. Chen, and Y. Cheng, “Twin-Merging: Dynamic Integration of Modular Expertise in Model Merging,” doi: 10.48550/arXiv.2406.15479.
