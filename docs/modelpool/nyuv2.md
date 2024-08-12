@@ -1,6 +1,6 @@
 # Scene Understanding on NYUv2 tasks
 
-![alt text](NYUv2-0000003446-63769b25.jpg)
+![alt text](images/NYUv2-0000003446-63769b25.jpg)
 
 ## Examples
 

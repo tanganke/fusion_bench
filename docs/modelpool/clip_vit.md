@@ -534,6 +534,14 @@ fusion_bench \
     method=... \
 ```
 
+Below is an example of different types of corruptions:
+
+<figure markdown="span">
+![alt text](images/clip_eight_corruption.png){ width="800px" }
+<figcaption style="max-width:90%" markdown="span">
+An example of corruption data visualization, in which the corruption image generation method refers to Hendrycks & Dietterich (2019) [^1].
+</figcaption>
+</figure>
 
 ### Experimental Results
 
@@ -602,3 +610,4 @@ Table: Results of the robustness experiments ($\lambda=0.3$).
 
 ::: fusion_bench.modelpool.HuggingFaceClipVisionPool
 
+[^1]: Dan Hendrycks and Thomas Dietterich. Benchmarking neural network robustness to common corruptions and perturbations. Proceedings of the International Conference on Learning Representations, 2019.

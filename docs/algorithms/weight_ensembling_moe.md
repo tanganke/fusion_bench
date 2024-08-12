@@ -45,6 +45,62 @@ Here is the number of parameters compared to a single pre-trained model (OpenCLI
 | WEMoE (2-layer, 7 tasks) | 7.15M (1.38%)        | 517.28M          | 7*113.45-517.28=276.87M       |
 | WEMoE (2-layer, 8 tasks) | 7.16M (1.25%)        | 573.96M          | 8*113.45-573.96=333.64M       |
 
+## Loss Landscape Visualization
+
+<figure markdown="span">
+![alt text](./images/wemoe_loss_landscape.png){width="900px"}
+<figcaption style="max-width:90%" markdown="span">
+Visualization of the joint loss $\mathcal{L}_1 + \mathcal{L}_2$ and five task pairs for CLIP-ViT-B/32 in the loss landscape.
+    We perform interpolations between pre-trained weights and two fine-tuned weights in the weight space on a 2D plane using the formula $\theta=\theta_0 + \lambda_1 \tau_1 + \lambda_2 \tau_2$, where $\theta_0$ represents pre-trained weights, $\tau_i=\theta_i -\theta_0$  are two task vectors with $\lambda_i$ in the range [-1, 1]. 
+</figcaption>
+</figure>
+
+## Hyperparameter Tuning
+
+In the below figure, we show the performance of the merged models with varying numbers of steps.
+Figure (b) shows the performance of the merged WEMoE models with varying number of steps.
+In Figure (a), we merge CLIP-ViT-B/32 models with different learning rate configurations.
+We observe that the performance of the merged model shows an upward trend with an increase in the number of training steps, and it converges rapidly, reaching a high accuracy level in just 200 steps.
+Furthermore, the influence of different learning rates is not significant, suggesting that our method is insensitive to the learning rate parameter. This is a desirable property as it reduces the need for hyperparameter tuning.
+
+<figure markdown="span">
+![alt text](./images/wemoe_lr_tuning.png){width="800px"}
+<figcaption style="max-width:90%" markdown="span">
+The performance of the merged models with a varying number of steps.  
+(a) CLIP-ViT-B/32 model with different learning rates.  
+(b) Comparison of CLIP-ViT-B/32 and CLIP-ViT-L/14.
+</figcaption>
+</figure>
+
+## Ablations of Router Depth
+
+
+Table: Parameter comparison of WEMoE (1-layer) and WEMoE (2-layer) on CLIP-ViT-B/32 models (OpenCLIP).
+
+| Method                  | Number of Trainable Parameters |
+| ----------------------- | ------------------------------ |
+| AdaMerging (layer-wise) | 1.3K                           |
+| WEMoE (1-layer)         | 73.8K (0.01%)                  |
+| WEMoE (2-layer)         | 7.16M (1.25%)                  |
+
+Table: Ablation study of the router depth on the performance of the up-scaled CLIP-ViT-B/32 models (OpenCLIP).
+
+| Method                  | SUN397 | CARS | RESISC45 | EuroSAT | SVHN | GRSRB | MNIST | DTD  | Avg. |
+| ----------------------- | ------ | ---- | -------- | ------- | ---- | ----- | ----- | ---- | ---- |
+| AdaMerging (layer-wise) | 66.6   | 68.3 | 82.4     | 92.5    | 86.5 | 93.7  | 97.7  | 61.1 | 80.9 |
+| WEMoE (1-layer)         | 73.2   | 76.7 | 93.8     | 98.6    | 95.7 | 98.6  | 99.5  | 74.5 | 88.3 |
+| WEMoE (2-layer)         | 74.1   | 77.4 | 93.7     | 99.1    | 96.2 | 98.9  | 99.6  | 76.4 | 89.4 |
+
+To explore the influence of router depth on the performance of the scaled-up model, we perform an ablation study where the router depth is varied. In WEMoE modules, the router is implemented as a multi-layer perceptron (MLP).
+
+- WEMoE (0-layer) functions as a bias-only model, representing a special case of an MLP with no hidden layers. It generates a constant routing weight for all inputs, captured by the formula as $r(h) = b_0$, indicating that it does not adjust based on the input.
+  When we only up-scale the MLP modules of the vision Transformers to MoE modules, WEMoE (0-layer) can be considered as a partial implementation of AdaMerging. Add when we up-scale the vision Transformers layer-wisely, WEMoE (0-layer) can be considered equivalent to AdaMerging.
+  For WEMoE (0-layer), the MoE modules can be unloaded, thus no additional parameters and inference cost are introduced.
+- For WEMoE (1-layer), each router is a one-layer MLP that takes the input sample $h$ and outputs the routing weight $r(h)$, which is adaptive to the input. The routing weight is calculated as $r(h) = W_1 h + b_1$.
+- For WEMoE (2-layer), each router is a two-layer MLP and the routing weight is calculated as $r(h) = W_2 ReLU(W_1 h + b_1) + b_2$.
+
+In the above two Tables, we present additional findings to support our argument. We compare the number of trainable parameters and performance between WEMoE (1-layer) and WEMoE (2-layer). The data reveal that WEMoE (1-layer) possesses 73.8K trainable parameters, which constitute only 0.01% of the total parameters in the merged model. Notably, the performance of WEMoE (1-layer) is significantly better than AdaMerging and nearly matches that of WEMoE (2-layer) across all tasks. This evidence underscores our claim that the MoE design is crucial for performance enhancement.
+
 
 ## Code Integration
 
@@ -83,6 +139,11 @@ fusion_bench \
   taskpool=clip-vit-classification_TA8 \
     taskpool.clip_model=openai/clip-vit-large-patch14
 ```
+
+## Reference
+
+::: fusion_bench.method.we_moe.we_moe
+::: fusion_bench.method.we_moe.clip_we_moe
 
 
 [^1]: Anke Tang et.al. ICML 2024. Merging Multi-Task Models via Weight-Ensembling Mixture of Experts. http://arxiv.org/abs/2402.00433
