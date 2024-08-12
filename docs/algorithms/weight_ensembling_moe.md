@@ -45,6 +45,82 @@ Here is the number of parameters compared to a single pre-trained model (OpenCLI
 | WEMoE (2-layer, 7 tasks) | 7.15M (1.38%)        | 517.28M          | 7*113.45-517.28=276.87M       |
 | WEMoE (2-layer, 8 tasks) | 7.16M (1.25%)        | 573.96M          | 8*113.45-573.96=333.64M       |
 
+The number of parameter count of HuggingFace CLIP vision models (of type `transformers.models.clip.modeling_clip.CLIPVisionModel`) are different from the OpenCLIP models downloaded from [the task arithmetic repo](https://github.com/mlfoundations/task_vectors), because the OpenCLIP models (of type `src.modeling.ImageEncoder`) include the embedding layer for text tokens, while the HuggingFace CLIP vision models do not.
+
+=== "OpenCLIP models of type `src.modeling.ImageEncoder`"
+    
+    ```{.bash .annotate}
+    ImageEncoder( # (1)
+      (model): CLIP(
+        (visual): VisualTransformer( # (2)
+          (conv1): Conv2d(3, 768, kernel_size=(32, 32), stride=(32, 32), bias=False)
+          (ln_pre): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+          (transformer): Transformer(
+            (resblocks): ModuleList(
+              (0-11): 12 x ResidualAttentionBlock(
+                (ln_1): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+                (attn): MultiheadAttention(
+                  (out_proj): NonDynamicallyQuantizableLinear(in_features=768, out_features=768, bias=True)
+                )
+                (ln_attn): Identity()
+                (ln_2): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+                (mlp): Sequential(
+                  (c_fc): Linear(in_features=768, out_features=3072, bias=True)
+                  (ln): Identity()
+                  (gelu): QuickGELU()
+                  (c_proj): Linear(in_features=3072, out_features=768, bias=True)
+                )
+              )
+            )
+          )
+          (ln_post): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+        )
+        (token_embedding): Embedding(49408, 512) # (3)
+        (ln_final): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+      )
+    )
+    ```
+
+    1. trainable params: 113.45M || all params: 113.45M || trainable%: 100.0000
+    2. trainable params: 87.85M || all params: 87.85M || trainable%: 100.0000
+    3. trainable params: 25.30M || all params: 25.30M || trainable%: 100.0000
+
+=== "Transfomers CLIP vision model of type `transformers.models.clip.modeling_clip.CLIPVisionModel`"
+
+    ``` { .bash .annotate }
+    CLIPVisionModel( # (1)
+      (vision_model): CLIPVisionTransformer(
+        (embeddings): CLIPVisionEmbeddings(
+          (patch_embedding): Conv2d(3, 768, kernel_size=(32, 32), stride=(32, 32), bias=False)
+          (position_embedding): Embedding(50, 768)
+        )
+        (pre_layrnorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+        (encoder): CLIPEncoder(
+          (layers): ModuleList(
+            (0-11): 12 x CLIPEncoderLayer(
+              (self_attn): CLIPAttention(
+                (k_proj): Linear(in_features=768, out_features=768, bias=True)
+                (v_proj): Linear(in_features=768, out_features=768, bias=True)
+                (q_proj): Linear(in_features=768, out_features=768, bias=True)
+                (out_proj): Linear(in_features=768, out_features=768, bias=True)
+              )
+              (layer_norm1): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+              (mlp): CLIPMLP(
+                (activation_fn): QuickGELUActivation()
+                (fc1): Linear(in_features=768, out_features=3072, bias=True)
+                (fc2): Linear(in_features=3072, out_features=768, bias=True)
+              )
+              (layer_norm2): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+            )
+          )
+        )
+        (post_layernorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      )
+    )
+    ```
+
+    1. trainable params: 87.85M || all params: 87.85M || trainable%: 100.0000
+
 ## Loss Landscape Visualization
 
 <figure markdown="span">
