@@ -21,17 +21,19 @@ class ExpertNotTrainedError(Exception):
     pass
 
 
-def _svd(w: Tensor) -> Tuple[Tensor, Tensor, Tensor]:
+def _svd(w: Tensor, full_matrices=True) -> Tuple[Tensor, Tensor, Tensor]:
     u, s, vh = torch.linalg.svd(
-        w, full_matrices=True, driver="gesvd" if w.is_cuda else None
+        w, full_matrices=full_matrices, driver="gesvd" if w.is_cuda else None
     )
     v = vh.T
     return u, s, v
 
 
-def svd(w: Tensor, accelerator=None) -> Tuple[Tensor, Tensor, Tensor]:
+def svd(
+    w: Tensor, full_matrices=True, accelerator=None
+) -> Tuple[Tensor, Tensor, Tensor]:
     if accelerator is None:
-        return _svd(w)
+        return _svd(w, full_matrices=full_matrices)
     original_device = w.device
     w = w.to(accelerator)
     u, s, v = _svd(w)
@@ -133,6 +135,7 @@ class SingularMoELinear(nn.Module):
         k: int,
         top_k: int = 1,
         pretrained_bias_as_expert: bool = False,
+        full_matrices=True,
         upscaling_accelerator=None,
     ):
         super().__init__()
@@ -153,7 +156,8 @@ class SingularMoELinear(nn.Module):
         if pretrained_bias_as_expert:
             w_diff_list = [pretrained_model.weight] + w_diff_list
         svd_cache_list = [
-            svd(w, accelerator=upscaling_accelerator) for w in w_diff_list
+            svd(w, full_matrices=full_matrices, accelerator=upscaling_accelerator)
+            for w in w_diff_list
         ]  # the svd cache list to avoid recomputing
         # construct the gate network
         self.gate = Router(
@@ -323,12 +327,16 @@ class SingularMoEUpscaling(ModelFusionAlgorithm, SimpleProfilerMixin):
                         gate_k=gate_k,
                         k=k,
                         top_k=top_k,
+                        full_matrices=self.config.full_matrices,
                         upscaling_accelerator=self.config.upscaling_accelerator,
                     )
                 except ExpertNotTrainedError as e:
                     print(f"skip {name} because the experts are not trained.")
                     continue
                 set_attr(model, name_list, moe_linear)
+                # remove the original module from fine-tuned models to save memory
+                for m in finetuned_models:
+                    set_attr(m, name_list, None)
             elif average_experts and len(tuple(module.named_modules())) == 1:
                 # if the module is a leaf module, we perform a parameter average
                 name_list = name.split(".")

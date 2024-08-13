@@ -10,3 +10,5 @@ models:
     path: /data/modelscope_models/deepseek-ai/deepseek-math-7b-rl
   - name: expert_3
     path: /data/modelscope_models/maple77/deepseek-coder-7b-instruct-v1.5
+
+dtype: float16

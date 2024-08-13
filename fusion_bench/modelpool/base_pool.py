@@ -28,7 +28,9 @@ class ModelPool(ABC):
         # check for duplicate model names
         if self.config is not None and self.config.get("models", None) is not None:
             model_names = [model["name"] for model in self.config["models"]]
-            assert len(model_names) == len(set(model_names))
+            assert len(model_names) == len(
+                set(model_names)
+            ), "Duplicate model names found in model pool"
             self._model_names = model_names
 
     def __len__(self):

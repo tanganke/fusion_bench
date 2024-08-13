@@ -10,6 +10,7 @@ from omegaconf import DictConfig
 from fusion_bench.taskpool.base_pool import TaskPool
 from fusion_bench.utils import timeit_context
 from fusion_bench.utils.parameters import count_parameters, print_parameters
+from fusion_bench.models.separate_io import separate_save
 
 
 class DummyTaskPool(TaskPool):
@@ -30,8 +31,7 @@ class DummyTaskPool(TaskPool):
         if self.config.get("model_save_path", None) is not None:
             model_save_path = self.config.model_save_path
             with timeit_context(f"Saving the model to {model_save_path}"):
-                os.makedirs(os.path.dirname("model_save_path"), exist_ok=True)
-                torch.save(model, model_save_path)
+                separate_save(model, model_save_path)
 
         report = {}
         training_params, all_params = count_parameters(model)
