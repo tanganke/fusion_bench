@@ -26,7 +26,7 @@ def _get_default_config_path():
         config_path = os.path.join(
             importlib.import_module("fusion_bench").__path__[0], "..", config_dir
         )
-        if os.path.exists(config_path):
+        if os.path.exists(config_path) and os.path.isdir(config_path):
             return config_path
     raise FileNotFoundError("Default config path not found.")
 
