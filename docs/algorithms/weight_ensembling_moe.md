@@ -1,4 +1,4 @@
-# Weight-Ensembling Mixture of Experts
+# Weight-Ensembling Mixture of Experts (Data-Adaptive Model Merging)
 
 <figure markdown="span">
     ![alt text](images/wemoe.png){ width="90%" }
