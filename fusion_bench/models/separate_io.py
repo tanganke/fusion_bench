@@ -67,13 +67,14 @@ def separate_load(
         .to(dtype=dtype)
         .to_empty(device=device or "cpu")
     )
-    state_dict = torch.load(
-        os.path.join(load_dir, state_dict_file),
-        map_location="cpu",
-    )
-    if dtype is not None:
-        for name, param in state_dict.items():
-            state_dict[name] = param.to(dtype=dtype, non_blocking=True)
+    if state_dict_file is not None:
+        state_dict = torch.load(
+            os.path.join(load_dir, state_dict_file),
+            map_location="cpu",
+        )
+        if dtype is not None:
+            for name, param in state_dict.items():
+                state_dict[name] = param.to(dtype=dtype, non_blocking=True)
 
-    model.load_state_dict(state_dict, strict=strict)
+        model.load_state_dict(state_dict, strict=strict)
     return model

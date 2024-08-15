@@ -10,8 +10,7 @@ gate_k: 1
 k: 128
 top_k: 1
 
-# set this to True to make the model use the pretrained bias as an expert
-pretrained_bias_as_expert: false
+routing_use_diff: true
 # average the remaining part, if this is set the False, the remaining part will kept as base model (the pretrained model)
 average_experts: false
 

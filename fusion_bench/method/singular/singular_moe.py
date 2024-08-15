@@ -13,12 +13,21 @@ from fusion_bench.method import ModelFusionAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import ModelPool, to_modelpool
 from fusion_bench.utils.parameters import print_parameters
+from fusion_bench.models.utils import get_attr, set_attr
+from fusion_bench.method.simple_average import simple_average
 
 log = logging.getLogger(__name__)
 
 
 class ExpertNotTrainedError(Exception):
     pass
+
+
+def _is_all_zeros(tensor: Tensor | List[Tensor]) -> bool:
+    if isinstance(tensor, Tensor):
+        return torch.allclose(tensor, torch.zeros_like(tensor))
+    else:
+        return all(_is_all_zeros(t) for t in tensor)
 
 
 def _svd(w: Tensor, full_matrices=True) -> Tuple[Tensor, Tensor, Tensor]:
@@ -66,32 +75,25 @@ class Router(nn.Module):
             weights.append(v.T)
         self.k = s.size(0)  # k is the actual k after truncation
 
-        weights = torch.stack(weights, dim=0)
+        weights = (
+            torch.stack(weights, dim=0)
+            .reshape(self.num_experts * self.k, -1)
+            .contiguous()
+        )
         self.weights = nn.Parameter(
             weights
-        )  # weights should be a tensor of shape (num_experts, k, n)
+        )  # weights should be a tensor of shape (num_experts * k, n)
 
     def forward(self, x: Tensor):
         batch_size = x.size(0)
-        temp = torch.zeros(x.size(0), self.num_experts, self.k, device=x.device)
-        for expert_idx in range(self.num_experts):
-            expert_weights = self.weights[expert_idx]
-            temp[:, expert_idx] = F.linear(x, expert_weights)
-        r = temp  # (B, num_experts, k)
-        r = r.norm(p=2, dim=2)  # (B, num_experts)
-        return r
+        if self.num_experts == 1:
+            return torch.ones(batch_size, 1, device=x.device, dtype=x.dtype)
 
-
-class BiasOnlyLinear(nn.Module):
-    def __init__(self, model: nn.Linear):
-        super().__init__()
-        self.in_features = model.in_features
-        self.out_features = model.out_features
-        self.bias = nn.Parameter(model.bias.data, requires_grad=True)
-
-    def forward(self, x):
-        y = self.bias.expand(*x.size()[:-1], self.out_features)
-        return y
+        routing_weights = F.linear(x, self.weights).view(
+            batch_size, self.num_experts, self.k
+        )
+        routing_weights = routing_weights.norm(p=2, dim=2)
+        return routing_weights
 
 
 class SingularCompressedLinear(nn.Module):
@@ -115,14 +117,9 @@ class SingularCompressedLinear(nn.Module):
             self.register_parameter("bias", None)
 
     def forward(self, x):
-        return F.linear(x, self.u @ self.svh, self.bias)
-
-
-def _is_all_zeros(tensor: Tensor | List[Tensor]) -> bool:
-    if isinstance(tensor, Tensor):
-        return torch.allclose(tensor, torch.zeros_like(tensor))
-    else:
-        return all(_is_all_zeros(t) for t in tensor)
+        x = F.linear(x, self.svh)
+        x = F.linear(x, self.u, self.bias)
+        return x
 
 
 class SingularMoELinear(nn.Module):
@@ -134,53 +131,60 @@ class SingularMoELinear(nn.Module):
         gate_k: int,
         k: int,
         top_k: int = 1,
-        pretrained_bias_as_expert: bool = False,
         full_matrices=True,
         upscaling_accelerator=None,
+        routing_use_diff=True,
     ):
         super().__init__()
-        pretrained_bias_as_expert = (
-            pretrained_bias_as_expert and pretrained_model.bias is not None
-        )
-        self.num_experts = len(finetuned_models) + int(pretrained_bias_as_expert)
+        self.num_experts = len(finetuned_models)
         self.top_k = top_k
+        self.k = k
+        self.gate_k = gate_k
         self.in_features = pretrained_model.in_features
         self.out_features = pretrained_model.out_features
 
-        for m in finetuned_models:
-            m.weight.data = m.weight - pretrained_model.weight
-        w_diff_list = [m.weight for m in finetuned_models]
+        w_diff_list = [m.weight - pretrained_model.weight for m in finetuned_models]
         if _is_all_zeros(w_diff_list):
             # All fine-tuned models are identical to the pretrained model
             raise ExpertNotTrainedError()
-        if pretrained_bias_as_expert:
-            w_diff_list = [pretrained_model.weight] + w_diff_list
-        svd_cache_list = [
-            svd(w, full_matrices=full_matrices, accelerator=upscaling_accelerator)
-            for w in w_diff_list
-        ]  # the svd cache list to avoid recomputing
+
+        if routing_use_diff or k > 0:
+            svd_cache_list = [
+                svd(w, full_matrices=full_matrices, accelerator=upscaling_accelerator)
+                for w in w_diff_list
+            ]  # the svd cache list to avoid recomputing
+
         # construct the gate network
-        self.gate = Router(
-            input_features=self.in_features,
-            w_diff_list=w_diff_list,
-            k=gate_k,
-            svd_list=svd_cache_list,
-            upscaling_accelerator=upscaling_accelerator,
-        )
+        if routing_use_diff:
+            self.gate = Router(
+                input_features=self.in_features,
+                w_diff_list=w_diff_list,
+                k=gate_k,
+                svd_list=svd_cache_list,
+                upscaling_accelerator=upscaling_accelerator,
+            )
+        else:
+            self.gate = Router(
+                input_features=self.in_features,
+                w_diff_list=[m.weight for m in finetuned_models],
+                k=gate_k,
+                svd_list=None,
+                upscaling_accelerator=upscaling_accelerator,
+            )
+
         # construct experts
-        experts = []
-        if pretrained_bias_as_expert:
-            svd_cache_list.pop(0)
-            experts = [BiasOnlyLinear(pretrained_model)]
+        for m, w_diff in zip(finetuned_models, w_diff_list):
+            m.weight.data = w_diff
         if k > 0:
-            experts = experts + [
+            experts = [
                 SingularCompressedLinear(m, k, svd_cache=svd_cache)
                 for m, svd_cache in zip(finetuned_models, svd_cache_list)
             ]
         else:
             # if k is not set (<0), we use the full fine-tuned model
-            experts = experts + finetuned_models
+            experts = finetuned_models
         self.experts = nn.ModuleList(experts)
+
         if pretrained_model.bias is not None:
             for m in experts:
                 m.bias.data = m.bias.data - pretrained_model.bias
@@ -250,6 +254,18 @@ class SingularMoELinear(nn.Module):
     def bias(self):
         return self.pretrained_model.bias
 
+    def __repr__(self):
+        return (
+            f"SingularMoELinear("
+            f"in_features={self.pretrained_model.in_features}, "
+            f"out_features={self.pretrained_model.out_features}, "
+            f"num_experts={self.num_experts}, "
+            f"top_k={self.top_k}, "
+            f"gate_k={self.gate_k}, "
+            f"k={self.k}"
+            f")"
+        )
+
 
 class SingularMoEUpscaling(ModelFusionAlgorithm, SimpleProfilerMixin):
     _linear_layer_cls = (nn.Linear,)
@@ -278,14 +294,7 @@ class SingularMoEUpscaling(ModelFusionAlgorithm, SimpleProfilerMixin):
             finetuned_models = [m.cuda() for m in finetuned_models]
 
         with self.profile("merge model"):
-            model = self.merge(
-                pretrained_model,
-                finetuned_models,
-                gate_k=self.config.gate_k,
-                k=self.config.k,
-                top_k=self.config.top_k,
-                average_experts=self.config.average_experts,
-            )
+            model = self.merge(pretrained_model, finetuned_models)
 
         self.print_profile_summary()
         if self.config.model_path is not None:
@@ -299,48 +308,72 @@ class SingularMoEUpscaling(ModelFusionAlgorithm, SimpleProfilerMixin):
         self,
         pretrained_model: nn.Module,
         finetuned_models: List[nn.Module],
-        gate_k: int,
-        k: int,
-        top_k: int,
-        average_experts: bool,
         in_place: bool = True,
     ):
-        from fusion_bench.models.utils import get_attr, set_attr
-        from fusion_bench.method.simple_average import simple_average
 
         if in_place:
             model = pretrained_model
         else:
             model = deepcopy(pretrained_model)
 
+        self._upscale_submodules(model, finetuned_models)
+        return model
+
+    def _upscale_linear_layer(
+        self,
+        pretrained_model,
+        finetuned_models,
+        name: str,
+    ):
+        config = self.config
+
+        name_list = name.split(".")
+        module = get_attr(pretrained_model, name_list)
+        experts = [get_attr(m, name_list) for m in finetuned_models]
+        try:
+            moe_linear = SingularMoELinear(
+                module,
+                experts,
+                gate_k=config.gate_k,
+                k=config.k,
+                top_k=config.top_k,
+                routing_use_diff=self.config.routing_use_diff,
+                full_matrices=self.config.full_matrices,
+                upscaling_accelerator=self.config.upscaling_accelerator,
+            )
+        except ExpertNotTrainedError as e:
+            print(f"skip {name} because the experts are not trained.")
+            return
+        set_attr(pretrained_model, name_list, moe_linear)
+        # remove the original module from fine-tuned models to save memory
+        for m in finetuned_models:
+            set_attr(m, name_list, None)
+
+    def _average_experts(self, pretarined_model, finetuned_models, name: str):
+        name_list = name.split(".")
+        experts = [get_attr(m, name_list) for m in finetuned_models]
+        averaged_module = simple_average(experts)
+        set_attr(pretarined_model, name_list, averaged_module)
+
+    def _upscale_submodules(
+        self,
+        pretrained_model,
+        finetuned_model,
+        tqdm_desc: str = "Upscaling Linear Modules",
+    ):
+        config = self.config
         for name, module in tqdm(
-            tuple(model.named_modules()),
-            "Upscaling Modules",
+            tuple(pretrained_model.named_modules()),
+            tqdm_desc,
+            leave=False,
+            dynamic_ncols=True,
         ):
             if isinstance(module, self._linear_layer_cls):
-                name_list = name.split(".")
-                experts = [get_attr(m, name_list) for m in finetuned_models]
-                try:
-                    moe_linear = SingularMoELinear(
-                        module,
-                        experts,
-                        gate_k=gate_k,
-                        k=k,
-                        top_k=top_k,
-                        full_matrices=self.config.full_matrices,
-                        upscaling_accelerator=self.config.upscaling_accelerator,
-                    )
-                except ExpertNotTrainedError as e:
-                    print(f"skip {name} because the experts are not trained.")
-                    continue
-                set_attr(model, name_list, moe_linear)
-                # remove the original module from fine-tuned models to save memory
-                for m in finetuned_models:
-                    set_attr(m, name_list, None)
-            elif average_experts and len(tuple(module.named_modules())) == 1:
+                self._upscale_linear_layer(
+                    pretrained_model=pretrained_model,
+                    finetuned_models=finetuned_model,
+                    name=name,
+                )
+            elif config.average_experts and len(tuple(module.named_modules())) == 1:
                 # if the module is a leaf module, we perform a parameter average
-                name_list = name.split(".")
-                experts = [get_attr(m, name_list) for m in finetuned_models]
-                averaged_module = simple_average(experts)
-                set_attr(model, name_list, averaged_module)
-        return model
+                self._average_experts(pretrained_model, finetuned_model, name)
