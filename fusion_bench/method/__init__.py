@@ -57,6 +57,7 @@ class AlgorithmFactory:
         "model_recombination": ModelRecombinationAlgorithm,
         "llama_singular_moe_upscaling": ".singular.llama_singular_moe.SingularMoEUpscalingForLlama",
         "singular_moe_upscaling": ".singular.singular_moe.SingularMoEUpscaling",
+        "smile_mistral_upscaling": ".smile_upscaling.smile_mistral_upscaing.SmileMistralUpscalingAlgorithm",
         # pruning methods
         "magnitude_diff_pruning": ".pruning.MagnitudeDiffPruningAlgorithm",
     }
