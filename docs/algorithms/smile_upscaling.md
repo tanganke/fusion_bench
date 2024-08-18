@@ -250,9 +250,9 @@ Knowing the model architecture, we can upscale the Mistral-7B models using the f
     type: AutoModelForCausalLMPool
     models:
     - name: _pretrained_
-        path: /data/huggingface_models/mistralai/Mistral-7B-v0.1
+        path: mistralai/Mistral-7B-v0.1
     - name: expert_1
-        path: /data/huggingface_models/meta-math/MetaMath-Mistral-7B
+        path: meta-math/MetaMath-Mistral-7B
 
     dtype: float16
     ```
@@ -261,9 +261,9 @@ Knowing the model architecture, we can upscale the Mistral-7B models using the f
     type: AutoModelForCausalLMPool
     models:
     - name: _pretrained_
-        path: /data/huggingface_models/mistralai/Mistral-7B-v0.1
+        path: mistralai/Mistral-7B-v0.1
     - name: expert_1
-        path: /data/huggingface_models/cognitivecomputations/dolphin-2.1-mistral-7b
+        path: cognitivecomputations/dolphin-2.1-mistral-7b
 
     dtype: float16
     ```
@@ -272,9 +272,9 @@ Knowing the model architecture, we can upscale the Mistral-7B models using the f
     type: AutoModelForCausalLMPool
     models:
     - name: _pretrained_
-        path: /data/huggingface_models/mistralai/Mistral-7B-v0.1
+        path: mistralai/Mistral-7B-v0.1
     - name: expert_1
-        path: /data/huggingface_models/uukuguy/speechless-code-mistral-7b-v1.0
+        path: uukuguy/speechless-code-mistral-7b-v1.0
 
     dtype: float16
     ```
@@ -283,13 +283,13 @@ Knowing the model architecture, we can upscale the Mistral-7B models using the f
     type: AutoModelForCausalLMPool
     models:
     - name: _pretrained_
-        path: /data/huggingface_models/mistralai/Mistral-7B-v0.1
+        path: mistralai/Mistral-7B-v0.1
     - name: expert_1
-        path: /data/huggingface_models/meta-math/MetaMath-Mistral-7B
+        path: meta-math/MetaMath-Mistral-7B
     - name: expert_2
-        path: /data/huggingface_models/cognitivecomputations/dolphin-2.1-mistral-7b
+        path: cognitivecomputations/dolphin-2.1-mistral-7b
     - name: expert_3
-        path: /data/huggingface_models/uukuguy/speechless-code-mistral-7b-v1.0
+        path: uukuguy/speechless-code-mistral-7b-v1.0
 
     dtype: float16
     ```
