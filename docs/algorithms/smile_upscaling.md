@@ -2,8 +2,14 @@
 
 ## Configurations
 
-We have the following configurations for SMILE upscaling, which can be found in `configs/method/`:
-The first configuration is for general `nn.Module` upscaling, and the second configuration is for Mistral models.
+The SMILE upscaling method offers several configuration options, which are located in the `config/method/` directory.
+
+1. **General `nn.Module` Upscaling**: 
+    This configuration is designed for upscaling any neural network module (`nn.Module`).
+2. **Mistral Model Upscaling**: 
+    This specific configuration is for Mistral models.
+
+Each configuration file contains detailed parameters and options that can be adjusted to meet the specific needs of your model and application.
 
 ```yaml title="config/method/smile_upscaling.yaml"
 name: smile_upscaling
