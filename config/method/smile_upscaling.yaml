@@ -1,4 +1,4 @@
-name: singular_moe_upscaling
+name: smile_upscaling
 
 # merge device on cuda can accelerate the SVD computation
 device: cpu
