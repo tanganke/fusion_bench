@@ -1,4 +1,4 @@
 type: huggingface_clip_vision
 models:
   - name: _pretrained_
-    path: openai/clip-vit-base-patch32
+    path: openai/clip-vit-large-patch14

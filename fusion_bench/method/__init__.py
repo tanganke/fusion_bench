@@ -44,6 +44,7 @@ class AlgorithmFactory:
         "ties_merging": TiesMergingAlgorithm,
         "clip_task_wise_adamerging": CLIPTaskWiseAdaMergingAlgorithm,
         "clip_layer_wise_adamerging": CLIPLayerWiseAdaMergingAlgorithm,
+        "singular_projection_merging": ".smile_upscaling.singular_projection_merging.SingularProjectionMergingAlgorithm",
         # plug-and-play model merging methods
         "clip_concrete_task_arithmetic": ".concrete_subspace.clip_concrete_task_arithmetic.ConcreteTaskArithmeticAlgorithmForCLIP",
         "clip_concrete_task_wise_adamerging": ".concrete_subspace.clip_concrete_adamerging.ConcreteTaskWiseAdaMergingForCLIP",
@@ -56,6 +57,8 @@ class AlgorithmFactory:
         "mixtral_for_causal_lm_merging": ".mixture_of_experts.mixtral_merging.MixtralForCausalLMMergingAlgorithm",
         "clip_weight_ensembling_moe": CLIPWeightEnsemblingMoEAlgorithm,
         "model_recombination": ModelRecombinationAlgorithm,
+        "smile_upscaling": ".smile_upscaling.smile_upscaing.SmileUpscalingAlgorithm",
+        "smile_mistral_upscaling": ".smile_upscaling.smile_mistral_upscaing.SmileMistralUpscalingAlgorithm",
         # pruning methods
         "magnitude_diff_pruning": ".pruning.MagnitudeDiffPruningAlgorithm",
     }

@@ -24,6 +24,7 @@ from fusion_bench.tasks.flan_t5_text_generation.glue_evaluation import (
 from fusion_bench.tasks.flan_t5_text_generation.glue_load_dataset import (
     load_glue_dataset,
 )
+from fusion_bench.utils.parameters import count_parameters
 
 from .base_pool import TaskPool
 
@@ -155,7 +156,14 @@ class FlanT5GLUETextGenerationTaskPool(TaskPool):
             log.warning(
                 f"Model is not an instance of T5ForConditionalGeneration, but {type(model)}"
             )
+        report = {}
+        training_params, all_params = count_parameters(model)
+        report["model_info"] = {
+            "trainable_params": training_params,
+            "all_params": all_params,
+            "trainable_percentage": training_params / all_params,
+        }
         model = self.fabric.setup(model)
-        report = super().evaluate(model)
+        report.update(super().evaluate(model))
         log.info(f"evaluation report: {report}")
         return report

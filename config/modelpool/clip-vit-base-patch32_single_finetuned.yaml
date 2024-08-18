@@ -1,0 +1,6 @@
+type: huggingface_clip_vision
+models:
+  - name: _pretrained_
+    path: openai/clip-vit-base-patch32
+  - name: stanford-cars
+    path: tanganke/clip-vit-base-patch32_stanford-cars
