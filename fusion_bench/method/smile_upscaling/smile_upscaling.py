@@ -272,6 +272,15 @@ class SmileUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
 
     @torch.no_grad()
     def run(self, modelpool: ModelPool):
+        """
+        Executes the upscaling process.
+
+        Args:
+            modelpool (ModelPool): The pool of models to be used for upscaling.
+
+        Returns:
+            nn.Module: The upscaled model.
+        """
         modelpool = to_modelpool(modelpool)
 
         if self.config.model_path is not None and os.path.exists(
@@ -310,7 +319,17 @@ class SmileUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
         finetuned_models: List[nn.Module],
         in_place: bool = True,
     ):
+        """
+        Merges the pretrained model with the fine-tuned models to create an upscaled model.
 
+        Args:
+            pretrained_model (nn.Module): The pretrained model.
+            finetuned_models (List[nn.Module]): A list of fine-tuned models.
+            in_place (bool): If True, modifies the pretrained model in place. Otherwise, creates a copy.
+
+        Returns:
+            nn.Module: The merged model.
+        """
         if in_place:
             model = pretrained_model
         else:
@@ -361,6 +380,14 @@ class SmileUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
         finetuned_model,
         tqdm_desc: str = "Upscaling Linear Modules",
     ):
+        """
+        Upscales the submodules of the pretrained model by merging them with the corresponding submodules from the fine-tuned models.
+
+        Args:
+            pretrained_model (nn.Module): The pretrained model.
+            finetuned_models (List[nn.Module]): A list of fine-tuned models.
+            tqdm_desc (str): Description for the tqdm progress bar.
+        """
         config = self.config
         for name, module in tqdm(
             tuple(pretrained_model.named_modules()),

@@ -1,5 +1,47 @@
 # SMILE Upscaling
 
+## Configurations
+
+We have the following configurations for SMILE upscaling, which can be found in `configs/method/`:
+The first configuration is for general `nn.Module` upscaling, and the second configuration is for Mistral models.
+
+```yaml title="config/method/smile_upscaling.yaml"
+name: smile_upscaling
+
+# merge device on cuda can accelerate the SVD computation
+device: cpu
+# device to compute svd
+upscaling_accelerator: cuda
+full_matrices: true # set to false if you are sure k < rank
+
+gate_k: 1
+k: 128
+top_k: 1
+
+routing_use_diff: true
+# average the remaining part, if this is set the False, the remaining part will kept as base model (the pretrained model)
+average_experts: false
+
+# path to save/load the model
+model_path: null
+```
+
+```yaml title="config/method/smile_mistral_upscaling.yaml"
+name: smile_mistral_upscaling
+
+device: cpu
+accelerator: cuda
+
+# path to save/load the model
+model_path: null
+model_dtype: float16
+
+num_experts_per_tok: 1
+rank_of_router: 8
+rank_of_expert: 512
+```
+
+
 ## Examples
 
 ### CLIP-ViT-B/32 on eight tasks
@@ -43,11 +85,11 @@ fusion_bench \
         method.device=cuda \
         method.gate_k=$gate_k method.k=$k \
     modelpool=clip-vit-base-patch32_TA8 \
-    taskpool=clip-vit-classification_TA8.local \
+    taskpool=clip-vit-classification_TA8 \
     save_report="outputs/ViT-B-32/eight_tasks/gate_k\=${gate_k}_k\=${k}.json"
 ```
 
-Hyperparameter search for SMILE upscaling.
+Hyperparameter search for SMILE upscaling. Pre-run results can be found in `examples/smile_upscaling/clip-vit-base-patch32.ipynb`.
 
 ```bash
 for gate_k in 1 2 4 8 16 32 64 128 256 512 768; do
@@ -57,13 +99,13 @@ for gate_k in 1 2 4 8 16 32 64 128 256 512 768; do
                 method.device=cuda \
                 method.gate_k=$gate_k method.k=$k \
             modelpool=clip-vit-base-patch32_TA8 \
-            taskpool=clip-vit-classification_TA8.local \
+            taskpool=clip-vit-classification_TA8 \
             save_report="outputs/ViT-B-32/eight_tasks/gate_k\=${gate_k}_k\=${k}.json"
     done
 done
 ```
 
-Ablations on number of experts per token (Top-K).
+Ablations on number of experts per token (Top-K). Pre-run results can be found in `examples/smile_upscaling/clip-vit-base-patch32-ablations-topk.ipynb`.
 
 ```bash
 gate_k=16
@@ -75,14 +117,14 @@ fusion_bench \
         method.device=cuda \
         method.gate_k=$gate_k method.k=$k \
     modelpool=clip-vit-base-patch32_TA8 \
-    taskpool=clip-vit-classification_TA8.local \
+    taskpool=clip-vit-classification_TA8 \
     save_report="outputs/ViT-B-32/ablation/gate_k\=${gate_k}_k\=${k}.json"
 done
 ```
 
 ### CLIP-ViT-L/14 on eight tasks
 
-hyperparameter search for SMILE upscaling.
+hyperparameter search for SMILE upscaling. Pre-run results can be found in `examples/smile_upscaling/clip-vit-large-patch14.ipynb`.
 
 ```bash
 for gate_k in 1 2 4 8 16 32 64 128; do
@@ -91,7 +133,7 @@ for gate_k in 1 2 4 8 16 32 64 128; do
             method=smile_upscaling \
                 method.gate_k=$gate_k method.k=$k \
             modelpool=clip-vit-large-patch14_TA8 \
-            taskpool=clip-vit-classification_TA8.local \
+            taskpool=clip-vit-classification_TA8 \
                 taskpool.clip_model=openai/clip-vit-large-patch14 \
             save_report="outputs/ViT-B-32/eight_tasks/gate_k\=${gate_k}_k\=${k}.json"
     done
@@ -101,6 +143,7 @@ done
 ### Flan-T5 models on eight tasks from GLUE benchmark
 
 Hyperparameter search for full fine-tuned and lora fine-tuned Flan-T5 models.
+Pre-run results can be found in `examples/smile_upscaling/flan-t5-base.ipynb` and `examples/smile_upscaling/flan-t5-base-lora16.ipynb`.
 
 ```bash
 # hyperparameter search for full fine-tuned flan-t5-base
@@ -131,6 +174,69 @@ done
 ```
 
 ### Upscale Mistral-7B models
+
+Here we upscale several Mistral-7B models using SMILE. The models are trained on different tasks and are used as experts in the SMILE upscaling.
+
+We first provide an example of the upscaled model, where we upscale the linear layers of the original Mistral model into a SMILE linear layer.
+
+```python
+import torch
+from accelerate import init_empty_weights
+from transformers import AutoConfig
+
+from fusion_bench.models.modeling_smile_mistral import (
+    SmileMistralConfig,
+    SmileMistralForCausalLM,
+)
+
+
+config = AutoConfig.from_pretrained(
+    "mistralai/Mistral-7B-v0.1"
+)
+config = SmileMistralConfig(
+    num_experts_per_tok=1,
+    rank_of_router=8,
+    rank_of_expert=8,
+    num_local_experts=3,
+    **config.to_dict()
+)
+with init_empty_weights():
+    model = SmileMistralForCausalLM(config)
+model.to(dtype=torch.float16).to_empty(device="cuda")
+```
+
+The model architecture is as follows:
+
+```c
+SmileMistralForCausalLM(
+  (model): SmileMistralModel(
+    (embed_tokens): Embedding(32000, 4096)
+    (layers): ModuleList(
+      (0-31): 32 x SmileMistralDecoderLayer(
+        (self_attn): SmileMistralAttention(
+          (q_proj): SingularMoELinear(in_features=4096, out_features=4096, num_local_experts=3, num_experts_per_tok=1, rank_of_router=8, rank_of_expert=8)
+          (k_proj): SingularMoELinear(in_features=4096, out_features=1024, num_local_experts=3, num_experts_per_tok=1, rank_of_router=8, rank_of_expert=8)
+          (v_proj): SingularMoELinear(in_features=4096, out_features=1024, num_local_experts=3, num_experts_per_tok=1, rank_of_router=8, rank_of_expert=8)
+          (o_proj): SingularMoELinear(in_features=4096, out_features=4096, num_local_experts=3, num_experts_per_tok=1, rank_of_router=8, rank_of_expert=8)
+          (rotary_emb): MistralRotaryEmbedding()
+        )
+        (mlp): SmileMistralMLP(
+          (gate_proj): SingularMoELinear(in_features=4096, out_features=14336, num_local_experts=3, num_experts_per_tok=1, rank_of_router=8, rank_of_expert=8)
+          (up_proj): SingularMoELinear(in_features=4096, out_features=14336, num_local_experts=3, num_experts_per_tok=1, rank_of_router=8, rank_of_expert=8)
+          (down_proj): SingularMoELinear(in_features=14336, out_features=4096, num_local_experts=3, num_experts_per_tok=1, rank_of_router=8, rank_of_expert=8)
+          (act_fn): SiLU()
+        )
+        (input_layernorm): MistralRMSNorm()
+        (post_attention_layernorm): MistralRMSNorm()
+      )
+    )
+    (norm): MistralRMSNorm()
+  )
+  (lm_head): Linear(in_features=4096, out_features=32000, bias=False)
+)
+```
+
+Knowing the model architecture, we can upscale the Mistral-7B models using the following steps:
 
 1. Prepare the following 4 configuration files in `configs/modelpool`:
 
@@ -230,6 +336,7 @@ done
     ```
 
     The above function can be used to evaluate the models on specified task.
+    Pre-run results can be found in `examples/smile_upscaling/mistral_gsm8k.ipynb`.
 
     ```bash
     # Evaluate all the models on GSM8K task
@@ -261,6 +368,8 @@ done
 
 ### Projection Merge Experiments
 
+Pre-run results can be found in `examples/smile_upscaling/clip-vit-base-patch32_single-task_projection-merging.ipynb`.
+
 ```bash
 # project into different subspaces
 for task in sun397 stanford-cars resisc45 eurosat svhn gtsrb mnist dtd
@@ -272,7 +381,7 @@ do
         modelpool=clip-vit-base-patch32_single_finetuned \
             modelpool.models.1.name=${task} \
             modelpool.models.1.path=tanganke/clip-vit-base-patch32_${task} \
-        taskpool=clip-vit-classification_TA8.local \
+        taskpool=clip-vit-classification_TA8 \
         save_report="outputs/ViT-B-32/single-task/projection_merging_zone1_${task}.json" &
 
     # Space II
@@ -282,7 +391,7 @@ do
         modelpool=clip-vit-base-patch32_single_finetuned \
             modelpool.models.1.name=${task} \
             modelpool.models.1.path=tanganke/clip-vit-base-patch32_${task} \
-        taskpool=clip-vit-classification_TA8.local \
+        taskpool=clip-vit-classification_TA8 \
         save_report="outputs/ViT-B-32/single-task/projection_merging_zone2_${task}.json" &
 
     # Space III
@@ -292,8 +401,17 @@ do
         modelpool=clip-vit-base-patch32_single_finetuned \
             modelpool.models.1.name=${task} \
             modelpool.models.1.path=tanganke/clip-vit-base-patch32_${task} \
-        taskpool=clip-vit-classification_TA8.local \
+        taskpool=clip-vit-classification_TA8 \
         save_report="outputs/ViT-B-32/single-task/projection_merging_zone23_${task}.json" &
     wait
 done
 ```
+
+
+## References
+
+### Algorithms
+
+::: fusion_bench.method.smile_upscaling.singular_projection_merging
+::: fusion_bench.method.smile_upscaling.smile_upscaling
+::: fusion_bench.method.smile_upscaling.smile_mistral_upscaling

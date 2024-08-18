@@ -110,7 +110,16 @@ def upscale_to_smile_linear(
 
 class SmileMistralUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
     @torch.no_grad()
-    def run(self, modelpool: ModelPool):
+    def run(self, modelpool: ModelPool) -> SmileMistralForCausalLM:
+        """
+        Executes the upscaling process.
+
+        Args:
+            modelpool (ModelPool): The pool of models to be used for upscaling.
+
+        Returns:
+            SmileMistralForCausalLM: The upscaled model.
+        """
         self.modelpool = modelpool = to_modelpool(modelpool)
         config = self.config
 
@@ -157,6 +166,16 @@ class SmileMistralUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
         pretrained_model: MistralForCausalLM,
         finetuned_models: List[MistralForCausalLM],
     ):
+        """
+        Merges the pretrained model with the fine-tuned models to create an upscaled model.
+
+        Args:
+            pretrained_model (MistralForCausalLM): The pretrained model.
+            finetuned_models (List[MistralForCausalLM]): A list of fine-tuned models.
+
+        Returns:
+            SmileMistralForCausalLM: The upscaled model.
+        """
         config = self.config
 
         with init_empty_weights():

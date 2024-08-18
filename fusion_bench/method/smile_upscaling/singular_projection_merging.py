@@ -81,6 +81,18 @@ class SingularProjectionMergingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMix
         finetuned_model: nn.Module,
         in_place: bool = True,
     ):
+        """
+        Merges the pretrained model with the fine-tuned model by projecting parameter differences
+        into the SVD subspace of the pretrained model.
+
+        Args:
+            pretrained_model (nn.Module): The pretrained model.
+            finetuned_model (nn.Module): The fine-tuned model.
+            in_place (bool): If True, modifies the fine-tuned model in place. Otherwise, creates a copy.
+
+        Returns:
+            nn.Module: The merged model.
+        """
         if in_place:
             model = finetuned_model
         else:
@@ -106,7 +118,17 @@ class SingularProjectionMergingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMix
     def projection_merge_linear(
         self, pretrained_model: nn.Linear, finetuned_model: nn.Linear, k: int
     ):
+        """
+        Projects the parameter differences of linear layers into the SVD subspace of the pretrained model.
 
+        Args:
+            pretrained_model (nn.Linear): The linear layer of the pretrained model.
+            finetuned_model (nn.Linear): The linear layer of the fine-tuned model.
+            k (int): The number of singular values to keep. If negative, it is determined based on the sum of singular values.
+
+        Returns:
+            nn.Linear: The merged linear layer with projected parameter differences.
+        """
         w = pretrained_model.weight
         w_ft = finetuned_model.weight
 
