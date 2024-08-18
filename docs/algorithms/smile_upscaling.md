@@ -294,11 +294,11 @@ Knowing the model architecture, we can upscale the Mistral-7B models using the f
     dtype: float16
     ```
 
-2. Upscale Mistral-7B models.
+2. Upscale Mistral-7B models. The upscaled models are saved in `outputs/mistral/gate_k-${gate_k}_k-${k}/version_${version}`.
 
     ```bash
     function model_fusion() {
-        output_dir=outputs/llama/gate_k-${gate_k}_k-${k}/version_${version}
+        output_dir=outputs/mistral/gate_k-${gate_k}_k-${k}/version_${version}
         fusion_bench \
             method=smile_mistral_upscaling \
                 method.rank_of_router=$gate_k method.rank_of_expert=$k \
@@ -325,7 +325,7 @@ Knowing the model architecture, we can upscale the Mistral-7B models using the f
     # export NCCL_IB_DISABLE="1"
 
     function model_eval() {
-        output_dir=outputs/llama/test/gate_k-${gate_k}_k-${k}/version_${version}
+        output_dir=outputs/mistral/gate_k-${gate_k}_k-${k}/version_${version}
 
         # Check if ${output_dir}/${task}.json exists as a directory and return if it does
         if [ -d "${output_dir}/${task}.json" ]; then
