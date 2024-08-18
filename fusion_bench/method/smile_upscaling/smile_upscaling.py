@@ -49,7 +49,7 @@ def svd(
     return u.to(original_device), s.to(original_device), v.to(original_device)
 
 
-class Router(nn.Module):
+class SmileGate(nn.Module):
     def __init__(
         self,
         input_features: int,
@@ -96,7 +96,7 @@ class Router(nn.Module):
         return routing_weights
 
 
-class SingularCompressedLinear(nn.Module):
+class SmileCompressedLinear(nn.Module):
     def __init__(self, model: nn.Linear, k: int, svd_cache=None):
         super().__init__()
         if svd_cache is None:
@@ -122,7 +122,7 @@ class SingularCompressedLinear(nn.Module):
         return x
 
 
-class SingularMoELinear(nn.Module):
+class SmileMoELinear(nn.Module):
     @torch.no_grad()
     def __init__(
         self,
@@ -156,7 +156,7 @@ class SingularMoELinear(nn.Module):
 
         # construct the gate network
         if routing_use_diff:
-            self.gate = Router(
+            self.gate = SmileGate(
                 input_features=self.in_features,
                 w_diff_list=w_diff_list,
                 k=gate_k,
@@ -164,7 +164,7 @@ class SingularMoELinear(nn.Module):
                 upscaling_accelerator=upscaling_accelerator,
             )
         else:
-            self.gate = Router(
+            self.gate = SmileGate(
                 input_features=self.in_features,
                 w_diff_list=[m.weight for m in finetuned_models],
                 k=gate_k,
@@ -177,7 +177,7 @@ class SingularMoELinear(nn.Module):
             m.weight.data = w_diff
         if k > 0:
             experts = [
-                SingularCompressedLinear(m, k, svd_cache=svd_cache)
+                SmileCompressedLinear(m, k, svd_cache=svd_cache)
                 for m, svd_cache in zip(finetuned_models, svd_cache_list)
             ]
         else:
@@ -267,7 +267,7 @@ class SingularMoELinear(nn.Module):
         )
 
 
-class SingularMoEUpscaling(ModelFusionAlgorithm, SimpleProfilerMixin):
+class SmileUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
     _linear_layer_cls = (nn.Linear,)
 
     @torch.no_grad()
@@ -331,7 +331,7 @@ class SingularMoEUpscaling(ModelFusionAlgorithm, SimpleProfilerMixin):
         module = get_attr(pretrained_model, name_list)
         experts = [get_attr(m, name_list) for m in finetuned_models]
         try:
-            moe_linear = SingularMoELinear(
+            moe_linear = SmileMoELinear(
                 module,
                 experts,
                 gate_k=config.gate_k,

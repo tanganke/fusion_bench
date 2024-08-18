@@ -57,8 +57,8 @@ class AlgorithmFactory:
         "mixtral_for_causal_lm_merging": ".mixture_of_experts.mixtral_merging.MixtralForCausalLMMergingAlgorithm",
         "clip_weight_ensembling_moe": CLIPWeightEnsemblingMoEAlgorithm,
         "model_recombination": ModelRecombinationAlgorithm,
-        "smile_upscaling": ".smile_upscaling.smile_upscaing.SmileUpscalingAlgorithm",
-        "smile_mistral_upscaling": ".smile_upscaling.smile_mistral_upscaing.SmileMistralUpscalingAlgorithm",
+        "smile_upscaling": ".smile_upscaling.smile_upscaling.SmileUpscalingAlgorithm",
+        "smile_mistral_upscaling": ".smile_upscaling.smile_mistral_upscaling.SmileMistralUpscalingAlgorithm",
         # pruning methods
         "magnitude_diff_pruning": ".pruning.MagnitudeDiffPruningAlgorithm",
     }
