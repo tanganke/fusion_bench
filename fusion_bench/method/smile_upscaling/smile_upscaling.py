@@ -1,20 +1,20 @@
+import logging
 import os
 import re
+from copy import deepcopy
 from typing import Dict, List, Tuple
 
 import torch
-from torch import Tensor, nn
 import torch.nn.functional as F
+from torch import Tensor, nn
 from tqdm.auto import tqdm
-import logging
-from copy import deepcopy
 
 from fusion_bench.method import ModelFusionAlgorithm
+from fusion_bench.method.simple_average import simple_average
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import ModelPool, to_modelpool
-from fusion_bench.utils.parameters import print_parameters
 from fusion_bench.models.utils import get_attr, set_attr
-from fusion_bench.method.simple_average import simple_average
+from fusion_bench.utils.parameters import print_parameters
 
 log = logging.getLogger(__name__)
 

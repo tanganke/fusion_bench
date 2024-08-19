@@ -1,8 +1,10 @@
 import unittest
 from unittest.mock import MagicMock, patch
+
+from torch import nn
+
 from fusion_bench.method import ModelRecombinationAlgorithm
 from fusion_bench.modelpool import ModelPool, to_modelpool
-from torch import nn
 
 
 class TestModelRecombinationAlgorithm(unittest.TestCase):

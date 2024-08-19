@@ -39,3 +39,6 @@ package-dir = { "fusion_bench" = "fusion_bench" }
 
 [tool.setuptools.package-data]
 fusion_bench = ['../fusion_bench_config/**/*']
+
+[tool.isort]
+profile = "black"

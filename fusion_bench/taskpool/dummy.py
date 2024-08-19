@@ -7,10 +7,10 @@ import os
 import torch
 from omegaconf import DictConfig
 
+from fusion_bench.models.separate_io import separate_save
 from fusion_bench.taskpool.base_pool import TaskPool
 from fusion_bench.utils import timeit_context
 from fusion_bench.utils.parameters import count_parameters, print_parameters
-from fusion_bench.models.separate_io import separate_save
 
 
 class DummyTaskPool(TaskPool):

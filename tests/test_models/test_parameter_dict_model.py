@@ -1,6 +1,8 @@
 import unittest
+
 import torch
 from torch import nn
+
 from fusion_bench.models.parameter_dict import ParameterDictModel, set_attr
 
 

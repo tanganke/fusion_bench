@@ -6,8 +6,9 @@ import argparse
 import logging
 import os
 from typing import Optional
-from transformers import CLIPProcessor, CLIPVisionModel
+
 import torch
+from transformers import CLIPProcessor, CLIPVisionModel
 
 
 def parse_args():

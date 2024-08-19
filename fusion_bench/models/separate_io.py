@@ -2,8 +2,9 @@ import os
 from copy import deepcopy
 
 import torch
-from fusion_bench.utils.dtype import parse_dtype
 from torch import nn
+
+from fusion_bench.utils.dtype import parse_dtype
 
 
 def separate_save(

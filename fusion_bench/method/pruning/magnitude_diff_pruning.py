@@ -33,11 +33,11 @@ def _magnitude_prune(weight: Tensor, prune_ratio: float) -> Tensor:
 def _is_name_matched(name: str, extract_names: List[str]):
     """
     Check if the parameter name matches any of the provided regular expressions.
-    
+
     Args:
         name (str): The name of the parameter.
         extract_names (List[str]): List of regular expressions to match the parameter names.
-    
+
     Returns:
         bool: True if the name matches any of the regular expressions, False otherwise.
     """
