@@ -3,8 +3,8 @@ type: AutoModelForCausalLMPool
 # this is equivalent to `AutoModelForCausalLM.from_pretrained(path)`
 models:
   - name: _pretrained_
-    path: /data/huggingface_models/mistralai/Mistral-7B-v0.1
+    path: mistralai/Mistral-7B-v0.1
   - name: expert_1
-    path: /data/huggingface_models/uukuguy/speechless-code-mistral-7b-v1.0
+    path: uukuguy/speechless-code-mistral-7b-v1.0
 
 dtype: float16
