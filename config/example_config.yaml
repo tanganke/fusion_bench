@@ -1,10 +1,11 @@
 defaults:
   - hydra: default
+  - fabric: auto
+  - fabric_logger: tensorboard_logger
+  # --- Model, Method, Task ---
   - modelpool: clip-vit-base-patch32_TA8
   - method: dummy
   - taskpool: dummy
-  - fabric: auto
-  - fabric_logger: tensorboard_logger
   - _self_
 
 fast_dev_run: false # Run a single batch of data to test the model or method

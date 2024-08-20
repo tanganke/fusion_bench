@@ -1,6 +1,8 @@
 import unittest
+
 from omegaconf import DictConfig
 from torch import nn
+
 from fusion_bench.method import DepthUpscalingAlgorithm
 from fusion_bench.modelpool import to_modelpool
 
@@ -32,8 +34,9 @@ class TestDepthUpscalingAlgorithm(unittest.TestCase):
     def test_run_solar_model(self):
         from omegaconf import DictConfig
         from torch import nn
-        from fusion_bench.method import DepthUpscalingAlgorithm
         from transformers import AutoModelForCausalLM, MistralConfig, MistralForCausalLM
+
+        from fusion_bench.method import DepthUpscalingAlgorithm
 
         model_config = MistralConfig(
             # https://huggingface.co/mistralai/Mistral-7B-v0.1/resolve/main/config.json

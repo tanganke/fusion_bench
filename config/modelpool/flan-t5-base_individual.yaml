@@ -1,0 +1,4 @@
+type: AutoModelForSeq2SeqLMPool
+models:
+  - name: _pretrained_
+    path: google/flan-t5-base

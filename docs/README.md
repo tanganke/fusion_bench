@@ -1,4 +1,13 @@
+---
+title: FusionBench
+description: A Comprehensive Benchmark of Deep Model Fusion
+---
+
 # FusionBench: A Comprehensive Benchmark of Deep Model Fusion
+
+[![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](http://arxiv.org/abs/2406.03280)
+[![Downloads](https://static.pepy.tech/badge/fusion-bench/month)](https://pepy.tech/project/fusion-bench)
+[![Downloads](https://static.pepy.tech/badge/fusion-bench/week)](https://pepy.tech/project/fusion-bench)
 
 !!! warning "Testing Phase"
     
@@ -11,173 +20,20 @@
     - Any questions or comments can be directed to the [GitHub Issues](https://github.com/tanganke/fusion_bench/issues) page for this project.
     - Any contributions or pull requests are welcome. If you find any mistakes or have suggestions for improvements, please feel free to raise an issue or submit a pull request.
 
+!!! tip "Introduction to Deep Model Fusion (The Learn From Model Paradigm)"
 
-## Introduction to Deep Model Fusion (the learn from model paradigm)
+    Deep model fusion is a technique that merges, ensemble, or fuse multiple deep neural networks to obtain a unified model.
+    It can be used to improve the performance and robustness of model or to combine the strengths of different models, such as fuse multiple task-specific models to create a multi-task model.
+    For a more detailed introduction to deep model fusion, you can refer to [W. Li, 2023, 'Deep Model Fusion: A Survey'](https://arxiv.org/abs/2309.15698). 
+    In this benchmark, we evaluate the performance of different fusion methods on a variety of datasets and tasks. ...
 
-Deep model fusion is a technique that merges, ensemble, or fuse multiple deep neural networks to obtain a unified model.
-It can be used to improve the performance and rubustness of model or to combine the strengths of different models, such as fuse multiple task-specific models to create a multi-task model.
-For a more detailed introduction to deep model fusion, you can refer to [W. Li, 2023, 'Deep Model Fusion: A Survey'](http://arxiv.org/abs/2309.15698).
-In this benchmark, we evaluate the performance of different fusion methods on a variety of datasets and tasks.
-
-### Background
-
-The traditional approach of training deep networks with supervised learning requires:
-
-1. gathering a large dataset relevant to the problem at hand. 
-2. Once the dataset is collected, manual labeling may be necessary to provide supervision.
-3. After the dataset is prepared, Feature Engineering can be conducted to select and transform variables that are most relevant to the predictive model. This step is optional but can significantly improve the accuracy of the model.
-4. The next step is Model Training, in which the design model architecture is developed and an optimization algorithm is chosen.
-
-We call this the "learn from data" paradigm. This approach has been very successful in many applications, and the size of both the dataset and the model has been increasing rapidly. 
-
-<figure markdown="span">
-![alt text](images/learning_paradiagm.png){ width="800px"}
-<figcaption><a href="https://arxiv.org/abs/2310.08184" target="_blank">Hongling Zheng, Li Shen, et al. "Learn from model beyond fine-tuning: A survey."  arXiv:2310.08184 (2023).</a></figcaption>
-</figure>
-
-However, in the past few years, it is obvious that the learning paradigm of deep neural networks has undergone a significant shift. The traditional approach of training deep networks with supervised learning has been complemented with emerging techniques that transfer knowledge from existing models, edit existing models, or leverage unlabeled data to tune the models. Many data-efficient approaches have been proposed, such as model tuning, model distillation, model ensemble, model pruning, model editing and so on. 
-We can even achieve satisfactory results with just prompt design in a few minutes, without any data or model training.
-
-This transformation is driven by the increasing complexity of the models and the increasing cost of data labeling. We call this the "learn from model" paradigm.
-
-So why do we need to learn from models? What are the advantages of learning from models?
-By learning from model, we aim to enhance model performance, reduce training costs, improve generalization...
-
-- Knowledge transfer across models (accelerate training, reuse sunk training cost)  
-- Knowledge transfer across tasks (Facilitating learning from smaller datasets)
-- Task regularization improve generalization and reduce overfitting
-- Reduced model/parameter maintenance costs
-- Improve the efficiency of the inference phase (one forward inference to obtain multiple task predictions)
-- ...
-         
-### Applications of Deep Model Fusion
-
-#### Accelerating Model Training
-
-Leveraging existing models provides a significant advantage in accelerating the development of new models. 
-Training a model from scratch is often both costly and time-consuming, so utilizing pre-existing models can substantially speed up this process. 
-By harnessing the knowledge embedded in these models, we can enhance the training efficiency for new models.
-
-<figure markdown="span">
-![alt text](images/accelerate%20model%20training.png){ width="950px"}
-</figure>
-
-#### Multi-Task Learning
-
-Another popular application of deep model fusion is to construct multi-task models (***FusionBench provides a comprehensive benchmark for multi-task model fusion***).
-Where we aim to collaboratively train one single model with data from multiple tasks to facilitate knowledge transfer.
-Unlike traditional multi-task learning approaches that train a single model with data from multiple tasks, the multi-task model fusion approach reuse the task-specific models to construct a multi-task model. 
-This approach can be more data-efficient.
-
-Similar to single-task model training, train a multi-task model needs three steps: 
-
-1. Data collection and preparation.
-2. Model design and algorithm selection.
-3. Model training and evaluation.
-
-<figure markdown="span">
-    ![alt text](images/multi-task_core_steps.png){ width="750px" }
-<figurecaption> Core steps of multi-task model training </figurecaption>
-</figure>
-
-However, the traditional model training strategy has limitations in certain applications. 
-Particularly when the training data for each task is private and cannot be shared. 
-In other cases, we may only have access to the models trained on the private data, but not the data itself. In these cases, we need to develop a new training strategy that can train a multi-task model without sharing the private data. 
-And training a multi-task model from scratch can be very expensive.
-
-Model fusion without accessing training data in machine learning has attracted increasing interest due to the practical resource-saving and data privacy issues. 
-Creating a multi-task model by merging models for distinct tasks has proven to be an economical andscalable approach.
-By fuse deep neural networks, transfer knowledge, addressing task interference, and utilizing combined knowledge can be achieved without the need for accessing labeled datasets. This is scalable to large models and a wide array of tasks. 
-
-<figure markdown="span">
-![alt text](images/multi-task_model_fusion.png){ width="850px" }
-<figcaption>The general framework of multi-task model fusion</figcaption>
-</figure>
-
-#### Improving Model Performance
-
-Moreover, the knowledge from existing models can be used to create new models. 
-For instance, if we have multiple models, we can combine their knowledge through techniques like model ensembling or weight manipulation. 
-This approach allows us to develop more sophisticated models by integrating the strengths of several pre-trained models.
-
-<figure markdown="span">
-![alt text](images/llm.png){ width="950px"}
-</figure>
-
-#### Scaling Up Models
-
-Additionally, we can upscale existing models to create larger, more powerful models. 
-This can be achieved by mixing the weights of existing models or by adding new layers to them. 
-One of the more popular methods for scaling up models recently is the use of Mixture of Experts (MoE) methods. 
-These methods allow for the scaling of models to very large sizes while maintaining a manageable inference cost.
-
-<figure markdown="span">
-![alt text](images/model_upscaling.png){ width="950px"}
-</figure>
-
-### Formal Definition and Taxonomies of Deep Model Fusion
-
-In this section, we provide a formal definition of deep model fusion and introduce several taxonomies to categorize different fusion methods.
-We define deep model fusion as the process of combining multiple deep neural networks to create a unified model that leverages the knowledge and capabilities of the individual models.
-We taxonomize these fusion methods based on their underlying principles and mechanisms, providing a structured framework for understanding and comparing different fusion techniques.
-We categorize deep model fusion methods into three main types: **Model Ensemble**, **Model Merging**, and **Model Mixing**.
-
-The initial diagram presented below provides a visual representation of the Model Ensemble technique. 
-This method involves the training of several independent models, each generating its own set of predictions. 
-These individual predictions are then aggregated to produce a final, more accurate prediction.
-The Model Ensemble technique is frequently employed to enhance both the performance and reliability of models. 
-It achieves this by leveraging the collective intelligence of multiple models, thereby reducing the likelihood of errors that could arise from a single model's predictions.
-However, it's important to note that this technique does come with its own set of challenges. 
-The necessity to train and maintain multiple models can lead to increased computational costs. 
-This is due to the additional resources required for the training process, as well as the storage needed for each model. 
-Therefore, while the Model Ensemble technique can lead to improved accuracy, it's essential to consider the potential trade-off in terms of computational expense.
-
-<figure markdown="span">
-![alt text](images/model_ensemble.png){ width="930px" }
-</figure>
-
-Moving on, the second diagram represents Model Merging. This technique involves combining multiple models into a single model of the same architecture.
-By merging these models, we can create a more robust and comprehensive model that leverages the strengths of its constituent models. 
-This can lead to improved performance and generalization, especially in scenarios where the individual models excel in different areas.
-
-<figure markdown="span">
-![alt text](images/model_merging.png){ width="850px" }
-</figure>
-
-Lastly, the third diagram depicts Model Mixing, a technique where the weights of multiple models are combined to form a new model. 
-The new model typically has a different architecture from the original models, such as a larger size or more complex structure.
-
-<figure markdown="span">
-![alt text](images/model_mixing.png){ width="900px" }
-</figure>
-
-## General Structure of FusionBench
-
-<figure markdown="span">
-![alt text](images/framework_of_model_fusion.png){ width="800px" }
-<figcaption>Framework of FusionBench</figcaption>
-</figure>
-
-FusionBench is a pioneering project that provides a comprehensive benchmark for deep model fusion, facilitating the evaluation and comparison of various model fusion techniques. The project is meticulously designed to support rigorous analysis and experimentation in the field of model fusion, offering a versatile and modular codebase tailored for advanced research and development.
-
-The general structure of the FusionBench project can be visualized through its modular framework, which is divided into several key components:
-
-1. **Fusion Algorithm**: The core component where Model Fusion takes place. It integrates models from the Model Pool and adjusts them according to the specified fusion algorithms. The output is then evaluated for performance and effectiveness.
-2. **Model Pool**: A repository of various pre-trained models that can be accessed and utilized for fusion. This pool serves as the foundation for creating new, fused models by leveraging the strengths of each individual model.
-3. **Task Pool**: A collection of tasks that the fused models are evaluated on. These tasks help in assessing the practical applicability and robustness of the fused models.
-4. **Models & Warpers, Datasets, and Metrics**: These underlying modules include:
-      - Models & Warpers: Tools and scripts for model loading, wrapping, and pre-processing.
-      - Datasets: The datasets used for training, validation, and testing the fused models.
-      - Metrics: The performance metrics used to evaluate the models, providing a comprehensive understanding of their capabilities.
-5. **YAML Configurations**: Central to the project's modularity, YAML files are used to configure models, datasets, and metrics, allowing seamless customization and scalability.
-
-By organizing these components into a structured and modular codebase, FusionBench ensures flexibility, ease of use, and scalability for researchers and developers. The project not only serves as a benchmark but also as a robust platform for innovation in the realm of deep model fusion.
+    [:octicons-arrow-right-24: Read More](introduction_to_model_fusion.md)
 
 ## Getting Started
 
 ### Installation
 
-install from PyPI:
+install from [PyPI](https://pypi.org/project/fusion-bench/):
 
 ```bash
 pip install fusion-bench
@@ -221,6 +77,180 @@ report = taskpool.evaluate(merged_model)
 
 For detailed information on the options available, you can refer to this [page](cli/fusion_bench.md).
 
+## General Structure of FusionBench
+
+<figure markdown="span">
+![alt text](images/framework_of_model_fusion.png){ width="800px" }
+<figcaption>Framework of FusionBench</figcaption>
+</figure>
+
+FusionBench is a pioneering project that provides a comprehensive benchmark for deep model fusion, facilitating the evaluation and comparison of various model fusion techniques. The project is meticulously designed to support rigorous analysis and experimentation in the field of model fusion, offering a versatile and modular codebase tailored for advanced research and development.
+
+The general structure of the FusionBench project can be visualized through its modular framework, which is divided into several key components:
+
+1. **Fusion Algorithm**: The core component where Model Fusion takes place. It integrates models from the Model Pool and adjusts them according to the specified fusion algorithms. The output is then evaluated for performance and effectiveness.
+2. **Model Pool**: A repository of various pre-trained models that can be accessed and utilized for fusion. This pool serves as the foundation for creating new, fused models by leveraging the strengths of each individual model.
+3. **Task Pool**: A collection of tasks that the fused models are evaluated on. These tasks help in assessing the practical applicability and robustness of the fused models.
+4. **Models & Warpers, Datasets, and Metrics**: These underlying modules include:
+      - Models & Warpers: Tools and scripts for model loading, wrapping, and pre-processing.
+      - Datasets: The datasets used for training, validation, and testing the fused models.
+      - Metrics: The performance metrics used to evaluate the models, providing a comprehensive understanding of their capabilities.
+5. **YAML Configurations**: Central to the project's modularity, YAML files are used to configure models, datasets, and metrics, allowing seamless customization and scalability. 
+    This is based on the hydra framework, which allows for easy customization and scalability.
+    [:octicons-arrow-right-24: Read More](https://hydra.cc/)
+
+By organizing these components into a structured and modular codebase, FusionBench ensures flexibility, ease of use, and scalability for researchers and developers. The project not only serves as a benchmark but also as a robust platform for innovation in the realm of deep model fusion.
+
+### Basic Example
+
+Here we provide a basic example to demonstrate the usage of FusionBench.
+We choose the [simple average algorithm](algorithms/simple_averaging.md) as the fusion algorithm, and 4 [fine-tuned CLIP-ViT-B/32 models](modelpool/clip_vit.md) to be merged.
+We are going to evaluate the merged model on 4 tasks with data corrupted by Gaussian noise to evaluate the robustness of the merged model.
+
+We provide an command line interface `fusion_bench` to run the example.
+The instruction to run the example is as follows:
+
+```{.bash .annotate}
+fusion_bench \
+    # (1)
+    --config-name clip-vit-base-patch32_robustness_corrupted \
+    corruption=gaussian_noise \
+    # (2)
+    method=simple_averaging  \
+    # (3)
+    modelpool=clip-vit-base-patch32_robustness_corrupted \
+    # (4)
+    taskpool=clip-vit-base-patch32_robustness_corrupted
+```
+
+1. Here we specify the main configuration file to be used. 
+    The `corruption` option specifies the type of data corruption to be applied to the evaluation datasets. In this case, we use Gaussian noise. 
+    In FusionBench, we are currently provide 7 types of data corruptions for imaage classification tasks Standford Cars, EuroSAT, RESISC45 and GTSRB. 
+    The option `corrption` can be one of: `contrast`, `gaussian_noise`, `impulse_noise`, `jpeg_compression`, `motion_blur`, `pixelate`, `spatter`.
+2. The `method` option specifies the fusion algorithm to be used. In this case, we use the simple averaging algorithm.
+3. Here we specify the model pool to be used. 
+    The model pool is responsible for managing the loading, preprocessing, and saving of the models.
+    By pass option `modelpool=clip-vit-base-patch32_robustness_corrupted`, the program instantiate a modelpool object that manages 4 task-specific CLIP-ViT-B/32 models that are fine-tuned on Stanford Cars, EuroSAT, RESISC45, and GTSRB datasets.
+4. Here we specify the task pool to be used. 
+    The task pool is responsible for managing the evaluation datasets and metrics.
+    By pass option `taskpool=clip-vit-base-patch32_robustness_corrupted`, the program instantiate a taskpool object that manages 4 tasks with data corrupted by Gaussian noise.
+
+The configurations are stored in the `configs` directory, listed as follows:
+
+=== "Method Configuration"
+
+    The simple averaging algorithm is very straightforward. No additional hyperparameters are required. So the configuration file contains only the name of the algorithm to specify the Python class of the fusion algorithm.
+
+    ```yaml title="config/method/simple_average.yaml"
+    name: simple_average # (1)
+    ```
+
+    1. Name of the fusion algorithm. The `name` field specifies the class of the fusion algorithm.
+
+
+=== "Model Pool Configuration"
+
+    ```yaml title="config/modelpool/clip-vit-base-patch32_robustness_corrupted.yaml"
+    type: huggingface_clip_vision # (1)
+    models: # (2)
+    - name: _pretrained_
+        path: openai/clip-vit-base-patch32
+    - name: stanford_cars
+        path: tanganke/clip-vit-base-patch32_stanford-cars
+    - name: eurosat
+        path: tanganke/clip-vit-base-patch32_eurosat
+    - name: resisc45
+        path: tanganke/clip-vit-base-patch32_resisc45
+    - name: gtsrb
+        path: tanganke/clip-vit-base-patch32_gtsrb
+
+
+    # `corrption` can be one of:
+    # contrast, gaussian_noise, impulse_noise, jpeg_compression, motion_blur, pixelate, spatter
+    corruption: ${corruption}
+
+    # Other configurations to meet other methods' requirements.
+    # For example, test dataset for test-time adaptation training.
+    # ...
+    ```
+
+    1. Type of the model pool. The `type` field specifies the class of the model pool.
+    2. The `models` field specifies the models to be used for fusion. In this case, we use 4 task-specific CLIP-ViT-B/32 models that are fine-tuned on Stanford Cars, EuroSAT, RESISC45, and GTSRB datasets.
+
+=== "Task Pool Configuration"
+
+    ```yaml title="config/taskpool/clip-vit-base-patch32_robustness_corrupted.yaml"
+    type: clip_vit_classification # (1)
+    name: clip-vit-robustness_clean
+
+    # corrption can be one of:
+    # contrast, gaussian_noise, impulse_noise, jpeg_compression, motion_blur, pixelate, spatter
+    corruption: ${corruption}
+    dataset_type: huggingface_image_classification
+    tasks: # (2)
+    - name: stanford_cars
+        dataset:
+        name: tanganke/stanford_cars
+        split: ${taskpool.corruption}
+    - name: eurosat
+        dataset:
+        name: tanganke/eurosat
+        split: ${taskpool.corruption}
+    - name: resisc45
+        dataset:
+        name: tanganke/resisc45
+        split: ${taskpool.corruption}
+    - name: gtsrb
+        dataset:
+        name: tanganke/gtsrb
+        split: ${taskpool.corruption}
+
+    clip_model: openai/clip-vit-base-patch32 # (3)
+    batch_size: 128 # (4)
+    num_workers: 16
+    fast_dev_run: ${fast_dev_run}
+    ```
+
+    1. Type and name of the task pool. The `type` field specifies the class of the task pool, and the `name` field specifies the name of the task pool.
+    2. The `tasks` field specifies the tasks to be evaluated. In this case, we evaluate the fused model on 4 tasks: Stanford Cars, EuroSAT, RESISC45, and GTSRB, with data corrupted by `${corruption}`.
+    3. Base model used for intializing the classification head. Here, we need the text encoder of CLIP-ViT-B/32 to initialize the classification head.
+    4. Batch size and number of workers used for data loading.
+
+
+A flowchart of the FusionBench command line interface is shown below:
+
+<figure markdown="span">
+![alt text](images/fusion_bench_flow.png){ width="800px"}
+</figure>
+
+<div class="grid cards" markdown>
+
+- **Fusion Algorithm Module**
+    
+    ---
+
+    Implement the fusion algorithms. Receive the model pool and return the fused model.
+
+    [:octicons-arrow-right-24: Read More](algorithms/README.md)
+
+- **Model Pool Module**
+
+    ---
+
+     Magage the models. Responsible for loading, preprocessing, and saving the models.
+        
+    [:octicons-arrow-right-24: Read More](modelpool/README.md)
+
+- **Task Pool Module**
+
+    ---
+
+    Manage the tasks. Responsible for loading evaluation datasets and metrics, and evaluating the fused model.
+
+    [:octicons-arrow-right-24: Read More](taskpool/README.md)
+
+</div>
+
 ## Citation
 
 If you find this benchmark useful, please consider citing our work:
@@ -229,7 +259,7 @@ If you find this benchmark useful, please consider citing our work:
 @misc{tangFusionBenchComprehensiveBenchmark2024,
   title = {{{FusionBench}}: {{A Comprehensive Benchmark}} of {{Deep Model Fusion}}},
   shorttitle = {{{FusionBench}}},
-  author = {Tang, Anke and Shen, Li and Luo, Yong and Hu, Han and Do, Bo and Tao, Dacheng},
+  author = {Tang, Anke and Shen, Li and Luo, Yong and Hu, Han and Du, Bo and Tao, Dacheng},
   year = {2024},
   month = jun,
   number = {arXiv:2406.03280},

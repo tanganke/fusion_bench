@@ -29,9 +29,24 @@ This collection is designed to serve as a valuable starting point for those inte
 
 ### Mode Connectivity
 
+Mode connectivity is such an important concept in model merging that it deserves [its own page](mode_connectivity.md).
+
 ### Weight Interpolation
 
+- G. Ilharco et al., “Editing Models with Task Arithmetic,” Mar. 31, 2023, arXiv: arXiv:2212.04089. doi: 10.48550/arXiv.2212.04089.
+- Guillermo Ortiz-Jimenez, Alessandro Favero, and Pascal Frossard, “Task Arithmetic in the Tangent Space: Improved Editing of Pre-Trained Models,” May 30, 2023, arXiv: arXiv:2305.12827. doi: 10.48550/arXiv.2305.12827.
+- P. Yadav, D. Tam, L. Choshen, C. Raffel, and M. Bansal, “Resolving Interference When Merging Models,” Jun. 02, 2023, arXiv: arXiv:2306.01708. Accessed: Jun. 12, 2023. [Online]. Available: http://arxiv.org/abs/2306.01708
+- [:simple-github:](https://github.com/EnnengYang/AdaMerging) 
+    E. Yang et al., “AdaMerging: Adaptive Model Merging for Multi-Task Learning,” ICLR 2024, arXiv: arXiv:2310.02575. doi: 10.48550/arXiv.2310.02575.
+- :llama: [:simple-github:](https://github.com/yule-BUAA/MergeLM)
+    L. Yu, B. Yu, H. Yu, F. Huang, and Y. Li, “Language Models are Super Mario: Absorbing Abilities from Homologous Models as a Free Lunch,” Nov. 06, 2023, arXiv: arXiv:2311.03099. Accessed: Nov. 07, 2023. [Online]. Available: http://arxiv.org/abs/2311.03099
+
+
 ### Alignment-based Methods
+
+- S. K. Ainsworth, J. Hayase, and S. Srinivasa, “Git Re-Basin: Merging Models modulo Permutation Symmetries,” ICLR 2023. Available: http://arxiv.org/abs/2209.04836
+- George Stoica, Daniel Bolya, Jakob Bjorner, Taylor Hearn, and Judy Hoffman, “ZipIt! Merging Models from Different Tasks without Training,” May 04, 2023, arXiv: arXiv:2305.03053. Accessed: May 06, 2023. [Online]. Available: http://arxiv.org/abs/2305.03053
+
 
 ### Subspace-based Methods
 
@@ -42,6 +57,9 @@ This collection is designed to serve as a valuable starting point for those inte
 
 - :llama: [:simple-github:](https://github.com/THUNLP-MT/ModelCompose) :hugging:
     C. Chen et al., “Model Composition for Multimodal Large Language Models.” [arXiv, Feb. 20, 2024. doi: 10.48550/arXiv.2402.12750.](http://arxiv.org/abs/2402.12750)
+- A. Tang, L. Shen, Y. Luo, N. Yin, L. Zhang, and D. Tao, “Merging Multi-Task Models via Weight-Ensembling Mixture of Experts,” Feb. 01, 2024, arXiv: arXiv:2402.00433. doi: 10.48550/arXiv.2402.00433.
+- :llama: [:simple-github:](https://github.com/LZY-the-boys/Twin-Merging) 
+    Zhenyi Lu et al., "Twin-Merging: Dynamic Integration of Modular Expertise in Model Merging" [10.48550/arXiv.2406.15479](http://arxiv.org/abs/2406.15479)
 
 
 ## Libraries and Tools

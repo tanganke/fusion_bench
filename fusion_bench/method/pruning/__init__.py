@@ -1,0 +1,1 @@
+from .magnitude_diff_pruning import MagnitudeDiffPruningAlgorithm

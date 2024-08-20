@@ -13,6 +13,7 @@ batch_reduce: true
 lr: 1e-4
 optimizer: adam
 
+# this is overrided by `fabric.devices` if launched from the `fusion_bench` CLI.
 devices: 1
 batch_size: 16
 num_workers: 16

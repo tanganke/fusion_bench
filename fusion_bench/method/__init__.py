@@ -25,6 +25,8 @@ from .weighted_average import WeightedAverageAlgorithm
 class AlgorithmFactory:
     _aglorithms = {
         "dummy": DummyAlgorithm,
+        # single task learning (fine-tuning)
+        "clip_finetune": ".classification.clip_finetune.ImageClassificationFineTuningForCLIP",
         # analysis
         "TaskVectorCosSimilarity": ".analysis.task_vector_cos_similarity.TaskVectorCosSimilarity",
         # model ensemble methods
@@ -42,8 +44,11 @@ class AlgorithmFactory:
         "ties_merging": TiesMergingAlgorithm,
         "clip_task_wise_adamerging": CLIPTaskWiseAdaMergingAlgorithm,
         "clip_layer_wise_adamerging": CLIPLayerWiseAdaMergingAlgorithm,
+        "singular_projection_merging": ".smile_upscaling.singular_projection_merging.SingularProjectionMergingAlgorithm",
         # plug-and-play model merging methods
         "clip_concrete_task_arithmetic": ".concrete_subspace.clip_concrete_task_arithmetic.ConcreteTaskArithmeticAlgorithmForCLIP",
+        "clip_concrete_task_wise_adamerging": ".concrete_subspace.clip_concrete_adamerging.ConcreteTaskWiseAdaMergingForCLIP",
+        "clip_concrete_layer_wise_adamerging": ".concrete_subspace.clip_concrete_adamerging.ConcreteLayerWiseAdaMergingForCLIP",
         # model mixing methods
         "depth_upscaling": DepthUpscalingAlgorithm,
         "mixtral_moe_upscaling": ".mixture_of_experts.mixtral_upcycling.MixtralUpscalingAlgorithm",
@@ -52,6 +57,10 @@ class AlgorithmFactory:
         "mixtral_for_causal_lm_merging": ".mixture_of_experts.mixtral_merging.MixtralForCausalLMMergingAlgorithm",
         "clip_weight_ensembling_moe": CLIPWeightEnsemblingMoEAlgorithm,
         "model_recombination": ModelRecombinationAlgorithm,
+        "smile_upscaling": ".smile_upscaling.smile_upscaling.SmileUpscalingAlgorithm",
+        "smile_mistral_upscaling": ".smile_upscaling.smile_mistral_upscaling.SmileMistralUpscalingAlgorithm",
+        # pruning methods
+        "magnitude_diff_pruning": ".pruning.MagnitudeDiffPruningAlgorithm",
     }
 
     @staticmethod

@@ -1,0 +1,9 @@
+defaults:
+  - singular_moe_upscaling
+  - _self_
+
+name: llama_singular_moe_upscaling
+
+upscale_attn: true
+upscale_mlp: true
+upscale_lm_head: false

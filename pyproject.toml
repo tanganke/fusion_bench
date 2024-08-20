@@ -6,18 +6,21 @@ build-backend = "setuptools.build_meta"
 name = "fusion_bench"
 description = "A Comprehensive Benchmark of Deep Model Fusion"
 readme = "README.md"
-version = "0.1.1"
+version = "0.1.4"
 authors = [{ name = "Anke Tang", email = "tang.anke@foxmail.com" }]
 license = { file = 'LICENSE' }
 dependencies = [
+    "hydra-core",
     "torch>=2.0.0",
+    "lightning",
     "transformers",
     "datasets",
-    "huggingface_hub",
     "peft",
-    "hydra-core",
-    "lightning",
+    "huggingface_hub",
     "matplotlib",
+    "tensorboard",
+    "tqdm",
+    "rich",
 ]
 keywords = ["deep learning", "model fusion", "benchmark"]
 
@@ -31,4 +34,11 @@ Issues = "https://github.com/tanganke/fusion_bench/issues"
 fusion_bench = "fusion_bench.scripts.cli:main"
 
 [tool.setuptools]
+include-package-data = true
 package-dir = { "fusion_bench" = "fusion_bench" }
+
+[tool.setuptools.package-data]
+fusion_bench = ['../fusion_bench_config/**/*']
+
+[tool.isort]
+profile = "black"

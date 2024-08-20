@@ -37,13 +37,16 @@ class CLIPTemplateFactory:
 
     _dataset_mapping = {
         "mnist": ".mnist",
-        "tanganke/stanford_cars": ".stanford_cars",
         "stanford_cars": ".stanford_cars",
-        "tanganke/gtsrb": ".gtsrb",
+        "tanganke/stanford_cars": ".stanford_cars",
         "gtsrb": ".gtsrb",
+        "tanganke/gtsrb": ".gtsrb",
+        "resisc45": ".resisc45",
         "tanganke/resisc45": ".resisc45",
         "tanganke/dtd": ".dtd",
+        "eurosat": ".eurosat",
         "tanganke/eurosat": ".eurosat",
+        "sun397": ".sun397",
         "tanganke/sun397": ".sun397",
         "cifar10": ".cifar10",
         "svhn": ".svhn",

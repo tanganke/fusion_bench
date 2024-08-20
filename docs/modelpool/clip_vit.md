@@ -50,6 +50,68 @@ clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
 clip_model.vision_model.load_state_dict(vision_model.vision_model.state_dict())
 ```
 
+### Performance of the Fine-tuned Models
+
+evaluate the fine-tuned CLIP-ViT-B/32 models on the eight tasks:
+
+```bash
+# evaluate singlue fine-tuned models
+for task in sun397 stanford-cars resisc45 eurosat svhn gtsrb mnist dtd
+do
+    fusion_bench method=dummy \
+        modelpool=clip-vit-base-patch32_individual \
+            modelpool.models.0.path=tanganke/clip-vit-base-patch32_${task} \
+        taskpool=clip-vit-classification_TA8 \
+        save_report="outputs/ViT-B-32/single-task/clip-vit-base-patch32_${task}.json"
+done
+```
+
+evaluate the fine-tuned CLIP-ViT-L/14 models on the eight tasks:
+
+```bash
+# assume you have eight GPUs, and you can evaluate the models on the eight tasks in parallel
+tasks=(sun397 stanford-cars resisc45 eurosat svhn gtsrb mnist dtd)
+CUDA_DEVICES=(0 1 2 3 4 5 6 7)  # List of CUDA devices to use
+
+for i in "${!CUDA_DEVICES[@]}"; do
+    task=${tasks[$i]}
+    CUDA_VISIBLE_DEVICES=${CUDA_DEVICES[$i]} fusion_bench method=dummy \
+        modelpool=clip-vit-large-patch14_individual \
+            modelpool.models.0.path=tanganke/clip-vit-large-patch14_${task} \
+        taskpool=clip-vit-classification_TA8 \
+            taskpool.clip_model=openai/clip-vit-large-patch14 \
+        save_report="outputs/ViT-L-14/single-task/clip-vit-large-patch14_${task}.json" &
+done
+```
+
+=== "Performance of the fine-tuned CLIP-ViT-B/32 models"
+    
+    | Model       | SUN397   | Cars     | RESISC45 | EuroSAT  | SVHN     | GTSRB    | MNIST    | DTD      | Average |
+    | ----------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | ------- |
+    | Pre-trained | 63.2     | 59.8     | 60.7     | 46.0     | 31.6     | 32.5     | 48.3     | 43.9     | 48.2    |
+    | SUN397      | **75.0** | 47.0     | 54.3     | 46.5     | 28.3     | 26.4     | 44.3     | 41.6     | 45.4    |
+    | Cars        | 56.6     | **78.3** | 50.9     | 38.4     | 30.2     | 30.6     | 49.7     | 41.8     | 47.1    |
+    | RESISC45    | 52.0     | 47.2     | **95.2** | 56.9     | 23.9     | 24.3     | 39.7     | 35.9     | 46.9    |
+    | EuroSAT     | 49.0     | 39.9     | 33.5     | **99.0** | 11.8     | 22.9     | 33.8     | 35.5     | 40.7    |
+    | SVHN        | 40.5     | 36.3     | 18.9     | 9.8      | **97.3** | 27.3     | 81.8     | 23.2     | 41.9    |
+    | GTSRB       | 36.8     | 33.0     | 20.6     | 21.3     | 41.2     | **98.9** | 30.9     | 23.9     | 38.3    |
+    | MNIST       | 50.3     | 40.0     | 31.3     | 17.7     | 50.1     | 19.3     | **99.6** | 30.7     | 42.4    |
+    | DTD         | 54.6     | 51.3     | 36.9     | 25.0     | 28.9     | 21.8     | 47.3     | **79.7** | 43.2    |
+
+=== "Performance of the fine-tuned CLIP-ViT-L/14 models"
+
+    | Model       | SUN397   | Cars     | RESISC45 | EuroSAT  | SVHN     | GTSRB    | MNIST    | DTD      | Average |
+    | ----------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | ------- |
+    | Pre-trained | 68.3     | 77.8     | 71.0     | 58.9     | 58.4     | 50.6     | 76.4     | 55.5     | 64.6    |
+    | SUN397      | **82.8** | 68.4     | 58.1     | 49.9     | 55.0     | 46.3     | 79.5     | 52.8     | 61.6    |
+    | Cars        | 67.8     | **92.9** | 68.7     | 56.4     | 51.7     | 47.7     | 80.5     | 55.6     | 65.2    |
+    | RESISC45    | 65.6     | 69.0     | **97.4** | 64.3     | 38.3     | 46.6     | 77.7     | 49.9     | 63.6    |
+    | EuroSAT     | 65.2     | 69.0     | 40.6     | **99.2** | 33.4     | 45.6     | 73.5     | 47.1     | 59.2    |
+    | SVHN        | 66.4     | 69.0     | 54.0     | 19.7     | **97.9** | 48.7     | 92.2     | 50.1     | 62.3    |
+    | GTSRB       | 63.4     | 64.8     | 38.7     | 19.6     | 71.0     | **99.2** | 75.1     | 45.8     | 59.7    |
+    | MNIST       | 56.0     | 49.8     | 53.5     | 26.6     | 48.2     | 33.1     | **99.8** | 47.1     | 51.7    |
+    | DTD         | 66.8     | 75.3     | 65.5     | 43.7     | 49.5     | 45.0     | 68.5     | **85.5** | 62.5    |
+
 ### Model Pool Configuration
 
 To use these models from our FusionBench library, you can specify the modelpool configuration file as follows:
@@ -80,15 +142,37 @@ models:
 
 The type of the modelpool is `huggingface_clip_vision`, corresponding to the modelpool class `HuggingFaceClipVisionPool`.
 
-::: fusion_bench.modelpool.HuggingFaceClipVisionPool
 
 ## Basic Examples
 
 Here are some basic examples of using the CLIP-ViT models for open vocabulary image classification with different fusion methods, using the [`fusion_bench`](../cli/fusion_bench.md) command line interface.
 
+### Inspection of Model Information
+
+Print the basic information of the CLIP-ViT-B/32 model and CLIP-ViT-L/14 model
+
+```bash
+fusion_bench \
+  method=dummy \
+  modelpool=clip-vit-base-patch32_individual \
+  taskpool=dummy  # a dummy task that just report the basic information of model (e.g., number of parameters)
+
+# Output:
+# {'model_info': {'trainable_params': 87456000, 'all_params': 87456000, 'trainable_percentage': 1.0}}
+
+# or use the following command to inspect the CLIP-ViT-L/14 model
+fusion_bench \
+  method=dummy \
+  modelpool=clip-vit-large-patch14_individual \
+  taskpool=dummy
+
+# Output:
+# {'model_info': {'trainable_params': 303179776, 'all_params': 303179776, 'trainable_percentage': 1.0}}
+```
+
 ### Single Model Evaluation
 
-evaluate the CLIP-ViT-B/32 model on the eight tasks
+evaluate a single CLIP-ViT-B/32 model on the eight downstream tasks:
 
 ```bash
 fusion_bench method=dummy \
@@ -97,8 +181,51 @@ fusion_bench method=dummy \
   taskpool=clip-vit-classification_TA8
 ```
 
-Here the `dummy` method is a special method used to skip the model merging process (see [dummy method](../algorithms/dummy.md) for more information), and the `clip-vit-classification_TA8` taskpool is used to evaluate the model on the eight tasks.
-if `$path_to_clip_model` is not specified, the pre-trained model from HuggingFace will be used by default.
+Here:
+
+- The `dummy` method is a special method used to skip the model merging process, it loads the pre-trained model in the modelpool and return the model without any modification (or the first model when a model with the name `_pretrained_` does not exist in modelpool), see [dummy method](../algorithms/dummy.md) for more information. 
+- The `clip-vit-base-patch32_individual` modelpool contains a single model. By passing argument `modelpool.models.0.path=...`, we override the path of the model with the specified path.
+```yaml title="config/modelpool/clip-vit-base-patch32_individual.yaml"
+type: huggingface_clip_vision
+models:
+  - name: _pretrained_
+    path: openai/clip-vit-base-patch32
+```
+- The `clip-vit-classification_TA8` taskpool is used to evaluate the model on the eight tasks.
+  if `$path_to_clip_model` is not specified, the pre-trained model from HuggingFace will be used by default.
+```yaml title="config/taskpool/clip-vit-classification_TA8.yaml"
+type: clip_vit_classification
+name: clip-vit-classification_TA8
+
+dataset_type: huggingface_image_classification
+tasks:
+  - name: svhn
+    dataset:
+      ...
+  - name: stanford_cars
+    dataset:
+      ...
+  - name: resisc45
+    dataset:
+      ...
+  ...
+
+clip_model: openai/clip-vit-base-patch32
+...
+```
+
+Use a for loop to evaluate multiple CLIP-ViT-B/32 model on the eight tasks, and save reports to json files:
+
+```bash
+for task in sun397 stanford-cars resisc45 eurosat svhn gtsrb mnist dtd
+do
+    fusion_bench method=dummy \
+        modelpool=clip-vit-base-patch32_individual \
+            modelpool.models.0.path=tanganke/clip-vit-base-patch32_${task} \
+        taskpool=clip-vit-classification_TA8 \
+        save_report="outputs/ViT-B-32/single-task/clip-vit-base-patch32_${task}.json"
+done
+```
 
 evaluate the CLIP-ViT-L/14 model on the eight tasks
 
@@ -378,22 +505,24 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
 
 === "Table: Mutli-task model merging methods using CLIP-ViT-B/32 models."
 
-    | Method                                   | SUN397 | Cars | RESISC45 | EuroSAT | SVHN | GTSRB | MNIST | DTD  | Average |
-    | ---------------------------------------- | ------ | ---- | -------- | ------- | ---- | ----- | ----- | ---- | ------- |
-    | Reference Results                        |        |      |          |         |      |       |       |      |         |
-    | Pre-trained                              | 63.2   | 59.8 | 60.7     | 46.0    | 31.6 | 32.5  | 48.2  | 43.9 | 48.2    |
-    | Fine-tuned (STL)                         | 75.0   | 78.3 | 95.2     | 99.0    | 97.3 | 98.9  | 99.6  | 79.7 | 90.3    |
-    | Model Merging                            |        |      |          |         |      |       |       |      |         |
-    | Simple Averaging                         | 65.4   | 62.6 | 70.8     | 76.9    | 64.5 | 54.9  | 86.3  | 50.9 | 66.5    |
-    | Fisher Merging                           | 66.7   | 64.0 | 72.2     | 91.6    | 69.0 | 64.3  | 83.5  | 53.7 | 70.6    |
-    | RegMean                                  | 67.8   | 68.9 | 82.5     | 94.4    | 90.6 | 79.2  | 97.6  | 63.2 | 80.5    |
-    | Task Arithmetic ($\lambda=0.3$)          | 57.1   | 55.7 | 64.9     | 76.7    | 77.9 | 68.5  | 96.1  | 47.2 | 68.0    |
-    | Concrete Task Arithmetic ($\lambda=0.3$) | 64.2   | 63.3 | 75.6     | 94.1    | 90.3 | 82.9  | 98.0  | 52.5 | 77.6    |
-    | Ties-Merging ($\lambda=0.3$)             | 67.1   | 64.2 | 74.1     | 76.8    | 77.7 | 69.4  | 94.1  | 54.0 | 72.2    |
-    | Task-wise AdaMerging ($\lambda=0.3$)     | 58.6   | 56.9 | 69.8     | 82.4    | 70.3 | 58.9  | 97.2  | 55.3 | 68.7    |
-    | Layer-wise AdaMerging ($\lambda=0.3$)    | 67.9   | 71.3 | 83.5     | 92.7    | 87.4 | 92.9  | 98.2  | 67.0 | 82.6    |
-    | Model Mixing                             |
-    | Weight-Ensembling MoE                    | 73.7   | 76.8 | 93.4     | 98.2    | 96.8 | 98.2  | 99.6  | 76.6 | 89.2    |
+    | Method                                         | SUN397 | Cars | RESISC45 | EuroSAT | SVHN | GTSRB | MNIST | DTD  | Average |
+    | ---------------------------------------------- | ------ | ---- | -------- | ------- | ---- | ----- | ----- | ---- | ------- |
+    | Reference Results                              |        |      |          |         |      |       |       |      |         |
+    | Pre-trained                                    | 63.2   | 59.8 | 60.7     | 46.0    | 31.6 | 32.5  | 48.2  | 43.9 | 48.2    |
+    | Fine-tuned (STL)                               | 75.0   | 78.3 | 95.2     | 99.0    | 97.3 | 98.9  | 99.6  | 79.7 | 90.3    |
+    | Traditional MTL                                | 72.3   | 76.6 | 92.2     | 97.9    | 95.5 | 97.7  | 99.3  | 77.7 | 88.6    |
+    | Model Merging                                  |        |      |          |         |      |       |       |      |         |
+    | Simple Averaging                               | 65.4   | 62.6 | 70.8     | 76.9    | 64.5 | 54.9  | 86.3  | 50.9 | 66.5    |
+    | Fisher Merging                                 | 66.7   | 64.0 | 72.2     | 91.6    | 69.0 | 64.3  | 83.5  | 53.7 | 70.6    |
+    | RegMean                                        | 67.8   | 68.9 | 82.5     | 94.4    | 90.6 | 79.2  | 97.6  | 63.2 | 80.5    |
+    | Task Arithmetic ($\lambda=0.3$)                | 57.1   | 55.7 | 64.9     | 76.7    | 77.9 | 68.5  | 96.1  | 47.2 | 68.0    |
+    | Concrete Task Arithmetic ($\lambda=0.3$)       | 64.2   | 63.3 | 75.6     | 94.1    | 90.3 | 82.9  | 98.0  | 52.5 | 77.6    |
+    | Ties-Merging ($\lambda=0.3$)                   | 67.1   | 64.2 | 74.1     | 76.8    | 77.7 | 69.4  | 94.1  | 54.0 | 72.2    |
+    | Task-wise AdaMerging ($\lambda=0.3$)           | 58.6   | 56.9 | 69.8     | 82.4    | 70.3 | 58.9  | 97.2  | 55.3 | 68.7    |
+    | Layer-wise AdaMerging ($\lambda=0.3$)          | 67.9   | 71.3 | 83.5     | 92.7    | 87.4 | 92.9  | 98.2  | 67.0 | 82.6    |
+    | Concrete Layer-wise AdaMerging ($\lambda=0.3$) | 69.1   | 72.7 | 85.9     | 94.7    | 91.3 | 95.7  | 98.7  | 66.8 | 84.4    |
+    | Model Mixing                                   |
+    | Weight-Ensembling MoE                          | 73.7   | 76.8 | 93.4     | 98.2    | 96.8 | 98.2  | 99.6  | 76.6 | 89.2    |
 
 === "Table: Mutli-task model merging methods using CLIP-ViT-L/14 models."
 
@@ -402,6 +531,7 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
     | Reference Results                     |        |      |          |         |      |       |       |      |         |
     | Pre-trained                           | 68.3   | 77.8 | 71.0     | 58.9    | 58.4 | 50.6  | 76.4  | 55.5 | 64.6    |
     | Fine-tuned (STL)                      | 82.8   | 92.9 | 97.4     | 99.2    | 97.9 | 99.2  | 99.8  | 85.5 | 94.3    |
+    | Traditional MTL                       | 79.0   | 89.3 | 94.5     | 98.4    | 96.4 | 98.1  | 99.4  | 83.7 | 92.4    |
     | Model Merging                         |        |      |          |         |      |       |       |      |         |
     | Simple Averaging                      | 72.5   | 81.5 | 82.2     | 90.0    | 81.6 | 74.0  | 96.6  | 61.8 | 80.0    |
     | Fisher Merging                        | 70.6   | 79.4 | 84.1     | 98.1    | 74.7 | 85.0  | 89.5  | 61.0 | 80.3    |
@@ -443,6 +573,37 @@ fusion_bench \
 ### Generalization and Robustness Evaluation
 
 You can also evaluate the generalization and robustness of different multi-task model fusion methods by change the configurations.
+
+Instruction for running the generalization experiments:
+
+```bash
+fusion_bench \
+    method=... \
+    modelpool=modelpool=clip-vit-base-patch32_generalization_exp1 # or `clip-vit-base-patch32_generalization_exp2`
+```
+
+
+Instruction for running the robustness experiments:
+
+```bash
+# corription can be one of the following values: 
+# contrast, gaussian_noise, impulse_noise, jpeg_compression, motion_blur, pixelate, spatter
+# or pass `taskpool=clip-vit-base-patch32_robustness_clean` to evaluate the model on clean data
+corruption=contrast
+fusion_bench \
+    --config-name clip-vit-base-patch32_robustness_corrupted \
+    corruption=${corruption} \
+    method=... \
+```
+
+Below is an example of different types of corruptions:
+
+<figure markdown="span">
+![alt text](images/clip_eight_corruption.png){ width="800px" }
+<figcaption style="max-width:90%" markdown="span">
+An example of corruption data visualization, in which the corruption image generation method refers to Hendrycks & Dietterich (2019) [^1].
+</figcaption>
+</figure>
 
 ### Experimental Results
 
@@ -506,3 +667,9 @@ Table: Results of the robustness experiments ($\lambda=0.3$).
 | Layer-wise AdaMerging | 73.1           | 67.4    | 83.0     | 96.2  | 79.9 | 72.9             | 70.7    | 86.3     | 90.6  | 80.1 |
 | Weight-Ensembling MoE | 77.2           | 34.7    | 93.1     | 98.4  | 75.9 | 77.3             | 61.0    | 94.1     | 95.7  | 82.0 |
 
+
+## References
+
+::: fusion_bench.modelpool.HuggingFaceClipVisionPool
+
+[^1]: Dan Hendrycks and Thomas Dietterich. Benchmarking neural network robustness to common corruptions and perturbations. Proceedings of the International Conference on Learning Representations, 2019.

@@ -17,6 +17,7 @@ clamp_weights: false
 tie_weights: true
 strict: false
 
+# this is overrided by `fabric.devices` if launched from the `fusion_bench` CLI.
 devices: 1
 batch_size: 16
 num_workers: 8

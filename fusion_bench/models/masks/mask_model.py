@@ -83,7 +83,7 @@ class MaskModel(ParameterDictModel):
         # Convert the tensor dictionary to a parameter dictionary
         parameters = {}
         for name, param in state_dict.items():
-            parameters[name] = nn.Parameter(param, requires_grad=True)
+            parameters[name] = nn.Parameter(torch.zeros_like(param), requires_grad=True)
 
         super().__init__(parameters)
         self.parameter_type = parameter_type
