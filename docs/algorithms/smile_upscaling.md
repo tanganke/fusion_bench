@@ -1,5 +1,22 @@
 # SMILE Upscaling
 
+[![arXiv](https://img.shields.io/badge/arXiv-2408.10174-b31b1b.svg)](https://arxiv.org/abs/2408.10174)
+
+<figure markdown="span">
+![alt text](images/smile_upscaling.png){width="800px"}
+<figcaption style="max-width:90%" markdown="span">The architecture of the Sparse MIxture of Low-rank Experts (SMILE) module.[^1]</figcaption>
+</figure>
+
+## Taxonomy for SMILE Upscaling
+
+Here we present the taxonomy for the SMILE upscaling method following "A Survey on Model MoErging" by Yadav et al. (2024) [^2].
+
+|                        |          |                       |                 |                      |           |
+| ---------------------- | -------- | --------------------- | --------------- | -------------------- | --------- |
+| **Expert Training**    | Standard | **Expert Data**       | Private         | **Routing Dataset**  | None      |
+| **Input Granularity**  | Step     | **Depth Granularity** | Module          | **Expert Selection** | Sparse    |
+| **Expert Aggregation** | Output   | **Generalization**    | In-Distribution | **User Dataset**     | Zero-Shot |
+
 ## Configurations
 
 The SMILE upscaling method offers several configuration options, which are located in the `config/method/` directory.
@@ -421,3 +438,8 @@ done
 ::: fusion_bench.method.smile_upscaling.singular_projection_merging
 ::: fusion_bench.method.smile_upscaling.smile_upscaling
 ::: fusion_bench.method.smile_upscaling.smile_mistral_upscaling
+
+
+[^1]: A. Tang et. al. SMILE: Zero-Shot Sparse Mixture of Low-Rank Experts Construction From Pre-Trained Foundation Models. Aug, 2024.
+    [https://arxiv.org/abs/2408.10174](https://arxiv.org/abs/2408.10174)
+[^2]: Yadav, Prateek, et al. "A Survey on Model MoErging: Recycling and Routing Among Specialized Experts for Collaborative Learning." arXiv preprint arXiv:2408.07057 (2024).
