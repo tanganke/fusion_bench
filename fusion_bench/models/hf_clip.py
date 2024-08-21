@@ -11,11 +11,34 @@ default_templates = [
 
 
 class HFCLIPClassifier(nn.Module):
+    """
+    A classifier based on the CLIP (Contrastive Language-Image Pre-training) model.
+
+    This class wraps a CLIP model and provides functionality for image classification
+    using zero-shot learning. It allows setting a classification task with custom
+    class names and text templates.
+
+    Attributes:
+        clip_model (CLIPModel): The underlying CLIP model.
+        processor (CLIPProcessor): The CLIP processor for preparing inputs.
+        zeroshot_weights (Tensor): Computed text embeddings for zero-shot classification.
+        classnames (List[str]): List of class names for the current classification task.
+        templates (List[Callable[[str], str]]): List of template functions for generating text prompts.
+
+    """
+
     def __init__(
         self,
         clip_model: CLIPModel,
         processor: CLIPProcessor,
     ):
+        """
+        Initialize the HFCLIPClassifier.
+
+        Args:
+            clip_model (CLIPModel): The CLIP model to use for classification.
+            processor (CLIPProcessor): The CLIP processor for preparing inputs.
+        """
         super().__init__()
         # we only fine-tune the vision model
         clip_model.visual_projection.requires_grad_(False)
@@ -33,10 +56,12 @@ class HFCLIPClassifier(nn.Module):
 
     @property
     def text_model(self):
+        """Get the text model component of CLIP."""
         return self.clip_model.text_model
 
     @property
     def vision_model(self):
+        """Get the vision model component of CLIP."""
         return self.clip_model.vision_model
 
     def set_classification_task(
@@ -44,6 +69,18 @@ class HFCLIPClassifier(nn.Module):
         classnames: List[str],
         templates: List[Callable[[str], str]] = default_templates,
     ):
+        """
+        Set up the zero-shot classification task.
+
+        This method computes text embeddings for the given class names using the
+        provided templates. These embeddings are then used for classification.
+
+        Args:
+            classnames (List[str]): List of class names for the classification task.
+            templates (List[Callable[[str], str]], optional): List of template functions
+                for generating text prompts. Defaults to `default_templates`, i.e.
+                ["a photo of a {classname}"].
+        """
         processor = self.processor
 
         self.classnames = classnames
@@ -71,6 +108,21 @@ class HFCLIPClassifier(nn.Module):
         self.zeroshot_weights = zeroshot_weights
 
     def forward(self, images):
+        """
+        Perform forward pass for zero-shot image classification.
+
+        This method computes image embeddings for the input images and calculates
+        the similarity with the pre-computed text embeddings to produce classification logits.
+
+        Args:
+            images (Tensor): Input images to classify.
+
+        Returns:
+            Tensor: Classification logits for each input image.
+
+        Raises:
+            ValueError: If the classification task hasn't been set using set_classification_task.
+        """
         if self.zeroshot_weights is None:
             raise ValueError("Must set classification task before forward pass")
         text_embeds = self.zeroshot_weights

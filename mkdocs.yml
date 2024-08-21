@@ -48,6 +48,7 @@ nav:
       - LightningFabricMixin: guides/mixins/lightning_fabric.md
       - SimpleProfilerMixin: guides/mixins/simple_profiler.md
     - CLIP-ViT Models For Image Classification:
+      - guides/clip_vit/HFCLIPClassifier.md
       - Manage Labels and Templates: guides/clip_vit/classification_templates.md
       - guides/clip_vit/finetune.md
   - Reading Lists: 

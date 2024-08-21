@@ -1,38 +1,35 @@
-"""
-This module provodes a class to convert dataset whose object is a list of dictionaries with keys "image" and "label" to dataset whose object is a tuple of tensors (inputs, label) for CLIP models.
-"""
+from typing import Any, Callable, Dict, Optional, Tuple
 
-import torch
-from transformers import CLIPProcessor
+from torch.utils.data import Dataset
 
 
-class CLIPDataset(torch.utils.data.Dataset):
+class TransformedImageDataset(Dataset):
     """
-    A dataset class for CLIP models that converts a dataset of dictionaries or tuples
-    into a format suitable for CLIP processing.
+    A dataset class for image classification tasks that applies a transform to images.
 
-    This class wraps an existing dataset and applies CLIP preprocessing to the images.
+    This class wraps an existing dataset and applies a specified transform to the images.
     It expects each item in the dataset to be either a dictionary with 'image' and 'label' keys,
     or a tuple/list of (image, label).
 
     Args:
         dataset: The original dataset to wrap.
-        processor (CLIPProcessor): The CLIP processor for preparing inputs.
+        transform (Callable): A function/transform to apply on the image.
 
     Attributes:
         dataset: The wrapped dataset.
-        processor (CLIPProcessor): The CLIP processor used for image preprocessing.
+        transform (Callable): The transform to be applied to the images.
     """
 
-    def __init__(self, dataset, processor: CLIPProcessor):
+    def __init__(self, dataset, transform: Callable):
+        super().__init__()
         self.dataset = dataset
-        self.processor = processor
+        self.transform = transform
 
     def __len__(self):
         """Returns the number of items in the dataset."""
         return len(self.dataset)
 
-    def __getitem__(self, idx: int):
+    def __getitem__(self, idx: int) -> Tuple[Any, Any]:
         """
         Retrieves and processes an item from the dataset.
 
@@ -40,7 +37,7 @@ class CLIPDataset(torch.utils.data.Dataset):
             idx (int): The index of the item to retrieve.
 
         Returns:
-            tuple: A tuple containing the processed image tensor and the label.
+            tuple: A tuple containing the processed image and the label.
 
         Raises:
             ValueError: If the item is neither a dictionary nor a tuple/list of length 2.
@@ -54,5 +51,5 @@ class CLIPDataset(torch.utils.data.Dataset):
         else:
             raise ValueError("Each item should be a dictionary or a tuple of length 2")
         image = item["image"]
-        inputs = self.processor(images=[image], return_tensors="pt")["pixel_values"][0]
+        inputs = self.transform(image)
         return inputs, item["label"]
