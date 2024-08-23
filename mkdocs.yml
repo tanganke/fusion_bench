@@ -5,8 +5,8 @@ nav:
     - README.md
     - introduction_to_model_fusion.md
   - Fusion Algorithms:
-      - Introduction: algorithms/README.md
-      - Dummy: algorithms/dummy.md
+      - algorithms/README.md
+      - algorithms/dummy.md
       - Model Ensemble: 
         - Simple Ensemble: algorithms/simple_ensemble.md
         - Weighted Ensemble: algorithms/weighted_ensemble.md
@@ -29,15 +29,15 @@ nav:
         - SMILE Upscaling: algorithms/smile_upscaling.md
         # - Model Stitching: algorithms/model_stitching.md
         - Model Recombination: algorithms/model_recombination.md
-  - Model Pool (Benchmark):
-      - Introduction: modelpool/README.md
+  - Model Pool (Benchmark Models):
+      - modelpool/README.md
       - CLIP-ViT Models: modelpool/clip_vit.md
       - ResNet Models for Sence Understanding: modelpool/nyuv2.md
       - GPT-2 Models for Text Classification: modelpool/gpt2_classification.md
       - Flan-T5 Models for Text Generation: modelpool/flan-t5_generation.md
   - Task Pool (Evaluation):
-      - Introduction: taskpool/README.md
-      - Dummy: taskpool/dummy.md
+      - taskpool/README.md
+      - taskpool/dummy.md
       - Classification Tasks for CLIP: taskpool/clip_vit_classification.md
       - GPT-2 Sequence Classification Tasks: taskpool/gpt2_classification.md
       - Flan-T5 Models for Text Generation: taskpool/flan-t5_generation.md
@@ -113,6 +113,11 @@ extra_css:
   - css/mkdocstrings.css
   - css/material_extra.css
 
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/tanganke/fusion_bench
+
 theme:
   name: material
   features:
@@ -122,8 +127,18 @@ theme:
     - content.code.annotate
     - content.code.copy
     - navigation.top
+    - navigation.tabs
+    # - navigation.tabs.sticky
+    - navigation.footer
+    # - navigation.prune
+    - navigation.expand
+    # - navigation.path
+    # - navigation.indexes
+    # - navigation.sections
     - search.suggest
     - search.highlight
+    # - git-authors
+  
   palette:
     - media: "(prefers-color-scheme)"
       toggle:

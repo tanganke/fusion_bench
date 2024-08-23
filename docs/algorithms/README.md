@@ -1,4 +1,4 @@
-# Introduction
+# Introduction to Fusion Algorithm Module
 
 The `Fusion Algorithm` module is a core component of the FusionBench project, dedicated to the implementation and execution of various model fusion techniques. 
 This module provides the mechanisms necessary to combine multiple models from the Model Pool, enabling nuanced and optimized model merging operations.

@@ -1,4 +1,4 @@
-# TaskPool
+# Introduction to Taskpool Module
 
 A taskpool is a collection of tasks that can be used to evaluate the performance of merged models.
 Each task in the taskpool is defined by a dataset and a metric.

@@ -50,8 +50,10 @@ Mode connectivity is such an important concept in model merging that it deserves
 
 ### Subspace-based Methods
 
+- Tang A, Shen L, Luo Y, et al. Concrete subspace learning based interference elimination for multi-task model fusion. [arXiv preprint arXiv:2312.06173](https://arxiv.org/abs/2312.06173), 2023.
 - :llama: [:simple-github:](https://github.com/xinykou/safety_realignment) 
     X. Yi, S. Zheng, L. Wang, X. Wang, and L. He, “A safety realignment framework via subspace-oriented model fusion for large language models.” [arXiv, May 14, 2024. doi: 10.48550/arXiv.2405.09055.](http://arxiv.org/abs/2405.09055)
+- [:simple-github:](https://github.com/nik-dim/tall_masks) Wang K, Dimitriadis N, Ortiz-Jimenez G, et al. Localizing Task Information for Improved Model Merging and Compression. [arXiv preprint arXiv:2405.07813](http://arxiv.org/abs/2405.07813), 2024.
 
 ## Model Mixing
 

@@ -1,4 +1,4 @@
-# ModelPool
+# Introduction to Model Pool Module
 
 A modelpool is a collection of models that are utilized in the process of model fusion.
 In the context of straightforward model fusion techniques, like averaging, only models with the same architecture are used.
