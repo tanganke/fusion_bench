@@ -53,6 +53,14 @@ The project is structured as follows:
 - `examples/`: example scripts for running some of the experiments.
 - `tests/`: unit tests for the benchmark.
 
+## A Unified Command Line Interface
+
+The `fusion_bench` command-line interface is a powerful tool for researchers and practitioners in the field of model fusion. It provides a streamlined way to experiment with various fusion algorithms, model combinations, and evaluation tasks. 
+By leveraging Hydra's configuration management, fusion_bench offers flexibility in setting up experiments and reproducibility in results. 
+The CLI's design allows for easy extension to new fusion methods, model types, and tasks, making it a versatile platform for advancing research in model fusion techniques.
+
+Read the [CLI documentation](https://tanganke.github.io/fusion_bench/cli/fusion_bench/) for more information.
+
 ## Citation
 
 If you find this benchmark useful, please consider citing our work:
