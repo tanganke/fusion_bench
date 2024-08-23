@@ -1,0 +1,1 @@
+from .weighted_average import WeightedAverageAlgorithm

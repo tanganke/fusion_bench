@@ -1,10 +1,19 @@
 import functools
 import logging
-from typing import Optional
+import os
+from typing import Optional, cast
 
 from omegaconf import DictConfig
 from torch.nn.modules import Module
-from transformers import AutoModel, AutoModelForCausalLM
+from transformers import (
+    AutoModel,
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    LlamaForCausalLM,
+    MistralForCausalLM,
+    PreTrainedModel,
+)
+from typing_extensions import override
 
 from fusion_bench.modelpool.base_pool import ModelPool
 from fusion_bench.utils import timeit_context
@@ -25,5 +34,64 @@ class AutoModelForCausalLMPool(ModelPool):
             kwargs["torch_dtype"] = parse_dtype(self.config.dtype)
 
         with timeit_context(f"loading model from {model_config.path}"):
-            model = AutoModelForCausalLM.from_pretrained(model_config.path, **kwargs)
+            model = AutoModelForCausalLM.from_pretrained(
+                os.path.expanduser(model_config.path), **kwargs
+            )
+        return model
+
+    @override
+    def save_model(
+        self,
+        model: PreTrainedModel,
+        path: str,
+        push_to_hub: bool = False,
+        save_tokenizer: bool = False,
+        **kwargs,
+    ):
+        path = os.path.expanduser(path)
+        model.save_pretrained(
+            path,
+            push_to_hub=push_to_hub,
+            **kwargs,
+        )
+        if save_tokenizer:
+            if self.has_pretrained:
+                tokenizer = AutoTokenizer.from_pretrained(
+                    os.path.expanduser(self.get_model_config("_pretrained_").path)
+                )
+            else:
+                tokenizer = AutoTokenizer.from_pretrained(
+                    os.path.expanduser(self.get_model_config(self.model_names[0]).path)
+                )
+            tokenizer.save_pretrained(
+                path,
+                push_to_hub=push_to_hub,
+            )
+
+
+class LLamaForCausalLMPool(AutoModelForCausalLMPool):
+    @override
+    def load_model(
+        self,
+        model_config: str | DictConfig,
+        backbone_only: bool = False,
+    ):
+        model = super().load_model(model_config)
+        model = cast(LlamaForCausalLM, model)
+        if backbone_only:
+            model = model.model
+        return model
+
+
+class MistralForCausalLMPool(AutoModelForCausalLMPool):
+    @override
+    def load_model(
+        self,
+        model_config: str | DictConfig,
+        backbone_only: bool = False,
+    ):
+        model = super().load_model(model_config)
+        model = cast(MistralForCausalLM, model)
+        if backbone_only:
+            model = model.model
         return model

@@ -1,0 +1,12 @@
+type: LLamaForCausalLMPool
+# each model should have a name and a path, and the model is loaded from the path
+# this is equivalent to `AutoModelForCausalLM.from_pretrained(path)`
+models:
+  - name: _pretrained_
+    path: meta-llama/Meta-Llama-3-8B
+  - name: expert_1
+    path: meta-llama/Meta-Llama-3-8B
+  - name: expert_2
+    path: meta-llama/Meta-Llama-3-8B-Instruct
+
+dtype: float16

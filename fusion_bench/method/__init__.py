@@ -19,7 +19,7 @@ from .simple_average import SimpleAverageAlgorithm
 from .task_arithmetic import TaskArithmeticAlgorithm
 from .ties_merging.ties_merging import TiesMergingAlgorithm
 from .we_moe.clip_we_moe import CLIPWeightEnsemblingMoEAlgorithm
-from .weighted_average import WeightedAverageAlgorithm
+from .weighted_average.weighted_average import WeightedAverageAlgorithm
 
 
 class AlgorithmFactory:
@@ -36,6 +36,7 @@ class AlgorithmFactory:
         # model merging methods
         "simple_average": SimpleAverageAlgorithm,
         "weighted_average": WeightedAverageAlgorithm,
+        "weighted_average_for_llama": ".weighted_average.llama.WeightedAverageForLLama",
         "clip_fisher_merging": FisherMergingAlgorithmForCLIP,
         "gpt2_fisher_merging": FisherMergingAlgorithmForGPT2,
         "clip_regmean": RegMeanAlgorithmForCLIP,

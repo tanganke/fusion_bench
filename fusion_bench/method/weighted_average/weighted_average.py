@@ -4,11 +4,12 @@ from typing import List, Mapping, Union
 
 import torch
 from torch import Tensor, nn
+import numpy as np
 
-from ..modelpool import ModelPool, to_modelpool
-from ..utils.state_dict_arithmetic import state_dict_add, state_dict_mul
-from ..utils.type import _StateDict
-from .base_algorithm import ModelFusionAlgorithm
+from fusion_bench.method.base_algorithm import ModelFusionAlgorithm
+from fusion_bench.modelpool import ModelPool, to_modelpool
+from fusion_bench.utils.state_dict_arithmetic import state_dict_add, state_dict_mul
+from fusion_bench.utils.type import _StateDict
 
 log = logging.getLogger(__name__)
 
@@ -43,6 +44,10 @@ class WeightedAverageAlgorithm(ModelFusionAlgorithm):
                 f"but got {len(weights)} weights and {len(modelpool.model_names)} models."
                 f"weights: {weights}, models: {modelpool.model_names}"
             )
+        if self.config.normalize:
+            weights = np.asarray(weights)
+            weights = weights / np.sum(weights)
+
         sd: _StateDict = None
         forward_model = None
 
