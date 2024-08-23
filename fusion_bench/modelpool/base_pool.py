@@ -93,6 +93,13 @@ class ModelPool(ABC):
         raise NotImplementedError
 
     def save_model(self, model: nn.Module, path: str):
+        """
+        Save the state dictionary of the model to the specified path.
+
+        Args:
+            model (nn.Module): The model whose state dictionary is to be saved.
+            path (str): The path where the state dictionary will be saved.
+        """
         with timeit_context(f"Saving the state dict of model to {path}"):
             torch.save(model.state_dict(), path)
 

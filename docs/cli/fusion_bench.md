@@ -1,26 +1,163 @@
-# fusion_bench
+# `fusion_bench`: The Command Line Interface for FusionBench
+
+`fusion_bench` is the command line interface for running model fusion benchmarks in the FusionBench project. 
+It provides a flexible way to configure and execute various fusion algorithms on different model pools and evaluate them across multiple tasks.
 
 ## Details and Options
 
-`fusion_bench` is the command line interface for running the benchmark.
-It takes a configuration file as input, which specifies the models, fusion method to be used, and the datasets to be evaluated. 
+`fusion_bench` takes a configuration file as input, which specifies the models, fusion method to be used, and the datasets to be evaluated. runing `fusion_bench` is equivalent to running `python fusion_bench/scripts/cli.py`.
 
-```
+```bash
 fusion_bench [--config-path CONFIG_PATH] [--config-name CONFIG_NAME] \
+    OPTION_1=VALUE_1 OPTION_2=VALUE_2 ...
+
+# or equivalently
+python fusion_bench/scripts/cli.py [--config-path CONFIG_PATH] [--config-name CONFIG_NAME] \
     OPTION_1=VALUE_1 OPTION_2=VALUE_2 ...
 ```
 
 `fusion_bench` has the following options, `method`, `modelpool`, and `taskpool` are the most important ones ammong these options:
 
-| **Option**    | **Default**                 | **Description**                                                                                                                   |
-| ------------- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| **modelpool** | `clip-vit-base-patch32_TA8` | The pool of models to be fused. See [modelpool](../modelpool/README.md) for more information.                                     |
-| **method**    | `dummy`                     | The fusion method to be used. See [fusion algorithms](../algorithms/README.md) for more information.                              |
-| **taskpool**  | `dummy`                     | The pool of tasks to be evaluated. See [taskpool](../taskpool/README.md) for more information.                                    |
-| print_config  | `true`                      | Whether to print the configuration to the console.                                                                                |
-| save_report   | `false`                     | the path to save the report. If not specified or is `false`, the report will not be saved. The report will be saved as json file. |
-| --cfg, -c     |                             | show the configuration instead of runing.                                                                                         |
-| --help, -h    |                             | show this help message and exit.                                                                                                  |
+### Hydra options
+
+- **--help, -h**: Application's help. Print help message and exit.
+  ```bash
+  fusion_bench --help
+  ```
+- **--hydra-help**: Hydra's help.
+- **--version**: Show Hydra's version and exit.
+- **--cfg, -c**: Show config instead of running [job|hydra|all].
+  This is useful for debugging the configuration. However, this just prints plain text configuration without color highlighting or formatting.
+  ```bash
+  fusion_bench --cfg
+  ```
+  Or equivalently with the following options:
+  ```bash
+  # this will print the configuration using rich library, which provides syntax highlighting and better formatting
+  fusion_bench print_config=true dry_run=true
+  ```
+- **--resolve**: Used in conjunction with --cfg, resolve config interpolations before printing.
+- **--package, -p**: Config package to show. For example, when you only want to see the configuration for `method`.
+  ```bash
+  fusion_bench --cfg job -p method
+  ```
+- **--info, -i**: Print Hydra information [all|config|defaults|defaults-tree|plugins|searchpath]
+- **--config-path, -cp**: Overrides the config_path specified in hydra.main(). The config_path is absolute or relative to the Python file declaring @hydra.main().
+By default, the config path is the `config` or `fusion_bench_config` directory in the project root.
+- **--config-name, -cn**: Overrides the config_name specified in hydra.main(). By default, the config name is `example_config` so `config/example_config.yaml` will be loaded.
+You can also specify another config name, for example:
+  ```bash
+  # this will load the config from `config/llama_weighted_average.yaml`
+  fusion_bench --config-name llama_weighted_average.yaml
+  ```
+- **--config-dir, -cd**: Adds an additional config dir to the config search path
+- **--multirun, -m**: Run multiple jobs with the configured launcher and sweeper. For more information, see [Hydra documentation](https://hydra.cc/docs/1.3/tutorials/basic/running_your_app/multi-run/).
+- **--experimental-rerun**: Rerun a job from a previous config pickle
+
+#### Shell Completion
+
+This is useful for tab completion in the shell. You can install shell completion for Bash, Fish, and Zsh.
+
+<figure markdown="span">
+![alt text](images/tab_completion.png){ width="850" }
+<figcaption> Screenshot of tab completion in the shell. </figcaption>
+</figure>
+
+- **--shell-completion, -sc**: Install or Uninstall shell completion:
+  - **Bash - Install**:
+    ```bash
+    eval "$(fusion_bench -sc install=bash)"
+    ```
+  - **Bash - Uninstall**:
+    ```bash
+    eval "$(fusion_bench -sc uninstall=bash)"
+    ```
+  - **Fish - Install**:
+    ```fish
+    fusion_bench -sc install=fish | source
+    ```
+  - **Fish - Uninstall**:
+    ```fish
+    fusion_bench -sc uninstall=fish | source
+    ```
+  - **Zsh - Install**:
+    Zsh is compatible with the Bash shell completion, see the [documentation](https://hydra.cc/docs/1.2/tutorials/basic/running_your_app/tab_completion#zsh-instructions) for details.
+    ```zsh
+    eval "$(fusion_bench -sc install=bash)"
+    ```
+  - **Zsh - Uninstall**:
+    ```zsh
+    eval "$(fusion_bench -sc uninstall=bash)"
+    ```
+
+### Application Options
+
+- **save_report**: The path to save the report. If not specified or is `false`, the report will not be saved. The report will be saved as a JSON file. Default is `false`.
+  For example, to save the report to `outputs/report.json`:
+  ```bash
+  fusion_bench save_report=outputs/report.json
+  ```
+- **print_config**: Whether to print the configuration to the console. If not specified or is `false`, the configuration will not be printed. Default is `true`.
+  For example, to print the configuration:
+  ```bash
+  fusion_bench print_config=true
+  ```
+- **dry_run**: Perform a dry run. 
+  This will only validate the configuration without running the actual code. Default is `false`.
+  For example, to perform a dry run and print the configuration:
+  ```bash
+  fusion_bench dry_run=true print_config=true
+  ```
+- **merged_model_save_path**: The path to save the merged model. If specified, the merged model will be saved to this path by calling `modelpool.save_model`.
+  For example, to save the merged model to `outputs/merged_model.pt`:
+  ```bash
+  fusion_bench merged_model_save_path=outputs/merged_model.pt
+  ```
+  Note that the behavior of `modelpool.save_model` depends on the implementation of the model pool. Take `AutoModelForCausalLMPool` as an example, it will save the model to the specified path as a dirctory containing the model configuration and safetensor files, i.e., calling `model.save_pretrained(merged_model_save_path)`.
+      
+    ??? example "Example of `modelpool.save_model`"
+        
+        `ModelPool` is the base class for model pools. The `save_model` method is defined in the `ModelPool` class and can be overridden in the derived classes. For example, `AutoModelForCausalLMPool` overrides the `save_model` method to save the model using the `save_pretrained` method of the model. The following is an example of the `save_model` method in the `ModelPool` class and the `AutoModelForCausalLMPool` class.
+
+        By passing `merged_model_save_path` to the `fusion_bench` command, only the model and the save path will be passed to the `modelpool.save_model` method. For example, although the `AutoModelForCausalLMPool` class has a `save_model` method that can take additional arguments, such as `push_to_hub` and `save_tokenizer`, these arguments will not be passed to the `save_model` method. If you want to pass additional arguments to the `save_model` method, you need to implement the logic in method class.
+
+        ::: fusion_bench.modelpool.ModelPool.save_model
+            options:
+              show_root_full_path: true
+              show_root_toc_entry: false
+        ::: fusion_bench.modelpool.huggingface_llm.AutoModelForCausalLMPool.save_model
+            options:
+              show_root_full_path: true
+              show_root_toc_entry: false
+
+### method, modelpool and taskpool options
+
+As mentioned earlier, `method`, `modelpool`, and `taskpool` are the most important options in `fusion_bench`.
+The basic usage is as follows:
+
+```bash
+fusion_bench method=<METHOD> modelpool=<MODELPOOL> taskpool=<TASKPOOL>
+```
+
+To override the default configuration, you can specify additional options as follows:
+
+```bash hl_lines="2-6"
+fusion_bench \
+  method=<METHOD> \
+    method.<OPTION_1>=<VALUE_1> \
+      method.<OPTION_1>.<SUBOPTION_1>=<VALUE_1_1> \
+      method.<OPTION_1>.<SUBOPTION_2>=<VALUE_1_2> \
+    method.<OPTION_2>=<VALUE_2> \
+  modelpool=<MODELPOOL> \
+    ...
+  taskpool=<TASKPOOL> \
+    ...
+```
+
+**Paremeter Overrides**:
+In the above example, `<METHOD>`, `<MODELPOOL>`, and `<TASKPOOL>` are the names of the method, model pool, and task pool, respectively.
+`<OPTION_1>`, `<VALUE_1>`, `<SUBOPTION_1>`, `<VALUE_1_1>`, etc., are the options and values for the method.
+In particular, the options for the method are prefixed with `method.`, e.g., `method.<OPTION_1>`. And the suboptions are prefixed with `method.<OPTION_1>.`, e.g., `method.<OPTION_1>.<SUBOPTION_1>`.
 
 ## Basic Examples
 
@@ -34,44 +171,44 @@ fusion_bench method=task_arithmetic \
 
 The overall configuration is as follows:
 
-```{.yaml .anotate}
-method: # (1)                                                                                                                                                                                                                       
-  name: task_arithmetic                                                                                                                                                                                                        
-  scaling_factor: 0.5                                                                                                                                                                                                          
-modelpool: # (2)                                                                                                                                                                                                                    
-   type: huggingface_clip_vision                                                                                                                                                                                                
-   models:                                                                                                                                                                                                                      
-   - name: _pretrained_                                                                                                                                                                                                         
-     path: openai/clip-vit-base-patch32                                                                                                                                                                                         
-   - name: svhn                                                                                                                                                                                                                 
-     path: tanganke/clip-vit-base-patch32_svhn                                                                                                                                                                                  
-   - name: mnist                                                                                                                                                                                                                
-     path: tanganke/clip-vit-base-patch32_mnist                                                                                                                                                                                 
-taskpool: # (3)                                                                                                                                                                                                                     
-  type: clip_vit_classification                                                                                                                                                                                                
-  name: clip-vit-base-patch32_svhn_and_mnist                                                                                                                                                                                   
-  dataset_type: huggingface_image_classification                                                                                                                                                                               
-  tasks:                                                                                                                                                                                                                       
-  - name: svhn                                                                                                                                                                                                                 
-    dataset:                                                                                                                                                                                                                   
-      type: instantiate                                                                                                                                                                                                        
-      name: svhn                                                                                                                                                                                                               
-      object:                                                                                                                                                                                                                  
-        _target_: datasets.load_dataset                                                                                                                                                                                        
-        _args_:                                                                                                                                                                                                                
-        - svhn                                                                                                                                                                                                                 
-        - cropped_digits                                                                                                                                                                                                       
-        split: test                                                                                                                                                                                                            
-  - name: mnist                                                                                                                                                                                                                
-    dataset:                                                                                                                                                                                                                   
-      name: mnist                                                                                                                                                                                                              
-      split: test                                                                                                                                                                                                              
-  clip_model: openai/clip-vit-base-patch32                                                                                                                                                                                     
-  batch_size: 128                                                                                                                                                                                                              
-  num_workers: 16                                                                                                                                                                                                              
-  fast_dev_run: ${fast_dev_run}                                                                                                                                                                                                
-fast_dev_run: false                                                                                                                                                                                                            
-print_config: true                                                                                                                                                                                                             
+```yaml linenums="1" hl_lines="1 4 13"
+method: # (1)!
+  name: task_arithmetic
+  scaling_factor: 0.5
+modelpool: # (2)!
+   type: huggingface_clip_vision
+   models:
+   - name: _pretrained_
+     path: openai/clip-vit-base-patch32
+   - name: svhn
+     path: tanganke/clip-vit-base-patch32_svhn
+   - name: mnist
+     path: tanganke/clip-vit-base-patch32_mnist
+taskpool: # (3)!
+  type: clip_vit_classification
+  name: clip-vit-base-patch32_svhn_and_mnist
+  dataset_type: huggingface_image_classification
+  tasks:
+  - name: svhn
+    dataset:
+      type: instantiate
+      name: svhn
+      object:
+        _target_: datasets.load_dataset
+        _args_:
+        - svhn
+        - cropped_digits
+        split: test
+  - name: mnist
+    dataset:
+      name: mnist
+      split: test
+  clip_model: openai/clip-vit-base-patch32
+  batch_size: 128
+  num_workers: 16
+  fast_dev_run: ${fast_dev_run}
+fast_dev_run: false
+print_config: true
 save_report: false
 ```
 
@@ -85,6 +222,42 @@ merge multiple CLIP models using simple averaging:
 ```bash
 fusion_bench method=simple_average modelpool=clip-vit-base-patch32_TA8.yaml taskpool=dummy
 ```
+
+## Debugging and Troubleshooting
+
+During algorithm development, you may want to debug the code or inspect the configuration. 
+Here are some tips for debugging and troubleshooting.
+
+### Debugging in VSCode
+
+Visual Studio Code (VSCode) is a popular code editor that supports debugging Python code with Python extension.
+To debug the code using VSCode, you can use the following configuration in your `.vscode/launch.json`:
+
+```json linenums="1" hl_lines="8-11"
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "FusionBench with Arguments",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fusion_bench.scripts.cli", // (1)!
+            "args": [ // (2)!
+                "${command:pickArgs}"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
+    ]
+}
+```
+
+1. The `module` field specifies the module to run. In this case, it is `fusion_bench.scripts.cli`. You can also specify the path to the script directly with `program` filed, e.g., `"program": ${workspaceFolder}/fusion_bench/scripts/cli.py`.
+2. The `args` field specifies the arguments to pass to the script. You can use `${command:pickArgs}` to pick the arguments interactively when you run the debugger. Or you can specify the arguments directly, e.g., `"args": ["--config-name", "example_config"]`.
+
+Once you have the configuration in your `launch.json`, you can start debugging by selecting the `FusionBench with Arguments` configuration and pressing `F5`.
+
+![alt text](images/vscode_debug.png){ width="200pt" }
 
 
 ## References

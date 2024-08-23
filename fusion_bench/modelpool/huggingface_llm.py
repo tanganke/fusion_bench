@@ -48,6 +48,16 @@ class AutoModelForCausalLMPool(ModelPool):
         save_tokenizer: bool = False,
         **kwargs,
     ):
+        """
+        Save the model to the specified path.
+
+        Args:
+            model (PreTrainedModel): The model to be saved.
+            path (str): The path where the model will be saved.
+            push_to_hub (bool, optional): Whether to push the model to the Hugging Face Hub. Defaults to False.
+            save_tokenizer (bool, optional): Whether to save the tokenizer along with the model. Defaults to False.
+            **kwargs: Additional keyword arguments passed to the `save_pretrained` method.
+        """
         path = os.path.expanduser(path)
         model.save_pretrained(
             path,
