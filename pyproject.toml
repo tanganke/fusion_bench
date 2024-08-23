@@ -9,6 +9,7 @@ readme = "README.md"
 version = "0.1.4"
 authors = [{ name = "Anke Tang", email = "tang.anke@foxmail.com" }]
 license = { file = 'LICENSE' }
+requires-python = ">= 3.8"
 dependencies = [
     "hydra-core",
     "torch>=2.0.0",
@@ -23,7 +24,6 @@ dependencies = [
     "rich",
 ]
 keywords = ["deep learning", "model fusion", "benchmark"]
-
 
 [project.urls]
 Repository = "https://github.com/tanganke/fusion_bench"

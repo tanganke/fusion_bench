@@ -6,8 +6,11 @@ description: A Comprehensive Benchmark of Deep Model Fusion
 # FusionBench: A Comprehensive Benchmark of Deep Model Fusion
 
 [![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](http://arxiv.org/abs/2406.03280)
+[![GitHub License](https://img.shields.io/github/license/tanganke/fusion_bench)](https://github.com/tanganke/fusion_bench/blob/main/LICENSE)
+[![PyPI - Version](https://img.shields.io/pypi/v/fusion-bench)](https://pypi.org/project/fusion-bench/)
 [![Downloads](https://static.pepy.tech/badge/fusion-bench/month)](https://pepy.tech/project/fusion-bench)
-[![Downloads](https://static.pepy.tech/badge/fusion-bench/week)](https://pepy.tech/project/fusion-bench)
+[![Static Badge](https://img.shields.io/badge/doc-mkdocs-blue)](https://tanganke.github.io/fusion_bench/)
+[![Static Badge](https://img.shields.io/badge/code%20style-black-black)](https://github.com/psf/black)
 
 !!! warning "Testing Phase"
     
