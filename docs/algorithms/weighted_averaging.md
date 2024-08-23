@@ -55,16 +55,16 @@ modelpool:
     # the pre-trained model (base model) is optional
     # if not provided, the first model will be used as the base model
     - name: _pretrained_
-      path: ~/data/huggingface_models/meta-llama/Meta-Llama-3-8B
+      path: meta-llama/Meta-Llama-3-8B
     - name: expert_1
-      path: ~/data/huggingface_models/meta-llama/Meta-Llama-3-8B
+      path: meta-llama/Meta-Llama-3-8B
     - name: expert_2
-      path: ~/data/huggingface_models/meta-llama/Meta-Llama-3-8B-Instruct
+      path: meta-llama/Meta-Llama-3-8B-Instruct
 
 method:
   normalize: true # if true, the weights will be normalized before merging
   weights: # List of weights for each model
-    - 0.4
+    - 0.5
     - 0.5
   # if true, only the backbone of the model will be merged and the head will be keeped as the pre-trained model (if the pre-trained model is provided, otherwise the head of the first model will be used)
   # if false, the whole model will be merged

@@ -1,7 +1,7 @@
 # Reading Lists
 
 !!! info
-    working in progress
+    working in progress. Any suggestions are welcome.
 
 I've been compiling a comprehensive list of papers and resources that have been instrumental in my research journey. 
 This collection is designed to serve as a valuable starting point for those interested in delving into the field of deep model fusion.
