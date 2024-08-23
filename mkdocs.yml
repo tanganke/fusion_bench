@@ -4,6 +4,7 @@ nav:
   - Introduction: 
     - README.md
     - introduction_to_model_fusion.md
+    - cli/fusion_bench.md
   - Fusion Algorithms:
       - algorithms/README.md
       - algorithms/dummy.md
@@ -41,8 +42,8 @@ nav:
       - Classification Tasks for CLIP: taskpool/clip_vit_classification.md
       - GPT-2 Sequence Classification Tasks: taskpool/gpt2_classification.md
       - Flan-T5 Models for Text Generation: taskpool/flan-t5_generation.md
-  - Command Line Interface:
-    - fusion_bench: cli/fusion_bench.md
+  # - Command Line Interface:
+    # - fusion_bench: cli/fusion_bench.md
   - Additional Guides:
     - Mixins:
       - LightningFabricMixin: guides/mixins/lightning_fabric.md

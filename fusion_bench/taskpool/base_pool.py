@@ -43,7 +43,7 @@ class TaskPool(ABC):
             model: The model to evaluate.
 
         Returns:
-            dict: A dictionary containing the results of the evaluation for each task.
+            report (dict): A dictionary containing the results of the evaluation for each task.
         """
         report = {}
         for task_name in tqdm(self.task_names, desc="Evaluating tasks"):
