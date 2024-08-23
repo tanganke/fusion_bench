@@ -12,7 +12,7 @@ This collection is designed to serve as a valuable starting point for those inte
     Meaning of the symbols in the list:
 
     - :star:  Highly recommended
-    - :llama: LLaMA model-related
+    - :llama: LLaMA model-related or Mistral-related work
     - :simple-github: Code available on GitHub
     - :hugging: models or datasets available on Hugging Face
 
@@ -62,7 +62,7 @@ Mode connectivity is such an important concept in model merging that it deserves
 - A. Tang, L. Shen, Y. Luo, N. Yin, L. Zhang, and D. Tao, “Merging Multi-Task Models via Weight-Ensembling Mixture of Experts,” Feb. 01, 2024, arXiv: arXiv:2402.00433. doi: 10.48550/arXiv.2402.00433.
 - :llama: [:simple-github:](https://github.com/LZY-the-boys/Twin-Merging) 
     Zhenyi Lu et al., "Twin-Merging: Dynamic Integration of Modular Expertise in Model Merging" [10.48550/arXiv.2406.15479](http://arxiv.org/abs/2406.15479)
-
+- :llama: [:simple-github:](http://github.com/tanganke/fusion_bench) :hugging: Tang A, Shen L, Luo Y, et al. SMILE: Zero-Shot Sparse Mixture of Low-Rank Experts Construction From Pre-Trained Foundation Models. [arXiv](http://arxiv.org/abs/2408.10174), 2024.
 
 ## Libraries and Tools
 
