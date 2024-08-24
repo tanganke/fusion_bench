@@ -233,7 +233,7 @@ Here are some tips for debugging and troubleshooting.
 Visual Studio Code (VSCode) is a popular code editor that supports debugging Python code with Python extension.
 To debug the code using VSCode, you can use the following configuration in your `.vscode/launch.json`:
 
-```json linenums="1" hl_lines="8-11"
+```json linenums="1" hl_lines="8-9"
 {
     "version": "0.2.0",
     "configurations": [
@@ -242,9 +242,7 @@ To debug the code using VSCode, you can use the following configuration in your 
             "type": "debugpy",
             "request": "launch",
             "module": "fusion_bench.scripts.cli", // (1)!
-            "args": [ // (2)!
-                "${command:pickArgs}"
-            ],
+            "args": "${command:pickArgs}", // (2)!
             "console": "integratedTerminal",
             "justMyCode": true
         }
