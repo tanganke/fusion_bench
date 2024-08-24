@@ -258,6 +258,18 @@ Once you have the configuration in your `launch.json`, you can start debugging b
 ![alt text](images/vscode_debug.png){ width="200pt" }
 
 
+### Debugging in PyCharm
+
+Debugging in PyCharm with arguments needs to be configured in the `Run/Debug Configurations`.
+
+1. Click on the `Run` menu click `Edit Configurations...`   
+    ![alt text](images/pycharm_debug_1.png)
+2. Select `+` in top right corner and select `Python`  
+    ![alt text](images/pycharm_debug_2.png)
+3. Provide the name, absolute path of the script (`fusion_bench/scripts/cli.py`) or select the script by clicking three dots (green arrow), script parameters, and python interpreter.  
+    ![alt text](images/pycharm_debug_3.png)
+
+
 ## References
 
 ::: fusion_bench.scripts.cli.run_model_fusion
