@@ -17,7 +17,7 @@ save_interval: 1000
 alpha: 1 # alpha for dirichlet, if alpha=1, then it is uniform
 
 # load model from this checkpoint
-checkpoint_path: /data0/users/tanganke/projects/fusion_bench/outputs/logs/lightning_logs/version_18/checkpoints/model_step=2000.pt
+checkpoint_path: null
 
 # evaluation grid
 eval_grid: true
