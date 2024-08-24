@@ -1,0 +1,25 @@
+name: pwe_moe_ls_for_clip # or pwe_moe_epo_for_clip
+
+upscale_mlp: true
+upscale_attn: true
+
+# scaling factor for the remaining parameters
+init_lambda: 0.3
+router_hidden_layers: 2
+
+# per-device batch size
+batch_size: 16
+num_workers: 4
+
+lr: 1e-2
+num_steps: 2000
+save_interval: 1000
+alpha: 1 # alpha for dirichlet, if alpha=1, then it is uniform
+
+# load model from this checkpoint
+checkpoint_path: /data0/users/tanganke/projects/fusion_bench/outputs/logs/lightning_logs/version_18/checkpoints/model_step=2000.pt
+
+# evaluation grid
+eval_grid: true
+eval_grid_n: 8
+eval_grid_m: 2

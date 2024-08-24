@@ -8,9 +8,12 @@ import importlib.resources
 import json
 import logging
 import os
+from typing import Iterable, Union, Dict
 
 import hydra
 from omegaconf import DictConfig, OmegaConf
+from torch import nn
+from tqdm.auto import tqdm
 
 from fusion_bench.method import load_algorithm_from_config
 from fusion_bench.mixins.lightning_fabric import LightningFabricMixin
@@ -91,6 +94,47 @@ class LightningProgram(LightningFabricMixin):
         else:
             print("No save path specified for the merged model. Skipping saving.")
 
+    def evaluate_merged_model(
+        self, taskpool, merged_modol: Union[nn.Module, Dict, Iterable]
+    ):
+        """
+        Evaluates the merged model using the provided task pool.
+
+        Depending on the type of the merged model, this function handles the evaluation differently:
+        - If the merged model is an instance of `nn.Module`, it directly evaluates the model.
+        - If the merged model is a dictionary, it extracts the model from the dictionary and evaluates it.
+          The evaluation report is then updated with the remaining dictionary items.
+        - If the merged model is an iterable, it recursively evaluates each model in the iterable.
+        - Raises a `ValueError` if the merged model is of an invalid type.
+
+        Args:
+            taskpool: The task pool used for evaluating the merged model.
+            merged_modol: The merged model to be evaluated. It can be an instance of `nn.Module`, a dictionary, or an iterable.
+
+        Returns:
+            The evaluation report. The type of the report depends on the type of the merged model:
+            - If the merged model is an instance of `nn.Module`, the report is a dictionary.
+            - If the merged model is a dictionary, the report is a dictionary updated with the remaining dictionary items.
+            - If the merged model is an iterable, the report is a list of evaluation reports.
+        """
+        if isinstance(merged_modol, nn.Module):
+            report = taskpool.evaluate(merged_modol)
+            print(report)
+            return report
+        elif isinstance(merged_modol, Dict):
+            model = merged_modol.pop("model")
+            report: dict = taskpool.evaluate(model)
+            report.update(merged_modol)
+            print(report)
+            return report
+        elif isinstance(merged_modol, Iterable):
+            return [
+                self.evaluate_merged_model(taskpool, m)
+                for m in tqdm(merged_modol, desc="Evaluating models")
+            ]
+        else:
+            raise ValueError(f"Invalid type for merged model: {type(merged_modol)}")
+
     def run_model_fusion(self):
         cfg = self.config
 
@@ -108,7 +152,7 @@ class LightningProgram(LightningFabricMixin):
                 load_taskpool_from_config, cfg.taskpool
             )
             modelpool.setup_taskpool(taskpool)
-            report = taskpool.evaluate(merged_model)
+            report = self.evaluate_merged_model(taskpool, merged_model)
             print(report)
             if cfg.get("save_report", False):
                 # save report (Dict) to a file

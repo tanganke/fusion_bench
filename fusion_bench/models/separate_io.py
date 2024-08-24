@@ -5,7 +5,10 @@ import torch
 from torch import nn
 
 from fusion_bench.utils.dtype import parse_dtype
+from safetensors import safe_open
+from safetensors.torch import save_file
 
+__all__ = ["separate_save", "separate_load"]
 
 def separate_save(
     model: nn.Module,
@@ -14,6 +17,7 @@ def separate_save(
     in_place: bool = True,
     model_file="functional.bin",
     state_dict_file="state_dict.bin",
+    use_safe_tensors: bool = True,
 ):
     """
     Save the model's architecture and state dictionary separately.
@@ -31,12 +35,15 @@ def separate_save(
     for name, param in model.state_dict().items():
         state_dict[name] = param.clone().detach().to(dtype=dtype).cpu()
 
-    model = model.to(device="meta")
+    model = model.to_empty(device="meta")
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     torch.save(model, os.path.join(save_dir, model_file))
-    torch.save(state_dict, os.path.join(save_dir, state_dict_file))
+    if not use_safe_tensors:
+        torch.save(state_dict, os.path.join(save_dir, state_dict_file))
+    else:
+        save_file(state_dict, os.path.join(save_dir, state_dict_file))
 
 
 def separate_load(
@@ -46,6 +53,7 @@ def separate_load(
     device: torch.device = "cpu",
     model_file="functional.bin",
     state_dict_file="state_dict.bin",
+    use_safe_tensors: bool = True,
 ):
     """
     Load the model's architecture and state dictionary separately.
@@ -69,10 +77,18 @@ def separate_load(
         .to_empty(device=device or "cpu")
     )
     if state_dict_file is not None:
-        state_dict = torch.load(
-            os.path.join(load_dir, state_dict_file),
-            map_location="cpu",
-        )
+        if not use_safe_tensors:
+            state_dict = torch.load(
+                os.path.join(load_dir, state_dict_file),
+                map_location="cpu",
+            )
+        else:
+            state_dict = {}
+            with safe_open(
+                os.path.join(load_dir, state_dict_file), framework="pt", device="cpu"
+            ) as f:
+                for k in f.keys():
+                    state_dict[k] = f.get_tensor(k)
         if dtype is not None:
             for name, param in state_dict.items():
                 state_dict[name] = param.to(dtype=dtype, non_blocking=True)

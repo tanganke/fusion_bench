@@ -1,0 +1,1 @@
+from fusion_bench.tasks.clip_classification.clip_mixin import CLIPClassificationMixin

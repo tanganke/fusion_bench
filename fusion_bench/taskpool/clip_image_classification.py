@@ -1,3 +1,4 @@
+import functools
 import json
 import logging
 import os
@@ -22,6 +23,11 @@ from fusion_bench.utils.parameters import count_parameters
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 log = logging.getLogger(__name__)
+
+
+@functools.cache
+def load_dataset_from_config_cached(dataset_config: DictConfig):
+    return load_dataset_from_config(dataset_config)
 
 
 class CLIPImageClassificationTask(ClassificationTask):
@@ -53,7 +59,7 @@ class CLIPImageClassificationTask(ClassificationTask):
         dataset_config = self.config["dataset"]
         dataset_config = self._taskpool.prepare_dataset_config(dataset_config)
         log.info(f"Loading test dataset: {dataset_config.name}")
-        dataset = load_dataset_from_config(dataset_config)
+        dataset = load_dataset_from_config_cached(dataset_config)
         dataset = CLIPDataset(dataset, self._clip_processor)
         return dataset
 
