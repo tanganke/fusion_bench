@@ -23,6 +23,22 @@ models:
 # The following datasets are used for test-time adaptation
 dataset_type: huggingface_image_classification
 tta_datasets:
+  - name: sun397
+    dataset:
+      name: tanganke/sun397
+      split: test
+  - name: stanford_cars
+    dataset:
+      name: tanganke/stanford_cars
+      split: test
+  - name: resisc45
+    dataset:
+      name: tanganke/resisc45
+      split: test
+  - name: eurosat
+    dataset:
+      name: tanganke/eurosat
+      split: test
   - name: svhn
     dataset:
       type: instantiate
@@ -33,18 +49,6 @@ tta_datasets:
           - svhn
           - cropped_digits
         split: test
-  - name: stanford_cars
-    dataset:
-      name: tanganke/stanford_cars
-      split: test
-  - name: resisc45
-    dataset:
-      name: tanganke/resisc45
-      split: test
-  - name: eurosat
-    dataset:
-      name: tanganke/eurosat
-      split: test
   - name: gtsrb
     dataset:
       name: tanganke/gtsrb
@@ -57,12 +61,24 @@ tta_datasets:
     dataset:
       name: tanganke/dtd
       split: test
+
+train_datasets:
   - name: sun397
     dataset:
       name: tanganke/sun397
-      split: test
-
-train_datasets:
+      split: train
+  - name: stanford_cars
+    dataset:
+      name: tanganke/stanford_cars
+      split: train
+  - name: resisc45
+    dataset:
+      name: tanganke/resisc45
+      split: train
+  - name: eurosat
+    dataset:
+      name: tanganke/eurosat
+      split: train
   - name: svhn
     dataset:
       type: instantiate
@@ -73,18 +89,6 @@ train_datasets:
           - svhn
           - cropped_digits
         split: train
-  - name: stanford_cars
-    dataset:
-      name: tanganke/stanford_cars
-      split: train
-  - name: resisc45
-    dataset:
-      name: tanganke/resisc45
-      split: train
-  - name: eurosat
-    dataset:
-      name: tanganke/eurosat
-      split: train
   - name: gtsrb
     dataset:
       name: tanganke/gtsrb
@@ -96,8 +100,4 @@ train_datasets:
   - name: dtd
     dataset:
       name: tanganke/dtd
-      split: train
-  - name: sun397
-    dataset:
-      name: tanganke/sun397
       split: train
