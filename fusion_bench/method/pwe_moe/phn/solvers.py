@@ -1,11 +1,11 @@
 from abc import abstractmethod
+from typing import Tuple
 
 import cvxopt
 import cvxpy as cp
 import numpy as np
 import torch
 from torch import Tensor
-from typing import Tuple
 
 """Implementation of Pareto HyperNetworks with:
 1. Linear scalarization

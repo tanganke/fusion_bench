@@ -8,7 +8,7 @@ import importlib.resources
 import json
 import logging
 import os
-from typing import Iterable, Union, Dict
+from typing import Dict, Iterable, Union
 
 import hydra
 from omegaconf import DictConfig, OmegaConf

@@ -58,7 +58,7 @@ class Program:
                 LearningRateMonitor(logging_interval="step"),
                 RichModelSummary(max_depth=1),
                 ModelCheckpoint(save_last=True),
-            ]
+            ],
         )
 
         train_loader = DataLoader(

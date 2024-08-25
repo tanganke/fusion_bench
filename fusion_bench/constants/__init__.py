@@ -1,2 +1,2 @@
-from .stats import *
 from .paths import *
+from .stats import *

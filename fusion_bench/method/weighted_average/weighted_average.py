@@ -2,9 +2,9 @@ import logging
 from copy import deepcopy
 from typing import List, Mapping, Union
 
+import numpy as np
 import torch
 from torch import Tensor, nn
-import numpy as np
 
 from fusion_bench.method.base_algorithm import ModelFusionAlgorithm
 from fusion_bench.modelpool import ModelPool, to_modelpool

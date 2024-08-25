@@ -2,13 +2,14 @@ import os
 from copy import deepcopy
 
 import torch
+from safetensors import safe_open
+from safetensors.torch import save_file
 from torch import nn
 
 from fusion_bench.utils.dtype import parse_dtype
-from safetensors import safe_open
-from safetensors.torch import save_file
 
 __all__ = ["separate_save", "separate_load"]
+
 
 def separate_save(
     model: nn.Module,
