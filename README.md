@@ -61,6 +61,14 @@ The CLI's design allows for easy extension to new fusion methods, model types, a
 
 Read the [CLI documentation](https://tanganke.github.io/fusion_bench/cli/fusion_bench/) for more information.
 
+### FusionBench Command Generator WebUI
+
+FusionBench Command Generator is a user-friendly web interface for generating FusionBench commands based on configuration files. 
+It provides an interactive way to select and customize FusionBench configurations, making it easier to run experiments with different settings.
+[Read more here](https://tanganke.github.io/fusion_bench/cli/fusion_bench_webui/).
+
+![FusionBench Command Generator Web Interface](docs/cli/images/fusion_bench_webui.png)
+
 ## Citation
 
 If you find this benchmark useful, please consider citing our work:

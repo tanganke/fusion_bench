@@ -5,6 +5,7 @@ nav:
     - README.md
     - introduction_to_model_fusion.md
     - cli/fusion_bench.md
+    - cli/fusion_bench_webui.md
   - Fusion Algorithms:
       - algorithms/README.md
       - algorithms/dummy.md
