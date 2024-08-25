@@ -45,6 +45,10 @@ class ModelPoolFactory:
     def register_modelpool(name: str, modelpool_cls):
         ModelPoolFactory._modelpool[name] = modelpool_cls
 
+    @classmethod
+    def available_modelpools(cls):
+        return list(cls._modelpool.keys())
+
 
 def load_modelpool_from_config(modelpool_config: DictConfig):
     """

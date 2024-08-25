@@ -86,6 +86,10 @@ class AlgorithmFactory:
     def register_algorithm(name: str, algorithm_cls):
         AlgorithmFactory._aglorithms[name] = algorithm_cls
 
+    @classmethod
+    def available_algorithms(cls):
+        return list(cls._aglorithms.keys())
+
 
 def load_algorithm_from_config(method_config: DictConfig):
     """

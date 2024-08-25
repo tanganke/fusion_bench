@@ -39,6 +39,10 @@ class TaskPoolFactory:
     def register_taskpool(name: str, taskpool_cls):
         TaskPoolFactory._taskpool_types[name] = taskpool_cls
 
+    @classmethod
+    def available_taskpools(cls):
+        return list(cls._taskpool_types.keys())
+
 
 def load_taskpool_from_config(taskpool_config: DictConfig):
     """
