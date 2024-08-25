@@ -1,4 +1,5 @@
 defaults:
+  - override help: fusion_bench_help
   - override job_logging: rich_logging
 
 run:
