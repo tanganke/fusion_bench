@@ -223,6 +223,19 @@ merge multiple CLIP models using simple averaging:
 fusion_bench method=simple_average modelpool=clip-vit-base-patch32_TA8.yaml taskpool=dummy
 ```
 
+## Running in Offline Mode
+
+In the offline mode, the model pool will not download the models from the internet. 
+Instead, it will use the models that are already downloaded to the local cache.
+
+To run `fusion_bench` in offline mode, you can run the following command before running `fusion_bench`:
+
+```bash
+source offline_mode.sh
+```
+
+Or set the environment variable according to the content of `offline_mode.sh`.
+
 ## Debugging and Troubleshooting
 
 During algorithm development, you may want to debug the code or inspect the configuration. 
