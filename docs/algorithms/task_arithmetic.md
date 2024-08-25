@@ -80,8 +80,6 @@ type: huggingface_clip_vision
 # and arbitrary number of fine-tuned models.
 models:
   - name: _pretrained_
-    path: google/flan-t5-base
-  - name: _pretrained_
     path: openai/clip-vit-base-patch32
   - name: svhn
     path: tanganke/clip-vit-base-patch32_svhn
