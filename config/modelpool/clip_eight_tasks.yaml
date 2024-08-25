@@ -1,0 +1,71 @@
+dataset_type: huggingface_image_classification
+
+# test-time adaptation datasets
+tta_datasets:
+  - name: sun397
+    dataset:
+      name: tanganke/sun397
+      split: test
+  - name: stanford_cars
+    dataset:
+      name: tanganke/stanford_cars
+      split: test
+  - name: resisc45
+    dataset:
+      name: tanganke/resisc45
+      split: test
+  - name: eurosat
+    dataset:
+      name: tanganke/eurosat
+      split: test
+  - name: svhn
+    dataset:
+      name: dpdl-benchmark/svhn_cropped
+      split: test
+  - name: gtsrb
+    dataset:
+      name: tanganke/gtsrb
+      split: test
+  - name: mnist
+    dataset:
+      name: mnist
+      split: test
+  - name: dtd
+    dataset:
+      name: tanganke/dtd
+      split: test
+
+# training datasets
+train_datasets:
+  - name: sun397
+    dataset:
+      name: tanganke/sun397
+      split: train
+  - name: stanford_cars
+    dataset:
+      name: tanganke/stanford_cars
+      split: train
+  - name: resisc45
+    dataset:
+      name: tanganke/resisc45
+      split: train
+  - name: eurosat
+    dataset:
+      name: tanganke/eurosat
+      split: train
+  - name: svhn
+    dataset:
+      name: dpdl-benchmark/svhn_cropped
+      split: train
+  - name: gtsrb
+    dataset:
+      name: tanganke/gtsrb
+      split: train
+  - name: mnist
+    dataset:
+      name: mnist
+      split: train
+  - name: dtd
+    dataset:
+      name: tanganke/dtd
+      split: train
