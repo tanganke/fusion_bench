@@ -98,13 +98,18 @@ class App:
         self.group_tree = group_tree
         self.overrides = []
         self.config = None
-        self.config_name = None
+        if "example_config" in group_tree.configs:
+            self.config_name = "example_config"
+        else:
+            self.config_name = group_tree.configs[0]
 
         initialize_config_dir(
             config_dir=self.config_path,
             job_name=Path(__file__).stem,
             version_base=None,
         )
+
+        self.config = self.generate_config(self.config_name)
 
     @functools.cached_property
     def config_path(self):
@@ -152,7 +157,9 @@ class App:
 
             # 1. Choose a root config file
             root_configs = gr.Dropdown(
-                choices=self.group_tree.configs, label="Root Config"
+                choices=self.group_tree.configs,
+                value=self.config_name,
+                label="Root Config",
             )
 
             with gr.Row():
@@ -179,7 +186,9 @@ class App:
                             gr.Markdown(f"### {prefix}{name}")
                             group_config = gr.Dropdown(
                                 choices=group_tree.configs,
-                                value=self.get_override(group_tree.parent.prefix + name),
+                                value=self.get_override(
+                                    group_tree.parent.prefix + name
+                                ),
                                 label="Config File",
                             )
                             group_config.select(
@@ -267,7 +276,15 @@ class App:
                                 label="Other Global Options",
                             )
 
-                config_output = gr.Code(language="yaml", label="Overall Configuration")
+                config_output = gr.Code(
+                    value=(
+                        OmegaConf.to_yaml(self.config)
+                        if self.config is not None
+                        else ""
+                    ),
+                    language="yaml",
+                    label="Overall Configuration",
+                )
 
             root_configs.change(
                 self.update_config,
@@ -291,6 +308,23 @@ def parse_args():
         action="store_true",
         help="Print the config tree",
     )
+    parser.add_argument(
+        "--bind-ip",
+        type=str,
+        default="127.0.0.1",
+        help="IP to bind the web UI",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=7860,
+        help="Port to run the web UI",
+    )
+    parser.add_argument(
+        "--share",
+        action="store_true",
+        help="Share the web UI",
+    )
     args = parser.parse_args()
     return args
 
@@ -299,7 +333,11 @@ def main() -> None:
     args = parse_args()
 
     app = App(args).generate_ui()
-    app.launch()
+    app.launch(
+        share=args.share,
+        server_name=args.bind_ip,
+        server_port=args.port,
+    )
 
 
 if __name__ == "__main__":

@@ -20,6 +20,9 @@ fusion_bench_webui [OPTIONS]
 
 - `--config-path PATH`: Specify the path to the config directory. If not provided, the default FusionBench config path will be used.
 - `--print-tree`: Print the configuration tree structure before launching the web interface. Default is `False`.
+- `--bind-ip IP`: Specify the IP address to bind the web UI. Default is `127.0.0.1`.
+- `--port PORT`: Specify the port to run the web UI. Default is `7860`.
+- `--share`: Share the web UI. Default is `False`.
 
 The web interface consists of the following components:
 
