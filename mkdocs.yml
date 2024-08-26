@@ -6,7 +6,7 @@ nav:
     - introduction_to_model_fusion.md
     - cli/fusion_bench.md
     - cli/fusion_bench_webui.md
-  - Fusion Algorithms:
+  - Algorithms:
       - algorithms/README.md
       - algorithms/dummy.md
       - Model Ensemble: 
@@ -32,6 +32,8 @@ nav:
         - SMILE Upscaling: algorithms/smile_upscaling.md
         # - Model Stitching: algorithms/model_stitching.md
         - Model Recombination: algorithms/model_recombination.md
+      - Model Pruning:
+        - Magnitude Pruning: algorithms/pruning/magnitude_pruning.md
   - Model Pool (Benchmark Models):
       - modelpool/README.md
       - CLIP-ViT Models: modelpool/clip_vit.md

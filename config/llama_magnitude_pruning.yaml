@@ -1,0 +1,13 @@
+defaults:
+  - example_config
+  - override method: llama_magnitude_pruning
+  - override modelpool: llama_for_causallm
+  - override taskpool: dummy
+  - _self_
+
+merged_model_save_path: null # path to save the merged model, use "{log_dir}" to refer to the logger directory, for example `merged_model_save_path=\{log_dir\}/merged_model`
+merged_model_save_kwargs:
+  save_tokenizer: true
+  tokenizer_kwargs:
+    unk_token: "<s>" # https://github.com/huggingface/transformers/issues/24318#issuecomment-1596801322
+

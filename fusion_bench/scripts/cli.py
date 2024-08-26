@@ -20,6 +20,7 @@ from fusion_bench.mixins.lightning_fabric import LightningFabricMixin
 from fusion_bench.modelpool import load_modelpool_from_config
 from fusion_bench.taskpool import load_taskpool_from_config
 from fusion_bench.utils.rich_utils import print_config_tree
+from fusion_bench.utils import timeit_context
 
 log = logging.getLogger(__name__)
 
@@ -89,7 +90,21 @@ class LightningProgram(LightningFabricMixin):
 
             if os.path.dirname(save_path):
                 os.makedirs(os.path.dirname(save_path), exist_ok=True)
-            self.modelpool.save_model(merged_model, save_path)
+
+            # save the merged model
+            if (
+                hasattr(self.config, "merged_model_save_kwargs")
+                and self.config.merged_model_save_kwargs is not None
+            ):
+                merged_model_save_kwargs = self.config.merged_model_save_kwargs
+            else:
+                merged_model_save_kwargs = {}
+            with timeit_context(f"Saving the merged model to {save_path}"):
+                self.modelpool.save_model(
+                    merged_model,
+                    save_path,
+                    **merged_model_save_kwargs,
+                )
         else:
             print("No save path specified for the merged model. Skipping saving.")
 

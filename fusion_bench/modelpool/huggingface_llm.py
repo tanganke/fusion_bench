@@ -45,7 +45,9 @@ class AutoModelForCausalLMPool(ModelPool):
         model: PreTrainedModel,
         path: str,
         push_to_hub: bool = False,
+        model_dtype: Optional[str] = None,
         save_tokenizer: bool = False,
+        tokenizer_kwargs=None,
         **kwargs,
     ):
         """
@@ -59,24 +61,33 @@ class AutoModelForCausalLMPool(ModelPool):
             **kwargs: Additional keyword arguments passed to the `save_pretrained` method.
         """
         path = os.path.expanduser(path)
-        model.save_pretrained(
-            path,
-            push_to_hub=push_to_hub,
-            **kwargs,
-        )
         if save_tokenizer:
+            if tokenizer_kwargs is None:
+                tokenizer_kwargs = {}
+            # load the tokenizer
             if self.has_pretrained:
                 tokenizer = AutoTokenizer.from_pretrained(
-                    os.path.expanduser(self.get_model_config("_pretrained_").path)
+                    os.path.expanduser(self.get_model_config("_pretrained_").path),
+                    **tokenizer_kwargs,
                 )
             else:
                 tokenizer = AutoTokenizer.from_pretrained(
-                    os.path.expanduser(self.get_model_config(self.model_names[0]).path)
+                    os.path.expanduser(
+                        self.get_model_config(self.model_names[0]).path,
+                        **tokenizer_kwargs,
+                    )
                 )
             tokenizer.save_pretrained(
                 path,
                 push_to_hub=push_to_hub,
             )
+        if model_dtype is not None:
+            model.to(dtype=parse_dtype(model_dtype))
+        model.save_pretrained(
+            path,
+            push_to_hub=push_to_hub,
+            **kwargs,
+        )
 
 
 class LLamaForCausalLMPool(AutoModelForCausalLMPool):
