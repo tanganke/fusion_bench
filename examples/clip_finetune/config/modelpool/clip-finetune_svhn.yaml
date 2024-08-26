@@ -1,0 +1,17 @@
+type: huggingface_clip_vision
+models:
+  - name: _pretrained_
+    path: openai/clip-vit-base-patch32
+
+dataset_type: huggingface_image_classification
+train_datasets:
+  - name: svhn
+    dataset:
+      type: instantiate
+      name: svhn
+      object:
+        _target_: datasets.load_dataset
+        _args_:
+          - svhn
+          - cropped_digits
+        split: train
