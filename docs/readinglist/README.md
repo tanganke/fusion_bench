@@ -9,12 +9,12 @@ This collection is designed to serve as a valuable starting point for those inte
 
 !!! note
 
-Meaning of the symbols in the list:
-
-- :star: Highly recommended
-- :llama: LLaMA model-related or Mistral-related work
-- :simple-github: Code available on GitHub
-- :hugging: models or datasets available on Hugging Face
+    Meaning of the symbols in the list:
+    
+    - :star: Highly recommended
+    - :llama: LLaMA model-related or Mistral-related work
+    - :simple-github: Code available on GitHub
+    - :hugging: models or datasets available on Hugging Face
 
 ## Survey Papers
 
