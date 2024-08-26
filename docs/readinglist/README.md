@@ -84,7 +84,9 @@ Mode connectivity is such an important concept in model merging that it deserves
 - :star: :llama: [:simple-github:](https://github.com/arcee-ai/mergekit) 
     MergeKit: A PyTorch library for merging large language models.
 
-## Application in RL
+## Other Applications of Model Fusion
+
+### Applications in Reinforcement Learning (RL)
 
 - :star: Lee K, Laskin M, Srinivas A, et al. “Sunrise: A simple unified framework for ensemble learning in deep reinforcement learning", ICML, 2021.
 
