@@ -49,9 +49,6 @@ class TiesMergingAlgorithm(ModelFusionAlgorithm):
         merged_state_dict = vector_to_state_dict(
             merged_check, ptm_check, remove_keys=remove_keys
         )
-        merged_state_dict = vector_to_state_dict(
-            merged_check, ptm_check, remove_keys=remove_keys
-        )
 
         pretrained_model.load_state_dict(merged_state_dict)
         return pretrained_model
