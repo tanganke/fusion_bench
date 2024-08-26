@@ -10,7 +10,7 @@ fusion_bench \
     method.normalize=true \
     method.weights=[0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3] \
     modelpool=clip-vit-base-patch32_TA8_model_only \
-    taskpool=clip-vit-classification_TA8.local
+    taskpool=clip-vit-classification_TA8
 ```
 """
 
