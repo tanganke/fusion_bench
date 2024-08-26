@@ -1,8 +1,12 @@
+"""
+TODO: Per-session state management (use AppState)
+"""
+
 import argparse
 import functools
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Union, Iterable
+from typing import Dict, Iterable, List, Optional, Union
 
 import gradio as gr
 import hydra
@@ -85,6 +89,82 @@ def priority_iterable(iter, priority_keys):
             items.remove(key)
     for item in items:
         yield item
+
+
+class AppState:
+    """
+    Pre-session state of the app
+    """
+
+    config_name: str
+    hydra_options: List[str]
+    overrides: List[str]
+    config: DictConfig
+
+    def __init__(
+        self,
+        config_path: str,
+        config_name: str,
+        hydra_options: List[str] = [],
+        overrides: List[str] = [],
+    ) -> None:
+        super().__init__()
+        self.config_path = config_path
+        self.config_name = config_name
+        self.hydra_options = hydra_options
+        self.overrides = overrides
+        self.update_config(config_name)
+
+    @property
+    def config_str(self):
+        return OmegaConf.to_yaml(self.config)
+
+    def update_config(
+        self,
+        config_name: str = None,
+        overrides: List[str] = None,
+    ) -> "AppState":
+        if config_name is not None:
+            self.config_name = config_name
+        if overrides is not None:
+            self.overrides = overrides
+
+        if self.config_name is None:
+            self.config = ""
+        else:
+            self.config = compose(
+                config_name=self.config_name, overrides=self.overrides
+            )
+        return self
+
+    def generate_command(self):
+        # Generate the command according to `config_name` and `overrides` (a list of strings)
+        command = "fusion_bench \\\n"
+        if self.config_path is not None:
+            command += f"--config-path {self.config_path} \\\n"
+        command += f"--config-name {self.config_name} \\\n"
+        command += " \\\n".join(self.overrides)
+        command = command.strip()
+        command = command.strip("\\")
+        command = command.strip()
+
+        return command
+
+    @property
+    def config_str_and_command(self):
+        return self.config_str, self.generate_command()
+
+    def get_override(self, key: str):
+        for ov in self.overrides:
+            if ov.startswith(f"{key}="):
+                return "".join(ov.split("=")[1:])
+        return None
+
+    def update_override(self, key: str, value):
+        self.overrides = [ov for ov in self.overrides if not ov.startswith(f"{key}=")]
+        if value:
+            self.overrides.append(f"{key}={value}")
+        return self.update_config()
 
 
 class App:
