@@ -9,7 +9,7 @@ First, import the necessary modules:
 ```python
 from omegaconf import DictConfig
 from torch import nn
-from fusion_bench.method import DepthUpscalingAlgorithm
+from fusion_bench.method.depth_upscaling import DepthUpscalingAlgorithm
 from fusion_bench.modelpool import to_modelpool
 ```
 
@@ -48,7 +48,7 @@ Here we provide an example of how to use the `DepthUpscalingAlgorithm` to upscal
 from omegaconf import DictConfig
 from torch import nn
 from transformers import AutoModelForCausalLM, MistralConfig, MistralForCausalLM
-from fusion_bench.method import DepthUpscalingAlgorithm
+from fusion_bench.method.depth_upscaling import DepthUpscalingAlgorithm
 
 # create a Mistral model
 # here we randomly initialize the model for demonstration purposes
@@ -113,7 +113,7 @@ fusion_bench method=depth_upscaling ...
 
 ## References
 
-::: fusion_bench.method.DepthUpscalingAlgorithm
+::: fusion_bench.method.depth_upscaling.DepthUpscalingAlgorithm
 
 
 [^1]: [SOLAR 10.7B: Scaling Large Language Models with Simple yet Effective Depth Up-Scaling](http://arxiv.org/abs/2312.15166)

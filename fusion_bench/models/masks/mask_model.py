@@ -65,7 +65,6 @@ def get_masked_state_dict(
 
 
 class MaskModel(ParameterDictModel):
-
     def __init__(
         self,
         state_dict_or_model: Union[_StateDict, nn.Module],

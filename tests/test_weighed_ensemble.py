@@ -4,7 +4,7 @@ import torch
 from omegaconf import DictConfig
 from torch import Tensor, nn
 
-from fusion_bench.method import WeightedEnsembleAlgorithm
+from fusion_bench.method.ensemble import WeightedEnsembleAlgorithm
 
 
 class TestWeightedAlgorithm(unittest.TestCase):

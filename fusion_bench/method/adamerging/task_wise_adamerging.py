@@ -45,7 +45,7 @@ class TaskWiseAdaMergingAlgorithm(ModelFusionAlgorithm):
         super().__init__(algorithm_config)
 
         if self._fabric is None and torch.cuda.is_available():
-            self._fabric = L.Fabric(devices=self.config.devices)
+            self._fabric = L.Fabric(devices=self.config.get("devices", 1))
             self._fabric.launch()
 
     @torch.no_grad()

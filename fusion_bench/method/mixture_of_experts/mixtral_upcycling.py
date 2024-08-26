@@ -141,7 +141,6 @@ class MixtralUpscalingAlgorithm(ModelFusionAlgorithm):
 
     @torch.no_grad()
     def _run(self, modelpool: ModelPool | LlamaModel | MistralModel) -> MixtralModel:
-
         if isinstance(modelpool, ModelPool):
             assert modelpool.has_pretrained, "ModelPool must have pretrained model."
             pretrained_model = modelpool.load_model("_pretrained_")

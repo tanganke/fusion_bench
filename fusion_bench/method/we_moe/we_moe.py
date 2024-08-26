@@ -43,12 +43,14 @@ class WeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
 
         if self._fabric is None and torch.cuda.is_available():
             self._fabric = L.Fabric(
-                devices=self.config.devices,
+                devices=self.config.get("devices", 1),
             )
             self._fabric.launch()
         else:
             assert "No CUDA device available."
-        self.profiler = SimpleProfiler(self.config.cache_dir, "we_moe_profiler.txt")
+        self.profiler = SimpleProfiler(
+            self.config.get("cache_dir", "outputs"), "we_moe_profiler.txt"
+        )
 
     @abstractmethod
     def load_checkpoint(self, model, checkpoint):

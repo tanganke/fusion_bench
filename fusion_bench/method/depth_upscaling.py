@@ -17,7 +17,6 @@ log = logging.getLogger(__name__)
 
 
 class DepthUpscalingAlgorithm(ModelFusionAlgorithm):
-
     @torch.no_grad()
     def run(self, modelpool: nn.ModuleList | ModelPool) -> nn.ModuleList:
         """

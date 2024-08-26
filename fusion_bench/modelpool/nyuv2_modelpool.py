@@ -17,7 +17,6 @@ log = logging.getLogger(__name__)
 
 
 class NYUv2ModelPool(ModelPool):
-
     def load_model(
         self, model_config: str | DictConfig, encoder_only: bool = True
     ) -> ResnetDilated | NYUv2Model:

@@ -447,7 +447,6 @@ SMILE_MISTRAL_ATTENTION_CLASSES = {
 
 
 class SmileMistralDecoderLayer(nn.Module):
-
     def __init__(self, config: SmileMistralConfig, layer_idx: int):
         super().__init__()
         self.hidden_size = config.hidden_size

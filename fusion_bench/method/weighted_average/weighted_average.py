@@ -33,7 +33,6 @@ log = logging.getLogger(__name__)
 
 
 class WeightedAverageAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
-
     @override
     @torch.no_grad()
     def run(self, modelpool: ModelPool):

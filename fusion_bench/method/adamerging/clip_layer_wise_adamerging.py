@@ -40,7 +40,6 @@ class CLIPLayerWiseAdaMergingAlgorithm(
     CLIPClassificationMixin,
     LayerWiseAdaMergingAlgorithm,
 ):
-
     def on_test_time_adaptation_start(self):
         """
         Here we load the CLIP processor and construct the zero-shot classification head for each task.

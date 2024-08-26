@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 from torch import nn
 
-from fusion_bench.method import ModelRecombinationAlgorithm
+from fusion_bench.method.model_recombination import ModelRecombinationAlgorithm
 from fusion_bench.modelpool import ModelPool, to_modelpool
 
 

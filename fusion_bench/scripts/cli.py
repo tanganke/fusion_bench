@@ -67,7 +67,6 @@ def run_model_fusion(cfg: DictConfig):
 
 
 class LightningProgram(LightningFabricMixin):
-
     def __init__(self, config: DictConfig):
         self.config = config
 

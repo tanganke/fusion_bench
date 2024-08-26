@@ -34,7 +34,7 @@ class FisherMergingAlgorithmForCLIP(FisherMergingAlgorithm):
 
         # setup fabric
         if self._fabric is None and torch.cuda.is_available():
-            self._fabric = L.Fabric(devices=self.config.devices)
+            self._fabric = L.Fabric(devices=self.config.get("devices", 1))
             self._fabric.launch()
 
     def on_fisher_merging_start(self):

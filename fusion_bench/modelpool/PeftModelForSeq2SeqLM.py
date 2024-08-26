@@ -13,7 +13,6 @@ log = logging.getLogger(__name__)
 
 
 class PeftModelForSeq2SeqLMPool(ModelPool):
-
     def load_model(self, model_config: str | DictConfig):
         """
         Load a model based on the provided configuration.

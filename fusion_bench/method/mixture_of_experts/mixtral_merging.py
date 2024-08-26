@@ -71,7 +71,6 @@ class MixtralMoEMergingAlgorithm(MixtralUpscalingAlgorithm):
 
 
 class MixtralForCausalLMMergingAlgorithm(MixtralForCausalLMUpscalingAlgorithm):
-
     @torch.no_grad()
     def run(self, modelpool: ModelPool) -> MixtralForCausalLM:
         """

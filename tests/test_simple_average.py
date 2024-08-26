@@ -3,7 +3,7 @@ import unittest
 import torch
 import torch.nn as nn
 
-from fusion_bench.method import SimpleAverageAlgorithm
+from fusion_bench.method.simple_average import SimpleAverageAlgorithm
 
 
 class TestSimpleAverageAlgorithm(unittest.TestCase):
