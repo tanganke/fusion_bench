@@ -176,12 +176,11 @@ class App:
             print(group_tree)
 
         self.group_tree = group_tree
-        self.overrides = []
-        self.config = None
+
         if "example_config" in group_tree.configs:
-            self.config_name = "example_config"
+            self.init_config_name = "example_config"
         else:
-            self.config_name = group_tree.configs[0]
+            self.init_config_name = group_tree.configs[0]
 
         initialize_config_dir(
             config_dir=self.config_path,
@@ -189,7 +188,12 @@ class App:
             version_base=None,
         )
 
-        self.config = self.generate_config(self.config_name)
+        self.app_state = AppState(
+            config_path=args.config_path,
+            config_name=self.init_config_name,
+            hydra_options=[],
+            overrides=[],
+        )
 
     @functools.cached_property
     def config_path(self):
@@ -198,38 +202,10 @@ class App:
         else:
             return _get_default_config_path()
 
-    def generate_config(self, config_name: str):
-        config = compose(config_name=config_name, overrides=self.overrides)
-        return config
-
-    def update_config(self, config_name):
-        # Generate a DictConfig object from the chosen config file
-        self.config_name = config_name
-        self.config = config = self.generate_config(config_name)
-
-        # Generate the command according to `config_name` and `overrides` (a list of strings)
-        command = "fusion_bench \\\n"
-        if self.args.config_path is not None:
-            command += f"--config-path {self.config_path} \\\n"
-        command += f"--config-name {config_name} \\\n"
-        command += " \\\n".join(self.overrides)
-        command = command.strip()
-        command = command.strip("\\")
-        command = command.strip()
-
-        return OmegaConf.to_yaml(config), command
-
-    def get_override(self, key):
-        for ov in self.overrides:
-            if ov.startswith(f"{key}="):
-                return "".join(ov.split("=")[1:])
-        return None
-
-    def update_override(self, key, value):
-        self.overrides = [ov for ov in self.overrides if not ov.startswith(f"{key}=")]
-        if value:
-            self.overrides.append(f"{key}={value}")
-        return self.update_config(self.config_name)
+    def __getattr__(self, name):
+        if hasattr(self.app_state, name):
+            return getattr(self.app_state, name)
+        raise AttributeError(f"App object has no attribute {name}")
 
     def generate_ui(self):
         with gr.Blocks() as app:
@@ -254,7 +230,7 @@ class App:
                         if not config_name:
                             return gr.Markdown("Select a root config to start.")
 
-                        config = self.generate_config(config_name)
+                        config = self.app_state.update_config(config_name).config
                         group_tree = self.group_tree
 
                         def render_group(
@@ -272,9 +248,9 @@ class App:
                                 label="Config File",
                             )
                             group_config.select(
-                                lambda c: self.update_override(
+                                lambda c: self.app_state.update_override(
                                     group_tree.parent.prefix + name, c
-                                ),
+                                ).config_str_and_command,
                                 inputs=[group_config],
                                 outputs=[config_output, command_output],
                             )
@@ -293,9 +269,9 @@ class App:
                                                 label=group_tree.prefix + key,
                                             )
                                             input_box.submit(
-                                                lambda v, k=group_tree.prefix + key: self.update_override(
+                                                lambda v, k=group_tree.prefix + key: self.app_state.update_override(
                                                     k, v
-                                                ),
+                                                ).config_str_and_command,
                                                 inputs=[input_box],
                                                 outputs=[config_output, command_output],
                                             )
@@ -338,7 +314,9 @@ class App:
                                             label=group_tree.prefix + key,
                                         )
                                         input_box.submit(
-                                            lambda v, k=key: self.update_override(k, v),
+                                            lambda v, k=key: self.app_state.update_override(
+                                                k, v
+                                            ).config_str_and_command,
                                             inputs=[input_box],
                                             outputs=[config_output, command_output],
                                         )
@@ -367,7 +345,9 @@ class App:
                 )
 
             root_configs.change(
-                self.update_config,
+                lambda config_name: self.app_state.update_config(
+                    config_name
+                ).config_str_and_command,
                 inputs=[root_configs],
                 outputs=[config_output, command_output],
             )
@@ -417,6 +397,7 @@ def main() -> None:
         share=args.share,
         server_name=args.bind_ip,
         server_port=args.port,
+        show_error=True,
     )
 
 
