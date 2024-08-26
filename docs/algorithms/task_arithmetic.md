@@ -30,7 +30,7 @@ The choice of the scaling coefficient $\lambda$ plays a crucial role in the fina
 To use the Task Arithmetic algorithm, you can use the `TaskArithmeticAlgorithm` class from the `fusion_bench.method` module.
 
 ```python
-from fusion_bench.method import TaskArithmeticAlgorithm
+from fusion_bench.method.task_arithmetic import TaskArithmeticAlgorithm
 from omegaconf import DictConfig
 
 # Instantiate the TaskArithmeticAlgorithm
@@ -115,7 +115,7 @@ tasks:
 
 ## References
 
-::: fusion_bench.method.TaskArithmeticAlgorithm
+::: fusion_bench.method.task_arithmetic.TaskArithmeticAlgorithm
     options:
         members: true
 

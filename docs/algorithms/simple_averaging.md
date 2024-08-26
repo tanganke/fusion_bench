@@ -23,7 +23,7 @@ In this example, we will demonstrate how to use the `SimpleAverageAlgorithm` cla
 This algorithm is used to merge multiple models by averaging their parameters.
 
 ```python
-from fusion_bench.method import SimpleAverageAlgorithm
+from fusion_bench.method.simple_average import SimpleAverageAlgorithm
 
 # Instantiate the SimpleAverageAlgorithm
 # This algorithm will be used to merge multiple models by averaging their parameters.
@@ -58,6 +58,6 @@ fusion_bench method=simple_average ...
 
 ## References
 
-::: fusion_bench.method.SimpleAverageAlgorithm
+::: fusion_bench.method.simple_average.SimpleAverageAlgorithm
     options:
         members: true

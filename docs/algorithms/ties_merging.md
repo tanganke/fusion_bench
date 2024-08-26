@@ -60,7 +60,7 @@ fusion_bench method=ties_merging ...
 
 ## Reference
 
-::: fusion_bench.method.TiesMergingAlgorithm
+::: fusion_bench.method.ties_merging.TiesMergingAlgorithm
     options:
         members: true
 
