@@ -25,6 +25,20 @@ Use the following command to run the Weighted Averaging algorithm:
 fusion_bench method=weighted_average ...
 ```
 
+### Merge CLIP-ViT Models
+
+The following command merges eight clip-ViT models using a weighted average approach.
+Because `method.normalize` is set to true, the weights are normalized to sum to 1, thus equivalent to simple average.
+
+```bash
+fusion_bench \
+    method=weighted_average \
+    method.normalize=true \
+    method.weights=[0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3] \
+    modelpool=clip-vit-base-patch32_TA8_model_only \
+    taskpool=clip-vit-classification_TA8
+```
+
 ### Merge Llama/Mistral Models
 
 Here is an example of how to use the Weighted Averaging algorithm to merge two LLama models. In particular, LLaMa models of the type `transformers.LlamaForCausalLM` are merged using the Weighted Averaging algorithm.
