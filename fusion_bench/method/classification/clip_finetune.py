@@ -24,27 +24,27 @@ fusion_bench \
 """
 
 import os
+from typing import Tuple
 
 import lightning as L
 import torch
 from omegaconf import OmegaConf
 from peft import LoraConfig, get_peft_model
+from peft.tuners.lora import LoraLayer
 from torch import Tensor, nn
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 from transformers import CLIPModel, CLIPProcessor
-from typing import Tuple
 
 from fusion_bench.method import ModelFusionAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import to_modelpool
 from fusion_bench.modelpool.huggingface_clip_vision import HuggingFaceClipVisionPool
 from fusion_bench.models.hf_clip import HFCLIPClassifier
+from fusion_bench.models.linearized.linearized_model_utils import LinearizedModelWraper
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.tasks.clip_classification.clip_mixin import CLIPClassificationMixin
 from fusion_bench.utils.data import InfiniteDataLoader
-from peft.tuners.lora import LoraLayer
-from fusion_bench.models.linearized.linearized_model_utils import LinearizedModelWraper
 
 
 def _get_submodules(model, key) -> Tuple:

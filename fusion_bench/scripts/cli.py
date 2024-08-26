@@ -19,8 +19,8 @@ from fusion_bench.method import load_algorithm_from_config
 from fusion_bench.mixins.lightning_fabric import LightningFabricMixin
 from fusion_bench.modelpool import load_modelpool_from_config
 from fusion_bench.taskpool import load_taskpool_from_config
-from fusion_bench.utils.rich_utils import print_config_tree
 from fusion_bench.utils import timeit_context
+from fusion_bench.utils.rich_utils import print_config_tree
 
 log = logging.getLogger(__name__)
 

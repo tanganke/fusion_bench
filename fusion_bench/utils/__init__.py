@@ -1,5 +1,6 @@
 import importlib
 
+from .dtype import parse_dtype
 from .parameters import print_parameters
 from .timer import timeit_context
 
