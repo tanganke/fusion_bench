@@ -109,7 +109,7 @@ class LightningProgram(LightningFabricMixin):
             print("No save path specified for the merged model. Skipping saving.")
 
     def evaluate_merged_model(
-        self, taskpool, merged_modol: Union[nn.Module, Dict, Iterable]
+        self, taskpool, merged_model: Union[nn.Module, Dict, Iterable]
     ):
         """
         Evaluates the merged model using the provided task pool.
@@ -123,7 +123,7 @@ class LightningProgram(LightningFabricMixin):
 
         Args:
             taskpool: The task pool used for evaluating the merged model.
-            merged_modol: The merged model to be evaluated. It can be an instance of `nn.Module`, a dictionary, or an iterable.
+            merged_model: The merged model to be evaluated. It can be an instance of `nn.Module`, a dictionary, or an iterable.
 
         Returns:
             The evaluation report. The type of the report depends on the type of the merged model:
@@ -131,23 +131,23 @@ class LightningProgram(LightningFabricMixin):
             - If the merged model is a dictionary, the report is a dictionary updated with the remaining dictionary items.
             - If the merged model is an iterable, the report is a list of evaluation reports.
         """
-        if isinstance(merged_modol, nn.Module):
-            report = taskpool.evaluate(merged_modol)
+        if isinstance(merged_model, nn.Module):
+            report = taskpool.evaluate(merged_model)
             print(report)
             return report
-        elif isinstance(merged_modol, Dict):
-            model = merged_modol.pop("model")
+        elif isinstance(merged_model, Dict):
+            model = merged_model.pop("model")
             report: dict = taskpool.evaluate(model)
-            report.update(merged_modol)
+            report.update(merged_model)
             print(report)
             return report
-        elif isinstance(merged_modol, Iterable):
+        elif isinstance(merged_model, Iterable):
             return [
                 self.evaluate_merged_model(taskpool, m)
-                for m in tqdm(merged_modol, desc="Evaluating models")
+                for m in tqdm(merged_model, desc="Evaluating models")
             ]
         else:
-            raise ValueError(f"Invalid type for merged model: {type(merged_modol)}")
+            raise ValueError(f"Invalid type for merged model: {type(merged_model)}")
 
     def run_model_fusion(self):
         cfg = self.config
