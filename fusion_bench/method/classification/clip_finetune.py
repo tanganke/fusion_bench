@@ -195,7 +195,6 @@ class ImageClassificationFineTuningForCLIP(
         self,
         model: HFCLIPClassifier | CLIPModel | CLIPVisionModel | CLIPVisionTransformer,
         save_path: str,
-        trainable_only: bool = True,
     ):
         if isinstance(model, HFCLIPClassifier):
             vision_model = model.clip_model.vision_model
@@ -208,19 +207,10 @@ class ImageClassificationFineTuningForCLIP(
         else:
             raise ValueError(f"Unsupported model type: {type(model)}")
 
-        if trainable_only:
-            filter = {"vision_model": lambda k, v: v.requires_grad}
-        else:
-            filter = None
-
         save_dir = os.path.dirname(save_path)
         if save_dir and not os.path.exists(save_dir):
             os.makedirs(save_dir, exist_ok=True)
-        self.fabric.save(
-            {"vision_model": vision_model},
-            save_path,
-            filter=filter,
-        )
+        self.fabric.save(save_path, {"vision_model": vision_model})
 
     def setup_model(self):
         """
