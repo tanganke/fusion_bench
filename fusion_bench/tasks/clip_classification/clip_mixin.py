@@ -31,6 +31,7 @@ class CLIPClassificationMixin(LightningFabricMixin):
     This mixin provides methods to classify images using the CLIP model.
     """
 
+    config: DictConfig
     # the modelpool is set by inheriting class
     modelpool: HuggingFaceClipVisionPool = None
     _clip_processor: CLIPProcessor = None
@@ -84,6 +85,7 @@ class CLIPClassificationMixin(LightningFabricMixin):
         loader = self.fabric.setup_dataloaders(loader)
         return iter(InfiniteDataLoader(loader))
 
+    @torch.no_grad()
     def setup_zero_shot_classification_head(
         self,
         clip_processor: Optional[CLIPProcessor] = None,
@@ -111,7 +113,7 @@ class CLIPClassificationMixin(LightningFabricMixin):
             self.visual_projection = self.to_device(self.visual_projection)
             self.logit_scale = self.to_device(self.logit_scale)
 
-        cache_dir = cache_file = os.path.join(
+        cache_dir = os.path.join(
             self.config.get("cache_dir", "outputs"),
             os.path.normpath(f"{os.path.basename(clip_model_config.path)}"),
         )
@@ -133,7 +135,9 @@ class CLIPClassificationMixin(LightningFabricMixin):
                 )
                 if os.path.exists(cache_file):
                     log.info(f"Loading cached zeroshot weights for task: {task}")
-                    zeroshot_weights = torch.load(cache_file, map_location="cpu")
+                    zeroshot_weights = torch.load(
+                        cache_file, map_location="cpu"
+                    ).detach()
                 else:
                     log.info(
                         f"Construct zero shot classification head for task: {task}"
@@ -142,7 +146,7 @@ class CLIPClassificationMixin(LightningFabricMixin):
                         self.modelpool.get_train_dataset_config(task)["dataset"].name
                     )
                     clip_classifier.set_classification_task(classnames, templates)
-                    zeroshot_weights = clip_classifier.zeroshot_weights
+                    zeroshot_weights = clip_classifier.zeroshot_weights.detach().clone()
                     log.info(f"save zeroshot weights to {cache_file}")
                     torch.save(zeroshot_weights, cache_file)
 

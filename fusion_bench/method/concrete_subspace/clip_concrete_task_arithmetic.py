@@ -12,10 +12,12 @@ fusion_bench \
 
 import logging
 import os
+from copy import deepcopy
 
 import torch
 from tqdm.autonotebook import tqdm
 
+from fusion_bench import separate_io
 from fusion_bench.method import ModelFusionAlgorithm
 from fusion_bench.method.adamerging.entropy_loss import entropy_loss
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
@@ -27,6 +29,7 @@ from fusion_bench.models.wrappers.task_wise_fusion import (
     get_task_wise_weights,
 )
 from fusion_bench.tasks.clip_classification.clip_mixin import CLIPClassificationMixin
+from fusion_bench.utils.dtype import parse_dtype
 from fusion_bench.utils.parameters import print_parameters
 from fusion_bench.utils.type import _StateDict
 
@@ -40,6 +43,8 @@ class ConcreteTaskArithmeticAlgorithmForCLIP(
 ):
     @torch.no_grad()
     def setup_models(self):
+        config = self.config
+        self.merge_dtype = parse_dtype(config.get("merge_dtype", None))
         modelpool = self.modelpool
 
         # Load the pretrained model
@@ -51,6 +56,8 @@ class ConcreteTaskArithmeticAlgorithmForCLIP(
             ignore_untrained_params=True,
             parameter_type="logits",
         )
+        if self.merge_dtype is not None:
+            mask_model.to(self.merge_dtype)
         mask_model.fill_(self.config.initial_logits)
         # TODO: ablation study for the initialization of mask model
         # for param in mask_model.parameters():
@@ -76,16 +83,22 @@ class ConcreteTaskArithmeticAlgorithmForCLIP(
             clamp_weights=self.config.clamp_weights,
             tie_weights=self.config.tie_weights,
             strict=self.config.strict,
+            task_vector_dtype=self.merge_dtype,
         )
+
         return module, mask_model
 
-    def train_mask(self, module, mask_model: MaskModel):
+    def train_mask(self, module: TaskWiseMergedModel, mask_model: MaskModel):
         config = self.config
+        # mask_model: MaskModel = self.fabric.to_device(mask_model)
 
         # configure optimizer
         lr_scheduler = None
         if self.config.optimizer == "adam":
-            optimizer = torch.optim.Adam(mask_model.parameters(), lr=self.config.lr)
+            optimizer = torch.optim.Adam(
+                filter(lambda p: p.requires_grad, mask_model.parameters()),
+                lr=self.config.lr,
+            )
             print(f"{optimizer=}")
             # TODO: ablation study for the learning rate scheduler. It should yield similar results.
             # lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
@@ -101,6 +114,9 @@ class ConcreteTaskArithmeticAlgorithmForCLIP(
             mask_model, optimizer = self.fabric.setup(mask_model, optimizer)
         else:
             raise ValueError(f"Unsupported optimizer: {self.config.optimizer}")
+
+        module.to(mask_model.device)
+        module.requires_grad_(False)
 
         mask_model.train()
         optimizer.zero_grad()
@@ -137,7 +153,7 @@ class ConcreteTaskArithmeticAlgorithmForCLIP(
                 with self.profile("data loading"):
                     batch = next(self.get_shuffled_test_loader_iter(task))
                     # NOTE: The labels are not allowed to be used during test-time adaptation
-                    images = batch[0]
+                    images = batch[0].to(dtype=self.merge_dtype)
                 with self.profile("forward pass"):
                     logits = self.compute_logits(module, images, task)
                     loss = entropy_loss(logits)
@@ -183,12 +199,12 @@ class ConcreteTaskArithmeticAlgorithmForCLIP(
 
         with self.profile("setup models"):
             module, mask_model = self.setup_models()
-            mask_model: MaskModel = self.fabric.to_device(mask_model)
-            module: TaskWiseMergedModel = self.fabric.to_device(module)
             self.setup_zero_shot_classification_head()
 
         if config.mask_checkpoint is None:
-            self.train_mask(module=module, mask_model=mask_model)
+            if not config.skip_training:
+                torch.cuda.empty_cache()
+                self.train_mask(module=module, mask_model=mask_model)
         else:
             if self.fabric.is_global_zero:
                 print("loading mask from checkpoint", config.mask_checkpoint)
@@ -205,4 +221,4 @@ class ConcreteTaskArithmeticAlgorithmForCLIP(
             for name, m in mask.items():
                 mask[name] = m / torch.mean(m)
             model = module.merge_and_unload(mask)
-        return model
+        return model.to(dtype=torch.float32)

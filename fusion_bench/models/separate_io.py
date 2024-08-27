@@ -11,6 +11,10 @@ from fusion_bench.utils.dtype import parse_dtype
 __all__ = ["separate_save", "separate_load"]
 
 
+def dir_is_empty(path: str) -> bool:
+    return not os.path.exists(path) or len(os.listdir(path)) == 0
+
+
 def separate_save(
     model: nn.Module,
     save_dir: str,
@@ -30,6 +34,9 @@ def separate_save(
         model_file (str, optional): The name of the file to save the model's architecture. Default is "functional.bin".
         state_dict_file (str, optional): The name of the file to save the model's state dictionary. Default is "state_dict.bin".
     """
+    if os.path.exists(save_dir) and not dir_is_empty(save_dir):
+        raise FileExistsError(f"Directory exists and is not empty. {save_dir}")
+
     if not in_place:
         model = deepcopy(model)
     state_dict = {}

@@ -171,11 +171,13 @@ class TaskWiseMergedModel(nn.Module):
         clamp_weights: bool = True,
         tie_weights: bool = False,
         strict: bool = True,
+        task_vector_dtype: Optional[torch.dtype] = None,
     ):
         super().__init__()
         self.clamp_weights = clamp_weights
         self.tie_weights = tie_weights
         self.strict = strict
+        self.task_vector_dtype = task_vector_dtype
 
         self.merge_weight = nn.Parameter(task_wise_weight, requires_grad=True)
 
@@ -192,6 +194,8 @@ class TaskWiseMergedModel(nn.Module):
         for m in finetuned_models:
             m.requires_grad_(False)
         self.task_vectors = nn.ModuleList(finetuned_models)
+        if self.task_vector_dtype is not None:
+            self.task_vectors = self.task_vectors.to(self.task_vector_dtype)
 
     @property
     def forward_model(self):
