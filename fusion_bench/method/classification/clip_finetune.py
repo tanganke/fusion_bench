@@ -24,22 +24,61 @@ fusion_bench \
 """
 
 import os
+from typing import Tuple
 
 import lightning as L
 import torch
+from omegaconf import OmegaConf
+from peft import LoraConfig, get_peft_model
+from peft.tuners.lora import LoraLayer
 from torch import Tensor, nn
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
-from transformers import CLIPModel, CLIPProcessor
+from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
+from transformers.models.clip.modeling_clip import CLIPVisionTransformer
 
+from fusion_bench import print_parameters
 from fusion_bench.method import ModelFusionAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import to_modelpool
 from fusion_bench.modelpool.huggingface_clip_vision import HuggingFaceClipVisionPool
 from fusion_bench.models.hf_clip import HFCLIPClassifier
+from fusion_bench.models.linearized.linearized_model_utils import LinearizedModelWraper
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.tasks.clip_classification.clip_mixin import CLIPClassificationMixin
 from fusion_bench.utils.data import InfiniteDataLoader
+
+
+def _get_submodules(model, key) -> Tuple:
+    """
+    Retrieves the parent module, target module, and target module name for a given key in a PyTorch model.
+    """
+    parent = model.get_submodule(".".join(key.split(".")[:-1]))
+    target_name = key.split(".")[-1]
+    target = model.get_submodule(key)
+    return parent, target, target_name
+
+
+def linearize_lora_model_(model):
+    """
+    Linearizes the LoraLayer modules in a PyTorch model according to the PETA paper.
+    """
+    for key, module in model.named_modules():
+        # if isinstance(module, LoraLayer) and isinstance(module, nn.Linear):
+        if isinstance(module, LoraLayer):
+            # print("L-LoRA MODULE : ", module)
+            parent, target, target_name = _get_submodules(model, key)
+            setattr(parent, target_name, LinearizedModelWraper(target))
+            # print("Linearized Lora Layer")
+    return model
+
+
+def unlinearize_lora_model_(model):
+    """
+    Unloads the linearized LoraLayer modules in a PyTorch model.
+    """
+    LinearizedModelWraper.unload_linearized_modules_(model)
+    return model
 
 
 class ImageClassificationFineTuningForCLIP(
@@ -64,6 +103,7 @@ class ImageClassificationFineTuningForCLIP(
         self.modelpool = to_modelpool(modelpool)
         config = self.config
         self.log_hyperparams(config, filename="method_config.yaml")
+        self.finetune_method = "fine-tune"
 
         L.seed_everything(config.seed)
 
@@ -72,6 +112,14 @@ class ImageClassificationFineTuningForCLIP(
         ]
         with self.profile("setup model and optimizer"):
             processor, classifier, optimizer, lr_scheduler = self.setup_model()
+
+            if config.state_dict_load_path is not None:
+                self.fabric.load(
+                    config.state_dict_load_path,
+                    {"vision_model": classifier.clip_model.vision_model},
+                )
+                if config.skip_training:
+                    return classifier.clip_model.vision_model
 
             self.setup_zero_shot_classification_head(
                 clip_processor=processor,
@@ -96,6 +144,8 @@ class ImageClassificationFineTuningForCLIP(
                 for dataset in train_datasets
             ]
             train_dataloaders = self.fabric.setup_dataloaders(*train_dataloaders)
+            if not isinstance(train_dataloaders, (list, tuple)):
+                train_dataloaders = [train_dataloaders]
             train_dataloader_iters = [
                 iter(InfiniteDataLoader(loader)) for loader in train_dataloaders
             ]
@@ -103,7 +153,7 @@ class ImageClassificationFineTuningForCLIP(
         # train
         for step_idx in tqdm(
             range(config.num_steps),
-            "fine-tuning",
+            desc=self.finetune_method,
             disable=not self.fabric.is_global_zero,
         ):
             optimizer.zero_grad()
@@ -131,15 +181,45 @@ class ImageClassificationFineTuningForCLIP(
                 save_path = os.path.join(
                     self.log_dir, "checkpoints", f"step={step_idx}.ckpt"
                 )
-                _dir = os.path.dirname(save_path)
-                if _dir and not os.path.exists(_dir):
-                    os.makedirs(_dir, exist_ok=True)
-                self.fabric.save(
-                    save_path, {"vision_model": classifier.clip_model.vision_model}
-                )
+                self.save_model(classifier, save_path, trainable_only=True)
 
+        if config.state_dict_save_path is not None:
+            self.save_model(
+                classifier, config.state_dict_save_path, trainable_only=True
+            )
         self.print_profile_summary()
         return classifier.clip_model.vision_model
+
+    def save_model(
+        self,
+        model: HFCLIPClassifier | CLIPModel | CLIPVisionModel | CLIPVisionTransformer,
+        save_path: str,
+        trainable_only: bool = True,
+    ):
+        if isinstance(model, HFCLIPClassifier):
+            vision_model = model.clip_model.vision_model
+        elif isinstance(model, CLIPModel):
+            vision_model = model.vision_model
+        elif isinstance(model, CLIPVisionModel):
+            vision_model = model.vision_model
+        elif isinstance(model, CLIPVisionTransformer):
+            vision_model = model
+        else:
+            raise ValueError(f"Unsupported model type: {type(model)}")
+
+        if trainable_only:
+            filter = {"vision_model": lambda k, v: v.requires_grad}
+        else:
+            filter = None
+
+        save_dir = os.path.dirname(save_path)
+        if save_dir and not os.path.exists(save_dir):
+            os.makedirs(save_dir, exist_ok=True)
+        self.fabric.save(
+            {"vision_model": vision_model},
+            save_path,
+            filter=filter,
+        )
 
     def setup_model(self):
         """
@@ -149,17 +229,96 @@ class ImageClassificationFineTuningForCLIP(
         modelpool = self.modelpool
 
         pretrained_model_config = modelpool.get_model_config("_pretrained_")
-        clip_model = CLIPModel.from_pretrained(pretrained_model_config.path)
+        clip_model: CLIPModel = CLIPModel.from_pretrained(pretrained_model_config.path)
         processor = CLIPProcessor.from_pretrained(pretrained_model_config.path)
+
+        self.finetune_method = "full fine-tune"
+        if config.use_lora or config.use_l_lora:
+            self.finetune_method = "lora fine-tune"
+            lora_config = LoraConfig(
+                **OmegaConf.to_container(
+                    config.lora_config, resolve=True, enum_to_str=True
+                )
+            )
+            clip_model.vision_model = get_peft_model(
+                clip_model.vision_model, lora_config
+            )
+
+            if config.use_l_lora:
+                # http://arxiv.org/abs/2310.04742
+                # Anke Tang et al. Parameter Efficient Multi-task Model Fusion with Partial Linearization. ICLR 2024.
+                self.finetune_method = "l-lora fine-tune"
+                print("Linearizing Lora Layers")
+                linearize_lora_model_(clip_model.vision_model)
 
         classifier = HFCLIPClassifier(clip_model, processor=processor)
 
+        if self.fabric.is_global_zero:
+            print("=== Model Summary (For Vision Model Only) ===")
+            print_parameters(classifier.clip_model.vision_model)
         # configure optimizers
         optimizer = torch.optim.Adam(
-            classifier.clip_model.vision_model.parameters(), lr=config.learning_rate
+            [
+                p
+                for p in classifier.clip_model.vision_model.parameters()
+                if p.requires_grad
+            ],
+            lr=config.learning_rate,
+            weight_decay=config.weight_decay,
         )
         lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer=optimizer, T_max=config.num_steps
         )
 
         return processor, classifier, optimizer, lr_scheduler
+
+
+def load_full_finetuned_vision_model(
+    pretrained_path: str, state_dict_path: str, strict=True
+):
+    """
+    Load a fully fine-tuned model from the state_dict_path and pretrained_path.
+    """
+    model: CLIPVisionModel = CLIPVisionModel.from_pretrained(pretrained_path)
+    model.vision_model.load_state_dict(
+        torch.load(state_dict_path, map_location="cpu")["vision_model"], strict=strict
+    )
+    return model
+
+
+def load_lora_vision_model(
+    pretrained_path: str,
+    lora_config: LoraConfig,
+    state_dict_path: str,
+    strict: bool = False,
+):
+    """
+    Load LoRA model from the state_dict_path and pretrained_path.
+    """
+    model: CLIPVisionModel = CLIPVisionModel.from_pretrained(pretrained_path)
+    model = get_peft_model(model, lora_config)
+    model.vision_model.load_state_dict(
+        torch.load(state_dict_path, map_location="cpu")["vision_model"], strict=strict
+    )
+    return model
+
+
+def load_l_lora_vision_model(
+    pretrained_path: str,
+    lora_config: LoraConfig,
+    state_dict_path: str,
+    strict: bool = False,
+    unload_linearized_modules: bool = False,
+):
+    """
+    Load L-LoRA model from the state_dict_path and pretrained_path.
+    """
+    model: CLIPVisionModel = CLIPVisionModel.from_pretrained(pretrained_path)
+    model = get_peft_model(model, lora_config)
+    model = linearize_lora_model_(model)
+    model.vision_model.load_state_dict(
+        torch.load(state_dict_path, map_location="cpu")["vision_model"], strict=strict
+    )
+    if unload_linearized_modules:
+        LinearizedModelWraper.unload_linearized_modules_(model)
+    return model

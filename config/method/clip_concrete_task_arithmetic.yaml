@@ -5,6 +5,7 @@ name: clip_concrete_task_arithmetic
 batch_size: 16
 num_workers: 8
 
+merge_dtype: null
 optimizer: adam
 lr: 1e-3
 
@@ -27,4 +28,6 @@ clamp_weights: false
 tie_weights: true
 strict: false
 
+# directory to cache zero-shot classication heads
 cache_dir: outputs
+skip_training: false
