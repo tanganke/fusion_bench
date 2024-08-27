@@ -10,8 +10,8 @@ This collection is designed to serve as a valuable starting point for those inte
 !!! note
 
     Meaning of the symbols in the list:
-
-    - :star:  Highly recommended
+    
+    - :star: Highly recommended
     - :llama: LLaMA model-related or Mistral-related work
     - :simple-github: Code available on GitHub
     - :hugging: models or datasets available on Hugging Face
@@ -24,6 +24,7 @@ This collection is designed to serve as a valuable starting point for those inte
     W. Li, Y. Peng, M. Zhang, L. Ding, H. Hu, and L. Shen, “Deep Model Fusion: A Survey.” [arXiv, Sep. 27, 2023. doi: 10.48550/arXiv.2309.15698.](http://arxiv.org/abs/2309.15698)
 - [:simple-github:](https://github.com/ruthless-man/Awesome-Learn-from-Model) 
     H. Zheng et al., “Learn From Model Beyond Fine-Tuning: A Survey.” [arXiv, Oct. 12, 2023.](http://arxiv.org/abs/2310.08184)
+
 
 ## Model Ensemble
 
@@ -81,3 +82,13 @@ Mode connectivity is such an important concept in model merging that it deserves
     FusionBench: A Comprehensive Benchmark of Deep Model Fusion.
 - :star: :llama: [:simple-github:](https://github.com/arcee-ai/mergekit) 
     MergeKit: A PyTorch library for merging large language models.
+
+## Other Applications of Model Fusion
+
+### Applications in Reinforcement Learning (RL)
+
+- (**Survey Paper**) Song Y, Suganthan P N, Pedrycz W, et al. Ensemble reinforcement learning: A survey. [Applied Soft Computing, 2023.](https://www.sciencedirect.com/science/article/abs/pii/S1568494623009936)
+- :star: Lee K, Laskin M, Srinivas A, et al. “Sunrise: A simple unified framework for ensemble learning in deep reinforcement learning", ICML, 2021.
+- Ren J, Li Y, Ding Z, et al. “Probabilistic mixture-of-experts for efficient deep reinforcement learning". arXiv:2104.09122, 2021.
+- :star: Celik O, Taranovic A, Neumann G. “Acquiring Diverse Skills using Curriculum Reinforcement Learning with Mixture of Experts". arXiv preprint arXiv:2403.06966, 2024.
+
