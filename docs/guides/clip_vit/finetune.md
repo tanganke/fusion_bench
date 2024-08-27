@@ -5,6 +5,11 @@ FusionBench provides a simple and easy-to-use interface to fine-tune clip vision
 
 ## Basic Examples
 
+### Single-Task Learning
+
+Refer to `examples/clip_finetune/clip_finetune.sh` for a complete example of fine-tuning a CLIP-ViT model, including full fine-tuning, lora fine-tuning and linearized lora fine-tuning.
+
+
 ### Multi-Task Learning
 
 Fine-tune CLIP-ViT-B/32:

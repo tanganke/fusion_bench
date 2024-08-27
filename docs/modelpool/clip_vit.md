@@ -26,6 +26,7 @@ We use the Adam Optimizer with a fixed learning rate of 1e-5 over 4000 training 
 Only the vision encoder is fine-tuned, while the text encoder remains fixed to preserve the open-vocabulary property of the model.
 
 - [fine-tuned CLIP-ViT-B/32 models](https://huggingface.co/collections/tanganke/clip-vit-b-32-on-the-eight-image-classication-tasks-6644d0c476c0a469f693cf91)
+- [fine-tuned CLIP-ViT-B/16 models](https://huggingface.co/collections/tanganke/clip-vit-b-16-on-the-eight-image-classification-tasks-66cd54d8332ce5c7468ab5f8)
 - [fine-tuned CLIP-ViT-L/14 models](https://huggingface.co/collections/tanganke/clip-vit-l-14-on-the-eight-image-classification-tasks-6644d2b014331c746683de63)
 
 To use these models, you can load them from the Transformers library as follows:
@@ -98,6 +99,19 @@ done
     | MNIST       | 50.3     | 40.0     | 31.3     | 17.7     | 50.1     | 19.3     | **99.6** | 30.7     | 42.4    |
     | DTD         | 54.6     | 51.3     | 36.9     | 25.0     | 28.9     | 21.8     | 47.3     | **79.7** | 43.2    |
 
+=== "Performance of the fine-tuned CLIP-ViT-B/16 models"
+
+    | Model    | SUN397   | Cars     | RESISC45 | EuroSAT  | SVHN     | GTSRB    | MNIST    | DTD      | Average |
+    | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | ------- |
+    | SUN397   | **78.9** | 56.2     | 58.9     | 46.6     | 42.7     | 39.9     | 59.3     | 40.8     | 52.9    |
+    | Cars     | 62.2     | **85.9** | 60.8     | 48.7     | 47.1     | 44.8     | 61.6     | 43.2     | 56.8    |
+    | RESISC45 | 60.5     | 57.8     | **96.6** | 65.7     | 28.4     | 35.6     | 71.5     | 39.0     | 56.9    |
+    | EuroSAT  | 58.3     | 59.2     | 37.4     | **99.0** | 40.5     | 38.9     | 57.4     | 37.7     | 53.6    |
+    | SVHN     | 57.6     | 55.4     | 42.8     | 19.6     | **97.6** | 32.6     | 90.0     | 33.1     | 53.6    |
+    | GTSRB    | 54.0     | 50.5     | 25.3     | 13.2     | 52.0     | **99.0** | 56.9     | 33.9     | 48.1    |
+    | MNIST    | 58.7     | 52.4     | 47.0     | 23.6     | 65.0     | 27.6     | **99.7** | 37.7     | 51.5    |
+    | DTD      | 57.7     | 58.1     | 53.5     | 43.0     | 44.2     | 36.2     | 70.4     | **82.3** | 55.7    |
+
 === "Performance of the fine-tuned CLIP-ViT-L/14 models"
 
     | Model       | SUN397   | Cars     | RESISC45 | EuroSAT  | SVHN     | GTSRB    | MNIST    | DTD      | Average |
@@ -142,6 +156,64 @@ models:
 
 The type of the modelpool is `huggingface_clip_vision`, corresponding to the modelpool class `HuggingFaceClipVisionPool`.
 
+### LoRA and L-LoRA
+
+Here we fine-tuned the CLIP-ViT-B/16 models on the eight image classification tasks using the LoRA and L-LoRA methods.
+`q_proj` and `v_proj` are fine-tuned with a learning rate of 1e-5 using the Adam optimizer for 2000 steps.
+You can find the script for fine-tuning the models at `examples/clip_finetune/clip_finetune.sh`.
+
+- [CLIP-ViT-B/16 on the eight image classification tasks (LoRA)](https://huggingface.co/collections/tanganke/clip-vit-b-16-on-the-eight-image-classification-tasks-lora-66cd554ee7829e9dbb236c29)
+- [CLIP-ViT-B/16 on eight image classification tasks (L-LoRA)](https://huggingface.co/collections/tanganke/clip-vit-b-16-on-eight-image-classification-tasks-l-lora-66cd5b0e332ce5c7468d1bc6)
+
+Load LoRA models:
+
+```python
+base_model = CLIPVisionModel.from_pretrained('openai/clip-vit-base-patch16')
+model = PeftModel.from_pretrained(base_model, peft_model_id)
+```
+
+Load L-LoRA models:
+
+```python
+from transformers import CLIPVisionModel
+from peft import PeftModel
+from fusion_bench.method.classification.clip_finetune import linearize_lora_model_
+
+base_model = CLIPVisionModel.from_pretrained("openai/clip-vit-base-patch16")
+peft_model_id = "openai/clip-vit-base-patch16_eurosat_l-lora-16"
+model = PeftModel.from_pretrained(base_model, peft_model_id)
+
+model = linearize_lora_model_(model)
+```
+
+=== "Performance of the fine-tuned CLIP-ViT-B/16 models (LoRA-16)"
+
+    | Model    | SUN397   | Cars     | RESISC45 | EuroSAT  | SVHN     | GTSRB    | MNIST    | DTD      | Average |
+    | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | ------- |
+    | SUN397   | **70.8** | 64.8     | 66.7     | 55.4     | 51.8     | 44.0     | 52.2     | 46.0     | 56.5    |
+    | Cars     | 65.8     | **72.3** | 65.7     | 54.5     | 52.3     | 44.1     | 54.1     | 45.3     | 56.8    |
+    | RESISC45 | 66.2     | 64.6     | **88.9** | 65.4     | 51.8     | 43.6     | 54.7     | 45.6     | 60.1    |
+    | EuroSAT  | 65.6     | 64.6     | 59.4     | **97.1** | 48.2     | 43.6     | 60.5     | 46.0     | 60.6    |
+    | SVHN     | 65.5     | 64.1     | 65.3     | 39.1     | **93.2** | 45.5     | 83.0     | 45.1     | 62.6    |
+    | GTSRB    | 65.5     | 63.9     | 64.2     | 28.6     | 56.9     | **91.0** | 71.3     | 45.5     | 60.9    |
+    | MNIST    | 65.3     | 64.1     | 65.7     | 51.9     | 57.6     | 46.6     | **98.4** | 45.2     | 61.9    |
+    | DTD      | 64.5     | 64.2     | 61.0     | 49.1     | 54.2     | 44.2     | 68.0     | **67.9** | 59.1    |
+
+=== "Performance of the fine-tuned CLIP-ViT-B/16 models (L-LoRA-16)"
+
+    | Model    | SUN397   | Cars     | RESISC45 | EuroSAT  | SVHN     | GTSRB    | MNIST    | DTD      | Average |
+    | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | ------- |
+    | SUN397   | **69.0** | 65.0     | 66.7     | 56.0     | 52.6     | 44.0     | 53.3     | 45.4     | 56.5    |
+    | Cars     | 65.8     | **69.7** | 65.7     | 54.4     | 52.0     | 43.7     | 52.6     | 45.3     | 56.2    |
+    | RESISC45 | 65.9     | 64.3     | **83.6** | 66.3     | 51.7     | 43.4     | 51.9     | 45.6     | 59.1    |
+    | EuroSAT  | 65.5     | 64.8     | 64.2     | **95.4** | 50.7     | 43.8     | 58.4     | 45.9     | 61.1    |
+    | SVHN     | 65.3     | 64.4     | 65.2     | 46.6     | **90.1** | 45.8     | 80.0     | 45.4     | 62.9    |
+    | GTSRB    | 65.5     | 64.4     | 64.2     | 43.8     | 59.5     | **78.6** | 72.6     | 45.2     | 61.7    |
+    | MNIST    | 65.3     | 64.5     | 65.0     | 53.3     | 57.6     | 45.6     | **96.4** | 45.5     | 61.7    |
+    | DTD      | 65.7     | 64.7     | 65.9     | 54.5     | 51.6     | 44.4     | 58.2     | **56.2** | 57.7    |
+
+![alt text](images/clip-vit-base-patch16_full&lora&l-lora.png){ width="1000px" }
+![alt text](images/clip-vit-base-patch16_full&lora&l-lora_average.png){ width="1000px" }
 
 ## Basic Examples
 

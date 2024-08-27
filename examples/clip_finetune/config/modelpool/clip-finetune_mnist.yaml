@@ -7,5 +7,5 @@ dataset_type: huggingface_image_classification
 train_datasets:
   - name: mnist
     dataset:
-      name: tanganke/mnist
+      name: mnist
       split: train

@@ -72,3 +72,20 @@ class LinearizedModelWraper(nn.Module):
             dparams,
         )
         return out + dp
+
+    @staticmethod
+    def unload_linearized_modules_(module: nn.Module):
+        """
+        Unloads the linearized module and returns the original module.
+
+        Args:
+            module (nn.Module): The linearized module to be unloaded.
+
+        Returns:
+            nn.Module: The original module.
+        """
+        for name, model in module.named_children():
+            if isinstance(model, LinearizedModelWraper):
+                setattr(module, name, model.model)
+            else:
+                LinearizedModelWraper.unload_linearized_modules_(model)
