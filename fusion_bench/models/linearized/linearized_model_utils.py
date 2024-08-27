@@ -62,7 +62,7 @@ class LinearizedModelWraper(nn.Module):
             torch.Tensor: The output of the linearized model, computed using a first-order Taylor decomposition.
         """
         params0 = tuple(self.params0_values)
-        params = dict_params_to_tuple(OrderedDict(self.named_parameters()))
+        params = dict_params_to_tuple(OrderedDict(self.model.named_parameters()))
         dparams = tuple(p - p0 for p, p0 in zip(params, params0))
         out, dp = jvp(
             lambda *param: functional_call(

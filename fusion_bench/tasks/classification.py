@@ -40,8 +40,8 @@ class ClassificationTask(BaseTask):
         accuracy: MulticlassAccuracy = Accuracy(
             task="multiclass", num_classes=self.num_classes
         )
+        classifier.eval()
         loss_metric = MeanMetric()
-
         # if fast_dev_run is set, we only evaluate on a batch of the data
         if self.config.get("fast_dev_run", False):
             log.info("Running under fast_dev_run mode, evaluating on a single batch.")
