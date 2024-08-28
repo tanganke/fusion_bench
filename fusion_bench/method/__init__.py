@@ -46,6 +46,7 @@ class AlgorithmFactory:
         # pruning methods
         "magnitude_diff_pruning": ".pruning.MagnitudeDiffPruningAlgorithm",
         "magnitude_pruning_for_llama": ".pruning.llama_magnitude_prune.MagnitudePruningForLlama",
+        "wanda_pruning_for_llama": ".pruning.llama_wanda_prune.WandaPruningForLlama",
     }
 
     @staticmethod
