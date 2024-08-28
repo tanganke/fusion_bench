@@ -18,7 +18,7 @@ from fusion_bench.models.wrappers.task_wise_fusion import (
 from fusion_bench.utils.state_dict_arithmetic import state_dict_sub
 
 from ...modelpool import ModelPool
-from ...utils.type import _StateDict
+from ...utils.type import StateDictType
 from ..base_algorithm import ModelFusionAlgorithm
 
 log = logging.getLogger(__name__)

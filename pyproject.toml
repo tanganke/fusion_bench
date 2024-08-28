@@ -9,7 +9,7 @@ readme = "README.md"
 version = "0.1.6"
 authors = [{ name = "Anke Tang", email = "tang.anke@foxmail.com" }]
 license = { file = 'LICENSE' }
-requires-python = ">= 3.8"
+requires-python = ">= 3.10"
 dependencies = [
     "hydra-core",
     "torch>=2.0.0",

@@ -13,7 +13,7 @@ from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_mul,
     state_dict_sub,
 )
-from fusion_bench.utils.type import _StateDict
+from fusion_bench.utils.type import StateDictType
 
 Module = TypeVar("Module")
 

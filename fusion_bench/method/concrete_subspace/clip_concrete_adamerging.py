@@ -43,7 +43,7 @@ from fusion_bench.models.wrappers.task_wise_fusion import (
 )
 from fusion_bench.tasks.clip_classification.clip_mixin import CLIPClassificationMixin
 from fusion_bench.utils.parameters import print_parameters
-from fusion_bench.utils.type import _StateDict
+from fusion_bench.utils.type import StateDictType
 
 log = logging.getLogger(__name__)
 

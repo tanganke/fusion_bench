@@ -23,7 +23,7 @@ from fusion_bench.models.wrappers.layer_wise_fusion import (
 )
 from fusion_bench.utils.data import load_tensor_from_file
 from fusion_bench.utils.state_dict_arithmetic import state_dict_sub
-from fusion_bench.utils.type import _StateDict
+from fusion_bench.utils.type import StateDictType
 
 from .entropy_loss import entropy_loss
 

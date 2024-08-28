@@ -10,7 +10,7 @@ from torch import Tensor, nn
 from torch.func import functional_call
 
 from fusion_bench.utils.timer import timeit_context
-from fusion_bench.utils.type import _StateDict
+from fusion_bench.utils.type import StateDictType
 
 __all__ = ["get_layer_wise_weights", "fuse_weights", "LayerWiseMergedModel"]
 
@@ -103,8 +103,8 @@ def _fuse_weights(layer_wise_weight: Tensor, tensors: List[Tensor]):
 
 
 def fuse_weights(
-    layer_wise_weight: Tensor, state_dicts: List[_StateDict]
-) -> _StateDict:
+    layer_wise_weight: Tensor, state_dicts: List[StateDictType]
+) -> StateDictType:
     """
     Fuse the weights of multiple models using layer-wise fusion.
 
@@ -130,7 +130,7 @@ def fuse_weights(
 
 
 class LayerWiseMergedModel(nn.Module):
-    _merged_state_dict: _StateDict = None
+    _merged_state_dict: StateDictType = None
 
     def __init__(
         self,

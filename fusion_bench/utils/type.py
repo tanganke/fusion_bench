@@ -1,6 +1,14 @@
+import sys
 from typing import Dict, List, Mapping
 
-from torch import Tensor
 from typing_extensions import TypeAlias
 
-_StateDict: TypeAlias = Dict[str, Tensor]
+try:
+    import torch
+    from torch import Tensor
+
+    StateDictType: TypeAlias = Dict[str, Tensor]
+except ImportError:
+    pass
+
+ModuleType = type(sys)

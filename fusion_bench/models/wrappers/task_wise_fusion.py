@@ -27,7 +27,7 @@ from torch import Tensor, nn
 from torch.func import functional_call
 
 from fusion_bench.utils.timer import timeit_context
-from fusion_bench.utils.type import _StateDict
+from fusion_bench.utils.type import StateDictType
 
 log = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ def get_attr(obj, names: List[str]):
         return get_attr(getattr(obj, names[0]), names[1:])
 
 
-def check_parameterNamesMatch(checkpoints: List[_StateDict]) -> None:
+def check_parameterNamesMatch(checkpoints: List[StateDictType]) -> None:
     """
     Checks that the parameter names of the given checkpoints match.
 
@@ -136,16 +136,16 @@ def _fuse_weights(task_wise_weight: Tensor, tensors: List[Tensor]):
     return sum(task_wise_weight[i] * w.to(device) for i, w in enumerate(tensors))
 
 
-def fuse_weights(task_wise_weight: Tensor, state_dicts: List[_StateDict]) -> _StateDict:
+def fuse_weights(task_wise_weight: Tensor, state_dicts: List[StateDictType]) -> StateDictType:
     """
     This function fuses the weights of the models and returns a state dictionary.
 
     Args:
         task_wise_weight (Tensor): The weights for each model. on cuda or cpu.
-        state_dicts (List[_StateDict]): The list of state dictionaries. on cpu.
+        state_dicts (List[StateDictType]): The list of state dictionaries. on cpu.
 
     Returns:
-        _StateDict: The fused state dictionary.
+        StateDictType: The fused state dictionary.
     """
     num_models = len(state_dicts)
     assert (
@@ -161,7 +161,7 @@ def fuse_weights(task_wise_weight: Tensor, state_dicts: List[_StateDict]) -> _St
 
 
 class TaskWiseMergedModel(nn.Module):
-    _merged_state_dict: _StateDict = None
+    _merged_state_dict: StateDictType = None
 
     def __init__(
         self,

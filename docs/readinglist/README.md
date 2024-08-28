@@ -28,6 +28,9 @@ This collection is designed to serve as a valuable starting point for those inte
 
 ## Model Ensemble
 
+- Liu T Y, Soatto S. Tangent Model Composition for Ensembling and Continual Fine-tuning. arXiv, 2023.
+- :llama: Wan F, Yang Z, Zhong L, et al. FuseChat: Knowledge Fusion of Chat Models. arXiv, 2024.
+
 ## Model Merging
 
 ### Mode Connectivity
