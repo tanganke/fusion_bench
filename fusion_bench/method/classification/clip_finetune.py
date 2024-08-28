@@ -24,13 +24,14 @@ fusion_bench \
 """
 
 import os
-from typing import Tuple
+from typing import Optional, Tuple
 
 import lightning as L
 import torch
 from omegaconf import OmegaConf
-from peft import LoraConfig, get_peft_model
+from peft import LoraConfig, PeftModel, get_peft_model
 from peft.tuners.lora import LoraLayer
+from safetensors.torch import save_file
 from torch import Tensor, nn
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
@@ -194,7 +195,6 @@ class ImageClassificationFineTuningForCLIP(
         self,
         model: HFCLIPClassifier | CLIPModel | CLIPVisionModel | CLIPVisionTransformer,
         save_path: str,
-        trainable_only: bool = True,
     ):
         if isinstance(model, HFCLIPClassifier):
             vision_model = model.clip_model.vision_model
@@ -207,19 +207,10 @@ class ImageClassificationFineTuningForCLIP(
         else:
             raise ValueError(f"Unsupported model type: {type(model)}")
 
-        if trainable_only:
-            filter = {"vision_model": lambda k, v: v.requires_grad}
-        else:
-            filter = None
-
         save_dir = os.path.dirname(save_path)
         if save_dir and not os.path.exists(save_dir):
             os.makedirs(save_dir, exist_ok=True)
-        self.fabric.save(
-            {"vision_model": vision_model},
-            save_path,
-            filter=filter,
-        )
+        self.fabric.save(save_path, {"vision_model": vision_model})
 
     def setup_model(self):
         """
@@ -290,16 +281,15 @@ def load_lora_vision_model(
     pretrained_path: str,
     lora_config: LoraConfig,
     state_dict_path: str,
-    strict: bool = False,
-):
+) -> PeftModel:
     """
     Load LoRA model from the state_dict_path and pretrained_path.
     """
     model: CLIPVisionModel = CLIPVisionModel.from_pretrained(pretrained_path)
-    model = get_peft_model(model, lora_config)
-    model.vision_model.load_state_dict(
-        torch.load(state_dict_path, map_location="cpu")["vision_model"], strict=strict
-    )
+    model = get_peft_model(model.vision_model, lora_config)
+    state_dict = torch.load(state_dict_path, map_location="cpu")["vision_model"]
+    for name, value in state_dict.items():
+        model.get_parameter(name).data = value
     return model
 
 
@@ -307,18 +297,98 @@ def load_l_lora_vision_model(
     pretrained_path: str,
     lora_config: LoraConfig,
     state_dict_path: str,
-    strict: bool = False,
     unload_linearized_modules: bool = False,
 ):
     """
     Load L-LoRA model from the state_dict_path and pretrained_path.
+
+    The output folder should contain the following files:
+
+    - README.md
+    - adapter_config.json
+    - linearized_adapter_model.safetensors
+
+    Load the converted model using the following code:
+
+    >>> from fusion_bench.models.linearized.vision_model import load_l_lora_vision_model_hf
+    >>> model = load_l_lora_vision_model_hf("base_model_name", "peft_name")
     """
     model: CLIPVisionModel = CLIPVisionModel.from_pretrained(pretrained_path)
-    model = get_peft_model(model, lora_config)
-    model = linearize_lora_model_(model)
-    model.vision_model.load_state_dict(
-        torch.load(state_dict_path, map_location="cpu")["vision_model"], strict=strict
-    )
+    model = get_peft_model(model.vision_model, lora_config)
+    linearize_lora_model_(model)
+    state_dict = torch.load(state_dict_path, map_location="cpu")["vision_model"]
+    for name, value in state_dict.items():
+        model.get_parameter(name).data = value
     if unload_linearized_modules:
         LinearizedModelWraper.unload_linearized_modules_(model)
     return model
+
+
+def convert_lora_state_dict_to_hf(
+    pretrained_path: str,
+    ckpt_path: str,
+    lora_config: LoraConfig,
+    output_path: str,
+    base_model_name: Optional[str] = None,
+):
+    model = load_lora_vision_model(
+        pretrained_path=pretrained_path,
+        state_dict_path=ckpt_path,
+        lora_config=lora_config,
+    )
+
+    model.config._name_or_path = base_model_name
+    model.peft_config["default"].base_model_name_or_path = base_model_name
+    model.save_pretrained(output_path)
+
+
+def convert_l_lora_state_dict_to_hf(
+    pretrained_path: str,
+    ckpt_path: str,
+    lora_config: LoraConfig,
+    output_path: str,
+    base_model_name: Optional[str] = None,
+):
+    """
+    Convert a linearized Lora model's checkpoint to Hugggingface's format.
+    """
+
+    if base_model_name is None:
+        base_model_name = pretrained_path
+
+    # load l-lora model from ckpt file
+    model = load_l_lora_vision_model(
+        pretrained_path=pretrained_path,
+        state_dict_path=ckpt_path,
+        lora_config=lora_config,
+        unload_linearized_modules=False,
+    )
+
+    # save lora config
+    model.peft_config["default"].base_model_name_or_path = base_model_name
+    model.peft_config["default"].save_pretrained(output_path)
+
+    # save linearized adapter to safetensors
+    linearized_adapter = {}
+    for name, module in model.named_modules():
+        if isinstance(module, LinearizedModelWraper):
+            for (param_name, param), (param0_name, param0) in zip(
+                module.model.named_parameters(),
+                module.params0_values.named_parameters(),
+            ):
+                if param.requires_grad:
+                    linearized_adapter[f"{name}.model.{param_name}"] = param
+                    linearized_adapter[f"{name}.params0_values.{param0_name}"] = param0
+
+    save_file(linearized_adapter, f"{output_path}/linearized_adapter_model.safetensors")
+
+    readme = f"""---
+base_model: {base_model_name}
+library_name: peft
+---
+
+# Model Card L-LoRA Model
+"""
+    # open README.md
+    with open(f"{output_path}/README.md", "w") as file:
+        file.write(readme)

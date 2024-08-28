@@ -170,7 +170,7 @@ class CLIPImageClassificationTaskPool(TaskPool):
             result = task.evaluate(self.clip_model)
             report[task_name] = result
         log.info(f"Results for taskpool {self.config.name}: {report}")
-        if self._fabric.is_global_zero and self._fabric.logger is not None:
+        if self._fabric.is_global_zero and len(self._fabric._loggers) > 0:
             with open(
                 os.path.join(self._fabric.logger.log_dir, "report.json"), "w"
             ) as fp:
