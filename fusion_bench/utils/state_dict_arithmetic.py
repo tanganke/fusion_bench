@@ -274,4 +274,3 @@ def state_dict_weighted_sum(
                     device, non_blocking=True
                 )
     return weighted_sum_state_dict
-    return weighted_sum_state_dict
