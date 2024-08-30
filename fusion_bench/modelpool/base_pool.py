@@ -92,6 +92,22 @@ class ModelPool(ABC):
         """
         raise NotImplementedError
 
+    def load_pretrained_or_first_model(self, *args, **kwargs):
+        """
+        Load the pretrained model if available, otherwise load the first model in the list.
+
+        This method checks if a pretrained model is available. If it is, it loads the pretrained model.
+        If not, it loads the first model from the list of model names.
+
+        Returns:
+            nn.Module: The loaded model.
+        """
+        if self.has_pretrained:
+            model = self.load_model("_pretrained_", *args, **kwargs)
+        else:
+            model = self.load_model(self.model_names[0], *args, **kwargs)
+        return model
+
     def save_model(self, model: nn.Module, path: str):
         """
         Save the state dictionary of the model to the specified path.

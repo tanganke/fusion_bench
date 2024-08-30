@@ -5,7 +5,7 @@ from .parameters import print_parameters
 from .timer import timeit_context
 
 
-def import_object(abs_obj_name):
+def import_object(abs_obj_name: str):
     """
     Imports a class from a module given the absolute class name.
 

@@ -37,6 +37,29 @@ def parse_dtype(dtype: Optional[str]):
     elif dtype == "bfloat16" or dtype == "bf16":
         dtype = torch.bfloat16
     else:
-        raise ValueError(f"Unsupported dtype: {dtype}")
+        raise ValueError(f"Unsupported dtype: {type(dtype)}")
 
     return dtype
+
+
+def get_dtype(obj) -> torch.dtype:
+    """
+    Get the data type (dtype) of a given object.
+
+    Returns:
+        torch.dtype: The data type of the given object.
+
+    Raises:
+        ValueError: If the object type is not supported.
+    """
+    if isinstance(obj, torch.Tensor):
+        return obj.dtype
+    elif isinstance(obj, torch.nn.Module):
+        if hasattr(obj, "dtype"):
+            return obj.dtype
+        else:
+            return next(iter(obj.parameters())).dtype
+    elif isinstance(obj, (torch.device, str)):
+        return parse_dtype(obj)
+    else:
+        raise ValueError(f"Unsupported object type: {type(obj)}")
