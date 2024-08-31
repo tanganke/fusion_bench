@@ -13,7 +13,7 @@ from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_sub,
     state_dict_weighted_sum,
 )
-from fusion_bench.utils.type import _StateDict
+from fusion_bench.utils.type import StateDictType
 
 log = logging.getLogger(__name__)
 
@@ -135,7 +135,7 @@ def construct_weight_ensembling_gate(
 
 class WeightEnsemblingMoE(nn.Module):
     # variable to store the merged state dict temporarily
-    _merged_state_dict: _StateDict = None
+    _merged_state_dict: StateDictType = None
 
     def __init__(
         self,

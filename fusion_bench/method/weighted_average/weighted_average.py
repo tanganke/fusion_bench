@@ -27,7 +27,7 @@ from fusion_bench.method.base_algorithm import ModelFusionAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import ModelPool, to_modelpool
 from fusion_bench.utils.state_dict_arithmetic import state_dict_add, state_dict_mul
-from fusion_bench.utils.type import _StateDict
+from fusion_bench.utils.type import StateDictType
 
 log = logging.getLogger(__name__)
 
@@ -61,7 +61,7 @@ class WeightedAverageAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
             weights = weights / np.sum(weights)
         print(f"weights: {weights}, normalized: {self.config.normalize}")
 
-        sd: Optional[_StateDict] = None
+        sd: Optional[StateDictType] = None
         forward_model = None
 
         for model_name, weight in zip(modelpool.model_names, weights):

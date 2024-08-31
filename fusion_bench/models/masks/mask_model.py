@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from torch import Tensor, nn
 
 from fusion_bench.models import ParameterDictModel
-from fusion_bench.utils.type import _StateDict
+from fusion_bench.utils.type import StateDictType
 
 
 def mask_sparsity(mask: Dict[str, Tensor]):
@@ -18,7 +18,7 @@ def mask_sparsity(mask: Dict[str, Tensor]):
 
 
 def to_state_dict(
-    state_dict_or_model: Union[_StateDict, nn.Module],
+    state_dict_or_model: Union[StateDictType, nn.Module],
     ignore_untrained_params: bool = False,
     ignore_keys: List[str] = [],
     keep_vars: bool = False,
@@ -27,17 +27,17 @@ def to_state_dict(
     Convert a PyTorch model or state dictionary to a state dictionary, optionally ignoring untrained parameters, specified keys, and keeping differentiable.
 
     Args:
-        state_dict_or_model: Either a PyTorch model (nn.Module) or a state dictionary (_StateDict).
+        state_dict_or_model: Either a PyTorch model (nn.Module) or a state dictionary (StateDictType).
         ignore_untrained: If True, ignore parameters that are not being trained (i.e., those with requires_grad=False).
         ignore_keys: A list of keys to ignore when converting to a state dictionary.
         keep_vars: If True, keeps the Variable wrappers around the tensor data; otherwise, the returned state dictionary will have tensors only.
 
 
     Returns:
-        A state dictionary (_StateDict) containing the model's parameters.
+        A state dictionary (StateDictType) containing the model's parameters.
     """
     if isinstance(state_dict_or_model, nn.Module):
-        state_dict: _StateDict = state_dict_or_model.state_dict(keep_vars=True)
+        state_dict: StateDictType = state_dict_or_model.state_dict(keep_vars=True)
         if ignore_untrained_params:
             for name, param in state_dict.items():
                 if not param.requires_grad:
@@ -55,7 +55,7 @@ def to_state_dict(
 
 
 def get_masked_state_dict(
-    state_dict_or_model: Union[_StateDict, nn.Module], mask: Dict[str, Tensor]
+    state_dict_or_model: Union[StateDictType, nn.Module], mask: Dict[str, Tensor]
 ):
     state_dict = to_state_dict(state_dict_or_model)
     masked_state_dict = {}
@@ -67,7 +67,7 @@ def get_masked_state_dict(
 class MaskModel(ParameterDictModel):
     def __init__(
         self,
-        state_dict_or_model: Union[_StateDict, nn.Module],
+        state_dict_or_model: Union[StateDictType, nn.Module],
         ignore_keys: List[str] = [],
         ignore_untrained_params: bool = True,
         parameter_type: Literal["probs", "logits"] = None,

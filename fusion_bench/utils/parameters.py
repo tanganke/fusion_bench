@@ -4,7 +4,7 @@ from typing import Callable, Iterable, List, Mapping, Optional, Union
 import torch
 from torch import nn
 
-from .type import _StateDict
+from .type import StateDictType
 
 __all__ = ["count_parameters", "print_parameters", "check_parameters_all_equal"]
 
@@ -72,7 +72,7 @@ def print_parameters(
 
 
 def check_parameters_all_equal(
-    list_of_param_names: List[Union[_StateDict, nn.Module, List[str]]]
+    list_of_param_names: List[Union[StateDictType, nn.Module, List[str]]]
 ) -> None:
     """
     Checks if all models have the same parameters.

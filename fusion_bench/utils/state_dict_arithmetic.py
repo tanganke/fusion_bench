@@ -7,11 +7,11 @@ import torch
 from torch import Tensor, nn
 
 from .parameters import check_parameters_all_equal
-from .type import _StateDict
+from .type import StateDictType
 
 
 def to_device(
-    state_dict: _StateDict,
+    state_dict: StateDictType,
     device: Union[torch.device, str],
     copy: bool = False,
     inplace: bool = False,
@@ -27,7 +27,7 @@ def to_device(
     return ret_state_dict
 
 
-def state_dicts_check_keys(state_dicts: List[_StateDict]):
+def state_dicts_check_keys(state_dicts: List[StateDictType]):
     """
     Checks that the state dictionaries have the same keys.
 
@@ -44,7 +44,7 @@ def state_dicts_check_keys(state_dicts: List[_StateDict]):
         assert keys == set(state_dict.keys()), "keys of state_dicts are not equal"
 
 
-def num_params_of_state_dict(state_dict: _StateDict):
+def num_params_of_state_dict(state_dict: StateDictType):
     """
     Returns the number of parameters in a state dict.
 
@@ -73,7 +73,7 @@ def state_dict_flatten(state_dict: Dict[str, Tensor]):
     return torch.cat(flattened_state_dict)
 
 
-def state_dict_avg(state_dicts: List[_StateDict]):
+def state_dict_avg(state_dicts: List[StateDictType]):
     """
     Returns the average of a list of state dicts.
 
@@ -98,17 +98,17 @@ def state_dict_avg(state_dicts: List[_StateDict]):
     return avg_state_dict
 
 
-def state_dict_sub(a: _StateDict, b: _StateDict, strict: bool = True, device=None):
+def state_dict_sub(a: StateDictType, b: StateDictType, strict: bool = True, device=None):
     """
     Returns the difference between two state dicts `a-b`.
 
     Args:
-        a (_StateDict): The first state dict.
-        b (_StateDict): The second state dict.
+        a (StateDictType): The first state dict.
+        b (StateDictType): The second state dict.
         strict (bool): Whether to check if the keys of the two state dicts are the same.
 
     Returns:
-        _StateDict: The difference between the two state dicts.
+        StateDictType: The difference between the two state dicts.
     """
     if strict:
         assert set(a.keys()) == set(b.keys())
@@ -122,7 +122,7 @@ def state_dict_sub(a: _StateDict, b: _StateDict, strict: bool = True, device=Non
     return diff
 
 
-def state_dict_add(a: _StateDict, b: _StateDict, strict: bool = True, device=None):
+def state_dict_add(a: StateDictType, b: StateDictType, strict: bool = True, device=None):
     """
     Returns the sum of two state dicts.
 
@@ -148,14 +148,14 @@ def state_dict_add(a: _StateDict, b: _StateDict, strict: bool = True, device=Non
     return ans
 
 
-def state_dict_add_scalar(a: _StateDict, scalar: Number):
+def state_dict_add_scalar(a: StateDictType, scalar: Number):
     ans = OrderedDict()
     for key in a:
         ans[key] = a[key] + scalar
     return ans
 
 
-def state_dict_mul(state_dict: _StateDict, scalar: float):
+def state_dict_mul(state_dict: StateDictType, scalar: float):
     """
     Returns the product of a state dict and a scalar.
 
@@ -218,7 +218,7 @@ def state_dict_interpolation(
     return interpolated_state_dict
 
 
-def state_dict_sum(state_dicts: List[_StateDict]):
+def state_dict_sum(state_dicts: List[StateDictType]):
     """
     Returns the sum of a list of state dicts.
 

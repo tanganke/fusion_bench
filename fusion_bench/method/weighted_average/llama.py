@@ -13,7 +13,7 @@ from fusion_bench.modelpool import ModelPool, to_modelpool
 from fusion_bench.modelpool.huggingface_llm import LLamaForCausalLMPool
 from fusion_bench.utils import timeit_context
 from fusion_bench.utils.state_dict_arithmetic import state_dict_add, state_dict_mul
-from fusion_bench.utils.type import _StateDict
+from fusion_bench.utils.type import StateDictType
 
 
 class WeightedAverageForLLama(ModelFusionAlgorithm):

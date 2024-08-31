@@ -104,6 +104,14 @@ The general structure of the FusionBench project can be visualized through its m
 
 By organizing these components into a structured and modular codebase, FusionBench ensures flexibility, ease of use, and scalability for researchers and developers. The project not only serves as a benchmark but also as a robust platform for innovation in the realm of deep model fusion.
 
+## Key Features
+
+- Comprehensive Benchmark: FusionBench provides a wide range of fusion algorithms, model pools, and tasks for thorough evaluation.
+- Modular Design: The project is structured into separate modules for algorithms, model pools, and task pools, allowing easy extension and customization.
+- Command-line Interface: A flexible CLI tool `fusion_bench` for running experiments with various configurations.
+- Web UI: An interactive web interface `fusion_bench_webui` for easier configuration and command generation.
+- Extensive Documentation: Detailed guides, API references, and examples to help users get started quickly.
+
 ### Basic Example
 
 Here we provide a basic example to demonstrate the usage of FusionBench.
