@@ -1,0 +1,13 @@
+_usage_: |
+  defaults:
+    - CLIPVisionModelPool@: _template
+_version_: 0.2
+_target_: CLIPVisionModelPool
+
+models: ???
+train_datasets: null
+test_datasets: null
+
+processor:
+  _target_: transformers.CLIPProcessor
+  pretrained_model_name_or_path: openai/clip-vit-base-patch32

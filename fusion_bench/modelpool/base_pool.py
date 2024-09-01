@@ -1,11 +1,14 @@
 import logging
 from abc import ABC, abstractmethod
 from copy import deepcopy
+from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 import torch
-from omegaconf import DictConfig
+from hydra.utils import instantiate
+from omegaconf import DictConfig, OmegaConf
 from torch import nn
+from torch.utils.data import Dataset
 
 from fusion_bench.utils import timeit_context
 
@@ -230,3 +233,193 @@ def to_modelpool(obj: List[nn.Module], **kwargs):
         return ListModelPool(models=[obj], **kwargs)
     else:
         raise ValueError(f"Invalid modelpool object: {obj}")
+
+
+class BaseModelPool:
+    """
+    A class for managing and interacting with a pool of models along with their associated datasets or other specifications. For example, a model pool may contain multiple models, each with its own training, validation, and testing datasets. As for the specifications, a vision model pool may contain image preprocessor, and a language model pool may contain a tokenizer.
+
+    Attributes:
+        _models (DictConfig): Configuration for all models in the pool.
+        _train_datasets (Optional[DictConfig]): Configuration for training datasets.
+        _val_datasets (Optional[DictConfig]): Configuration for validation datasets.
+        _test_datasets (Optional[DictConfig]): Configuration for testing datasets.
+        _usage_ (Optional[str]): Optional usage information.
+        _version_ (Optional[str]): Optional version information.
+    """
+
+    _models: DictConfig
+    _config_mapping = {
+        "_models": "models",
+        "_train_datasets": "train_datasets",
+        "_val_datasets": "val_datasets",
+        "_test_datasets": "test_datasets",
+        "_usage_": "_usage_",
+        "_version_": "_version_",
+    }
+
+    def __init__(
+        self,
+        models: DictConfig,
+        *,
+        train_datasets: Optional[DictConfig] = None,
+        val_datasets: Optional[DictConfig] = None,
+        test_datasets: Optional[DictConfig] = None,
+        _usage_: Optional[str] = None,
+        _version_: Optional[str] = None,
+        **kwargs,
+    ):
+        super().__init__()
+        self._models = models
+        self._train_datasets = train_datasets
+        self._val_datasets = val_datasets
+        self._test_datasets = test_datasets
+        self._usage_ = _usage_
+        self._version_ = _version_
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+    def to_yaml(self, path: Union[str, Path]):
+        """
+        Save the model pool to a YAML file.
+
+        Args:
+            path (Union[str, Path]): The path to save the model pool to.
+        """
+        config = {"_target_": type(self).__name__}
+        for attr, key in self._config_mapping.items():
+            if hasattr(self, attr):
+                config[key] = getattr(self, attr)
+        config = OmegaConf.create(config)
+        OmegaConf.save(config, path, resolve=True)
+
+    @staticmethod
+    def from_yaml(path: Union[str, Path]):
+        """
+        Load a model pool from a YAML file.
+
+        Args:
+            path (Union[str, Path]): The path to load the model pool from.
+
+        Returns:
+            BaseModelPool: The loaded model pool.
+        """
+        config = OmegaConf.load(path)
+        return instantiate(config, _recursive_=False)
+
+    @property
+    def has_pretrained(self):
+        """
+        Check if the model pool contains a pretrained model.
+
+        Returns:
+            bool: True if a pretrained model is available, False otherwise.
+        """
+        return "_pretrained_" in self._models
+
+    @property
+    def all_model_names(self):
+        """
+        Get the names of all models in the pool, including special models.
+
+        Returns:
+            List[str]: A list of all model names.
+        """
+        return self._models
+
+    @property
+    def model_names(self):
+        """
+        Get the names of regular models, excluding special models.
+
+        Returns:
+            List[str]: A list of regular model names.
+        """
+        return [name for name in self._models if not self.is_special_model(name)]
+
+    @staticmethod
+    def is_special_model(model_name: str):
+        """
+        Determine if a model is special based on its name.
+
+        Args:
+            model_name (str): The name of the model.
+
+        Returns:
+            bool: True if the model name indicates a special model, False otherwise.
+        """
+        return model_name.startswith("_") and model_name.endswith("_")
+
+    def load_model(self, model: Union[str, DictConfig], *args, **kwargs) -> nn.Module:
+        """
+        Load a model from the pool based on the provided configuration.
+
+        Args:
+            model (Union[str, DictConfig]): The model name or configuration.
+
+        Returns:
+            nn.Module: The instantiated model.
+        """
+        if isinstance(model, str):
+            model = self._models[model]
+        return instantiate(model, *args, **kwargs)
+
+    def load_pretrained_or_first_model(self, *args, **kwargs):
+        """
+        Load the pretrained model if available, otherwise load the first available model.
+
+        Returns:
+            nn.Module: The loaded model.
+        """
+        if self.has_pretrained:
+            model = self.load_model("_pretrained_", *args, **kwargs)
+        else:
+            model = self.load_model(self.model_names[0], *args, **kwargs)
+        return model
+
+    def load_train_dataset(self, model_name: str, *args, **kwargs) -> Dataset:
+        """
+        Load the training dataset for the specified model.
+
+        Args:
+            model_name (str): The name of the model.
+
+        Returns:
+            Dataset: The instantiated training dataset.
+        """
+        return instantiate(self._train_datasets[model_name], *args, **kwargs)
+
+    def load_val_dataset(self, model_name: str, *args, **kwargs) -> Dataset:
+        """
+        Load the validation dataset for the specified model.
+
+        Args:
+            model_name (str): The name of the model.
+
+        Returns:
+            Dataset: The instantiated validation dataset.
+        """
+        return instantiate(self._val_datasets[model_name], *args, **kwargs)
+
+    def load_test_dataset(self, model_name: str, *args, **kwargs) -> Dataset:
+        """
+        Load the testing dataset for the specified model.
+
+        Args:
+            model_name (str): The name of the model.
+
+        Returns:
+            Dataset: The instantiated testing dataset.
+        """
+        return instantiate(self._test_datasets[model_name], *args, **kwargs)
+
+    def save_model(self, model: nn.Module, path: str):
+        """
+        Save the state dictionary of the model to the specified path.
+
+        Args:
+            model (nn.Module): The model whose state dictionary is to be saved.
+            path (str): The path where the state dictionary will be saved.
+        """
+        with timeit_context(f"Saving the state dict of model to {path}"):
+            torch.save(model.state_dict(), path)

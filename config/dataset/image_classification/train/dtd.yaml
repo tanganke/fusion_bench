@@ -1,0 +1,4 @@
+dtd:
+  _target_: datasets.load_dataset
+  name: tanganke/dtd
+  split: train

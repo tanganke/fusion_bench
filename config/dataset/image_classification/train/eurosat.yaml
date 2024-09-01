@@ -1,0 +1,4 @@
+eurosat:
+  _target_: datasets.load_dataset
+  name: tanganke/eurosat
+  split: train
