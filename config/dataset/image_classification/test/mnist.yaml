@@ -1,4 +1,4 @@
 mnist:
   _target_: datasets.load_dataset
-  name: tanganke/mnist
+  path: tanganke/mnist
   split: test

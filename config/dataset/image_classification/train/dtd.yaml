@@ -1,4 +1,4 @@
 dtd:
   _target_: datasets.load_dataset
-  name: tanganke/dtd
+  path: tanganke/dtd
   split: train

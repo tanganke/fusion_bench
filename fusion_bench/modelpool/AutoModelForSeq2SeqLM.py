@@ -7,12 +7,12 @@ from transformers import AutoModelForSeq2SeqLM
 
 from fusion_bench.utils import timeit_context
 
-from .base_pool import ModelPool
+from .base_pool import BaseModelPool
 
 log = logging.getLogger(__name__)
 
 
-class AutoModelForSeq2SeqLMPool(ModelPool):
+class AutoModelForSeq2SeqLMPool(BaseModelPool):
     def load_model(self, model_config: str | DictConfig):
         """
         Load a Seq2Seq language model based on the provided configuration.

@@ -11,7 +11,11 @@ from .dummy import DummyTaskPool
 from .flan_t5_glue_text_generation import FlanT5GLUETextGenerationTaskPool
 from .gpt2_text_classification import GPT2TextClassificationTaskPool
 
-_import_structure = {"clip_vision": ["CLIPVisionModelTaskPool"]}
+_import_structure = {
+    "base_pool": ["BaseTaskPool"],
+    "clip_vision": ["CLIPVisionModelTaskPool"],
+    "dummy": ["DummyTaskPool"],
+}
 
 
 class TaskPoolFactory:
@@ -71,7 +75,9 @@ def load_taskpool_from_config(taskpool_config: DictConfig):
 
 
 if TYPE_CHECKING:
+    from .base_pool import BaseTaskPool
     from .clip_vision import CLIPVisionModelTaskPool
+    from .dummy import DummyTaskPool
 
 else:
     sys.modules[__name__] = LazyImporter(

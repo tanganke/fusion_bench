@@ -1,4 +1,4 @@
 gtsrb:
   _target_: datasets.load_dataset
-  name: tanganke/gtsrb
+  path: tanganke/gtsrb
   split: test

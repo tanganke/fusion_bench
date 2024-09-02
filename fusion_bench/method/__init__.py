@@ -1,6 +1,17 @@
+import sys
+from typing import TYPE_CHECKING
+
 from omegaconf import DictConfig
 
+from fusion_bench.utils.lazy_imports import LazyImporter
+
 from .base_algorithm import ModelFusionAlgorithm
+
+_import_structure = {
+    "base_algorithm": ["BaseModelFusionAlgorithm"],
+    "dummy": ["DummyAlgorithm"],
+    "task_arithmetic": ["TaskArithmeticAlgorithm"],
+}
 
 
 class AlgorithmFactory:
@@ -92,3 +103,20 @@ def load_algorithm_from_config(method_config: DictConfig):
         ValueError: If 'name' attribute is not found in the configuration or does not match any known algorithm names.
     """
     return AlgorithmFactory.create_algorithm(method_config)
+
+
+if TYPE_CHECKING:
+    from .base_algorithm import BaseModelFusionAlgorithm
+    from .dummy import DummyAlgorithm
+    from .task_arithmetic import TaskArithmeticAlgorithm
+
+else:
+    sys.modules[__name__] = LazyImporter(
+        __name__,
+        globals()["__file__"],
+        _import_structure,
+        extra_objects={
+            "AlgorithmFactory": AlgorithmFactory,
+            "load_algorithm_from_config": load_algorithm_from_config,
+        },
+    )

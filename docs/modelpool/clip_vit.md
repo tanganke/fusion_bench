@@ -226,7 +226,7 @@ Print the basic information of the CLIP-ViT-B/32 model and CLIP-ViT-L/14 model
 ```bash
 fusion_bench \
   method=dummy \
-  modelpool=clip-vit-base-patch32_individual \
+  modelpool=CLIPVisionModelPool/clip-vit-base-patch32_individual \
   taskpool=dummy  # a dummy task that just report the basic information of model (e.g., number of parameters)
 
 # Output:
@@ -235,7 +235,7 @@ fusion_bench \
 # or use the following command to inspect the CLIP-ViT-L/14 model
 fusion_bench \
   method=dummy \
-  modelpool=clip-vit-large-patch14_individual \
+  modelpool=CLIPVisionModelPool/clip-vit-large-patch14_individual \
   taskpool=dummy
 
 # Output:
@@ -247,10 +247,13 @@ fusion_bench \
 evaluate a single CLIP-ViT-B/32 model on the eight downstream tasks:
 
 ```bash
-fusion_bench method=dummy \
-  modelpool=clip-vit-base-patch32_individual \
-    modelpool.models.0.path="'${path_to_clip_model}'" \
-  taskpool=clip-vit-classification_TA8
+path_to_clip_model="tanganke/clip-vit-base-patch32_sun397"
+
+fusion_bench \
+  method=dummy \
+  modelpool=CLIPVisionModelPool/clip-vit-base-patch32_individual \
+    modelpool.models._pretrained_.pretrained_model_name_or_path="'${path_to_clip_model}'" \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
 ```
 
 Here:
@@ -741,7 +744,5 @@ Table: Results of the robustness experiments ($\lambda=0.3$).
 
 
 ## References
-
-::: fusion_bench.modelpool.HuggingFaceClipVisionPool
 
 [^1]: Dan Hendrycks and Thomas Dietterich. Benchmarking neural network robustness to common corruptions and perturbations. Proceedings of the International Conference on Learning Representations, 2019.

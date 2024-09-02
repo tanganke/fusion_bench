@@ -19,7 +19,6 @@ from .wanda_utils.prune import llama_prune_wanda_
 
 
 class WandaPruningForLlama(ModelFusionAlgorithm, SimpleProfilerMixin):
-
     def run(self, modelpool: LLamaForCausalLMPool):
         config = self.config
 

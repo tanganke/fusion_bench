@@ -11,6 +11,10 @@ class YAMLSerializationMixin:
         "_recursive_": "_recursive_",
     }
 
+    @property
+    def config(self):
+        return self.to_config()
+
     def to_yaml(self, path: Union[str, Path]):
         """
         Save the model pool to a YAML file.
@@ -18,11 +22,7 @@ class YAMLSerializationMixin:
         Args:
             path (Union[str, Path]): The path to save the model pool to.
         """
-        config = {"_target_": type(self).__name__}
-        for attr, key in self._config_mapping.items():
-            if hasattr(self, attr):
-                config[key] = getattr(self, attr)
-        config = OmegaConf.create(config)
+        config = self.to_config()
         OmegaConf.save(config, path, resolve=True)
 
     @classmethod
@@ -38,3 +38,16 @@ class YAMLSerializationMixin:
         """
         config = OmegaConf.load(path)
         return instantiate(config, _recursive_=cls._recursive_)
+
+    def to_config(self):
+        """
+        Convert the model pool to a DictConfig.
+
+        Returns:
+            Dict: The model pool as a DictConfig.
+        """
+        config = {"_target_": type(self).__name__}
+        for attr, key in self._config_mapping.items():
+            if hasattr(self, attr):
+                config[key] = getattr(self, attr)
+        return OmegaConf.create(config)

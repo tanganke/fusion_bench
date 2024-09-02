@@ -6,7 +6,6 @@ from fusion_bench.utils import import_object
 
 
 class BaseFactoryClass(ABC):
-
     _registry = {}
 
     @classmethod

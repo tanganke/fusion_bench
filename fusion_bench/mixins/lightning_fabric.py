@@ -34,7 +34,7 @@ class LightningFabricMixin:
     in the consuming class for configuration.
     """
 
-    _fabric: L.Fabric = None
+    _fabric_instance: L.Fabric = None
 
     def setup_lightning_fabric(self, config: DictConfig):
         """
@@ -48,33 +48,33 @@ class LightningFabricMixin:
         - fabric: The configuration for the Lightning Fabric.
         - fabric_logger: The configuration for the TensorBoardLogger.
         """
-        if self._fabric is None:
+        if self._fabric_instance is None:
             if config.get("fabric", None) is None:
                 log.warning("No fabric configuration found. use default settings.")
-                self._fabric = L.Fabric()
+                self._fabric_instance = L.Fabric()
             else:
                 if config.get("fabric_logger", None) is not None:
                     logger = TensorBoardLogger(**config.fabric_logger)
                 else:
                     logger = None
                 log.info("Launching Lightning Fabric")
-                self._fabric = L.Fabric(**config.fabric, loggers=logger)
-            self._fabric.launch()
+                self._fabric_instance = L.Fabric(**config.fabric, loggers=logger)
+            self._fabric_instance.launch()
             # Set the log directory in config if it is not already set
             if (
                 self.log_dir is not None
                 and hasattr(config, "log_dir")
                 and config.get("log_dir", None) is None
             ):
-                if self._fabric.is_global_zero:
+                if self._fabric_instance.is_global_zero:
                     log.info(f"Setting log_dir to {self.log_dir}")
                 config.log_dir = self.log_dir
 
     @property
     def fabric(self):
-        if self._fabric is None:
+        if self._fabric_instance is None:
             self.setup_lightning_fabric(getattr(self, "config", DictConfig({})))
-        return self._fabric
+        return self._fabric_instance
 
     @property
     def log_dir(self):

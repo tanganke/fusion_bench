@@ -79,7 +79,9 @@ class MagnitudeDiffPruningAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
             model = deepcopy(pretrained_model)
 
         if self.config.extract_names is not None:
-            extract_names: List[str] = (
+            extract_names: List[
+                str
+            ] = (
                 self.config.extract_names
             )  # regular expressions for the names of the parameters
         else:

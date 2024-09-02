@@ -9,12 +9,12 @@ from typing_extensions import override
 from fusion_bench.dataset import CLIPDataset, load_dataset_from_config
 from fusion_bench.utils import timeit_context
 
-from .base_pool import ModelPool
+from .base_pool import BaseModelPool
 
 log = logging.getLogger(__name__)
 
 
-class HuggingFaceClipVisionPool(ModelPool):
+class HuggingFaceClipVisionPool(BaseModelPool):
     """
     A model pool for managing Hugging Face's CLIP Vision models.
 

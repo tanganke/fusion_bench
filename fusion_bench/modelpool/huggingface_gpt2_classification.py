@@ -5,13 +5,13 @@ from torch import nn
 from transformers import GPT2ForSequenceClassification, GPT2Model, GPT2Tokenizer
 
 from fusion_bench.dataset.gpt2_glue import TokenizedGLUE
-from fusion_bench.modelpool import ModelPool
+from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.utils import timeit_context
 
 log = logging.getLogger(__name__)
 
 
-class HuggingFaceGPT2ClassificationPool(ModelPool):
+class HuggingFaceGPT2ClassificationPool(BaseModelPool):
     def __init__(self, modelpool_config: DictConfig):
         super().__init__(modelpool_config)
 
