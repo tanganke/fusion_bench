@@ -1,9 +1,10 @@
 import functools
 import logging
 import os
+from copy import deepcopy
 from typing import Optional, cast
 
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig, OmegaConf, flag_override
 from torch.nn.modules import Module
 from transformers import (
     AutoModel,
@@ -15,7 +16,7 @@ from transformers import (
 )
 from typing_extensions import override
 
-from fusion_bench.modelpool.base_pool import ModelPool
+from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.utils import timeit_context
 from fusion_bench.utils.dtype import parse_dtype
 
@@ -44,54 +45,43 @@ def config_priority_get(priority_config, general_config, key, default):
     return general_config.get(key, default)
 
 
-class AutoModelForCausalLMPool(ModelPool):
-    def load_model(self, model_config: str | DictConfig) -> Module:
-        if isinstance(model_config, str):
-            model_config = self.get_model_config(model_config)
-        else:
-            model_config = model_config
+class AutoModelForCausalLMPool(BaseModelPool):
+    _config_mapping = BaseModelPool._config_mapping | {
+        "_tokenizer": "tokenizer",
+        "_model_kwargs": "model_kwargs",
+    }
 
-        config = self.config
-        get_option = lambda key, default: config_priority_get(
-            priority_config=model_config,
-            general_config=config,
-            key=key,
-            default=default,
-        )
+    def __init__(
+        self,
+        models,
+        *,
+        tokenizer: Optional[DictConfig],
+        model_kwargs: Optional[DictConfig] = None,
+        **kwargs,
+    ):
+        super().__init__(models, **kwargs)
+        # process `model_kwargs`
+        self._tokenizer = tokenizer
+        self._model_kwargs = model_kwargs
+        if self._model_kwargs is None:
+            self._model_kwargs = {}
+        with flag_override(self._model_kwargs, "allow_objects", True):
+            if hasattr(self._model_kwargs, "torch_dtype"):
+                self._model_kwargs.torch_dtype = parse_dtype(
+                    self._model_kwargs.torch_dtype
+                )
 
-        kwargs = get_option("model_kwargs", {})
-        if isinstance(kwargs, DictConfig):
-            kwargs = OmegaConf.to_container(kwargs, resolve=True)
-        if "torch_dtype" in kwargs:
-            kwargs["torch_dtype"] = parse_dtype(kwargs["torch_dtype"])
-        if (
-            "torch_dtype" not in kwargs
-            and (dtype := get_option("dtype", None)) is not None
-        ):
-            kwargs["torch_dtype"] = parse_dtype(dtype)
+    def load_model(
+        self, model_name_or_config: str | DictConfig, *args, **kwargs
+    ) -> Module:
+        model_kwargs = deepcopy(self._model_kwargs)
+        model_kwargs.update(kwargs)
+        return super().load_model(model_name_or_config, *args, **model_kwargs)
 
-        with timeit_context(f"loading model from {model_config.path}"):
-            model = AutoModelForCausalLM.from_pretrained(
-                os.path.expanduser(model_config.path), **kwargs
-            )
-        return model
-
-    def load_tokenizer(self, model_config: str | DictConfig, **kwargs):
-        if isinstance(model_config, str):
-            model_config = self.get_model_config(model_config)
-        else:
-            model_config = model_config
-
-        with timeit_context(f"loading tokenizer from {model_config.path}"):
-            tokenizer = AutoTokenizer.from_pretrained(
-                os.path.expanduser(model_config.path), **kwargs
-            )
+    def load_tokenizer(self, *args, **kwargs):
+        assert self._tokenizer is not None, "Tokenizer is not defined in the config"
+        tokenizer = isinstance(self._tokenizer, *args, **kwargs)
         return tokenizer
-
-    def load_pretrained_or_first_tokenizer(self, **kwargs):
-        if self.has_pretrained:
-            return self.load_tokenizer("_pretrained_", **kwargs)
-        return self.load_tokenizer(self.model_names[0], **kwargs)
 
     @override
     def save_model(

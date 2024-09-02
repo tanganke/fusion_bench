@@ -6,7 +6,7 @@ from fusion_bench.utils.lazy_imports import LazyImporter
 
 _import_structure = {
     "lightning_fabric": ["LightningFabricMixin"],
-    "serialization": ["YAMLSerializationMixin"],
+    "serialization": ["YAMLSerializationMixin", "BaseYAMLSerializableModel"],
     "simple_profiler": ["SimpleProfilerMixin"],
     "clip_classification": ["CLIPClassificationMixin"],
 }
@@ -14,7 +14,7 @@ _import_structure = {
 if TYPE_CHECKING:
     from .clip_classification import CLIPClassificationMixin
     from .lightning_fabric import LightningFabricMixin
-    from .serialization import YAMLSerializationMixin
+    from .serialization import YAMLSerializationMixin, BaseYAMLSerializableModel
     from .simple_profiler import SimpleProfilerMixin
 
 else:

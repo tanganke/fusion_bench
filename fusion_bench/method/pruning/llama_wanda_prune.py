@@ -2,7 +2,7 @@ import logging
 import os
 import re
 from copy import deepcopy
-from typing import Dict, List, cast
+from typing import Dict, List, cast, Literal
 
 import torch
 from omegaconf import DictConfig
@@ -10,15 +10,39 @@ from torch import Tensor, nn
 from tqdm.auto import tqdm
 from transformers import LlamaForCausalLM
 
-from fusion_bench.method import ModelFusionAlgorithm
-from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
-from fusion_bench.modelpool import ModelPool, to_modelpool
-from fusion_bench.modelpool.huggingface_llm import LLamaForCausalLMPool
+from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.mixins import SimpleProfilerMixin
+from fusion_bench.modelpool import BaseModelPool, LLamaForCausalLMPool
 
 from .wanda_utils.prune import llama_prune_wanda_
 
 
-class WandaPruningForLlama(ModelFusionAlgorithm, SimpleProfilerMixin):
+class WandaPruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
+    def __init__(
+        self,
+        *,
+        nsamples: int,
+        seed: int,
+        use_variant: bool,
+        prune_type: Literal["unstructured", "semistructured"],
+        device: str,
+        dtype: str,
+        sparsity_ratio: float,
+        n: int,
+        m: int,
+        **kwargs,
+    ):
+        super().__init__()
+        self.nsamples = nsamples
+        self.seed = seed
+        self.use_variant = use_variant
+        self.prune_type = prune_type
+        self.device = device
+        self.dtype = dtype
+        self.sparsity_ratio = sparsity_ratio
+        self.n = n
+        self.m = m
+
     def run(self, modelpool: LLamaForCausalLMPool):
         config = self.config
 

@@ -1,4 +1,4 @@
-name: wanda_pruning_for_llama
+_target_: fusion_bench.method.WandaPruningForLlama
 nsamples: 128
 seed: 0
 use_variant: false

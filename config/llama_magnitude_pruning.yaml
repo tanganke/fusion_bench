@@ -1,5 +1,5 @@
 defaults:
-  - example_config
+  - fabric_model_fusion
   - override method: llama_magnitude_pruning
   - override modelpool: llama_for_causallm
   - override taskpool: dummy

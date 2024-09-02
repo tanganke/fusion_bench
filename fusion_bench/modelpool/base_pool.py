@@ -10,7 +10,7 @@ from omegaconf import DictConfig, OmegaConf
 from torch import nn
 from torch.utils.data import Dataset
 
-from fusion_bench.mixins import YAMLSerializationMixin
+from fusion_bench.mixins import BaseYAMLSerializableModel
 from fusion_bench.utils import timeit_context
 
 __all__ = ["BaseModelPool", "DictModelPool", "ListModelPool", "to_modelpool"]
@@ -18,7 +18,7 @@ __all__ = ["BaseModelPool", "DictModelPool", "ListModelPool", "to_modelpool"]
 log = logging.getLogger(__name__)
 
 
-class BaseModelPool(YAMLSerializationMixin):
+class BaseModelPool(BaseYAMLSerializableModel):
     """
     A class for managing and interacting with a pool of models along with their associated datasets or other specifications. For example, a model pool may contain multiple models, each with its own training, validation, and testing datasets. As for the specifications, a vision model pool may contain image preprocessor, and a language model pool may contain a tokenizer.
 
@@ -31,14 +31,13 @@ class BaseModelPool(YAMLSerializationMixin):
         _version_ (Optional[str]): Optional version information.
     """
 
+    _program = None
     _models: Union[DictConfig, Dict[str, nn.Module]]
-    _config_mapping = YAMLSerializationMixin._config_mapping | {
+    _config_mapping = BaseYAMLSerializableModel._config_mapping | {
         "_models": "models",
         "_train_datasets": "train_datasets",
         "_val_datasets": "val_datasets",
         "_test_datasets": "test_datasets",
-        "_usage_": "_usage_",
-        "_version_": "_version_",
     }
 
     def __init__(
@@ -48,21 +47,15 @@ class BaseModelPool(YAMLSerializationMixin):
         train_datasets: Optional[DictConfig] = None,
         val_datasets: Optional[DictConfig] = None,
         test_datasets: Optional[DictConfig] = None,
-        _usage_: Optional[str] = None,
-        _version_: Optional[str] = None,
         **kwargs,
     ):
-        super().__init__()
         if isinstance(models, List):
             models = {str(model_idx): model for model_idx, model in enumerate(models)}
         self._models = models
         self._train_datasets = train_datasets
         self._val_datasets = val_datasets
         self._test_datasets = test_datasets
-        self._usage_ = _usage_
-        self._version_ = _version_
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+        super().__init__(**kwargs)
 
     @property
     def has_pretrained(self):

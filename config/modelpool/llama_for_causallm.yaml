@@ -1,4 +1,5 @@
-type: LLamaForCausalLMPool
+_target_: fusion_bench.modelpool.LLamaForCausalLMPool
+_recursive_: false
 # each model should have a name and a path, and the model is loaded from the path
 # this is equivalent to `AutoModelForCausalLM.from_pretrained(path)`
 models:
@@ -7,11 +8,18 @@ models:
   #   path:
   #   model_kwargs:
   #     - cache_dir: null
-  - name: _pretrained_
-    path: meta-llama/Meta-Llama-3-8B
-  - name: expert_1
-    path: meta-llama/Meta-Llama-3-8B
-  - name: expert_2
-    path: meta-llama/Meta-Llama-3-8B-Instruct
-dtype: float16 # this will be overrided by the `torch_dtype` in model_kwargs
-model_kwargs: null
+  _pretrained_:
+    _target_: transformers.LlamaForCausalLM.from_pretrained
+    pretrained_model_name_or_path: meta-llama/Meta-Llama-3-8B
+  expert_1:
+    _target_: transformers.LlamaForCausalLM.from_pretrained
+    pretrained_model_name_or_path: meta-llama/Meta-Llama-3-8B
+  expert_2:
+    _target_: transformers.LlamaForCausalLM.from_pretrained
+    pretrained_model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
+
+model_kwargs:
+  torch_dtype: float16
+tokenizer:
+  _target_: transformers.AutoTokenizer.from_pretrained
+  pretrained_model_name_or_path: meta-llama/Meta-Llama-3-8B

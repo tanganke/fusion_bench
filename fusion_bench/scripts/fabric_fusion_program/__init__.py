@@ -12,7 +12,7 @@ from omegaconf import DictConfig, OmegaConf
 from torch import nn
 from tqdm.auto import tqdm
 
-from fusion_bench.method import BaseModelFusionAlgorithm, load_algorithm_from_config
+from fusion_bench.method import BaseModelFusionAlgorithm
 from fusion_bench.mixins import LightningFabricMixin, YAMLSerializationMixin
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.scripts import BaseHydraProgram
@@ -37,8 +37,6 @@ class FabricModelFusionProgram(
         "_taskpool": "taskpool",
         "_fabric": "fabric",
         "_fabric_logger": "fabric_logger",
-        "_usage_": "_usage_",
-        "_version_": "_version_",
     }
 
     def __init__(
@@ -54,21 +52,17 @@ class FabricModelFusionProgram(
         report_save_path: Optional[str] = None,
         merged_model_save_path: Optional[str] = None,
         merged_model_save_kwargs: Optional[DictConfig] = None,
-        _usage_: Optional[str] = None,
-        _version_: Optional[str] = None,
         **kwargs,
     ):
-        super().__init__()
         self._method = method
         self._modelpool = modelpool
         self._taskpool = taskpool
         self._fabric = fabric
         self._fabric_logger = fabric_logger
-        self._usage_ = _usage_
-        self._version_ = _version_
         self.report_save_path = report_save_path
         self.merged_model_save_path = merged_model_save_path
         self.merged_model_save_kwargs = merged_model_save_kwargs
+        super().__init__()
 
         if print_config:
             print_config_tree(

@@ -1,9 +1,9 @@
 from abc import abstractmethod
 
-from fusion_bench.mixins import YAMLSerializationMixin
+from fusion_bench.mixins import BaseYAMLSerializableModel
 
 
-class BaseHydraProgram(YAMLSerializationMixin):
+class BaseHydraProgram(BaseYAMLSerializableModel):
     @abstractmethod
     def run(self):
         pass

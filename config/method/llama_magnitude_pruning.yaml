@@ -1,4 +1,5 @@
-name: magnitude_pruning_for_llama
+_target_: fusion_bench.method.MagnitudePruningForLlama
+_recursive_: false
 # `prune_type` can be either `unstructured` or `semistructured`
 prune_type: unstructured
 # device and dtype to compute the pruning mask

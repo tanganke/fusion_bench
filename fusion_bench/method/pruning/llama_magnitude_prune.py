@@ -1,13 +1,13 @@
-from typing import Union
+from typing import Literal, Optional, Union
 
 import torch
 from torch import Dict, Tensor, nn
 from tqdm.auto import tqdm
 from transformers import LlamaForCausalLM, LlamaModel
 
-from fusion_bench.method import ModelFusionAlgorithm
+from fusion_bench.method import BaseModelFusionAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
-from fusion_bench.modelpool.huggingface_llm import LLamaForCausalLMPool
+from fusion_bench.modelpool import LLamaForCausalLMPool
 from fusion_bench.utils.dtype import parse_dtype
 
 from . import prune_utils
@@ -91,7 +91,7 @@ def semistructured_magnitude_prune_(
     return model
 
 
-class MagnitudePruningForLlama(ModelFusionAlgorithm, SimpleProfilerMixin):
+class MagnitudePruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
     """
     Implements magnitude-based pruning for LLama models.
 
@@ -103,16 +103,40 @@ class MagnitudePruningForLlama(ModelFusionAlgorithm, SimpleProfilerMixin):
             Executes the pruning process on the model pool and returns the pruned model.
     """
 
+    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+        "prune_type": "prune_type",
+        "device": "device",
+        "dtype": "dtype",
+        "sparsity_ratio": "sparsity_ratio",
+        "n": "n",
+        "m": "m",
+    }
+
+    def __init__(
+        self,
+        *,
+        prune_type: Literal["unstructured", "semistructured"],
+        device: str,
+        dtype: Optional[str],
+        sparsity_ratio: float,
+        n: int,
+        m: int,
+        **kwargs,
+    ):
+        self.prune_type = prune_type
+        self.device = device
+        self.dtype = dtype
+        self.sparsity_ratio = sparsity_ratio
+        self.n = n
+        self.m = m
+        super().__init__(**kwargs)
+
     @torch.no_grad()
     def run(self, modelpool: LLamaForCausalLMPool):
         config = self.config
 
         # load pre-trained model or the first model in the pool
-        with self.profile("load_model"):
-            if modelpool.has_pretrained:
-                base_model = modelpool.load_model("_pretrained_")
-            else:
-                base_model = modelpool.load_model(modelpool.model_names[0])
+        base_model = modelpool.load_pretrained_or_first_model()
 
         dtype = parse_dtype(config.dtype)
         device = torch.device(config.device)

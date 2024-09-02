@@ -1,8 +1,11 @@
+import logging
 from pathlib import Path
 from typing import Dict, Optional, Union
 
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
+
+log = logging.getLogger(__name__)
 
 
 class YAMLSerializationMixin:
@@ -65,3 +68,22 @@ class YAMLSerializationMixin:
             if hasattr(self, attr):
                 config[key] = getattr(self, attr)
         return OmegaConf.create(config)
+
+
+class BaseYAMLSerializableModel(YAMLSerializationMixin):
+    _config_mapping = YAMLSerializationMixin._config_mapping | {
+        "_usage_": "_usage_",
+        "_version_": "_version_",
+    }
+
+    def __init__(
+        self,
+        _usage_: Optional[str] = None,
+        _version_: Optional[str] = None,
+        **kwargs,
+    ):
+        super().__init__()
+        self._usage_ = _usage_
+        self._version_ = _version_
+        for key, value in kwargs.items():
+            log.warning(f"Unused argument: {key}={value}")
