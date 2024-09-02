@@ -10,6 +10,7 @@ from omegaconf import DictConfig, OmegaConf
 from torch import nn
 from torch.utils.data import Dataset
 
+from fusion_bench.mixins import YAMLSerializationMixin
 from fusion_bench.utils import timeit_context
 
 __all__ = ["ModelPool", "DictModelPool", "ListModelPool", "to_modelpool"]
@@ -235,7 +236,7 @@ def to_modelpool(obj: List[nn.Module], **kwargs):
         raise ValueError(f"Invalid modelpool object: {obj}")
 
 
-class BaseModelPool:
+class BaseModelPool(YAMLSerializationMixin):
     """
     A class for managing and interacting with a pool of models along with their associated datasets or other specifications. For example, a model pool may contain multiple models, each with its own training, validation, and testing datasets. As for the specifications, a vision model pool may contain image preprocessor, and a language model pool may contain a tokenizer.
 
@@ -249,7 +250,7 @@ class BaseModelPool:
     """
 
     _models: DictConfig
-    _config_mapping = {
+    _config_mapping = YAMLSerializationMixin._config_mapping | {
         "_models": "models",
         "_train_datasets": "train_datasets",
         "_val_datasets": "val_datasets",
@@ -278,34 +279,6 @@ class BaseModelPool:
         self._version_ = _version_
         for key, value in kwargs.items():
             setattr(self, key, value)
-
-    def to_yaml(self, path: Union[str, Path]):
-        """
-        Save the model pool to a YAML file.
-
-        Args:
-            path (Union[str, Path]): The path to save the model pool to.
-        """
-        config = {"_target_": type(self).__name__}
-        for attr, key in self._config_mapping.items():
-            if hasattr(self, attr):
-                config[key] = getattr(self, attr)
-        config = OmegaConf.create(config)
-        OmegaConf.save(config, path, resolve=True)
-
-    @staticmethod
-    def from_yaml(path: Union[str, Path]):
-        """
-        Load a model pool from a YAML file.
-
-        Args:
-            path (Union[str, Path]): The path to load the model pool from.
-
-        Returns:
-            BaseModelPool: The loaded model pool.
-        """
-        config = OmegaConf.load(path)
-        return instantiate(config, _recursive_=False)
 
     @property
     def has_pretrained(self):

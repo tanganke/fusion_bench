@@ -10,9 +10,10 @@ from typing_extensions import override
 from fusion_bench.dataset import CLIPDataset, load_dataset_from_config
 from fusion_bench.utils import timeit_context
 
-from .base_pool import BaseModelPool
+from ..base_pool import BaseModelPool
 
 log = logging.getLogger(__name__)
+print("CLIPVisionModelPool")
 
 
 class CLIPVisionModelPool(BaseModelPool):
@@ -22,6 +23,8 @@ class CLIPVisionModelPool(BaseModelPool):
     This class extends the base `ModelPool` class and overrides its methods to handle
     the specifics of the CLIP Vision models provided by the Hugging Face Transformers library.
     """
+
+    _config_mapping = BaseModelPool._config_mapping | {"_processor": "processor"}
 
     def __init__(
         self,

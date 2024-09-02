@@ -1,7 +1,7 @@
 import heapq
+import logging
 import time
 from typing import List, Tuple, cast
-import logging
 
 import torch
 import torch.nn as nn

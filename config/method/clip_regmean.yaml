@@ -1,5 +1,4 @@
 name: clip_regmean
-
 # list, regular expression of names of parameters that need to be excluded
 exclude_param_names_regex: []
 # numbers of examples to compute regmean weights

@@ -10,12 +10,9 @@ models:
     path: tanganke/clip-vit-base-patch32_resisc45
   - name: gtsrb
     path: tanganke/clip-vit-base-patch32_gtsrb
-
-
 # `corrption` can be one of:
 # contrast, gaussian_noise, impulse_noise, jpeg_compression, motion_blur, pixelate, spatter
 corruption: ${corruption}
-
 # The following datasets are used for test-time adaptation
 dataset_type: huggingface_image_classification
 tta_datasets:
@@ -35,7 +32,6 @@ tta_datasets:
     dataset:
       name: tanganke/gtsrb
       split: ${modelpool.corruption}
-
 train_datasets:
   - name: stanford_cars
     dataset:

@@ -10,8 +10,6 @@ models:
     path: tanganke/clip-vit-base-patch32_resisc45
   - name: gtsrb
     path: tanganke/clip-vit-base-patch32_gtsrb
-
-
 # The following datasets are used for test-time adaptation
 dataset_type: huggingface_image_classification
 tta_datasets:
@@ -31,7 +29,6 @@ tta_datasets:
     dataset:
       name: tanganke/gtsrb
       split: test
-
 train_datasets:
   - name: stanford_cars
     dataset:

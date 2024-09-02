@@ -81,7 +81,7 @@ class LightningFabricMixin:
         """
         Retrieves the log directory from the fabric's logger.
         """
-        if self.fabric is not None and self.fabric.logger is not None:
+        if self.fabric is not None and len(self.fabric._loggers) > 0:
             log_dir = self.fabric.logger.log_dir
             if self.fabric.is_global_zero and not os.path.exists(log_dir):
                 os.makedirs(log_dir, exist_ok=True)

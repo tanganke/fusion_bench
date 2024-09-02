@@ -1,6 +1,5 @@
 type: clip_vit_classification
 name: clip-vit-robustness_clean
-
 dataset_type: huggingface_image_classification
 tasks:
   - name: stanford_cars
@@ -19,7 +18,6 @@ tasks:
     dataset:
       name: tanganke/gtsrb
       split: test
-
 clip_model: openai/clip-vit-base-patch32
 batch_size: 128
 num_workers: 16

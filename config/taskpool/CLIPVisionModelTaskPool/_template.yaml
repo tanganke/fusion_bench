@@ -1,0 +1,12 @@
+_target_: fusion_bench.taskpool.CLIPVisionModelTaskPool
+_version_: "0.2"
+test_datasets: ??? # The datasets to evaluate the model on
+processor:
+  _target_: transformers.CLIPProcessor
+  pretrained_model_name_or_path: openai/clip-vit-base-patch32
+loader_kwargs:
+  batch_size: 128
+  num_workers: 8
+  pin_memory: True
+  drop_last: False
+  shuffle: False

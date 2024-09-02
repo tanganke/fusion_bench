@@ -32,7 +32,3 @@ class BaseFactoryClass(ABC):
     @classmethod
     def available_items(cls):
         return list(cls._registry.keys())
-
-    @abstractmethod
-    def create(self, config: DictConfig):
-        pass

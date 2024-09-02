@@ -98,7 +98,9 @@ def state_dict_avg(state_dicts: List[StateDictType]):
     return avg_state_dict
 
 
-def state_dict_sub(a: StateDictType, b: StateDictType, strict: bool = True, device=None):
+def state_dict_sub(
+    a: StateDictType, b: StateDictType, strict: bool = True, device=None
+):
     """
     Returns the difference between two state dicts `a-b`.
 
@@ -122,7 +124,9 @@ def state_dict_sub(a: StateDictType, b: StateDictType, strict: bool = True, devi
     return diff
 
 
-def state_dict_add(a: StateDictType, b: StateDictType, strict: bool = True, device=None):
+def state_dict_add(
+    a: StateDictType, b: StateDictType, strict: bool = True, device=None
+):
     """
     Returns the sum of two state dicts.
 

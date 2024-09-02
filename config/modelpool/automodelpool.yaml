@@ -1,5 +1,4 @@
 type: AutoModelPool
-
 models:
   - name: _pretrained_
     path: path_to_your_pretrained_model

@@ -1,7 +1,6 @@
+from datasets import load_dataset
 from hydra.utils import instantiate
 from omegaconf import DictConfig, open_dict
-
-from datasets import load_dataset
 
 from .clip_dataset import CLIPDataset
 

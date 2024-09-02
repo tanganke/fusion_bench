@@ -13,6 +13,5 @@ models:
     path: meta-llama/Meta-Llama-3-8B
   - name: expert_2
     path: meta-llama/Meta-Llama-3-8B-Instruct
-
 dtype: float16 # this will be overrided by the `torch_dtype` in model_kwargs
 model_kwargs: null

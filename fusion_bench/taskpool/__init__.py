@@ -1,10 +1,17 @@
+import sys
+
 from omegaconf import DictConfig
+from typing_extensions import TYPE_CHECKING
+
+from fusion_bench.utils.lazy_imports import LazyImporter
 
 from .base_pool import TaskPool
 from .clip_image_classification import CLIPImageClassificationTaskPool
 from .dummy import DummyTaskPool
 from .flan_t5_glue_text_generation import FlanT5GLUETextGenerationTaskPool
 from .gpt2_text_classification import GPT2TextClassificationTaskPool
+
+_import_structure = {"clip_vision": ["CLIPVisionModelTaskPool"]}
 
 
 class TaskPoolFactory:
@@ -61,3 +68,18 @@ def load_taskpool_from_config(taskpool_config: DictConfig):
         ValueError: If 'type' attribute is not found in the configuration or does not match any known task pool types.
     """
     return TaskPoolFactory.create_taskpool(taskpool_config)
+
+
+if TYPE_CHECKING:
+    from .clip_vision import CLIPVisionModelTaskPool
+
+else:
+    sys.modules[__name__] = LazyImporter(
+        __name__,
+        globals()["__file__"],
+        _import_structure,
+        extra_objects={
+            "TaskPoolFactory": TaskPoolFactory,
+            "load_taskpool_from_config": load_taskpool_from_config,
+        },
+    )

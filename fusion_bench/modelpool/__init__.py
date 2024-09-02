@@ -1,10 +1,19 @@
+import sys
+from typing import TYPE_CHECKING
+
 from omegaconf import DictConfig
+
+from fusion_bench.utils.lazy_imports import LazyImporter
 
 from .AutoModelForSeq2SeqLM import AutoModelForSeq2SeqLMPool
 from .base_pool import DictModelPool, ListModelPool, ModelPool, to_modelpool
 from .huggingface_clip_vision import HuggingFaceClipVisionPool
 from .huggingface_gpt2_classification import HuggingFaceGPT2ClassificationPool
 from .PeftModelForSeq2SeqLM import PeftModelForSeq2SeqLMPool
+
+_import_structure = {
+    "clip_vision": ["CLIPVisionModelPool"],
+}
 
 
 class ModelPoolFactory:
@@ -66,4 +75,21 @@ def load_modelpool_from_config(modelpool_config: DictConfig):
     Raises:
         ValueError: If 'type' attribute is not found in the configuration or does not match any known model pool types.
     """
-    return ModelPoolFactory.create_modelpool(modelpool_config)
+    from hydra.utils import instantiate
+
+    return instantiate(modelpool_config, _recursive_=False)
+
+
+if TYPE_CHECKING:
+    from .clip_vision import CLIPVisionModelPool
+
+else:
+    sys.modules[__name__] = LazyImporter(
+        __name__,
+        globals()["__file__"],
+        _import_structure,
+        extra_objects={
+            "ModelPoolFactory": ModelPoolFactory,
+            "load_modelpool_from_config": load_modelpool_from_config,
+        },
+    )
