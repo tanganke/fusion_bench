@@ -94,6 +94,9 @@ class BaseModelPool(YAMLSerializationMixin):
         """
         return [name for name in self._models if not self.is_special_model(name)]
 
+    def __len__(self):
+        return len(self.model_names)
+
     @staticmethod
     def is_special_model(model_name: str):
         """
@@ -106,6 +109,20 @@ class BaseModelPool(YAMLSerializationMixin):
             bool: True if the model name indicates a special model, False otherwise.
         """
         return model_name.startswith("_") and model_name.endswith("_")
+
+    def get_model_config(self, model_name: str) -> DictConfig:
+        """
+        Get the configuration for the specified model.
+
+        Args:
+            model_name (str): The name of the model.
+
+        Returns:
+            DictConfig: The configuration for the specified model.
+        """
+        model_config = self._models[model_name]
+        assert isinstance(model_config, DictConfig), "Model config must be a DictConfig"
+        return model_config
 
     def load_model(
         self, model_name_or_config: Union[str, DictConfig], *args, **kwargs
@@ -148,6 +165,10 @@ class BaseModelPool(YAMLSerializationMixin):
         else:
             model = self.load_model(self.model_names[0], *args, **kwargs)
         return model
+
+    def named_models(self):
+        for model_name in self.model_names:
+            yield model_name, self.load_model(model_name)
 
     def load_train_dataset(self, model_name: str, *args, **kwargs) -> Dataset:
         """

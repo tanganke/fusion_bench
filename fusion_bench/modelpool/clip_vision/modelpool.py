@@ -3,6 +3,7 @@ import logging
 from typing import Optional
 
 from hydra.utils import instantiate
+from copy import deepcopy
 from omegaconf import DictConfig, open_dict
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 from typing_extensions import override
@@ -41,6 +42,15 @@ class CLIPVisionModelPool(BaseModelPool):
         assert self._processor is not None, "Processor is not defined in the config"
         processor = instantiate(self._processor, *args, **kwargs)
         return processor
+
+    def load_clip_model(self, model_name: str, *args, **kwargs) -> CLIPModel:
+        model_config = self._models[model_name]
+        assert isinstance(model_config, DictConfig), "Model config must be a DictConfig"
+        model_config = deepcopy(model_config)
+        with open_dict(model_config):
+            model_config._target_ = "transformers.CLIPModel.from_pretrained"
+        clip_model = instantiate(model_config, *args, **kwargs)
+        return clip_model
 
     @override
     def save_model(self, model: CLIPVisionModel, path: str):

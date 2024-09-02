@@ -23,7 +23,6 @@ For more information, see [the document of fusion_bench CLI](../cli/fusion_bench
 `ModelFusionAlgorithm` is the base class for all fusion algorithms in the Fusion Algorithm module. 
 It provides a common interface for different fusion techniques, allowing for seamless integration and execution of various algorithms.
 
-::: fusion_bench.method.base_algorithm.ModelFusionAlgorithm
 
 #### Example Usage
 
@@ -45,6 +44,4 @@ def run_model_fusion(cfg: DictConfig):
 
 In summary, the Fusion Algorithm module is vital for the model merging operations within FusionBench, leveraging sophisticated techniques to ensure optimal fusion and performance evaluation of deep learning models. This capability makes it an indispensable tool for researchers and practitioners focusing on model fusion strategies.
 
-### References
 
-::: fusion_bench.method.load_algorithm_from_config

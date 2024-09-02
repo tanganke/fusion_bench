@@ -77,15 +77,15 @@ class FabricModelFusionProgram(
             )
         if dry_run:
             log.info("The program is running in dry-run mode. Exiting.")
-            return
+            exit(0)
 
     def _instantiate_and_setup(self, config: DictConfig):
         assert "_target_" in config, f"Missing '_target_' in config: {config}"
         obj = instantiate(config)
         if hasattr(obj, "_program"):
             obj._program = self
-        if hasattr(obj, "_fabric") and self.fabric is not None:
-            obj._fabric = self.fabric
+        if hasattr(obj, "_fabric_instance") and self.fabric is not None:
+            obj._fabric_instance = self.fabric
         return obj
 
     def save_merged_model(self, merged_model):

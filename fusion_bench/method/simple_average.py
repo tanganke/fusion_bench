@@ -1,13 +1,13 @@
 import logging
 from copy import deepcopy
-from typing import List, Mapping, Optional, Union
+from typing import Dict, List, Mapping, Optional, Union
 
 import torch
 from torch import Tensor, nn
 
-from fusion_bench.method.base_algorithm import ModelFusionAlgorithm
+from fusion_bench.method.base_algorithm import BaseModelFusionAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
-from fusion_bench.modelpool import ModelPool, to_modelpool
+from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_add,
     state_dict_avg,
@@ -50,11 +50,11 @@ def simple_average(modules: List[Union[nn.Module, StateDictType]]):
 
 
 class SimpleAverageAlgorithm(
-    ModelFusionAlgorithm,
+    BaseModelFusionAlgorithm,
     SimpleProfilerMixin,
 ):
     @torch.no_grad()
-    def run(self, modelpool: ModelPool):
+    def run(self, modelpool: Union[BaseModelPool, Dict[str, nn.Module]]):
         """
         Fuse the models in the given model pool using simple averaging.
 
@@ -67,7 +67,9 @@ class SimpleAverageAlgorithm(
         Returns:
             The fused model obtained by simple averaging.
         """
-        modelpool = to_modelpool(modelpool)
+        if not isinstance(modelpool, BaseModelPool):
+            modelpool = BaseModelPool(modelpool)
+
         log.info(
             f"Fusing models using simple average on {len(modelpool.model_names)} models."
             f"models: {modelpool.model_names}"

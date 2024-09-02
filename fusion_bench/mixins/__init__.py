@@ -8,9 +8,11 @@ _import_structure = {
     "lightning_fabric": ["LightningFabricMixin"],
     "serialization": ["YAMLSerializationMixin"],
     "simple_profiler": ["SimpleProfilerMixin"],
+    "clip_classification": ["CLIPClassificationMixin"],
 }
 
 if TYPE_CHECKING:
+    from .clip_classification import CLIPClassificationMixin
     from .lightning_fabric import LightningFabricMixin
     from .serialization import YAMLSerializationMixin
     from .simple_profiler import SimpleProfilerMixin

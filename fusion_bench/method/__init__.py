@@ -5,12 +5,21 @@ from omegaconf import DictConfig
 
 from fusion_bench.utils.lazy_imports import LazyImporter
 
-from .base_algorithm import ModelFusionAlgorithm
-
 _import_structure = {
     "base_algorithm": ["BaseModelFusionAlgorithm"],
     "dummy": ["DummyAlgorithm"],
+    # model ensemble methods
+    "ensemble": [
+        "EnsembleAlgorithm",
+        "WeightedEnsembleAlgorithm",
+        "MaxModelPredictorAlgorithm",
+    ],
+    # model merging methods
+    "simple_average": ["SimpleAverageAlgorithm"],
     "task_arithmetic": ["TaskArithmeticAlgorithm"],
+    "fisher_merging": ["FisherMergingForCLIPVisionModel"],
+    # model mixing methods
+    "model_recombination": ["ModelRecombinationAlgorithm"],
 }
 
 
@@ -21,10 +30,6 @@ class AlgorithmFactory:
         "clip_finetune": ".classification.clip_finetune.ImageClassificationFineTuningForCLIP",
         # analysis
         "TaskVectorCosSimilarity": ".analysis.task_vector_cos_similarity.TaskVectorCosSimilarity",
-        # model ensemble methods
-        "simple_ensemble": ".ensemble.EnsembleAlgorithm",
-        "weighted_ensemble": ".ensemble.WeightedEnsembleAlgorithm",
-        "max_model_predictor": ".ensemble.MaxModelPredictorAlgorithm",
         # model merging methods
         "simple_average": ".simple_average.SimpleAverageAlgorithm",
         "weighted_average": ".weighted_average.weighted_average.WeightedAverageAlgorithm",
@@ -61,7 +66,7 @@ class AlgorithmFactory:
     }
 
     @staticmethod
-    def create_algorithm(method_config: DictConfig) -> ModelFusionAlgorithm:
+    def create_algorithm(method_config: DictConfig):
         from fusion_bench.utils import import_object
 
         algorithm_name = method_config.name
@@ -108,6 +113,14 @@ def load_algorithm_from_config(method_config: DictConfig):
 if TYPE_CHECKING:
     from .base_algorithm import BaseModelFusionAlgorithm
     from .dummy import DummyAlgorithm
+    from .ensemble import (
+        EnsembleAlgorithm,
+        MaxModelPredictorAlgorithm,
+        WeightedEnsembleAlgorithm,
+    )
+    from .fisher_merging import FisherMergingForCLIPVisionModel
+    from .model_recombination import ModelRecombinationAlgorithm
+    from .simple_average import SimpleAverageAlgorithm
     from .task_arithmetic import TaskArithmeticAlgorithm
 
 else:

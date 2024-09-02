@@ -23,23 +23,26 @@ from fusion_bench.mixins import LightningFabricMixin, YAMLSerializationMixin
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.utils.parameters import count_parameters
+from fusion_bench.taskpool import BaseTaskPool
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 log = logging.getLogger(__name__)
 
 
-class CLIPVisionModelTaskPool(LightningFabricMixin, YAMLSerializationMixin):
+class CLIPVisionModelTaskPool(LightningFabricMixin, BaseTaskPool):
     """
     This class is used to define the image classification task for CLIP models.
     """
 
-    _config_mapping = YAMLSerializationMixin._config_mapping | {
+    _is_setup = False
+    _config_mapping = BaseTaskPool._config_mapping | {
         "_test_datasets": "test_datasets",
         "_processor": "processor",
         "_clip_model": "clip_model",
-        "_loader_kwargs": "loader_kwargs",
+        "_dataloader_kwargs": "dataloader_kwargs",
         "fast_dev_run": "fast_dev_run",
+        "_version_": "_version",
     }
 
     def __init__(
@@ -48,17 +51,19 @@ class CLIPVisionModelTaskPool(LightningFabricMixin, YAMLSerializationMixin):
         *,
         processor: Union[DictConfig, CLIPProcessor],
         clip_model: Union[DictConfig, CLIPModel],
-        loader_kwargs: DictConfig = None,
+        dataloader_kwargs: DictConfig = None,
         fast_dev_run: bool = False,
+        _version_: str = None,
+        **kwargs,
     ):
         super().__init__()
         self._test_datasets = test_datasets
         self._processor = processor
         self._clip_model = clip_model
-        self._loader_kwargs = loader_kwargs or {}
+        self._dataloader_kwargs = dataloader_kwargs or {}
         self.fast_dev_run = fast_dev_run
-
-        self.setup()
+        self._version_ = _version_
+        log.warning(f"Unrecognized arguments: {list(kwargs.keys())}")
 
     def setup(self):
         # setup processor and clip model
@@ -87,13 +92,15 @@ class CLIPVisionModelTaskPool(LightningFabricMixin, YAMLSerializationMixin):
         }
         # Setup the dataloaders
         self.test_dataloaders = {
-            name: DataLoader(dataset, **self._loader_kwargs)
+            name: DataLoader(dataset, **self._dataloader_kwargs)
             for name, dataset in self.test_datasets.items()
         }
         self.test_dataloaders = {
             name: self.fabric.setup_dataloaders(dataloader)
             for name, dataloader in self.test_dataloaders.items()
         }
+
+        self._is_setup = True
 
     @torch.no_grad()
     def _evaluate(self, classifier: nn.Module, test_loader, num_classes: int):
@@ -136,10 +143,14 @@ class CLIPVisionModelTaskPool(LightningFabricMixin, YAMLSerializationMixin):
         """
         Evaluate the model on the image classification task.
         """
+        if not self._is_setup:
+            self.setup()
+
         report = {}
         # CLIPVisionModel works the same with CLIPVisonTransformer, so we can use it directly
         self.clip_model.vision_model = model
         classifier = HFCLIPClassifier(self.clip_model, processor=self.processor)
+        classifier = self.fabric.to_device(classifier)
         # collect basic model information
         training_params, all_params = count_parameters(model)
         report["model_info"] = {

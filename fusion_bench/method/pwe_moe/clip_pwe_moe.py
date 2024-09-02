@@ -134,17 +134,17 @@ class PWEMoEAlgorithmForCLIP(
 
                 if config.upscale_attn:
                     # upscale the Attention layer
-                    get_layer(
-                        model, layer_idx
-                    ).self_attn = ParetoWeightEnsemblingModule(
-                        base_model=get_layer(pretrained_model, layer_idx).self_attn,
-                        expert_models=[
-                            get_layer(m, layer_idx).self_attn
-                            for m in finetuned_models.values()
-                        ],
-                        init_lambda=config.init_lambda,
-                        fix_base_model_and_experts=True,
-                        router_hidden_layers=config.router_hidden_layers,
+                    get_layer(model, layer_idx).self_attn = (
+                        ParetoWeightEnsemblingModule(
+                            base_model=get_layer(pretrained_model, layer_idx).self_attn,
+                            expert_models=[
+                                get_layer(m, layer_idx).self_attn
+                                for m in finetuned_models.values()
+                            ],
+                            init_lambda=config.init_lambda,
+                            fix_base_model_and_experts=True,
+                            router_hidden_layers=config.router_hidden_layers,
+                        )
                     )
 
             print("model statistics after upscaling:")

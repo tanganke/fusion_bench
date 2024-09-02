@@ -3,22 +3,19 @@ import random
 from copy import deepcopy
 from typing import List, Mapping, Union
 
-import lightning.fabric
-import lightning.pytorch
-import lightning.pytorch.utilities
 import torch
 from torch import Tensor, nn
 from tqdm.autonotebook import tqdm
 
-from fusion_bench.method import ModelFusionAlgorithm
-from fusion_bench.modelpool import DictModelPool, ModelPool, to_modelpool
+from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.modelpool import BaseModelPool
 
 log = logging.getLogger(__name__)
 
 
-class DepthUpscalingAlgorithm(ModelFusionAlgorithm):
+class DepthUpscalingAlgorithm(BaseModelFusionAlgorithm):
     @torch.no_grad()
-    def run(self, modelpool: nn.ModuleList | ModelPool) -> nn.ModuleList:
+    def run(self, modelpool: nn.ModuleList | BaseModelPool) -> nn.ModuleList:
         """
         Executes the depth upscaling algorithm on a given model pool.
 
@@ -35,7 +32,7 @@ class DepthUpscalingAlgorithm(ModelFusionAlgorithm):
             ValueError: If an invalid layer specification is provided in the configuration.
         """
         # check the modelpool type
-        if isinstance(modelpool, ModelPool):
+        if isinstance(modelpool, BaseModelPool):
             assert len(modelpool) == 1, "DepthUpscaling only support one model"
             model = modelpool.load_model(modelpool.model_names[0])
             assert isinstance(

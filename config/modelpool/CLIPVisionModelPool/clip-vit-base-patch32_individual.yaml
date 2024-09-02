@@ -3,5 +3,5 @@ defaults:
   - /model/clip-vit@models:
       - clip-vit-base-patch32
 processor:
-  _target_: transformers.CLIPProcessor
+  _target_: transformers.CLIPProcessor.from_pretrained
   pretrained_model_name_or_path: openai/clip-vit-base-patch32
