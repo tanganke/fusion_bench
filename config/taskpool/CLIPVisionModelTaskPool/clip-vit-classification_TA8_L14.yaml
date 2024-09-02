@@ -9,5 +9,4 @@ defaults:
       - gtsrb
       - mnist
       - dtd
-
 base_model: openai/clip-vit-large-patch14
