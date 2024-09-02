@@ -1,9 +1,9 @@
 import functools
 import logging
+from copy import deepcopy
 from typing import Optional
 
 from hydra.utils import instantiate
-from copy import deepcopy
 from omegaconf import DictConfig, open_dict
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 from typing_extensions import override

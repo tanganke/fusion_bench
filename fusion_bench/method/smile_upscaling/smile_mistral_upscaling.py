@@ -12,10 +12,10 @@ from tqdm.auto import tqdm
 from transformers import AutoConfig, AutoTokenizer, MistralForCausalLM
 from transformers.models.mistral.modeling_mistral import MistralDecoderLayer
 
-from fusion_bench.method import ModelFusionAlgorithm
+from fusion_bench.method import BaseModelFusionAlgorithm
 from fusion_bench.method.simple_average import simple_average
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
-from fusion_bench.modelpool import ModelPool, to_modelpool
+from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.models.modeling_smile_mistral import (
     SmileMistralConfig,
     SmileMistralForCausalLM,
@@ -108,9 +108,9 @@ def upscale_to_smile_linear(
     return target
 
 
-class SmileMistralUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
+class SmileMistralUpscalingAlgorithm(BaseModelFusionAlgorithm, SimpleProfilerMixin):
     @torch.no_grad()
-    def run(self, modelpool: ModelPool) -> SmileMistralForCausalLM:
+    def run(self, modelpool: BaseModelPool) -> SmileMistralForCausalLM:
         """
         Executes the upscaling process.
 

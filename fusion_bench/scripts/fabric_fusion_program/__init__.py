@@ -161,7 +161,7 @@ class FabricModelFusionProgram(
         if self._taskpool is not None:
             self.taskpool = self._instantiate_and_setup(self._taskpool)
             report = self.evaluate_merged_model(self.taskpool, merged_model)
-            print(report)
+            print(json.dumps(report))
             if self.report_save_path is not None:
                 # save report (Dict) to a file
                 # if the directory of `save_report` does not exists, create it

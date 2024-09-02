@@ -166,6 +166,10 @@ class BaseModelPool(YAMLSerializationMixin):
             model = self.load_model(self.model_names[0], *args, **kwargs)
         return model
 
+    def models(self):
+        for model_name in self.model_names:
+            yield self.load_model(model_name)
+
     def named_models(self):
         for model_name in self.model_names:
             yield model_name, self.load_model(model_name)

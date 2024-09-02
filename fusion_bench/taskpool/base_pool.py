@@ -9,6 +9,7 @@ from fusion_bench.mixins import YAMLSerializationMixin
 
 
 class BaseTaskPool(YAMLSerializationMixin):
+
     @abstractmethod
     def evaluate(self, model):
         """

@@ -1,0 +1,1 @@
+from .smile_upscaling import SmileUpscalingAlgorithm

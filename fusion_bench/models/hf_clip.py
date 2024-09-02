@@ -4,6 +4,7 @@ import torch
 from torch import Tensor, nn
 from torch.types import _device
 from transformers import CLIPModel, CLIPProcessor, CLIPTextModel, CLIPVisionModel
+
 from fusion_bench.utils.devices import get_device
 
 default_templates = [

@@ -74,7 +74,9 @@ class FisherMergingForCLIPVisionModel(
         image_embeds = image_embeds / image_embeds.norm(p=2, dim=-1, keepdim=True)
 
         # cosine similarity
-        logits_per_text = torch.matmul(text_embeds, image_embeds.t()) * self.logit_scale
+        logits_per_text = (
+            torch.matmul(text_embeds, image_embeds.t()) * self.logit_scale_exp
+        )
         logits_per_image = logits_per_text.t()
 
         return logits_per_image

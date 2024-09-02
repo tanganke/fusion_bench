@@ -21,9 +21,9 @@ from transformers.models.clip.modeling_clip import CLIPVisionTransformer
 from fusion_bench.dataset import CLIPDataset
 from fusion_bench.mixins import LightningFabricMixin, YAMLSerializationMixin
 from fusion_bench.models.hf_clip import HFCLIPClassifier
+from fusion_bench.taskpool import BaseTaskPool
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.utils.parameters import count_parameters
-from fusion_bench.taskpool import BaseTaskPool
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 

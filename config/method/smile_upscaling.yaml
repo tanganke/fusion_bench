@@ -1,4 +1,4 @@
-name: smile_upscaling
+_target_: fusion_bench.method.SmileUpscalingAlgorithm
 # merge device on cuda can accelerate the SVD computation
 device: cpu
 # device to compute svd

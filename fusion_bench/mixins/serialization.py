@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Union
+from typing import Dict, Optional, Union
 
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
@@ -9,7 +9,21 @@ class YAMLSerializationMixin:
     _recursive_: bool = False
     _config_mapping: Dict[str, str] = {
         "_recursive_": "_recursive_",
+        "_version_": "_version_",
+        "_usage_": "_usage_",
     }
+
+    def __init__(
+        self,
+        *,
+        _version_: Optional[str] = None,
+        _usage_: Optional[str] = None,
+        **kwargs,
+    ) -> None:
+        self._version_ = _version_
+        self._usage_ = _usage_
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
     @property
     def config(self):
