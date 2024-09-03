@@ -1,4 +1,4 @@
 sun397:
   _target_: datasets.load_dataset
-  path: tanganke/sun397
+  path: /data0/users/tanganke/data/huggingface_datasets/tanganke/sun397
   split: test
