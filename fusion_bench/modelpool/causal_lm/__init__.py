@@ -1,5 +1,1 @@
-from .causal_lm import (
-    AutoModelForCausalLMPool,
-    LLamaForCausalLMPool,
-    MistralForCausalLMPool,
-)
+from .causal_lm import CausalLMPool

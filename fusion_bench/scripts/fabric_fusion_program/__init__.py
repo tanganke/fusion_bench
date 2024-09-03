@@ -7,17 +7,16 @@ from typing import Dict, Iterable, Optional, Union
 
 import hydra
 import lightning as L
-from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 from torch import nn
 from tqdm.auto import tqdm
 
 from fusion_bench.method import BaseModelFusionAlgorithm
-from fusion_bench.mixins import LightningFabricMixin, YAMLSerializationMixin
+from fusion_bench.mixins import LightningFabricMixin
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.scripts import BaseHydraProgram
 from fusion_bench.taskpool import BaseTaskPool
-from fusion_bench.utils import timeit_context
+from fusion_bench.utils import import_object, instantiate, timeit_context
 from fusion_bench.utils.rich_utils import print_config_tree
 
 log = logging.getLogger(__name__)
@@ -62,7 +61,7 @@ class FabricModelFusionProgram(
         self.report_save_path = report_save_path
         self.merged_model_save_path = merged_model_save_path
         self.merged_model_save_kwargs = merged_model_save_kwargs
-        super().__init__()
+        super().__init__(**kwargs)
 
         if print_config:
             print_config_tree(
@@ -75,7 +74,13 @@ class FabricModelFusionProgram(
 
     def _instantiate_and_setup(self, config: DictConfig):
         assert "_target_" in config, f"Missing '_target_' in config: {config}"
-        obj = instantiate(config)
+        # try to import the object from the target
+        # this checks if the target is valid and can be imported
+        import_object(config._target_)
+        obj = instantiate(
+            config,
+            _recursive_=config.get("_recursive_", False),
+        )
         if hasattr(obj, "_program"):
             obj._program = self
         if hasattr(obj, "_fabric_instance") and self.fabric is not None:

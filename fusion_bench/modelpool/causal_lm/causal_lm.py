@@ -45,7 +45,7 @@ def config_priority_get(priority_config, general_config, key, default):
     return general_config.get(key, default)
 
 
-class AutoModelForCausalLMPool(BaseModelPool):
+class CausalLMPool(BaseModelPool):
     _config_mapping = BaseModelPool._config_mapping | {
         "_tokenizer": "tokenizer",
         "_model_kwargs": "model_kwargs",
@@ -132,31 +132,3 @@ class AutoModelForCausalLMPool(BaseModelPool):
             push_to_hub=push_to_hub,
             **kwargs,
         )
-
-
-class LLamaForCausalLMPool(AutoModelForCausalLMPool):
-    @override
-    def load_model(
-        self,
-        model_config: str | DictConfig,
-        backbone_only: bool = False,
-    ):
-        model = super().load_model(model_config)
-        model = cast(LlamaForCausalLM, model)
-        if backbone_only:
-            model = model.model
-        return model
-
-
-class MistralForCausalLMPool(AutoModelForCausalLMPool):
-    @override
-    def load_model(
-        self,
-        model_config: str | DictConfig,
-        backbone_only: bool = False,
-    ):
-        model = super().load_model(model_config)
-        model = cast(MistralForCausalLM, model)
-        if backbone_only:
-            model = model.model
-        return model

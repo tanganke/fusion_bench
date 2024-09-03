@@ -14,7 +14,7 @@ _import_structure = {
 if TYPE_CHECKING:
     from .clip_classification import CLIPClassificationMixin
     from .lightning_fabric import LightningFabricMixin
-    from .serialization import YAMLSerializationMixin, BaseYAMLSerializableModel
+    from .serialization import BaseYAMLSerializableModel, YAMLSerializationMixin
     from .simple_profiler import SimpleProfilerMixin
 
 else:

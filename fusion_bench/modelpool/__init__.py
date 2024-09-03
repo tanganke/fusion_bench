@@ -8,28 +8,20 @@ _import_structure = {
     "clip_vision": ["CLIPVisionModelPool"],
     "nyuv2_modelpool": ["NYUv2ModelPool"],
     "huggingface_automodel": ["AutoModelPool"],
-    "causal_lm": [
-        "AutoModelForCausalLMPool",
-        "LLamaForCausalLMPool",
-        "MistralForCausalLMPool",
-    ],
-    "AutoModelForSeq2SeqLM": ["AutoModelForSeq2SeqLMPool"],
+    "causal_lm": ["CausalLMPool"],
+    "seq2seq_lm": ["Seq2SeqLMPool"],
     "PeftModelForSeq2SeqLM": ["PeftModelForSeq2SeqLMPool"],
 }
 
 
 if TYPE_CHECKING:
-    from .AutoModelForSeq2SeqLM import AutoModelForSeq2SeqLMPool
     from .base_pool import BaseModelPool
-    from .causal_lm import (
-        AutoModelForCausalLMPool,
-        LLamaForCausalLMPool,
-        MistralForCausalLMPool,
-    )
+    from .causal_lm import CausalLMPool
     from .clip_vision import CLIPVisionModelPool
     from .huggingface_automodel import AutoModelPool
     from .nyuv2_modelpool import NYUv2ModelPool
     from .PeftModelForSeq2SeqLM import PeftModelForSeq2SeqLMPool
+    from .seq2seq_lm import Seq2SeqLMPool
 
 else:
     sys.modules[__name__] = LazyImporter(

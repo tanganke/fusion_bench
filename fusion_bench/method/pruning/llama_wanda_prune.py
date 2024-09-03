@@ -2,7 +2,7 @@ import logging
 import os
 import re
 from copy import deepcopy
-from typing import Dict, List, cast, Literal
+from typing import Dict, List, Literal, cast
 
 import torch
 from omegaconf import DictConfig

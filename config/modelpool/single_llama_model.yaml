@@ -1,7 +1,0 @@
-type: LLamaForCausalLMPool
-# each model should have a name and a path, and the model is loaded from the path
-# this is equivalent to `AutoModelForCausalLM.from_pretrained(path)`
-models:
-  - name: _pretrained_
-    path: decapoda-research/llama-7b-hf
-dtype: float16
