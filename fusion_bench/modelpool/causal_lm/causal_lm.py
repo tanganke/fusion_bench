@@ -7,17 +7,13 @@ from typing import Optional, cast
 from omegaconf import DictConfig, OmegaConf, flag_override
 from torch.nn.modules import Module
 from transformers import (
-    AutoModel,
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    LlamaForCausalLM,
-    MistralForCausalLM,
+    PreTrainedTokenizer,
     PreTrainedModel,
 )
 from typing_extensions import override
 
 from fusion_bench.modelpool import BaseModelPool
-from fusion_bench.utils import timeit_context
+from fusion_bench.utils import timeit_context, instantiate
 from fusion_bench.utils.dtype import parse_dtype
 
 log = logging.getLogger(__name__)
@@ -78,9 +74,10 @@ class CausalLMPool(BaseModelPool):
         model_kwargs.update(kwargs)
         return super().load_model(model_name_or_config, *args, **model_kwargs)
 
-    def load_tokenizer(self, *args, **kwargs):
+    def load_tokenizer(self, *args, **kwargs) -> PreTrainedTokenizer:
         assert self._tokenizer is not None, "Tokenizer is not defined in the config"
-        tokenizer = isinstance(self._tokenizer, *args, **kwargs)
+        log.info(f"Loading tokenizer.")
+        tokenizer = instantiate(self._tokenizer, *args, **kwargs)
         return tokenizer
 
     @override
@@ -109,18 +106,7 @@ class CausalLMPool(BaseModelPool):
             if tokenizer_kwargs is None:
                 tokenizer_kwargs = {}
             # load the tokenizer
-            if self.has_pretrained:
-                tokenizer = AutoTokenizer.from_pretrained(
-                    os.path.expanduser(self.get_model_config("_pretrained_").path),
-                    **tokenizer_kwargs,
-                )
-            else:
-                tokenizer = AutoTokenizer.from_pretrained(
-                    os.path.expanduser(
-                        self.get_model_config(self.model_names[0]).path,
-                        **tokenizer_kwargs,
-                    )
-                )
+            tokenizer = self.load_tokenizer(**tokenizer_kwargs)
             tokenizer.save_pretrained(
                 path,
                 push_to_hub=push_to_hub,

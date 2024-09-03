@@ -17,6 +17,7 @@ from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.scripts import BaseHydraProgram
 from fusion_bench.taskpool import BaseTaskPool
 from fusion_bench.utils import import_object, instantiate, timeit_context
+from fusion_bench.utils.hydra_utils import get_hydra_output_dir
 from fusion_bench.utils.rich_utils import print_config_tree
 
 log = logging.getLogger(__name__)
@@ -36,6 +37,8 @@ class FabricModelFusionProgram(
         "_taskpool": "taskpool",
         "_fabric": "fabric",
         "_fabric_logger": "fabric_logger",
+        "fast_dev_run": "fast_dev_run",
+        "seed": "seed",
     }
 
     def __init__(
@@ -51,6 +54,8 @@ class FabricModelFusionProgram(
         report_save_path: Optional[str] = None,
         merged_model_save_path: Optional[str] = None,
         merged_model_save_kwargs: Optional[DictConfig] = None,
+        fast_dev_run: bool = False,
+        seed: Optional[int] = None,
         **kwargs,
     ):
         self._method = method
@@ -61,6 +66,8 @@ class FabricModelFusionProgram(
         self.report_save_path = report_save_path
         self.merged_model_save_path = merged_model_save_path
         self.merged_model_save_kwargs = merged_model_save_kwargs
+        self.fast_dev_run = fast_dev_run
+        self.seed = seed
         super().__init__(**kwargs)
 
         if print_config:
@@ -152,12 +159,21 @@ class FabricModelFusionProgram(
             raise ValueError(f"Invalid type for merged model: {type(merged_model)}")
 
     def run(self):
+        if self.seed is not None:
+            L.seed_everything(self.seed)
+
+        self._link_hydra_output()
+
+        log.info("Running the model fusion program.")
+        log.info("loading model pool")
         self.modelpool = self._instantiate_and_setup(self._modelpool)
+        log.info("loading method")
         self.method = self._instantiate_and_setup(self._method)
         merged_model = self.method.run(self.modelpool)
         self.save_merged_model(merged_model)
 
         if self._taskpool is not None:
+            log.info("loading task pool")
             self.taskpool = self._instantiate_and_setup(self._taskpool)
             report = self.evaluate_merged_model(self.taskpool, merged_model)
             print(json.dumps(report))
@@ -168,3 +184,18 @@ class FabricModelFusionProgram(
                 json.dump(report, open(self.report_save_path, "w"))
         else:
             print("No task pool specified. Skipping evaluation.")
+
+    def _link_hydra_output(self):
+        if self.log_dir is not None:
+            # make symlink to the hydra output directory
+            hydra_output_dir = get_hydra_output_dir()
+            if hydra_output_dir is not None:
+                os.makedirs(self.log_dir, exist_ok=True)
+                os.symlink(
+                    hydra_output_dir,
+                    os.path.join(
+                        self.log_dir,
+                        "hydra_output_" + os.path.basename(hydra_output_dir),
+                    ),
+                    target_is_directory=True,
+                )

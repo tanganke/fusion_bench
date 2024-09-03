@@ -12,12 +12,24 @@ from transformers import LlamaForCausalLM
 
 from fusion_bench.method import BaseModelFusionAlgorithm
 from fusion_bench.mixins import SimpleProfilerMixin
-from fusion_bench.modelpool import BaseModelPool, LLamaForCausalLMPool
+from fusion_bench.modelpool import BaseModelPool, CausalLMPool
 
 from .wanda_utils.prune import llama_prune_wanda_
 
 
 class WandaPruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
+    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+        "nsamples": "nsamples",
+        "seed": "seed",
+        "use_variant": "use_variant",
+        "prune_type": "prune_type",
+        "device": "device",
+        "dtype": "dtype",
+        "sparsity_ratio": "sparsity_ratio",
+        "n": "n",
+        "m": "m",
+    }
+
     def __init__(
         self,
         *,
@@ -32,7 +44,7 @@ class WandaPruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
         m: int,
         **kwargs,
     ):
-        super().__init__()
+        super().__init__(**kwargs)
         self.nsamples = nsamples
         self.seed = seed
         self.use_variant = use_variant
@@ -43,14 +55,14 @@ class WandaPruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
         self.n = n
         self.m = m
 
-    def run(self, modelpool: LLamaForCausalLMPool):
+    def run(self, modelpool: CausalLMPool):
         config = self.config
 
         # load pre-trained model or the first model in the pool
         with self.profile("load_model"):
-            model = cast(LlamaForCausalLM, modelpool.load_pretrained_or_first_model())
+            model = modelpool.load_pretrained_or_first_model()
             model.seqlen = model.config.max_position_embeddings
-            tokenizer = modelpool.load_pretrained_or_first_tokenizer(use_fast=False)
+            tokenizer = modelpool.load_tokenizer(use_fast=False)
 
         args = DictConfig(
             {

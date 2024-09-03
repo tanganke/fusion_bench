@@ -7,7 +7,7 @@ from transformers import LlamaForCausalLM, LlamaModel
 
 from fusion_bench.method import BaseModelFusionAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
-from fusion_bench.modelpool import LLamaForCausalLMPool
+from fusion_bench.modelpool import CausalLMPool
 from fusion_bench.utils.dtype import parse_dtype
 
 from . import prune_utils
@@ -60,7 +60,7 @@ def unstructured_magnitude_prune_(
     for name in tqdm(subset, desc="Pruning"):
         prune_utils.unstructured_magnitude_prune_(
             subset[name].weight,
-            metric_function=torch.abs,
+            metric_function_or_scores=torch.abs,
             sparsity_ratio=sparsity_ratio,
             dtype=dtype,
             device=device,
@@ -81,7 +81,7 @@ def semistructured_magnitude_prune_(
     for name in tqdm(subset, desc="Pruning"):
         prune_utils.semistructured_magnitude_prune_(
             subset[name].weight,
-            metric_function=torch.abs,
+            metric_function_or_scores=torch.abs,
             n=n,
             m=m,
             dtype=dtype,
@@ -132,7 +132,7 @@ class MagnitudePruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
         super().__init__(**kwargs)
 
     @torch.no_grad()
-    def run(self, modelpool: LLamaForCausalLMPool):
+    def run(self, modelpool: CausalLMPool):
         config = self.config
 
         # load pre-trained model or the first model in the pool

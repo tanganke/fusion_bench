@@ -1,5 +1,5 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-
+# Modified from Hydra
 import copy
 import functools
 from enum import Enum
@@ -11,6 +11,33 @@ from hydra.errors import InstantiationException
 from hydra.types import ConvertMode, TargetConf
 from omegaconf import OmegaConf, SCMode
 from omegaconf._utils import is_structured_config
+from rich import print
+from rich.panel import Panel
+from rich.syntax import Syntax
+
+PRINT_FUNCTION_CALL = True
+"""
+Flag to determine whether function calls should be printed.
+If set to True, function calls will be printed.
+"""
+
+PRINT_FUNCTION_CALL_FUNC = print
+"""
+Function to be used for printing function calls.
+"""
+
+
+def _format_args_kwargs(args, kwargs):
+    result_strings = []
+    if len(args) > 0:
+        result_strings.append(", ".join(repr(arg) for arg in args))
+    if len(kwargs) > 0:
+        result_strings.append(", ".join(f"{k}={repr(v)}" for k, v in kwargs.items()))
+
+    if len(result_strings) == 0:
+        return ""
+    else:
+        return ", ".join(result_strings)
 
 
 class _Keys(str, Enum):
@@ -76,9 +103,42 @@ def _call_target(
         raise InstantiationException(msg) from e
 
     if _partial_:
-        return functools.partial(_target_, *args, **kwargs)
+        if PRINT_FUNCTION_CALL:
+            call_str = f"functools.partial({_target_.__name__}, {_format_args_kwargs(args, kwargs)})"
+            PRINT_FUNCTION_CALL_FUNC(
+                Panel(
+                    Syntax(call_str, "python", theme="monokai", word_wrap=True),
+                    title="Calling partial",
+                    border_style="cyan",
+                )
+            )
+        try:
+            return functools.partial(_target_, *args, **kwargs)
+        except Exception as e:
+            msg = (
+                f"Error in creating partial({_convert_target_to_string(_target_)}, ...) object:"
+                + f"\n{repr(e)}"
+            )
+            if full_key:
+                msg += f"\nfull_key: {full_key}"
+            raise InstantiationException(msg) from e
     else:
-        return _target_(*args, **kwargs)
+        if PRINT_FUNCTION_CALL:
+            call_str = f"{_target_.__name__}({_format_args_kwargs(args, kwargs)})"
+            PRINT_FUNCTION_CALL_FUNC(
+                Panel(
+                    Syntax(call_str, "python", theme="monokai", word_wrap=True),
+                    title="Calling function",
+                    border_style="green",
+                )
+            )
+        try:
+            return _target_(*args, **kwargs)
+        except Exception as e:
+            msg = f"Error in call to target '{_convert_target_to_string(_target_)}':\n{repr(e)}"
+            if full_key:
+                msg += f"\nfull_key: {full_key}"
+            raise InstantiationException(msg) from e
 
 
 def _convert_target_to_string(t: Any) -> Any:

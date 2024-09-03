@@ -12,21 +12,16 @@ class YAMLSerializationMixin:
     _recursive_: bool = False
     _config_mapping: Dict[str, str] = {
         "_recursive_": "_recursive_",
-        "_version_": "_version_",
-        "_usage_": "_usage_",
     }
 
     def __init__(
         self,
-        *,
-        _version_: Optional[str] = None,
-        _usage_: Optional[str] = None,
+        _recursive_: bool = False,
         **kwargs,
     ) -> None:
-        self._version_ = _version_
-        self._usage_ = _usage_
+        self._recursive_ = _recursive_
         for key, value in kwargs.items():
-            setattr(self, key, value)
+            log.warning(f"Unused argument: {key}={value}")
 
     @property
     def config(self):
@@ -82,8 +77,6 @@ class BaseYAMLSerializableModel(YAMLSerializationMixin):
         _version_: Optional[str] = None,
         **kwargs,
     ):
-        super().__init__()
+        super().__init__(**kwargs)
         self._usage_ = _usage_
         self._version_ = _version_
-        for key, value in kwargs.items():
-            log.warning(f"Unused argument: {key}={value}")

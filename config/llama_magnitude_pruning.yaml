@@ -1,7 +1,7 @@
 defaults:
   - fabric_model_fusion
   - override method: llama_magnitude_pruning
-  - override modelpool: llama_for_causallm
+  - override modelpool: CausalLMPool/single_llama_model
   - override taskpool: dummy
   - _self_
 merged_model_save_path: null # path to save the merged model, use "{log_dir}" to refer to the logger directory, for example `merged_model_save_path=\{log_dir\}/merged_model`
