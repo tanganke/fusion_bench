@@ -52,6 +52,10 @@ def convert_to_losparse_llama(model: LlamaForCausalLM, *, rank: int):
     ), f"Unexpected keys: {result.unexpected_keys}"
     # copy over the generation config
     new_model.generation_config = deepcopy(model.generation_config)
+    log.info("parameters of the original model")
+    print_parameters(model, print_fn=log.info)
+    log.info("parameters of the new model")
+    print_parameters(new_model, print_fn=log.info)
     return new_model
 
 
@@ -131,6 +135,9 @@ class WandaHookFn(BaseLoSparseHookFn):
 
 
 class LoSparseForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
+    _variants_requires_calibration_data = ["wanda"]
+    _variants_hook_mapping = {"wanda": WandaHookFn}
+
     _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
         "nsamples": "nsamples",
         "seed": "seed",
@@ -147,7 +154,7 @@ class LoSparseForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
         self,
         *,
         nsamples: int,
-        variant: Literal["wanda"],
+        variant: Literal["dense", "random", "wanda", "lowrank-only", "magnitude"],
         seed: int,
         rank: int,
         sparsity_ratio: float,
@@ -184,43 +191,66 @@ class LoSparseForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
         if not isinstance(model, (LlamaForCausalLM,)):
             log.warning(f"Model type {type(model)} may not supported.")
 
-        with timeit_context("loading calibdation data"):
-            dataloader, _ = get_loaders(
-                "c4",
-                nsamples=self.nsamples,
-                seed=self.seed,
-                seqlen=model.seqlen,
-                tokenizer=tokenizer,
-            )
-
-        with torch.no_grad():
-            # collect input to the first layer
-            inps, outs, attention_mask, position_ids = prepare_calibration_input(
-                model, dataloader, self.device
+        if self.variant in self._variants_requires_calibration_data:
+            inps, outs, attention_mask, position_ids = self.prepare_calibration_data(
+                model, tokenizer
             )
 
         model = convert_to_losparse_llama(model, rank=self.rank)
-        print_parameters(model, print_fn=log.info)
         gc.collect()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
-        with torch.no_grad():
-            for layer in tqdm(
-                list(model.model.layers),
-                "Extract Low-Rank Parts (Layers)",
-                dynamic_ncols=True,
-            ):
-                for losparse_linear in layer.modules():
-                    if isinstance(losparse_linear, LoSparseLinear):
-                        if self.device is not None:
-                            original_device = get_device(losparse_linear)
-                            losparse_linear.to(self.device)
-                        extract_low_rank_part_(losparse_linear, self.rank)
-                        if self.device is not None:
-                            losparse_linear.to(original_device)
+        # extract low-rank parts
+        self.extract_low_rank_parts_(model)
 
         # compute importance scores and prune
+        match self.variant:
+            case "dense":
+                pass
+            case "lowrank-only":
+                self.set_weights_to_zeros_(model)
+            case "random":
+                self.random_prune_(model)
+            case "magnitude":
+                self.magnitude_prune_(model)
+            case variant if variant in self._variants_requires_calibration_data:
+                self.prune_using_calibration_data_(
+                    model,
+                    inps=inps,
+                    outs=outs,
+                    attention_mask=attention_mask,
+                    position_ids=position_ids,
+                )
+            case _:
+                raise ValueError(f"Invalid variant: {self.variant}")
+
+        if self.model_save_path is not None:
+            with timeit_context(f"Saving the model to {self.model_save_path}"):
+                tokenizer.save_pretrained(self.model_save_path)
+                model.save_pretrained(self.model_save_path)
+
+        return model
+
+    @torch.no_grad()
+    def extract_low_rank_parts_(self, model):
+        for layer in tqdm(
+            list(model.model.layers),
+            "Extract Low-Rank Parts (Layers)",
+            dynamic_ncols=True,
+        ):
+            for losparse_linear in layer.modules():
+                if isinstance(losparse_linear, LoSparseLinear):
+                    if self.device is not None:
+                        original_device = get_device(losparse_linear)
+                        losparse_linear.to(self.device)
+                    extract_low_rank_part_(losparse_linear, self.rank)
+                    if self.device is not None:
+                        losparse_linear.to(original_device)
+
+    def prune_using_calibration_data_(
+        self, model: LlamaForCausalLM, *, inps, outs, attention_mask, position_ids
+    ):
         layers = model.model.layers
         for layer_idx, layer in tqdm(
             enumerate(layers), "Pruning Layers", total=len(layers)
@@ -237,7 +267,7 @@ class LoSparseForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
                     position_ids.to(dev) if position_ids is not None else None,
                 )
 
-            # collect the importance scores
+                # collect the importance scores
             linear_layers = cast(
                 Dict[str, LoSparseLinear],
                 find_linear_layers(layer, layers=[LoSparseLinear]),
@@ -245,10 +275,7 @@ class LoSparseForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
 
             # register hooks to collect the importance scores
             def get_hook_fn(linear: LoSparseLinear):
-                if self.variant == "wanda":
-                    hook_fn = WandaHookFn(linear)
-                else:
-                    raise ValueError(f"Invalid variant: {self.variant}")
+                hook_fn = self._variants_hook_mapping[self.variant](linear)
                 return hook_fn
 
             hooks = {}
@@ -266,14 +293,14 @@ class LoSparseForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
                         position_ids=position_ids,
                     )[0]
 
-            # compute the importance scores and remove the hooks
+                # compute the importance scores and remove the hooks
             metrics = {}
             for name, hook in hooks.items():
                 metrics[name] = hook.compute()
             for h in handles:
                 h.remove()
 
-            # prune the weights based on the importance scores
+                # prune the weights based on the importance scores
             if self.prune_type == PruningType.UNSTRUCTURED:
                 for name, linear in tqdm(
                     linear_layers.items(),
@@ -304,7 +331,7 @@ class LoSparseForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
             else:
                 raise ValueError(f"Invalid pruning type: {self.prune_type}")
 
-            # compute the input to the next layer
+                # compute the input to the next layer
             with torch.no_grad():
                 for j in range(self.nsamples):
                     outs[j] = layer(
@@ -314,9 +341,81 @@ class LoSparseForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
                     )[0]
             inps, outs = outs, inps
 
-        if self.model_save_path is not None:
-            with timeit_context(f"Saving the model to {self.model_save_path}"):
-                tokenizer.save_pretrained(self.model_save_path)
-                model.save_pretrained(self.model_save_path)
+    def magnitude_prune_(self, model):
+        layers: nn.ModuleList = model.model.layers
+        for layer_idx, layer in tqdm(
+            enumerate(layers), "Pruning Layers", total=len(layers)
+        ):
+            for name, losparse_linear in layer.named_modules():
+                if isinstance(losparse_linear, LoSparseLinear):
+                    log.info(f"Magnitude Pruning {name}")
+                    if self.prune_type == PruningType.UNSTRUCTURED:
+                        unstructured_magnitude_prune_(
+                            losparse_linear.weight.data,
+                            metric_function_or_scores=torch.abs,
+                            sparsity_ratio=self.sparsity_ratio,
+                        )
+                    elif self.prune_type == PruningType.SEMISTRUCTURED:
+                        semistructured_magnitude_prune_(
+                            losparse_linear.weight.data,
+                            metric_function_or_scores=torch.abs,
+                            n=self.n,
+                            m=self.m,
+                        )
+                    else:
+                        raise ValueError(f"Invalid pruning type: {self.prune_type}")
 
-        return model
+    def random_prune_(self, model):
+        layers: nn.ModuleList = model.model.layers
+        for layer in tqdm(
+            list(layers),
+            "Pruning Layers",
+            dynamic_ncols=True,
+        ):
+            for name, losparse_linear in layer.named_modules():
+                if isinstance(losparse_linear, LoSparseLinear):
+                    log.info(f"Pruning {name}, set weights to zeros")
+                    if self.prune_type == PruningType.UNSTRUCTURED:
+                        unstructured_magnitude_prune_(
+                            losparse_linear.weight.data,
+                            metric_function_or_scores=torch.rand_like,
+                            sparsity_ratio=self.sparsity_ratio,
+                        )
+                    elif self.prune_type == PruningType.SEMISTRUCTURED:
+                        semistructured_magnitude_prune_(
+                            losparse_linear.weight.data,
+                            metric_function_or_scores=torch.rand_like,
+                            n=self.n,
+                            m=self.m,
+                        )
+                    else:
+                        raise ValueError(f"Invalid pruning type: {self.prune_type}")
+
+    def set_weights_to_zeros_(self, model):
+        layers: nn.ModuleList = model.model.layers
+        for layer in tqdm(
+            list(layers),
+            "Pruning Layers",
+            dynamic_ncols=True,
+        ):
+            for name, losparse_linear in layer.named_modules():
+                if isinstance(losparse_linear, LoSparseLinear):
+                    log.info(f"Pruning {name}, set weights to zeros")
+                    losparse_linear.weight.data.zero_()
+
+    def prepare_calibration_data(self, model, tokenizer):
+        with timeit_context("loading calibration data"):
+            dataloader, _ = get_loaders(
+                "c4",
+                nsamples=self.nsamples,
+                seed=self.seed,
+                seqlen=model.seqlen,
+                tokenizer=tokenizer,
+            )
+
+        with torch.no_grad():
+            # collect input to the first layer
+            inps, outs, attention_mask, position_ids = prepare_calibration_input(
+                model, dataloader, self.device
+            )
+        return inps, outs, attention_mask, position_ids

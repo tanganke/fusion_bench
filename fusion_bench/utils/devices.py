@@ -1,6 +1,12 @@
+import gc
 from typing import List, Optional, Union
 
 import torch
+
+
+def cuda_empty_cache():
+    gc.collect()
+    torch.cuda.empty_cache()
 
 
 def to_device(obj, device: Optional[torch.device], **kwargs):

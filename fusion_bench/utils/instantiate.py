@@ -15,6 +15,7 @@ from omegaconf._utils import is_structured_config
 from rich import print
 from rich.panel import Panel
 from rich.syntax import Syntax
+from lightning_utilities.core.rank_zero import rank_zero_only
 
 PRINT_FUNCTION_CALL = True
 """
@@ -118,7 +119,7 @@ def _call_target(
         raise InstantiationException(msg) from e
 
     if _partial_:
-        if PRINT_FUNCTION_CALL:
+        if PRINT_FUNCTION_CALL and getattr(rank_zero_only, "rank", 0) == 0:
             call_str = f"functools.partial({_resolve_callable_name(_target_)}, {_format_args_kwargs(args, kwargs)})"
             PRINT_FUNCTION_CALL_FUNC(
                 Panel(
@@ -138,7 +139,7 @@ def _call_target(
                 msg += f"\nfull_key: {full_key}"
             raise InstantiationException(msg) from e
     else:
-        if PRINT_FUNCTION_CALL:
+        if PRINT_FUNCTION_CALL and getattr(rank_zero_only, "rank", 0) == 0:
             call_str = f"{_resolve_callable_name(_target_)}({_format_args_kwargs(args, kwargs)})"
             PRINT_FUNCTION_CALL_FUNC(
                 Panel(

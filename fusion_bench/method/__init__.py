@@ -59,6 +59,7 @@ _import_structure = {
     # pruning methods
     "pruning": [
         "MagnitudeDiffPruningAlgorithm",
+        "RandomPruningForLlama",
         "MagnitudePruningForLlama",
         "WandaPruningForLlama",
     ],
@@ -86,6 +87,7 @@ if TYPE_CHECKING:
         WeightedEnsembleAlgorithm,
     )
     from .fisher_merging import FisherMergingForCLIPVisionModel
+    from .losparse import LoSparseForLlama
     from .mixture_of_experts import (
         MixtralForCausalLMMergingAlgorithm,
         MixtralForCausalLMUpscalingAlgorithm,
@@ -96,6 +98,7 @@ if TYPE_CHECKING:
     from .pruning import (
         MagnitudeDiffPruningAlgorithm,
         MagnitudePruningForLlama,
+        RandomPruningForLlama,
         WandaPruningForLlama,
     )
     from .pwe_moe import (

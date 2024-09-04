@@ -6,14 +6,11 @@ from typing import Optional, cast
 
 from omegaconf import DictConfig, OmegaConf, flag_override
 from torch.nn.modules import Module
-from transformers import (
-    PreTrainedTokenizer,
-    PreTrainedModel,
-)
+from transformers import PreTrainedModel, PreTrainedTokenizer
 from typing_extensions import override
 
 from fusion_bench.modelpool import BaseModelPool
-from fusion_bench.utils import timeit_context, instantiate
+from fusion_bench.utils import instantiate, timeit_context
 from fusion_bench.utils.dtype import parse_dtype
 
 log = logging.getLogger(__name__)

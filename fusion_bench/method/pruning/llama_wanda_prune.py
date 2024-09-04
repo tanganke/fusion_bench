@@ -2,7 +2,7 @@ import logging
 import os
 import re
 from copy import deepcopy
-from typing import Dict, List, Literal, cast
+from typing import Dict, List, Literal, Optional, cast
 
 import torch
 from omegaconf import DictConfig
@@ -13,6 +13,7 @@ from transformers import LlamaForCausalLM
 from fusion_bench.method import BaseModelFusionAlgorithm
 from fusion_bench.mixins import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool, CausalLMPool
+from fusion_bench.utils import timeit_context
 
 from .wanda_utils.prune import llama_prune_wanda_
 
@@ -42,6 +43,7 @@ class WandaPruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
         sparsity_ratio: float,
         n: int,
         m: int,
+        model_save_path: Optional[str] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -54,6 +56,7 @@ class WandaPruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
         self.sparsity_ratio = sparsity_ratio
         self.n = n
         self.m = m
+        self.model_save_path = model_save_path
 
     def run(self, modelpool: CausalLMPool):
         config = self.config
@@ -87,4 +90,9 @@ class WandaPruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
             prune_n=prune_n,
             prune_m=prune_m,
         )
+
+        if self.model_save_path is not None:
+            with timeit_context(f"Saving pruned model to {self.model_save_path}"):
+                tokenizer.save_pretrained(self.model_save_path)
+                model.save_pretrained(self.model_save_path)
         return model
