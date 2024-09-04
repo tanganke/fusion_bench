@@ -15,3 +15,5 @@ sparsity_ratio: 0.5
 # 2:4 means 2 out of 4 weights are pruned
 n: 2
 m: 4
+# string to specify the path to where the pruned model is saved
+model_save_path: null

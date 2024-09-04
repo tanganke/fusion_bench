@@ -14,6 +14,15 @@ log = logging.getLogger(__name__)
 
 
 class DepthUpscalingAlgorithm(BaseModelFusionAlgorithm):
+
+    _config_mapping = BaseModelFusionAlgorithm | {
+        "layer_indices": "layer_indices",
+    }
+
+    def __init__(self, layer_indices: list, **kwargs):
+        super().__init__(**kwargs)
+        self.layer_indices = layer_indices
+
     @torch.no_grad()
     def run(self, modelpool: nn.ModuleList | BaseModelPool) -> nn.ModuleList:
         """
@@ -46,7 +55,7 @@ class DepthUpscalingAlgorithm(BaseModelFusionAlgorithm):
             )
 
         # parse the layers
-        layer_indices = self.config.layer_indices
+        layer_indices = self.layer_indices
         parsed_layer_indices = []
         for layer in layer_indices:
             if isinstance(layer, int):

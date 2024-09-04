@@ -29,8 +29,8 @@ class LoSparseLinear(nn.Module):
         self.weight = Parameter(
             torch.empty((out_features, in_features), **factory_kwargs)
         )
-        self.lo_A = Parameter(torch.empty((out_features, rank), **factory_kwargs))
-        self.lo_B = Parameter(torch.empty((rank, in_features), **factory_kwargs))
+        self.lo_A = Parameter(torch.empty((rank, in_features), **factory_kwargs))
+        self.lo_B = Parameter(torch.empty((out_features, rank), **factory_kwargs))
         if bias:
             self.bias = Parameter(torch.empty(out_features, **factory_kwargs))
         else:
@@ -42,8 +42,8 @@ class LoSparseLinear(nn.Module):
         # uniform(-1/sqrt(in_features), 1/sqrt(in_features)). For details, see
         # https://github.com/pytorch/pytorch/issues/57109
         init.kaiming_uniform_(self.weight, a=math.sqrt(5))
-        init.kaiming_uniform_(self.lo_A, a=math.sqrt(5))
         init.kaiming_uniform_(self.lo_B, a=math.sqrt(5))
+        init.kaiming_uniform_(self.lo_A, a=math.sqrt(5))
         if self.bias is not None:
             fan_in, _ = init._calculate_fan_in_and_fan_out(self.weight)
             bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
@@ -51,7 +51,7 @@ class LoSparseLinear(nn.Module):
 
     def forward(self, input: Tensor) -> Tensor:
         sparse_out = F.linear(input, self.weight, self.bias)
-        low_rank_out = F.linear(F.linear(input, self.lo_B), self.lo_A)
+        low_rank_out = F.linear(F.linear(input, self.lo_A), self.lo_B)
         return sparse_out + low_rank_out
 
     def extra_repr(self) -> str:

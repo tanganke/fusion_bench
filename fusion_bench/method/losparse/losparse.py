@@ -1,5 +1,7 @@
 import gc
 import logging
+from abc import abstractmethod
+from copy import deepcopy
 from typing import Dict, List, Literal, Optional, Tuple, Union, cast
 
 import lightning as L
@@ -22,8 +24,7 @@ from fusion_bench.method.pruning.wanda_utils.data import get_loaders
 from fusion_bench.method.pruning.wanda_utils.prune import prepare_calibration_input
 from fusion_bench.mixins import SimpleProfilerMixin
 from fusion_bench.modelpool import CausalLMPool
-from fusion_bench.models.utils import get_attr, set_attr
-from fusion_bench.utils import timeit_context
+from fusion_bench.utils import print_parameters, timeit_context
 from fusion_bench.utils.devices import get_device
 
 from .modeling_losparse_llama import LoSparseLlamaConfig, LoSparseLlamaForCausalLM
@@ -49,6 +50,8 @@ def convert_to_losparse_llama(model: LlamaForCausalLM, *, rank: int):
     assert (
         len(result.unexpected_keys) == 0
     ), f"Unexpected keys: {result.unexpected_keys}"
+    # copy over the generation config
+    new_model.generation_config = deepcopy(model.generation_config)
     return new_model
 
 
@@ -66,15 +69,29 @@ def extract_low_rank_part_(linear: LoSparseLinear, rank: int):
     uk = u[:, :rank]
     sk = s[:rank]
     vk = v[:, :rank]
-    linear.lo_B.data = (uk * sk).to(linear.lo_B.dtype)
-    linear.lo_A.data = vk.T.to(linear.lo_A.dtype)
-    linear.weight.data = (linear.weight - linear.lo_B @ linear.lo_A).to(
-        linear.weight.dtype
+    linear.lo_A.data = vk.T.to(linear.lo_A.dtype).contiguous()
+    linear.lo_B.data = (uk * sk).to(linear.lo_B.dtype).contiguous()
+    linear.weight.data = (
+        (linear.weight - linear.lo_B @ linear.lo_A).to(linear.weight.dtype).contiguous()
     )
     return linear
 
 
-class WandaHookFn:
+class BaseLoSparseHookFn:
+
+    def __init__(self, linear):
+        self.linear = linear
+
+    @abstractmethod
+    def compute(self) -> Tensor:
+        pass
+
+    @abstractmethod
+    def __call__(self, linear, inp: Tuple[Tensor], out: Tensor):
+        pass
+
+
+class WandaHookFn(BaseLoSparseHookFn):
     R"""
     Here in this class, the `scalar_row` is the mean of the squared sum of the input to the linear layer along a specific input dimension.
 
@@ -82,7 +99,8 @@ class WandaHookFn:
     """
 
     def __init__(self, linear: nn.Linear):
-        self.linear = linear
+        super().__init__(linear)
+
         self.scalar_row = torch.zeros(
             (linear.weight.size(1),), device=linear.weight.device
         )
@@ -93,7 +111,9 @@ class WandaHookFn:
             self.scalar_row.reshape(1, -1)
         )
 
-    def __call__(self, linear: nn.Linear, inp: Tensor, out: Tensor):
+    def __call__(self, linear: nn.Linear, inp: Tuple[Tensor], out: Tensor):
+        assert len(inp) == 1
+        inp = inp[0]
         if len(inp.shape) == 2:
             inp = inp.unsqueeze(0)
 
@@ -135,6 +155,7 @@ class LoSparseForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
         n: int,
         m: int,
         device: Optional[str] = None,
+        model_save_path: Optional[str] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -145,6 +166,7 @@ class LoSparseForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
         self.sparsity_ratio = sparsity_ratio
         self.prune_type = prune_type
         self.device = device
+        self.model_save_path = model_save_path
         self.n = n
         self.m = m
 
@@ -178,19 +200,25 @@ class LoSparseForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
             )
 
         model = convert_to_losparse_llama(model, rank=self.rank)
+        print_parameters(model, print_fn=log.info)
         gc.collect()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
-        for layer in tqdm(list(model.model.layers), "Extract Low-Rank Parts (Layers)"):
-            for losparse_linear in layer.modules():
-                if isinstance(losparse_linear, LoSparseLinear):
-                    if self.device is not None:
-                        original_device = get_device(losparse_linear)
-                        losparse_linear.to(self.device)
-                    extract_low_rank_part_(losparse_linear, self.rank)
-                    if self.device is not None:
-                        losparse_linear.to(original_device)
+        with torch.no_grad():
+            for layer in tqdm(
+                list(model.model.layers),
+                "Extract Low-Rank Parts (Layers)",
+                dynamic_ncols=True,
+            ):
+                for losparse_linear in layer.modules():
+                    if isinstance(losparse_linear, LoSparseLinear):
+                        if self.device is not None:
+                            original_device = get_device(losparse_linear)
+                            losparse_linear.to(self.device)
+                        extract_low_rank_part_(losparse_linear, self.rank)
+                        if self.device is not None:
+                            losparse_linear.to(original_device)
 
         # compute importance scores and prune
         layers = model.model.layers
@@ -247,18 +275,28 @@ class LoSparseForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
 
             # prune the weights based on the importance scores
             if self.prune_type == PruningType.UNSTRUCTURED:
-                for name, linear in linear_layers.items():
-                    print(f"Pruning {name}")
+                for name, linear in tqdm(
+                    linear_layers.items(),
+                    f"Unstructured Pruning {layer_idx}-th Layer",
+                    leave=False,
+                    total=len(linear_layers),
+                ):
+                    log.info(f"Pruning {name}")
                     unstructured_magnitude_prune_(
-                        linear.weight,
+                        linear.weight.data,
                         metrics[name],
                         sparsity_ratio=self.sparsity_ratio,
                     )
             elif self.prune_type == PruningType.SEMISTRUCTURED:
-                for name, linear in linear_layers.items():
-                    print(f"Pruning {name}")
+                for name, linear in tqdm(
+                    linear_layers.items(),
+                    f"Semistructured Pruning {layer_idx}-th Layer",
+                    leave=False,
+                    total=len(linear_layers),
+                ):
+                    log.info(f"Pruning {name}")
                     semistructured_magnitude_prune_(
-                        linear.weight,
+                        linear.weight.data,
                         metrics[name],
                         n=self.n,
                         m=self.m,
@@ -275,5 +313,10 @@ class LoSparseForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
                         position_ids=position_ids,
                     )[0]
             inps, outs = outs, inps
+
+        if self.model_save_path is not None:
+            with timeit_context(f"Saving the model to {self.model_save_path}"):
+                tokenizer.save_pretrained(self.model_save_path)
+                model.save_pretrained(self.model_save_path)
 
         return model

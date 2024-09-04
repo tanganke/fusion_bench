@@ -11,10 +11,11 @@ from omegaconf import DictConfig, OmegaConf
 from torch import nn
 from tqdm.auto import tqdm
 
+import fusion_bench.utils.instantiate
 from fusion_bench.method import BaseModelFusionAlgorithm
 from fusion_bench.mixins import LightningFabricMixin
 from fusion_bench.modelpool import BaseModelPool
-from fusion_bench.scripts import BaseHydraProgram
+from fusion_bench.programs import BaseHydraProgram
 from fusion_bench.taskpool import BaseTaskPool
 from fusion_bench.utils import import_object, instantiate, timeit_context
 from fusion_bench.utils.hydra_utils import get_hydra_output_dir
@@ -56,6 +57,7 @@ class FabricModelFusionProgram(
         merged_model_save_kwargs: Optional[DictConfig] = None,
         fast_dev_run: bool = False,
         seed: Optional[int] = None,
+        print_function_call: bool = True,
         **kwargs,
     ):
         self._method = method
@@ -69,6 +71,7 @@ class FabricModelFusionProgram(
         self.fast_dev_run = fast_dev_run
         self.seed = seed
         super().__init__(**kwargs)
+        fusion_bench.utils.instantiate.PRINT_FUNCTION_CALL = print_function_call
 
         if print_config:
             print_config_tree(

@@ -9,10 +9,10 @@ import logging
 import os
 
 import hydra
-from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 
-from fusion_bench.scripts import BaseHydraProgram
+from fusion_bench.programs import BaseHydraProgram
+from fusion_bench.utils import instantiate
 
 log = logging.getLogger(__name__)
 

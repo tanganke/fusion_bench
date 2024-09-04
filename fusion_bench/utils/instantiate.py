@@ -2,6 +2,7 @@
 # Modified from Hydra
 import copy
 import functools
+import inspect
 from enum import Enum
 from textwrap import dedent
 from typing import Any, Callable, Dict, List, Sequence, Tuple, Union
@@ -25,6 +26,20 @@ PRINT_FUNCTION_CALL_FUNC = print
 """
 Function to be used for printing function calls.
 """
+
+
+def _resolve_callable_name(f: Callable[..., Any]) -> str:
+    # Get the module name
+    module_name = f.__module__
+    # Get the qualname (fully qualified name) of the callable
+    qualname = f.__qualname__
+    # If the module is not "__main__", include it in the full name
+    if module_name != "__main__":
+        full_name = f"{module_name}.{qualname}"
+    else:
+        full_name = qualname
+
+    return full_name
 
 
 def _format_args_kwargs(args, kwargs):
@@ -104,7 +119,7 @@ def _call_target(
 
     if _partial_:
         if PRINT_FUNCTION_CALL:
-            call_str = f"functools.partial({_target_.__name__}, {_format_args_kwargs(args, kwargs)})"
+            call_str = f"functools.partial({_resolve_callable_name(_target_)}, {_format_args_kwargs(args, kwargs)})"
             PRINT_FUNCTION_CALL_FUNC(
                 Panel(
                     Syntax(call_str, "python", theme="monokai", word_wrap=True),
@@ -124,7 +139,7 @@ def _call_target(
             raise InstantiationException(msg) from e
     else:
         if PRINT_FUNCTION_CALL:
-            call_str = f"{_target_.__name__}({_format_args_kwargs(args, kwargs)})"
+            call_str = f"{_resolve_callable_name(_target_)}({_format_args_kwargs(args, kwargs)})"
             PRINT_FUNCTION_CALL_FUNC(
                 Panel(
                     Syntax(call_str, "python", theme="monokai", word_wrap=True),

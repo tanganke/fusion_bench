@@ -1,7 +1,7 @@
+!*.template
 /datasets/
 /datasets
 outputs/
-/.vscode/
 lightning_logs/
 
 # Byte-compiled / optimized / DLL files

@@ -2,8 +2,9 @@ import logging
 from pathlib import Path
 from typing import Dict, Optional, Union
 
-from hydra.utils import instantiate
 from omegaconf import OmegaConf
+
+from fusion_bench.utils import instantiate
 
 log = logging.getLogger(__name__)
 

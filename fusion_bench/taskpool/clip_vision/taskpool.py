@@ -7,7 +7,6 @@ from typing import Any, Callable, Dict, List, Union, cast
 
 import lightning as L
 import torch
-from hydra.utils import instantiate
 from omegaconf import DictConfig
 from torch import Tensor, nn
 from torch.nn import functional as F
@@ -23,6 +22,7 @@ from fusion_bench.mixins import LightningFabricMixin, YAMLSerializationMixin
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.taskpool import BaseTaskPool
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
+from fusion_bench.utils import instantiate
 from fusion_bench.utils.parameters import count_parameters
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"

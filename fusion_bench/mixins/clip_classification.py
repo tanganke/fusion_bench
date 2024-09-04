@@ -6,7 +6,6 @@ from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union, cast
 
 import lightning as L
 import torch
-from hydra.utils import instantiate
 from omegaconf import DictConfig, open_dict
 from torch import nn
 from torch.utils.data import DataLoader
@@ -18,7 +17,7 @@ from fusion_bench.mixins import LightningFabricMixin
 from fusion_bench.modelpool import CLIPVisionModelPool
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
-from fusion_bench.utils import timeit_context
+from fusion_bench.utils import instantiate, timeit_context
 from fusion_bench.utils.data import InfiniteDataLoader
 
 log = logging.getLogger(__name__)

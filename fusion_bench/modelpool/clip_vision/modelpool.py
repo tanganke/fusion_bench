@@ -3,13 +3,12 @@ import logging
 from copy import deepcopy
 from typing import Optional
 
-from hydra.utils import instantiate
 from omegaconf import DictConfig, open_dict
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 from typing_extensions import override
 
 from fusion_bench.dataset import CLIPDataset, load_dataset_from_config
-from fusion_bench.utils import timeit_context
+from fusion_bench.utils import instantiate, timeit_context
 
 from ..base_pool import BaseModelPool
 
