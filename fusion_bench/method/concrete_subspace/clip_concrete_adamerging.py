@@ -42,6 +42,7 @@ from fusion_bench.models.wrappers.task_wise_fusion import (
     get_task_wise_weights,
 )
 from fusion_bench.tasks.clip_classification.clip_mixin import CLIPClassificationMixin
+from fusion_bench.utils.dtype import parse_dtype
 from fusion_bench.utils.parameters import print_parameters
 from fusion_bench.utils.type import StateDictType
 
@@ -55,6 +56,8 @@ class ConcreteTaskWiseAdaMergingForCLIP(
 ):
     @torch.no_grad()
     def setup_models(self):
+        config = self.config
+        self.merge_dtype = parse_dtype(config.get("merge_dtype", None))
         modelpool = self.modelpool
 
         # Load the pretrained model
@@ -66,6 +69,8 @@ class ConcreteTaskWiseAdaMergingForCLIP(
             ignore_untrained_params=True,
             parameter_type="logits",
         )
+        if self.merge_dtype is not None:
+            mask_model.to(self.merge_dtype)
         mask_model.fill_(self.config.initial_logits)
         # TODO: ablation study for the initialization of mask model
         # for param in mask_model.parameters():
@@ -92,6 +97,7 @@ class ConcreteTaskWiseAdaMergingForCLIP(
             clamp_weights=self.config.clamp_weights,
             tie_weights=self.config.tie_weights,
             strict=self.config.strict,
+            task_vector_dtype=self.merge_dtype,
         )
         return module, mask_model
 
@@ -321,6 +327,8 @@ class ConcreteLayerWiseAdaMergingForCLIP(
 ):
     @torch.no_grad()
     def setup_models(self):
+        config = self.config
+        self.merge_dtype = parse_dtype(config.get("merge_dtype", None))
         modelpool = self.modelpool
 
         # Load the pretrained model
@@ -332,6 +340,8 @@ class ConcreteLayerWiseAdaMergingForCLIP(
             ignore_untrained_params=True,
             parameter_type="logits",
         )
+        if self.merge_dtype is not None:
+            mask_model.to(self.merge_dtype)
         mask_model.fill_(self.config.initial_logits)
         # TODO: ablation study for the initialization of mask model
         # for param in mask_model.parameters():
@@ -361,6 +371,7 @@ class ConcreteLayerWiseAdaMergingForCLIP(
             clamp_weights=self.config.clamp_weights,
             tie_weights=self.config.tie_weights,
             strict=self.config.strict,
+            layer_vector_dtype=self.merge_dtype,
         )
         return module, mask_model
 

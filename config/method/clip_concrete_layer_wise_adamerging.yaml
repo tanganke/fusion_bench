@@ -5,6 +5,7 @@ name: clip_concrete_layer_wise_adamerging
 batch_size: 16
 num_workers: 8
 
+merge_dtype: null
 optimizer: adam
 lr: 1e-3
 base_lr: 1
