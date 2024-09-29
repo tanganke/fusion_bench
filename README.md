@@ -19,6 +19,16 @@
 
 FusionBench is a benchmark suite designed to evaluate the performance of various deep model fusion techniques. It aims to provide a comprehensive comparison of different methods on a variety of datasets and tasks.
 
+Projects based on FusionBench:
+
+<details>
+  <summary>Anke Tang et al. SMILE: Zero-Shot Sparse Mixture of Low-Rank Experts Construction From Pre-Trained Foundation Models. Aug, 2024. http://arxiv.org/abs/2408.10174</summary>
+
+  Example notebooks can be found at [examples/smile_upscaling](examples/smile_upscaling).  
+  ![](examples/smile_upscaling/SMILE.png)
+
+</details>
+
 ## Installation
 
 install from PyPI:
