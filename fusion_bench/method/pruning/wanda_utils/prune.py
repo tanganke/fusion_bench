@@ -6,6 +6,7 @@ from typing import List, Tuple, cast
 import torch
 import torch.nn as nn
 from torch import Tensor
+from tqdm.auto import tqdm
 from transformers import LlamaForCausalLM, PreTrainedModel
 
 from fusion_bench import timeit_context

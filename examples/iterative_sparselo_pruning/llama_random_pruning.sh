@@ -5,7 +5,7 @@ function unstructured_pruning() {
     sparsity_ratio=$1
     fusion_bench \
         --config-name llama_magnitude_pruning \
-        method=llama_random_pruning \
+        method=pruning/llama_random_pruning \
         method.prune_type=unstructured \
         method.sparsity_ratio=${sparsity_ratio} \
         modelpool.base_model=${MODEL_PATH} \
@@ -17,7 +17,7 @@ function semistructured_pruning() {
     m=$2
     fusion_bench \
         --config-name llama_magnitude_pruning \
-        method=llama_random_pruning \
+        method=pruning/llama_random_pruning \
         method.prune_type=semistructured \
         method.n=${n} method.m=${m} \
         modelpool.base_model=${MODEL_PATH} \

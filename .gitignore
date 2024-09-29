@@ -1,6 +1,7 @@
 !*.template
 /datasets/
 /datasets
+/lm-evaluation-harness/
 outputs/
 lightning_logs/
 

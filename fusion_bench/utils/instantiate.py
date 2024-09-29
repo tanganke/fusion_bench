@@ -10,12 +10,12 @@ from typing import Any, Callable, Dict, List, Sequence, Tuple, Union
 from hydra._internal.utils import _locate
 from hydra.errors import InstantiationException
 from hydra.types import ConvertMode, TargetConf
+from lightning_utilities.core.rank_zero import rank_zero_only
 from omegaconf import OmegaConf, SCMode
 from omegaconf._utils import is_structured_config
 from rich import print
 from rich.panel import Panel
 from rich.syntax import Syntax
-from lightning_utilities.core.rank_zero import rank_zero_only
 
 PRINT_FUNCTION_CALL = True
 """

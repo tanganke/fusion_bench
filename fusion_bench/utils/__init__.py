@@ -2,8 +2,10 @@ import importlib
 
 from .dtype import parse_dtype
 from .instantiate import instantiate
-from .parameters import print_parameters
+from .parameters import *
 from .timer import timeit_context
+from .cache_utils import *
+from .devices import *
 
 
 def import_object(abs_obj_name: str):

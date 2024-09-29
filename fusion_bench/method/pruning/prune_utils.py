@@ -38,6 +38,7 @@ def unstructured_magnitude_prune_(
     sparsity_ratio: float,
     dtype: torch.dtype = None,
     device: torch.device = None,
+    return_pruned_weight: bool = False,
 ):
     original_device = weight.device
     if callable(metric_function_or_scores):
@@ -48,11 +49,21 @@ def unstructured_magnitude_prune_(
         raise ValueError(
             "metric_function_or_scores should be either a callable or a tensor"
         )
-    thresh = torch.sort(W_metric.flatten())[0][int(weight.numel() * sparsity_ratio)]
-    W_mask = W_metric <= thresh
 
-    weight[W_mask.to(device=original_device)] = 0
-    return weight
+    W_mask = torch.zeros_like(W_metric) == 1
+    sort_res = torch.sort(W_metric, dim=-1, stable=True)
+    indices = sort_res[1][:, : int(W_metric.shape[1] * sparsity_ratio)]
+    W_mask.scatter_(1, indices, True)
+    W_mask = W_mask.to(device=original_device)
+
+    if not return_pruned_weight:
+        weight.masked_fill_(W_mask, 0)
+        return weight
+    else:
+        pruned_weight = weight.clone()
+        weight.masked_fill_(W_mask, 0)
+        pruned_weight.masked_fill_(~W_mask, 0)
+        return weight, pruned_weight
 
 
 def semistructured_magnitude_prune_(
@@ -64,6 +75,7 @@ def semistructured_magnitude_prune_(
     m: int,
     dtype: torch.dtype = None,
     device: torch.device = None,
+    return_pruned_weight: bool = False,
 ):
     original_device = weight.device
     if callable(metric_function_or_scores):
@@ -82,9 +94,15 @@ def semistructured_magnitude_prune_(
             col_idx + torch.topk(tmp, n, dim=1, largest=False)[1],
             True,
         )
-
-    weight[W_mask.to(device=original_device)] = 0
-    return weight
+    W_mask = W_mask.to(device=original_device)
+    if not return_pruned_weight:
+        weight.masked_fill_(W_mask, 0)
+        return weight
+    else:
+        pruned_weight = weight.clone()
+        weight.masked_fill_(W_mask, 0)
+        pruned_weight.masked_fill_(~W_mask, 0)
+        return weight, pruned_weight
 
 
 def compute_sparsity(weight: torch.Tensor):

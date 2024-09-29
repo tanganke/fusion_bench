@@ -63,6 +63,11 @@ _import_structure = {
         "MagnitudePruningForLlama",
         "WandaPruningForLlama",
     ],
+    "sparselo": [
+        "IterativeSparseLoForLlama",
+        "SparseLoForLlama",
+        "PCPSparseLoForLlama",
+    ],
 }
 
 
@@ -87,7 +92,11 @@ if TYPE_CHECKING:
         WeightedEnsembleAlgorithm,
     )
     from .fisher_merging import FisherMergingForCLIPVisionModel
-    from .losparse import LoSparseForLlama
+    from .sparselo import (
+        IterativeSparseLoForLlama,
+        SparseLoForLlama,
+        PCPSparseLoForLlama,
+    )
     from .mixture_of_experts import (
         MixtralForCausalLMMergingAlgorithm,
         MixtralForCausalLMUpscalingAlgorithm,

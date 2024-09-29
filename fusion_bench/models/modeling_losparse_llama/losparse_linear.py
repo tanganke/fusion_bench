@@ -7,6 +7,9 @@ from torch.nn import Parameter, init
 
 
 class LoSparseLinear(nn.Module):
+    skip_lowrank: bool = False
+    skip_sparse: bool = False
+
     __constants__ = ["in_features", "out_features"]
     in_features: int
     out_features: int
@@ -50,8 +53,14 @@ class LoSparseLinear(nn.Module):
             init.uniform_(self.bias, -bound, bound)
 
     def forward(self, input: Tensor) -> Tensor:
-        sparse_out = F.linear(input, self.weight, self.bias)
-        low_rank_out = F.linear(F.linear(input, self.lo_A), self.lo_B)
+        if self.skip_lowrank:
+            low_rank_out = 0
+        else:
+            low_rank_out = F.linear(F.linear(input, self.lo_A), self.lo_B)
+        if self.skip_sparse:
+            sparse_out = self.bias if self.bias is not None else 0
+        else:
+            sparse_out = F.linear(input, self.weight, self.bias)
         return sparse_out + low_rank_out
 
     def extra_repr(self) -> str:

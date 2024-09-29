@@ -1,6 +1,6 @@
 defaults:
   - fabric_model_fusion
-  - override method: llama_magnitude_pruning
+  - override method: pruning/llama_magnitude_pruning
   - override modelpool: CausalLMPool/single_llama_model
   - override taskpool: dummy
   - _self_
