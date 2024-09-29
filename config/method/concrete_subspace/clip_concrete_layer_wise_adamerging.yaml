@@ -3,6 +3,8 @@ name: clip_concrete_layer_wise_adamerging
 # if you have multiple gpus, the total batch size will be `batch_size * num_gpus`
 batch_size: 16
 num_workers: 8
+
+merge_dtype: null
 optimizer: adam
 lr: 1e-3
 base_lr: 1
