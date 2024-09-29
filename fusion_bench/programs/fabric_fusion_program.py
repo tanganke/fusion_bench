@@ -3,7 +3,7 @@ import importlib.resources
 import json
 import logging
 import os
-from typing import Dict, Iterable, Optional, Union
+from typing import Callable, Dict, Iterable, Optional, Union
 
 import hydra
 import lightning as L
@@ -82,19 +82,32 @@ class FabricModelFusionProgram(
             log.info("The program is running in dry-run mode. Exiting.")
             exit(0)
 
-    def _instantiate_and_setup(self, config: DictConfig):
-        assert "_target_" in config, f"Missing '_target_' in config: {config}"
-        # try to import the object from the target
-        # this checks if the target is valid and can be imported
-        import_object(config._target_)
-        obj = instantiate(
-            config,
-            _recursive_=config.get("_recursive_", False),
-        )
-        if hasattr(obj, "_program"):
-            obj._program = self
-        if hasattr(obj, "_fabric_instance") and self.fabric is not None:
-            obj._fabric_instance = self.fabric
+    def _instantiate_and_setup(
+        self, config: DictConfig, compat_load_fn: Optional[str] = None
+    ):
+        if "_target_" not in config:
+            log.warning(
+                "No '_target_' key found in config. Attempting to instantiate the object in a compatible way."
+            )
+            if compat_load_fn is not None:
+                compat_load_fn = import_object(compat_load_fn)
+                obj = compat_load_fn(config)
+            else:
+                raise ValueError(
+                    "No load function provided. Please provide a load function to instantiate the object."
+                )
+        else:
+            # try to import the object from the target
+            # this checks if the target is valid and can be imported
+            import_object(config._target_)
+            obj = instantiate(
+                config,
+                _recursive_=config.get("_recursive_", False),
+            )
+            if hasattr(obj, "_program"):
+                obj._program = self
+            if hasattr(obj, "_fabric_instance") and self.fabric is not None:
+                obj._fabric_instance = self.fabric
         return obj
 
     def save_merged_model(self, merged_model):
@@ -169,15 +182,24 @@ class FabricModelFusionProgram(
 
         log.info("Running the model fusion program.")
         log.info("loading model pool")
-        self.modelpool = self._instantiate_and_setup(self._modelpool)
+        self.modelpool = self._instantiate_and_setup(
+            self._modelpool,
+            compat_load_fn="fusion_bench.compat.modelpool.load_modelpool_from_config",
+        )
         log.info("loading method")
-        self.method = self._instantiate_and_setup(self._method)
+        self.method = self._instantiate_and_setup(
+            self._method,
+            compat_load_fn="fusion_bench.compat.method.load_algorithm_from_config",
+        )
         merged_model = self.method.run(self.modelpool)
         self.save_merged_model(merged_model)
 
         if self._taskpool is not None:
             log.info("loading task pool")
-            self.taskpool = self._instantiate_and_setup(self._taskpool)
+            self.taskpool = self._instantiate_and_setup(
+                self._taskpool,
+                compat_load_fn="fusion_bench.compat.taskpool.load_taskpool_from_config",
+            )
             report = self.evaluate_merged_model(self.taskpool, merged_model)
             print(json.dumps(report))
             if self.report_save_path is not None:
