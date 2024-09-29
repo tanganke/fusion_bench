@@ -92,11 +92,6 @@ if TYPE_CHECKING:
         WeightedEnsembleAlgorithm,
     )
     from .fisher_merging import FisherMergingForCLIPVisionModel
-    from .sparselo import (
-        IterativeSparseLoForLlama,
-        SparseLoForLlama,
-        PCPSparseLoForLlama,
-    )
     from .mixture_of_experts import (
         MixtralForCausalLMMergingAlgorithm,
         MixtralForCausalLMUpscalingAlgorithm,
@@ -117,6 +112,11 @@ if TYPE_CHECKING:
     from .regmean import RegMeanAlgorithmForCLIP, RegMeanAlgorithmForGPT2
     from .simple_average import SimpleAverageAlgorithm
     from .smile_upscaling import SmileUpscalingAlgorithm
+    from .sparselo import (
+        IterativeSparseLoForLlama,
+        PCPSparseLoForLlama,
+        SparseLoForLlama,
+    )
     from .task_arithmetic import TaskArithmeticAlgorithm
     from .ties_merging import TiesMergingAlgorithm
     from .weighted_average import WeightedAverageAlgorithm, WeightedAverageForLLama

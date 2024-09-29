@@ -1,9 +1,9 @@
+import logging
 import os
 import pickle
 from functools import wraps
 from pathlib import Path
 from typing import Any, Callable
-import logging
 
 __all__ = ["cache_to_disk"]
 
