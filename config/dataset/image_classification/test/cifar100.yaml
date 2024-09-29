@@ -1,4 +1,4 @@
-resisc45:
+dtd:
   _target_: datasets.load_dataset
-  path: tanganke/resisc45
+  path: tanganke/cifar100
   split: test

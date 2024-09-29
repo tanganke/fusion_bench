@@ -1,4 +1,4 @@
 gtsrb:
   _target_: datasets.load_dataset
-  path: /data0/users/tanganke/data/huggingface_datasets/tanganke/gtsrb
+  path: tanganke/gtsrb
   split: train

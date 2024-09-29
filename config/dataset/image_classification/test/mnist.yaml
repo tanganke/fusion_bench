@@ -1,4 +1,4 @@
 mnist:
   _target_: datasets.load_dataset
-  path: /data0/users/tanganke/data/huggingface_datasets/mnist
+  path: mnist
   split: test

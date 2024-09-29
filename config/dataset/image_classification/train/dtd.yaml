@@ -1,4 +1,4 @@
 dtd:
   _target_: datasets.load_dataset
-  path: /data0/users/tanganke/data/huggingface_datasets/tanganke/dtd
+  path: tanganke/dtd
   split: train

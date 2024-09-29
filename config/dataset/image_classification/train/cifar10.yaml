@@ -1,4 +1,4 @@
-mnist:
+dtd:
   _target_: datasets.load_dataset
-  path: mnist
+  path: tanganke/cifar10
   split: train

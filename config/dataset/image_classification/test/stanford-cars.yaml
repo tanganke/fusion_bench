@@ -1,4 +1,4 @@
 stanford-cars:
   _target_: datasets.load_dataset
-  path: /data0/users/tanganke/data/huggingface_datasets/tanganke/stanford_cars
+  path: tanganke/stanford_cars
   split: test

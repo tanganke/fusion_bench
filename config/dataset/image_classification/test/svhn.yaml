@@ -1,6 +1,6 @@
 svhn:
   _target_: datasets.load_dataset
   _args_:
-    - /data0/users/tanganke/data/huggingface_datasets/svhn
+    - svhn
     - cropped_digits
   split: test
