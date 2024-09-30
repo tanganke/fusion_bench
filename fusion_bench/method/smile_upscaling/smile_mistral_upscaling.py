@@ -12,7 +12,8 @@ from tqdm.auto import tqdm
 from transformers import AutoConfig, AutoTokenizer, MistralForCausalLM
 from transformers.models.mistral.modeling_mistral import MistralDecoderLayer
 
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.compat.method import ModelFusionAlgorithm
+from fusion_bench.compat.modelpool import to_modelpool
 from fusion_bench.method.simple_average import simple_average
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
@@ -43,12 +44,20 @@ def _is_all_zeros(tensor: Tensor | List[Tensor]) -> bool:
 
 
 def _svd(w: Tensor, full_matrices=False) -> Tuple[Tensor, Tensor, Tensor]:
+    device = w.device
+    if w.device != torch.float32 or w.device != torch.float64:
+        w = w.float()
+
     u, s, vh = torch.linalg.svd(
         w,
         full_matrices=full_matrices,
         # driver="gesvd" if w.is_cuda else None
     )
     v = vh.T
+
+    u = u.to(device)
+    s = s.to(device)
+    v = v.to(device)
     return u, s, v
 
 
@@ -95,20 +104,24 @@ def upscale_to_smile_linear(
     target.shared_linear.load_state_dict(base.state_dict())
 
     # experts
-    for expert_idx, target_expert in enumerate(target.experts):
-        u, s, v = svd_list[expert_idx]
-        u = u[:, :rank_of_expert]
-        s = s[:rank_of_expert]
-        v = v[:, :rank_of_expert]
-        state_dict = {"u": u, "svh": (s * v).T}
-        if experts[expert_idx].bias is not None:
-            state_dict["bias"] = experts[expert_idx].bias.data
-        target_expert.load_state_dict(state_dict)
+    if rank_of_expert > 0:
+        for expert_idx, target_expert in enumerate(target.experts):
+            u, s, v = svd_list[expert_idx]
+            u = u[:, :rank_of_expert]
+            s = s[:rank_of_expert]
+            v = v[:, :rank_of_expert]
+            state_dict = {"u": u, "svh": (s * v).T}
+            if experts[expert_idx].bias is not None:
+                state_dict["bias"] = experts[expert_idx].bias.data
+            target_expert.load_state_dict(state_dict)
+    else:
+        for expert_idx, target_expert in enumerate(target.experts):
+            target_expert.load_state_dict(experts[expert_idx].state_dict())
 
     return target
 
 
-class SmileMistralUpscalingAlgorithm(BaseModelFusionAlgorithm, SimpleProfilerMixin):
+class SmileMistralUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool) -> SmileMistralForCausalLM:
         """
@@ -123,6 +136,7 @@ class SmileMistralUpscalingAlgorithm(BaseModelFusionAlgorithm, SimpleProfilerMix
         self.modelpool = modelpool = to_modelpool(modelpool)
         config = self.config
 
+        print(config)
         if config.model_path is not None and os.path.exists(config.model_path):
             log.info(f"Loading model from {config.model_path}")
             model = torch.load(config.model_path)
@@ -179,7 +193,10 @@ class SmileMistralUpscalingAlgorithm(BaseModelFusionAlgorithm, SimpleProfilerMix
         config = self.config
 
         with init_empty_weights():
-            pretrained_path = self.modelpool.get_model_config("_pretrained_")["path"]
+            pretrained_model_config = self.modelpool.get_model_config("_pretrained_")
+            pretrained_path = pretrained_model_config.get(
+                "path", pretrained_model_config["pretrained_model_name_or_path"]
+            )
             base_config = AutoConfig.from_pretrained(pretrained_path)
             model_config = SmileMistralConfig(
                 num_experts_per_tok=config.num_experts_per_tok,

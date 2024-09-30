@@ -5,9 +5,8 @@ from omegaconf import DictConfig
 from peft import PeftModel
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
+from fusion_bench.compat.modelpool.base_pool import ModelPool
 from fusion_bench.utils import timeit_context
-
-from .base_pool import ModelPool
 
 log = logging.getLogger(__name__)
 

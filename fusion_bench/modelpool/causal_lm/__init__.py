@@ -1,1 +1,1 @@
-from .causal_lm import CausalLMPool
+from .causal_lm import CausalLMPool, CausalLMBackbonePool

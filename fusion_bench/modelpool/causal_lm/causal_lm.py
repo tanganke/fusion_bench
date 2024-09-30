@@ -2,11 +2,16 @@ import functools
 import logging
 import os
 from copy import deepcopy
-from typing import Optional, cast
+from typing import Any, Optional, Union, cast
 
 from omegaconf import DictConfig, OmegaConf, flag_override
 from torch.nn.modules import Module
-from transformers import PreTrainedModel, PreTrainedTokenizer
+from transformers import (
+    LlamaForCausalLM,
+    MistralForCausalLM,
+    PreTrainedModel,
+    PreTrainedTokenizer,
+)
 from typing_extensions import override
 
 from fusion_bench.modelpool import BaseModelPool
@@ -115,3 +120,13 @@ class CausalLMPool(BaseModelPool):
             push_to_hub=push_to_hub,
             **kwargs,
         )
+
+
+class CausalLMBackbonePool(CausalLMPool):
+    def load_model(
+        self, model_name_or_config: str | DictConfig, *args, **kwargs
+    ) -> Module:
+        model: Union[MistralForCausalLM, LlamaForCausalLM, Any] = super().load_model(
+            model_name_or_config, *args, **kwargs
+        )
+        return model.model.layers

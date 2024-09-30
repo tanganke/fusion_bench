@@ -76,10 +76,13 @@ class SimpleAverageAlgorithm(
         )
         sd: Optional[StateDictType] = None
         forward_model = None
+        merged_model_names = []
 
         for model_name in modelpool.model_names:
             with self.profile("load model"):
                 model = modelpool.load_model(model_name)
+                merged_model_names.append(model_name)
+                print(f"load model of type: {type(model).__name__}")
             with self.profile("merge weights"):
                 if sd is None:
                     sd = model.state_dict(keep_vars=True)
@@ -89,6 +92,10 @@ class SimpleAverageAlgorithm(
         with self.profile("merge weights"):
             sd = state_dict_mul(sd, 1 / len(modelpool.model_names))
 
-        self.print_profile_summary()
         forward_model.load_state_dict(sd)
+        # print profile report and log the merged models
+        self.print_profile_summary()
+        log.info(f"merged {len(merged_model_names)} models:")
+        for model_name in merged_model_names:
+            log.info(f"  - {model_name}")
         return forward_model

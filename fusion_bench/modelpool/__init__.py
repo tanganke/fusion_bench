@@ -8,7 +8,7 @@ _import_structure = {
     "clip_vision": ["CLIPVisionModelPool"],
     "nyuv2_modelpool": ["NYUv2ModelPool"],
     "huggingface_automodel": ["AutoModelPool"],
-    "causal_lm": ["CausalLMPool"],
+    "causal_lm": ["CausalLMPool", "CausalLMBackbonePool"],
     "seq2seq_lm": ["Seq2SeqLMPool"],
     "PeftModelForSeq2SeqLM": ["PeftModelForSeq2SeqLMPool"],
 }
@@ -16,7 +16,7 @@ _import_structure = {
 
 if TYPE_CHECKING:
     from .base_pool import BaseModelPool
-    from .causal_lm import CausalLMPool
+    from .causal_lm import CausalLMBackbonePool, CausalLMPool
     from .clip_vision import CLIPVisionModelPool
     from .huggingface_automodel import AutoModelPool
     from .nyuv2_modelpool import NYUv2ModelPool

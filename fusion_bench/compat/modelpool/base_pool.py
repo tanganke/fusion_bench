@@ -7,6 +7,7 @@ import torch
 from omegaconf import DictConfig
 from torch import nn
 
+from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.utils import timeit_context
 
 __all__ = ["ModelPool", "DictModelPool", "ListModelPool", "to_modelpool"]
@@ -220,7 +221,7 @@ class DictModelPool(ModelPool):
 
 
 def to_modelpool(obj: List[nn.Module], **kwargs):
-    if isinstance(obj, ModelPool):
+    if isinstance(obj, (ModelPool, BaseModelPool)):
         return obj
     elif isinstance(obj, (list, tuple)) and all(isinstance(m, nn.Module) for m in obj):
         return ListModelPool(models=obj, **kwargs)
