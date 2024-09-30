@@ -124,7 +124,7 @@ def _call_target(
             PRINT_FUNCTION_CALL_FUNC(
                 Panel(
                     Syntax(call_str, "python", theme="monokai", word_wrap=True),
-                    title="Calling partial",
+                    title="Instantiate by calling partial",
                     border_style="cyan",
                 )
             )
@@ -144,7 +144,7 @@ def _call_target(
             PRINT_FUNCTION_CALL_FUNC(
                 Panel(
                     Syntax(call_str, "python", theme="monokai", word_wrap=True),
-                    title="Calling function",
+                    title="Instantiate by calling function",
                     border_style="green",
                 )
             )

@@ -122,6 +122,24 @@ def upscale_to_smile_linear(
 
 
 class SmileMistralUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
+    R"""
+    SmileMistralUpscalingAlgorithm is a model fusion algorithm designed to upscale 
+    a pretrained Mistral model using a set of fine-tuned expert models. The algorithm 
+    leverages Singular Value Decomposition (SVD) to merge the weights of the pretrained 
+    model and the expert models into a new upscaled model.
+
+    Attributes:
+        modelpool (BaseModelPool): The pool of models to be used for upscaling.
+        config (dict): Configuration parameters for the upscaling process.
+
+    Methods:
+        run(modelpool: BaseModelPool) -> SmileMistralForCausalLM:
+            Executes the upscaling process and returns the upscaled model.
+
+        merge(pretrained_model: MistralForCausalLM, finetuned_models: List[MistralForCausalLM]) -> SmileMistralForCausalLM:
+            Merges the pretrained model with the fine-tuned models to create an upscaled model.
+    """
+
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool) -> SmileMistralForCausalLM:
         """
@@ -168,7 +186,10 @@ class SmileMistralUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
             if os.path.dirname(config.model_path):
                 os.makedirs(os.path.dirname(config.model_path), exist_ok=True)
             log.info(f"Saving model to {config.model_path}")
-            pretrained_path = modelpool.get_model_config("_pretrained_")["path"]
+            pretrained_model_config = self.modelpool.get_model_config("_pretrained_")
+            pretrained_path = pretrained_model_config.get(
+                "path", pretrained_model_config["pretrained_model_name_or_path"]
+            )
             tokenizer = AutoTokenizer.from_pretrained(pretrained_path)
             tokenizer.save_pretrained(config.model_path)
             model.save_pretrained(config.model_path)
@@ -219,7 +240,9 @@ class SmileMistralUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
 
         # upscale model
         for layer_idx in tqdm(
-            range(len(pretrained_model.model.layers)), "Upscaling Modules (layer)"
+            range(len(pretrained_model.model.layers)),
+            "Upscaling Modules (layer)",
+            dynamic_ncols=True,
         ):
             pretrained_layer: MistralDecoderLayer = pretrained_model.model.layers[
                 layer_idx

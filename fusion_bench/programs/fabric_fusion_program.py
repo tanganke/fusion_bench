@@ -19,7 +19,7 @@ from fusion_bench.programs import BaseHydraProgram
 from fusion_bench.taskpool import BaseTaskPool
 from fusion_bench.utils import import_object, instantiate, timeit_context
 from fusion_bench.utils.hydra_utils import get_hydra_output_dir
-from fusion_bench.utils.rich_utils import print_config_tree
+from fusion_bench.utils.rich_utils import print_config_tree, print_bordered
 
 log = logging.getLogger(__name__)
 
@@ -91,6 +91,12 @@ class FabricModelFusionProgram(
             )
             if compat_load_fn is not None:
                 compat_load_fn = import_object(compat_load_fn)
+                print_bordered(
+                    OmegaConf.to_yaml(config),
+                    title="instantiate compat object",
+                    style="magenta",
+                    code_style="yaml",
+                )
                 obj = compat_load_fn(config)
             else:
                 raise ValueError(
