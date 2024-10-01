@@ -28,6 +28,7 @@ from fusion_bench.models.modeling_smile_mistral.modeling_smile_mistral import (
 from fusion_bench.models.utils import get_attr, set_attr
 from fusion_bench.utils.dtype import parse_dtype
 from fusion_bench.utils.parameters import print_parameters
+from fusion_bench.utils.state_dict_arithmetic import state_dict_sub
 
 log = logging.getLogger(__name__)
 
@@ -116,16 +117,18 @@ def upscale_to_smile_linear(
             target_expert.load_state_dict(state_dict)
     else:
         for expert_idx, target_expert in enumerate(target.experts):
-            target_expert.load_state_dict(experts[expert_idx].state_dict())
+            target_expert.load_state_dict(
+                state_dict_sub(experts[expert_idx].state_dict(), base.state_dict())
+            )
 
     return target
 
 
 class SmileMistralUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
     R"""
-    SmileMistralUpscalingAlgorithm is a model fusion algorithm designed to upscale 
-    a pretrained Mistral model using a set of fine-tuned expert models. The algorithm 
-    leverages Singular Value Decomposition (SVD) to merge the weights of the pretrained 
+    SmileMistralUpscalingAlgorithm is a model fusion algorithm designed to upscale
+    a pretrained Mistral model using a set of fine-tuned expert models. The algorithm
+    leverages Singular Value Decomposition (SVD) to merge the weights of the pretrained
     model and the expert models into a new upscaled model.
 
     Attributes:

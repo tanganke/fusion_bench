@@ -5,6 +5,7 @@ from copy import deepcopy
 from typing import Any, Optional, Union, cast
 
 from omegaconf import DictConfig, OmegaConf, flag_override
+from torch import nn
 from torch.nn.modules import Module
 from transformers import (
     LlamaForCausalLM,
@@ -70,8 +71,11 @@ class CausalLMPool(BaseModelPool):
                 )
 
     def load_model(
-        self, model_name_or_config: str | DictConfig, *args, **kwargs
-    ) -> Module:
+        self,
+        model_name_or_config: str | DictConfig,
+        *args,
+        **kwargs,
+    ) -> LlamaForCausalLM | MistralForCausalLM | nn.Module:
         model_kwargs = deepcopy(self._model_kwargs)
         model_kwargs.update(kwargs)
         return super().load_model(model_name_or_config, *args, **model_kwargs)
