@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 class DepthUpscalingAlgorithm(BaseModelFusionAlgorithm):
 
-    _config_mapping = BaseModelFusionAlgorithm | {
+    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
         "layer_indices": "layer_indices",
     }
 

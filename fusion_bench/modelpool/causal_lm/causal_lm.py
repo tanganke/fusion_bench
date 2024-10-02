@@ -2,7 +2,7 @@ import functools
 import logging
 import os
 from copy import deepcopy
-from typing import Any, Optional, Union, cast
+from typing import Any, Optional, Union, cast, TypeAlias
 
 from omegaconf import DictConfig, OmegaConf, flag_override
 from torch import nn
@@ -20,6 +20,8 @@ from fusion_bench.utils import instantiate, timeit_context
 from fusion_bench.utils.dtype import parse_dtype
 
 log = logging.getLogger(__name__)
+
+CausalLM: TypeAlias = Union[LlamaForCausalLM, MistralForCausalLM, Any]
 
 
 def config_priority_get(priority_config, general_config, key, default):
@@ -70,6 +72,7 @@ class CausalLMPool(BaseModelPool):
                     self._model_kwargs.torch_dtype
                 )
 
+    @override
     def load_model(
         self,
         model_name_or_config: str | DictConfig,

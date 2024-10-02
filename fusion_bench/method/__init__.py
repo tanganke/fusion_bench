@@ -44,7 +44,7 @@ _import_structure = {
         "ConcreteLayerWiseAdaMergingForCLIP",
     ],
     # model mixing methods
-    "depth_upscaling": ["DepthUpscalingAlgorithm"],
+    "depth_upscaling": ["DepthUpscalingAlgorithm", "DepthUpscalingForLlama"],
     "mixture_of_experts": [
         "MixtralUpscalingAlgorithm",
         "MixtralForCausalLMUpscalingAlgorithm",
@@ -85,7 +85,7 @@ if TYPE_CHECKING:
         ConcreteTaskArithmeticAlgorithmForCLIP,
         ConcreteTaskWiseAdaMergingForCLIP,
     )
-    from .depth_upscaling import DepthUpscalingAlgorithm
+    from .depth_upscaling import DepthUpscalingAlgorithm, DepthUpscalingForLlama
     from .dummy import DummyAlgorithm
     from .ensemble import (
         EnsembleAlgorithm,
