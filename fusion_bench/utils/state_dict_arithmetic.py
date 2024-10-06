@@ -138,7 +138,7 @@ def state_dict_add(
     Returns:
         Dict: The sum of the two state dicts.
     """
-    ans = OrderedDict()
+    ans = {}
     if strict:
         check_parameters_all_equal([a, b])
         for key in a:
@@ -239,9 +239,9 @@ def state_dict_sum(state_dicts: List[StateDictType]):
 
     sum_state_dict = OrderedDict()
     for key in state_dicts[0]:
-        sum_state_dict[key] = torch.zeros_like(state_dicts[0][key])
+        sum_state_dict[key] = 0
         for state_dict in state_dicts:
-            sum_state_dict[key] += state_dict[key]
+            sum_state_dict[key] = sum_state_dict[key] + state_dict[key]
     return sum_state_dict
 
 
@@ -268,13 +268,15 @@ def state_dict_weighted_sum(
 
     weighted_sum_state_dict = {}
     for key in state_dicts[0]:
-        weighted_sum_state_dict[key] = torch.zeros_like(state_dicts[0][key])
+        weighted_sum_state_dict[key] = 0
         for state_dict, weight in zip(state_dicts, weights):
             if device is None:
-                weighted_sum_state_dict[key] += weight * state_dict[key]
+                weighted_sum_state_dict[key] = (
+                    weighted_sum_state_dict[key] + weight * state_dict[key]
+                )
             else:
                 # NOTE: if weight is a tensor, state_dict and weight must be on the same device
-                weighted_sum_state_dict[key] += (weight * state_dict[key]).to(
-                    device, non_blocking=True
-                )
+                weighted_sum_state_dict[key] = weighted_sum_state_dict[key] + (
+                    weight * state_dict[key]
+                ).to(device, non_blocking=True)
     return weighted_sum_state_dict
