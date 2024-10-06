@@ -51,6 +51,7 @@ _import_structure = {
         "MixtralMoEMergingAlgorithm",
         "MixtralForCausalLMMergingAlgorithm",
     ],
+    "dawe": ["DataAdaptiveWeightEnsemblingForCLIP"],
     "we_moe": ["CLIPWeightEnsemblingMoEAlgorithm"],
     "model_recombination": ["ModelRecombinationAlgorithm"],
     "smile_upscaling": [
@@ -85,6 +86,7 @@ if TYPE_CHECKING:
         ConcreteTaskArithmeticAlgorithmForCLIP,
         ConcreteTaskWiseAdaMergingForCLIP,
     )
+    from .dawe import DataAdaptiveWeightEnsemblingForCLIP
     from .depth_upscaling import DepthUpscalingAlgorithm, DepthUpscalingForLlama
     from .dummy import DummyAlgorithm
     from .ensemble import (
@@ -122,7 +124,6 @@ if TYPE_CHECKING:
     from .task_arithmetic import TaskArithmeticAlgorithm
     from .ties_merging import TiesMergingAlgorithm
     from .weighted_average import WeightedAverageAlgorithm, WeightedAverageForLLama
-
 
 else:
     sys.modules[__name__] = LazyImporter(

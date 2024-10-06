@@ -1,0 +1,26 @@
+_target_: fusion_bench.DataAdaptiveWeightEnsemblingForCLIP
+_recursive_: false
+merge_mode: task_wise
+init_lambda: 0.3
+batch_reduce: true
+
+_dict_feature_extractor_path: microsoft/resnet-18
+dict_processor:
+  _target_: fusion_bench.method.dawe.dawe_for_clip.load_resnet_processor
+  pretrained_model_name_or_path: ${.._dict_feature_extractor_path}
+dict_feature_extractor:
+  _target_: fusion_bench.method.dawe.dawe_for_clip.load_resnet_feature_extractor
+  pretrained_model_name_or_path: ${.._dict_feature_extractor_path}
+# dimension of the extracted embeddings, if this None, try to infer from the feature extractor model
+hidden_size: null
+gate_hidden_layers: 1
+
+# training & logging args
+max_steps: 1000
+save_interval: 200
+learning_rate: 1e-5
+
+# dataloader args
+batch_size: 4
+num_workers: 0
+pin_memory: true
