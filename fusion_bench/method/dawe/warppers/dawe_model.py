@@ -1,19 +1,23 @@
 import functools
-from typing import List, Literal
+import logging
+from typing import List, Literal, Optional
 
 import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
 from torch.func import functional_call
+from typing_extensions import override
 
+from fusion_bench.mixins import SimpleProfilerMixin
 from fusion_bench.models.utils import del_attr, get_attr
 from fusion_bench.utils.devices import get_device
+from fusion_bench.utils.dtype import parse_dtype
 from fusion_bench.utils.state_dict_arithmetic import (
     StateDictType,
     state_dict_weighted_sum,
 )
 
-from ....models.wrappers.task_wise_fusion import TaskWiseMergedModel
+log = logging.getLogger(__name__)
 
 
 class Depth_0_Gate(nn.Module):
@@ -34,7 +38,7 @@ class Depth_1_Gate(nn.Module):
         self.fc = nn.Linear(hidden_size, output_dim, bias=True)
 
     def init_weight(self, init_lambda: float):
-        nn.init.normal_(self.fc.weight, std=0.01)
+        nn.init.normal_(self.fc.weight, std=0.001)
         nn.init.constant_(self.fc.bias, init_lambda)
 
     def forward(self, hidden_states: Tensor) -> Tensor:
@@ -78,7 +82,7 @@ def construct_dawe_gate(
     return gate
 
 
-class DataAdaptiveWeightEnsemblingModel(nn.Module):
+class DataAdaptiveWeightEnsemblingModel(nn.Module, SimpleProfilerMixin):
 
     def __init__(
         self,
@@ -91,6 +95,7 @@ class DataAdaptiveWeightEnsemblingModel(nn.Module):
         dict_feature_extractor: nn.Module,
         base_model: nn.Module,
         expert_models: List[nn.Module],
+        task_vector_dtype: Optional[str | torch.dtype],
         init_lambda: float = 0.2,
         gate_hidden_layers: int = 2,
         batch_reduce: bool = False,
@@ -123,6 +128,9 @@ class DataAdaptiveWeightEnsemblingModel(nn.Module):
         for m in expert_models:
             m.requires_grad_(False)
         self.task_vectors = nn.ModuleList(expert_models)
+        if task_vector_dtype is not None:
+            log.info(f"Converting task vectors to {task_vector_dtype}")
+            self.task_vectors = self.task_vectors.to(parse_dtype(task_vector_dtype))
         self.num_layers = len(self.task_vectors[0].state_dict())
 
         if self.merge_mode == "task_wise":
@@ -168,28 +176,38 @@ class DataAdaptiveWeightEnsemblingModel(nn.Module):
             state_dict[name] = state_dict[name] + param
         return state_dict
 
+    def model_forward_on_single_sample(self, state_dict, sample_idx, *args, **kwargs):
+        raise NotImplementedError
+
     def model_forward(self, dict_codings, *args, **kwargs):
         if self.batch_reduce:
-            dict_codings = dict_codings.mean(dim=0)
-            task_vector = self.compute_task_vectors(dict_codings)
-            state_dict = self.merge_weights(task_vector)
-            return functional_call(
-                self.base_model, state_dict, args=args, kwargs=kwargs, strict=True
-            )
+            with self.profile("merge weights"):
+                dict_codings = dict_codings.mean(dim=0)
+                task_vector = self.compute_task_vectors(dict_codings)
+                state_dict = self.merge_weights(task_vector)
+            with self.profile("model forward"):
+                return functional_call(
+                    self.base_model,
+                    state_dict,
+                    args=args,
+                    kwargs=kwargs,
+                    strict=False,  # buffer is not included in the state_dict
+                )
         else:
             model_outputs = []
-            for dict_coding in dict_codings:
-                task_vector = self.compute_task_vectors(dict_coding)
-                state_dict = self.merge_weights(task_vector)
-                model_outputs.append(
-                    functional_call(
-                        self.base_model,
-                        state_dict,
-                        args=args,
-                        kwargs=kwargs,
-                        strict=True,
+            for sample_idx, dict_coding in enumerate(dict_codings):
+                with self.profile("merge weights"):
+                    task_vector = self.compute_task_vectors(dict_coding)
+                    state_dict = self.merge_weights(task_vector)
+                with self.profile("model forward"):
+                    model_outputs.append(
+                        self.model_forward_on_single_sample(
+                            state_dict,
+                            sample_idx,
+                            *args,
+                            **kwargs,
+                        )
                     )
-                )
             model_outputs = self.collate_fn(model_outputs)
             return model_outputs
 
@@ -197,14 +215,28 @@ class DataAdaptiveWeightEnsemblingModel(nn.Module):
         # compute dict codings
         if self.dict_processor is not None:
             inputs = self.dict_processor(*args, **kwargs)
-            dict_features = self.dict_feature_exactor(inputs)
+            if isinstance(inputs, Tensor):
+                inputs = inputs.to(get_device(self.dict_feature_exactor))
+            with self.profile("compute sparse codings"):
+                dict_features = self.dict_feature_exactor(inputs)
         else:
-            dict_features = self.dict_feature_exactor(*args, **kwargs)
+            with self.profile("compute sparse codings"):
+                dict_features = self.dict_feature_exactor(*args, **kwargs)
         dict_codings: Tensor = self.gate(dict_features)
 
         if self.model_processor is not None:
             inputs = self.model_processor(*args, **kwargs)
+            if isinstance(inputs, Tensor):
+                inputs = inputs.to(get_device(self.base_model))
             model_outputs = self.model_forward(dict_codings, inputs)
         else:
             model_outputs = self.model_forward(dict_codings, *args, **kwargs)
         return model_outputs
+
+
+class DataAdaptiveWeightEnsemblingCLIPVisionModel(DataAdaptiveWeightEnsemblingModel):
+    @override
+    def model_forward_on_single_sample(self, state_dict, sample_idx, images: Tensor):
+        return functional_call(
+            self.base_model, state_dict, args=images[sample_idx : sample_idx + 1]
+        )

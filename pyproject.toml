@@ -22,6 +22,8 @@ dependencies = [
     "tensorboard",
     "tqdm",
     "rich",
+    "scipy",
+    "h5py"
 ]
 keywords = ["deep learning", "model fusion", "benchmark"]
 
