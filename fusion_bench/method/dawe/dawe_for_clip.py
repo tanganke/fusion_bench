@@ -1,11 +1,15 @@
+# NOTE: Working in progress.
 import functools
+import logging
 from pathlib import Path
 from typing import Any, Literal, Optional, Union
 
 import torch
 from omegaconf import DictConfig
-from torch import nn
+from PIL.Image import Image
+from torch import Tensor, nn
 from torch.utils.data import DataLoader
+from torchvision.transforms import ToPILImage
 from tqdm.auto import tqdm
 from transformers import (
     AutoFeatureExtractor,
@@ -22,8 +26,10 @@ from fusion_bench.modelpool import CLIPVisionModelPool
 from fusion_bench.utils import timeit_context
 from fusion_bench.utils.data import InfiniteDataLoader
 from fusion_bench.utils.instantiate import instantiate
-from PIL.Image import Image
+
 from .warppers.dawe_model import DataAdaptiveWeightEnsemblingCLIPVisionModel
+
+log = logging.getLogger(__name__)
 
 
 def convert_to_rgb(image: Image | list[Image]) -> Image | list[Image]:
@@ -71,14 +77,6 @@ class DataAdaptiveWeightEnsemblingForCLIP(
 ):
     modelpool: CLIPVisionModelPool
     _processor: CLIPProcessor
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
-        "merge_mode": "merge_mode",
-        "dict_processor": "_dict_processor",
-        "dict_feature_extractor": "_dict_feature_extractor",
-        "batch_size": "batch_size",
-        "num_workers": "num_workers",
-        "pin_memory": "pin_memory",
-    }
 
     def __init__(
         self,
@@ -86,16 +84,20 @@ class DataAdaptiveWeightEnsemblingForCLIP(
         merge_mode: Literal["task_wise", "layer_wise"],
         init_lambda: float,
         batch_reduce: bool,
+        eval_batch_reduce: bool,
         # model options
         dict_processor: DictConfig,
         dict_feature_extractor: DictConfig,
         hidden_size: Optional[int],
         gate_hidden_layers: int,
         task_vector_dtype: Optional[str | torch.dtype],
+        task_vector_sparsity: float,
         # training & logging args
         max_steps: int,
         save_interval: int,
         learning_rate: float = 1e-5,
+        skip_training: bool = False,
+        resume_checkpoint_path: Optional[str] = None,
         # dataloader args
         batch_size: int = 4,
         num_workers: int = 0,
@@ -106,16 +108,20 @@ class DataAdaptiveWeightEnsemblingForCLIP(
         self.merge_mode = merge_mode
         self.init_lambda = init_lambda
         self.batch_reduce = batch_reduce
+        self.eval_batch_reduce = eval_batch_reduce
         # model options
         self._dict_processor = dict_processor
         self._dict_feature_extractor = dict_feature_extractor
         self.hidden_size = hidden_size
         self.gate_hidden_layers = gate_hidden_layers
         self.task_vector_dtype = task_vector_dtype
+        self.task_vector_sparsity = task_vector_sparsity
         # training & logging args
         self.max_steps = max_steps
         self.save_interval = save_interval
         self.learning_rate = learning_rate
+        self.skip_training = skip_training
+        self.resume_checkpoint_path = resume_checkpoint_path
         # dataloader args
         self.batch_size = batch_size
         self.num_workers = num_workers
@@ -147,17 +153,21 @@ class DataAdaptiveWeightEnsemblingForCLIP(
             model_processor=lambda images: clip_processor(
                 images=images, return_tensors="pt"
             ).pixel_values,
-            collate_fn=lambda outputs: torch.stack(
-                [out.pooler_output for out in outputs]
+            collate_fn=lambda outputs: torch.cat(
+                [out.pooler_output for out in outputs], dim=0
             ),
             dict_feature_extractor=dict_feature_extractor,
             base_model=modelpool.load_model("_pretrained_"),
             expert_models=list(modelpool.models()),
             task_vector_dtype=self.task_vector_dtype,
+            task_vector_sparsity=self.task_vector_sparsity,
             init_lambda=self.init_lambda,
             gate_hidden_layers=self.gate_hidden_layers,
             batch_reduce=self.batch_reduce,
         )
+
+        if self.resume_checkpoint_path is not None:
+            self.fabric.load(self.resume_checkpoint_path, {"model": model})
         return model
 
     def load_datasets(self):
@@ -180,7 +190,10 @@ class DataAdaptiveWeightEnsemblingForCLIP(
         self.shuffled_test_loaders = {
             task_name: self.fabric.setup_dataloaders(
                 DataLoader(
-                    test_dataset, **dataloader_kwargs, collate_fn=raw_image_collate_fn
+                    test_dataset,
+                    **dataloader_kwargs,
+                    collate_fn=raw_image_collate_fn,
+                    shuffle=True,
                 )
             )
             for task_name, test_dataset in self.test_datasets.items()
@@ -198,31 +211,47 @@ class DataAdaptiveWeightEnsemblingForCLIP(
             self.load_datasets()
 
         # run test-time adaptation
+        if not self.skip_training:
+            model = self.test_time_adaptation_training(modelpool, model)
+
+        if self.eval_batch_reduce is not None:
+            model.batch_reduce = self.eval_batch_reduce
+        return model
+
+    def test_time_adaptation_training(self, modelpool, model):
         optimizer = torch.optim.Adam(
-            [p for p in model.parameters() if p.requires_grad], lr=self.learning_rate
+            [p for p in model.gate.parameters() if p.requires_grad],
+            lr=self.learning_rate,
         )
         model, optimizer = self.fabric.setup(model, optimizer)
         model.train()
-        for step_idx in tqdm(range(self.max_steps), desc="TTA Training"):
+        for step_idx in tqdm(
+            range(self.max_steps),
+            desc="TTA Training",
+            dynamic_ncols=True,
+        ):
+            log_metrics = {}
             losses = 0
             for task_idx, task_name in enumerate(modelpool.model_names):
-                images, _ = next(self.shuffled_test_loader_iters[task_name])
+                # labels are used for logging acc, not involved in training
+                images, labels = next(self.shuffled_test_loader_iters[task_name])
                 logits = self.compute_logits(model, images=images, task=task_name)
                 loss = entropy_loss(logits)
                 losses += loss
+                log_metrics[f"train/{task_name}_loss"] = loss.item()
+                log_metrics[f"train/{task_name}_accuracy"] = (
+                    logits.argmax(dim=-1).eq(labels).float().mean().item()
+                )
 
             optimizer.zero_grad()
             self.fabric.backward(losses)
             optimizer.step()
 
-            self.fabric.log_dict(
-                {
-                    "loss": losses.item(),
-                },
-                step=step_idx,
-            )
+            log_metrics["train/loss"] = losses.item()
+            self.fabric.log_dict(log_metrics, step=step_idx)
 
             if (step_idx + 1) % self.save_interval == 0:
+                log.info(f"Saving model at step {step_idx}")
                 self.fabric.save(
                     Path(self.log_dir) / "checkpoints" / f"model_{step_idx}.pt",
                     {"model": model},

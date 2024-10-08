@@ -16,6 +16,7 @@ from fusion_bench.utils.state_dict_arithmetic import (
     StateDictType,
     state_dict_weighted_sum,
 )
+from fusion_bench.method.pruning import prune_utils
 
 log = logging.getLogger(__name__)
 
@@ -96,6 +97,7 @@ class DataAdaptiveWeightEnsemblingModel(nn.Module, SimpleProfilerMixin):
         base_model: nn.Module,
         expert_models: List[nn.Module],
         task_vector_dtype: Optional[str | torch.dtype],
+        task_vector_sparsity: float,
         init_lambda: float = 0.2,
         gate_hidden_layers: int = 2,
         batch_reduce: bool = False,
@@ -128,10 +130,22 @@ class DataAdaptiveWeightEnsemblingModel(nn.Module, SimpleProfilerMixin):
         for m in expert_models:
             m.requires_grad_(False)
         self.task_vectors = nn.ModuleList(expert_models)
+        self.num_layers = len(self.task_vectors[0].state_dict())
         if task_vector_dtype is not None:
             log.info(f"Converting task vectors to {task_vector_dtype}")
             self.task_vectors = self.task_vectors.to(parse_dtype(task_vector_dtype))
-        self.num_layers = len(self.task_vectors[0].state_dict())
+        if task_vector_sparsity is not None and task_vector_sparsity > 0:
+            for module in self.task_vectors.modules():
+                if isinstance(module, nn.Linear):
+                    prune_utils.unstructured_magnitude_prune_(
+                        module.weight,
+                        metric_function_or_scores=torch.abs,
+                        sparsity_ratio=task_vector_sparsity,
+                    )
+                    module.weight = nn.Parameter(
+                        module.weight.to_sparse(),
+                        requires_grad=module.weight.requires_grad,
+                    )
 
         if self.merge_mode == "task_wise":
             self.coding_size = self.num_experts

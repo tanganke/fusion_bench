@@ -30,6 +30,12 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 log = logging.getLogger(__name__)
 
 
+def raw_image_collate_fn(batch):
+    images, labels = tuple(zip(*batch))
+    labels = torch.as_tensor(labels)
+    return images, labels
+
+
 class CLIPVisionModelTaskPool(LightningFabricMixin, BaseTaskPool):
     """
     This class is used to define the image classification task for CLIP models.
@@ -39,6 +45,7 @@ class CLIPVisionModelTaskPool(LightningFabricMixin, BaseTaskPool):
     _config_mapping = BaseTaskPool._config_mapping | {
         "_test_datasets": "test_datasets",
         "_processor": "processor",
+        "_data_processor": "data_processor",
         "_clip_model": "clip_model",
         "_dataloader_kwargs": "dataloader_kwargs",
         "fast_dev_run": "fast_dev_run",
@@ -50,6 +57,7 @@ class CLIPVisionModelTaskPool(LightningFabricMixin, BaseTaskPool):
         test_datasets: Union[DictConfig, Dict[str, Dataset]],
         *,
         processor: Union[DictConfig, CLIPProcessor],
+        data_processor: Union[DictConfig, CLIPProcessor],
         clip_model: Union[DictConfig, CLIPModel],
         dataloader_kwargs: DictConfig = None,
         fast_dev_run: bool = False,
@@ -59,6 +67,7 @@ class CLIPVisionModelTaskPool(LightningFabricMixin, BaseTaskPool):
         super().__init__()
         self._test_datasets = test_datasets
         self._processor = processor
+        self._data_processor = data_processor
         self._clip_model = clip_model
         self._dataloader_kwargs = dataloader_kwargs or {}
         self.fast_dev_run = fast_dev_run
@@ -71,6 +80,11 @@ class CLIPVisionModelTaskPool(LightningFabricMixin, BaseTaskPool):
             instantiate(self._processor)
             if isinstance(self._processor, DictConfig)
             else self._processor
+        )
+        self.data_processor = (
+            instantiate(self._data_processor)
+            if isinstance(self._data_processor, DictConfig)
+            else self._data_processor
         )
         self.clip_model = (
             instantiate(self._clip_model)
@@ -87,12 +101,18 @@ class CLIPVisionModelTaskPool(LightningFabricMixin, BaseTaskPool):
             for name, dataset in self._test_datasets.items()
         }
         self.test_datasets = {
-            name: CLIPDataset(dataset, self.processor)
+            name: CLIPDataset(dataset, self.data_processor)
             for name, dataset in self.test_datasets.items()
         }
         # Setup the dataloaders
         self.test_dataloaders = {
-            name: DataLoader(dataset, **self._dataloader_kwargs)
+            name: DataLoader(
+                dataset,
+                **self._dataloader_kwargs,
+                collate_fn=(
+                    raw_image_collate_fn if self.data_processor is None else None
+                ),
+            )
             for name, dataset in self.test_datasets.items()
         }
         self.test_dataloaders = {

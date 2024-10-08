@@ -15,7 +15,7 @@ class YAMLSerializationMixin:
         "_recursive_": "_recursive_",
     }
     R"""
-    `_config_mapping` is a dictionary mapping the config option names to the attribute names of the class. This is used to convert the class to a DictConfig.
+    `_config_mapping` is a dictionary mapping the attribute names of the class to the config option names. This is used to convert the class to a DictConfig.
 
     For example, if an algorithm class is defined as follows:
     
@@ -25,8 +25,8 @@ class YAMLSerializationMixin:
         hyper_parameter_2 = None
 
         _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
-            "hyper_param_1" : "hyper_parameter_1",
-            "hyper_param_2" : "hyper_parameter_2",
+            "hyper_parameter_1" : "hyper_param_1",
+            "hyper_parameter_2" : "hyper_param_2",
         }
         def __init__(self, hyper_param_1: int, hyper_param_2: int):
             self.hyper_parameter_1 = hyper_param_1

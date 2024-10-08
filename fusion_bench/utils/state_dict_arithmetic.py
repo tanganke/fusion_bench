@@ -266,17 +266,16 @@ def state_dict_weighted_sum(
         [len(state_dicts[0]) == len(state_dict) for state_dict in state_dicts]
     ), "All state_dicts must have the same number of keys"
 
-    weighted_sum_state_dict = {}
+    weighted_sum_state_dict: Dict[str, Tensor] = {}
     for key in state_dicts[0]:
-        weighted_sum_state_dict[key] = 0
+        # states dicts can be sparse matrices
+        weighted_sum_state_dict[key] = torch.zeros_like(state_dicts[0][key]).to_dense()
         for state_dict, weight in zip(state_dicts, weights):
-            if device is None:
-                weighted_sum_state_dict[key] = (
-                    weighted_sum_state_dict[key] + weight * state_dict[key]
-                )
-            else:
-                # NOTE: if weight is a tensor, state_dict and weight must be on the same device
-                weighted_sum_state_dict[key] = weighted_sum_state_dict[key] + (
-                    weight * state_dict[key]
-                ).to(device, non_blocking=True)
+            weighted_sum_state_dict[key] = torch.add(
+                weighted_sum_state_dict[key], weight * state_dict[key]
+            )
+        if device is not None:
+            weighted_sum_state_dict[key] = weighted_sum_state_dict[key].to(
+                device, non_blocking=True
+            )
     return weighted_sum_state_dict

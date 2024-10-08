@@ -12,6 +12,7 @@ clip_model:
 processor:
   _target_: transformers.CLIPProcessor.from_pretrained
   pretrained_model_name_or_path: ${..base_model} # The base model to use
+data_processor: ${.processor}
 dataloader_kwargs:
   batch_size: 128
   num_workers: 8
