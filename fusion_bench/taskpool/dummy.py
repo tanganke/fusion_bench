@@ -3,20 +3,25 @@ This is the dummy task pool that is used for debugging purposes.
 """
 
 import os
+from typing import Optional
 
 import torch
 from omegaconf import DictConfig
 
 from fusion_bench.models.separate_io import separate_save
-from fusion_bench.taskpool.base_pool import TaskPool
+from fusion_bench.taskpool.base_pool import BaseTaskPool
 from fusion_bench.utils import timeit_context
 from fusion_bench.utils.parameters import count_parameters, print_parameters
 
 
-class DummyTaskPool(TaskPool):
+class DummyTaskPool(BaseTaskPool):
     """
     This is a dummy task pool used for debugging purposes. It inherits from the base TaskPool class.
     """
+
+    def __init__(self, model_save_path: Optional[str] = None):
+        super().__init__()
+        self.model_save_path = model_save_path
 
     def evaluate(self, model):
         """
@@ -28,10 +33,9 @@ class DummyTaskPool(TaskPool):
         """
         print_parameters(model, is_human_readable=True)
 
-        if self.config.get("model_save_path", None) is not None:
-            model_save_path = self.config.model_save_path
-            with timeit_context(f"Saving the model to {model_save_path}"):
-                separate_save(model, model_save_path)
+        if self.model_save_path is not None:
+            with timeit_context(f"Saving the model to {self.model_save_path}"):
+                separate_save(model, self.model_save_path)
 
         report = {}
         training_params, all_params = count_parameters(model)

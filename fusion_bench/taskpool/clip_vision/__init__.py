@@ -1,0 +1,1 @@
+from .taskpool import CLIPVisionModelTaskPool

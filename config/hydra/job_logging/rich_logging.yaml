@@ -15,6 +15,6 @@ handlers:
 root:
   level: INFO
   handlers:
-  - console
-  - file
+    - console
+    - file
 disable_existing_loggers: false

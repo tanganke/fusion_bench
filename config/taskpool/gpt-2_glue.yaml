@@ -1,6 +1,5 @@
 type: GPT2TextClassificationTaskPool
 name: gpt2_classification_on_glue
-
 dataset_type: GPT2ClassificationGLUETask
 tasks:
   - name: cola
@@ -31,7 +30,6 @@ tasks:
     dataset:
       name: sst2
       split: validation
-
 tokenizer: gpt2
 batch_size: 8
 num_workers: 0

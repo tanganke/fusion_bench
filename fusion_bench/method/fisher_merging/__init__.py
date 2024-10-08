@@ -1,1 +1,2 @@
+from .clip_fisher_merging import FisherMergingForCLIPVisionModel
 from .fisher_merging import FisherMergingAlgorithm, get_param_names_to_merge

@@ -10,5 +10,4 @@ models:
     path: cognitivecomputations/dolphin-2.1-mistral-7b
   - name: expert_3
     path: uukuguy/speechless-code-mistral-7b-v1.0
-
 dtype: float16

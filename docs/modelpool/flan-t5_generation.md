@@ -270,6 +270,4 @@ Flan-T5-Large models:
 
 ## References
 
-::: fusion_bench.modelpool.AutoModelForSeq2SeqLM.AutoModelForSeq2SeqLMPool
-
-::: fusion_bench.modelpool.PeftModelForSeq2SeqLM.PeftModelForSeq2SeqLMPool
+::: fusion_bench.modelpool.Seq2SeqLMPool

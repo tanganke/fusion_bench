@@ -11,6 +11,7 @@ description: A Comprehensive Benchmark of Deep Model Fusion
 [![Downloads](https://static.pepy.tech/badge/fusion-bench/month)](https://pepy.tech/project/fusion-bench)
 [![Static Badge](https://img.shields.io/badge/doc-mkdocs-blue)](https://tanganke.github.io/fusion_bench/)
 [![Static Badge](https://img.shields.io/badge/code%20style-black-black)](https://github.com/psf/black)
+[![Static Badge](https://img.shields.io/badge/code%20style-yamlfmt-black)](https://github.com/google/yamlfmt)
 
 !!! warning "Testing Phase"
     

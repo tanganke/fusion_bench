@@ -136,7 +136,9 @@ def _fuse_weights(task_wise_weight: Tensor, tensors: List[Tensor]):
     return sum(task_wise_weight[i] * w.to(device) for i, w in enumerate(tensors))
 
 
-def fuse_weights(task_wise_weight: Tensor, state_dicts: List[StateDictType]) -> StateDictType:
+def fuse_weights(
+    task_wise_weight: Tensor, state_dicts: List[StateDictType]
+) -> StateDictType:
     """
     This function fuses the weights of the models and returns a state dictionary.
 

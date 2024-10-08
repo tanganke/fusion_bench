@@ -186,18 +186,26 @@ class SmileLinear(nn.Module):
         )
 
         # construct experts
-        self.experts = nn.ModuleList(
-            [
-                SmileLinearExpert(
-                    in_features=in_features,
-                    out_features=out_features,
-                    bias=bias,
-                    k=self.rank_of_expert,
-                    **factory_kwargs,
-                )
-                for _ in range(self.num_local_experts)
-            ]
-        )
+        if self.rank_of_expert > 0:
+            self.experts = nn.ModuleList(
+                [
+                    SmileLinearExpert(
+                        in_features=in_features,
+                        out_features=out_features,
+                        bias=bias,
+                        k=self.rank_of_expert,
+                        **factory_kwargs,
+                    )
+                    for _ in range(self.num_local_experts)
+                ]
+            )
+        else:
+            self.experts = nn.ModuleList(
+                [
+                    nn.Linear(in_features, out_features, bias=bias, **factory_kwargs)
+                    for _ in range(self.num_local_experts)
+                ]
+            )
 
     def forward(self, hidden_states: Tensor):
         pretrained_out = self.shared_linear(hidden_states)

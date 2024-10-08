@@ -16,7 +16,7 @@ from transformers.models.llama.modeling_llama import LlamaDecoderLayer
 from transformers.models.mistral.modeling_mistral import MistralDecoderLayer
 from transformers.models.mixtral.modeling_mixtral import MixtralDecoderLayer
 
-from fusion_bench.modelpool import ModelPool
+from fusion_bench.modelpool import BaseModelPool
 
 from .mixtral_upcycling import (
     MixtralForCausalLMUpscalingAlgorithm,
@@ -44,7 +44,7 @@ class MixtralMoEMergingAlgorithm(MixtralUpscalingAlgorithm):
     """
 
     @torch.no_grad()
-    def run(self, modelpool: ModelPool) -> MixtralModel:
+    def run(self, modelpool: BaseModelPool) -> MixtralModel:
         """
         Runs the merging process.
 
@@ -72,7 +72,7 @@ class MixtralMoEMergingAlgorithm(MixtralUpscalingAlgorithm):
 
 class MixtralForCausalLMMergingAlgorithm(MixtralForCausalLMUpscalingAlgorithm):
     @torch.no_grad()
-    def run(self, modelpool: ModelPool) -> MixtralForCausalLM:
+    def run(self, modelpool: BaseModelPool) -> MixtralForCausalLM:
         """
         Runs the merging process. It first upscales the models to MixtralForCausalLM,
         then substitutes the experts of the MixtralForCausalLM with the models from the modelpool.

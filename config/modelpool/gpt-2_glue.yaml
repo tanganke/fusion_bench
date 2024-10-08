@@ -16,7 +16,6 @@ models:
     path: tanganke/gpt2_rte
   - name: sst2
     path: tanganke/gpt2_sst2
-
 # train datasets for RegMean, Fisher Merging ...
 dataset_type: GPT2ClassificationGLUETask
 train_datasets:

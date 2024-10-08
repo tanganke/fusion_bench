@@ -1,6 +1,5 @@
 name: flan-t5_glue_text_generation # whatever you want to name your task pool
 type: FlanT5GLUETextGenerationTaskPool
-
 tasks:
   - name: cola
     dataset:
@@ -34,7 +33,6 @@ tasks:
     dataset:
       name: stsb
       split: validation
-
 # all flan-t5 models share the same tokenizer, 
 # so it is not necessary to change it when you evaluate other models,
 # such as flan-t5-large, flan-t5-xxl

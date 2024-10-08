@@ -24,8 +24,8 @@ from transformers.models.mixtral.modeling_mixtral import (
 )
 from transformers.utils import ContextManagers
 
-from fusion_bench.method import ModelFusionAlgorithm
-from fusion_bench.modelpool import ModelPool
+from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.modelpool import BaseModelPool
 
 log = logging.getLogger(__name__)
 
@@ -133,15 +133,17 @@ def upscale_to_mixtral_for_causal_lm(
     upscale_to_mixtral_model(input_model.model, output_model.model)
 
 
-class MixtralUpscalingAlgorithm(ModelFusionAlgorithm):
+class MixtralUpscalingAlgorithm(BaseModelFusionAlgorithm):
     """
     This class is responsible for upscaling a model to a MixtralModel.
     It inherits from the ModelFusionAlgorithm class.
     """
 
     @torch.no_grad()
-    def _run(self, modelpool: ModelPool | LlamaModel | MistralModel) -> MixtralModel:
-        if isinstance(modelpool, ModelPool):
+    def _run(
+        self, modelpool: BaseModelPool | LlamaModel | MistralModel
+    ) -> MixtralModel:
+        if isinstance(modelpool, BaseModelPool):
             assert modelpool.has_pretrained, "ModelPool must have pretrained model."
             pretrained_model = modelpool.load_model("_pretrained_")
         elif isinstance(modelpool, (LlamaModel, MistralModel)):
@@ -163,7 +165,7 @@ class MixtralUpscalingAlgorithm(ModelFusionAlgorithm):
         return mixtral_model
 
     @torch.no_grad()
-    def run(self, modelpool: ModelPool | LlamaModel | MistralModel) -> MixtralModel:
+    def run(self, modelpool: BaseModelPool | LlamaModel | MistralModel) -> MixtralModel:
         """
         Runs the upscaling process.
 
@@ -180,7 +182,7 @@ class MixtralUpscalingAlgorithm(ModelFusionAlgorithm):
         return mixtral_model
 
 
-class MixtralForCausalLMUpscalingAlgorithm(ModelFusionAlgorithm):
+class MixtralForCausalLMUpscalingAlgorithm(BaseModelFusionAlgorithm):
     """
     This class is responsible for upscaling a model to a MixtralForCausalLM.
     It inherits from the ModelFusionAlgorithm class.
@@ -188,9 +190,9 @@ class MixtralForCausalLMUpscalingAlgorithm(ModelFusionAlgorithm):
 
     @torch.no_grad()
     def _run(
-        self, modelpool: ModelPool | LlamaForCausalLM | MistralForCausalLM
+        self, modelpool: BaseModelPool | LlamaForCausalLM | MistralForCausalLM
     ) -> MixtralForCausalLM:
-        if isinstance(modelpool, ModelPool):
+        if isinstance(modelpool, BaseModelPool):
             assert modelpool.has_pretrained, "ModelPool must have pretrained model."
             pretrained_model = modelpool.load_model("_pretrained_")
         elif isinstance(modelpool, (LlamaForCausalLM, MistralForCausalLM)):
@@ -213,7 +215,7 @@ class MixtralForCausalLMUpscalingAlgorithm(ModelFusionAlgorithm):
 
     @torch.no_grad()
     def run(
-        self, modelpool: ModelPool | LlamaForCausalLM | MistralForCausalLM
+        self, modelpool: BaseModelPool | LlamaForCausalLM | MistralForCausalLM
     ) -> MixtralForCausalLM:
         """
         Runs the upscaling process.

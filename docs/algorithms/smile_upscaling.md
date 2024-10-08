@@ -107,9 +107,9 @@ fusion_bench \
     method=smile_upscaling \
         method.device=cuda \
         method.gate_k=$gate_k method.k=$k \
-    modelpool=clip-vit-base-patch32_TA8 \
-    taskpool=clip-vit-classification_TA8 \
-    save_report="outputs/ViT-B-32/eight_tasks/gate_k\=${gate_k}_k\=${k}.json"
+    modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
+    taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
+    report_save_path="outputs/ViT-B-32/eight_tasks/gate_k\=${gate_k}_k\=${k}.json"
 ```
 
 Hyperparameter search for SMILE upscaling. Pre-run results can be found in `examples/smile_upscaling/clip-vit-base-patch32.ipynb`.
@@ -435,9 +435,7 @@ done
 
 ### Algorithms
 
-::: fusion_bench.method.smile_upscaling.singular_projection_merging
-::: fusion_bench.method.smile_upscaling.smile_upscaling
-::: fusion_bench.method.smile_upscaling.smile_mistral_upscaling
+::: fusion_bench.method.SmileUpscalingAlgorithm
 
 
 [^1]: A. Tang et. al. SMILE: Zero-Shot Sparse Mixture of Low-Rank Experts Construction From Pre-Trained Foundation Models. Aug, 2024.

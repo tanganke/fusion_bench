@@ -6,8 +6,8 @@ from typing import List, Mapping, Union
 import torch
 from torch import Tensor, nn
 
-from fusion_bench.method import ModelFusionAlgorithm
-from fusion_bench.modelpool import DictModelPool, ModelPool, to_modelpool
+from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.modelpool import BaseModelPool
 
 log = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ def recombine_state_dict(models: List[nn.Module]):
     return models
 
 
-class ModelRecombinationAlgorithm(ModelFusionAlgorithm):
+class ModelRecombinationAlgorithm(BaseModelFusionAlgorithm):
     """
     Model recombination recombinates the layers of the given models, to create a new set of models.
     """
@@ -61,9 +61,9 @@ class ModelRecombinationAlgorithm(ModelFusionAlgorithm):
     @torch.no_grad()
     def run(
         self,
-        modelpool: ModelPool,
+        modelpool: BaseModelPool,
         return_modelpool: bool = True,
-    ) -> Union[nn.Module, ModelPool]:
+    ) -> Union[nn.Module, BaseModelPool]:
         """
         Executes the model recombination algorithm on a given model pool.
 
@@ -76,11 +76,11 @@ class ModelRecombinationAlgorithm(ModelFusionAlgorithm):
         - If the models are of type `nn.Module`, the recombination method `recombine_state_dict` is used. Where the state dictionaries of the models are shuffled across the models.
 
         Args:
-            modelpool (ModelPool): The pool of models to recombine.
+            modelpool (BaseModelPool): The pool of models to recombine.
             return_modelpool (bool, optional): Flag indicating whether to return the entire model pool or just the first model. Defaults to True. If this algorithm is initialized with config, the value of `return_modelpool` in the config will be used and this argument passed to the method will be ignored.
 
         Returns:
-            Union[nn.Module, ModelPool]: The recombined model pool or the first model from the recombined pool, depending on the `return_modelpool` flag.
+            Union[nn.Module, BaseModelPool]: The recombined model pool or the first model from the recombined pool, depending on the `return_modelpool` flag.
 
         Raises:
             ValueError: If the models in the model pool are of an unsupported type.
@@ -89,7 +89,8 @@ class ModelRecombinationAlgorithm(ModelFusionAlgorithm):
         if self.config.get("return_modelpool", None) is not None:
             return_modelpool = self.config.return_modelpool
         # check the modelpool type
-        modelpool = to_modelpool(modelpool)
+        if not isinstance(modelpool, BaseModelPool):
+            modelpool = BaseModelPool(modelpool)
 
         log.info(f"Running model recombination algorithm with {len(modelpool)} models")
 
@@ -104,7 +105,7 @@ class ModelRecombinationAlgorithm(ModelFusionAlgorithm):
         else:
             raise ValueError(f"Unsupported model type {type(models[0])}")
 
-        new_modelpool = DictModelPool(
+        new_modelpool = BaseModelPool(
             {n: m for n, m in zip(modelpool.model_names, new_models)}
         )
         if return_modelpool:

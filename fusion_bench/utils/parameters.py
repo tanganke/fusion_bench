@@ -49,6 +49,7 @@ def count_parameters(module: nn.Module):
 def print_parameters(
     module: nn.Module,
     is_human_readable: bool = True,
+    print_fn=print,
 ):
     """
     Prints the number of trainable and total parameters in a PyTorch model.
@@ -66,7 +67,7 @@ def print_parameters(
         trainable_params = human_readable(trainable_params)
         all_param = human_readable(all_param)
 
-    print(
+    print_fn(
         f"trainable params: {trainable_params} || all params: {all_param} || trainable%: {trainable_ratio:.4f}"
     )
 

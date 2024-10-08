@@ -1,13 +1,13 @@
 import logging
 from copy import deepcopy
-from typing import List, Mapping, TypeVar, Union
+from typing import Dict, List, Mapping, TypeVar, Union
 
 import torch
 from torch import Tensor, nn
 
-from fusion_bench.method.base_algorithm import ModelFusionAlgorithm
+from fusion_bench.method.base_algorithm import BaseModelFusionAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
-from fusion_bench.modelpool import ModelPool, to_modelpool
+from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_add,
     state_dict_mul,
@@ -69,12 +69,22 @@ def task_arithmetic_merge(
 
 
 class TaskArithmeticAlgorithm(
-    ModelFusionAlgorithm,
+    BaseModelFusionAlgorithm,
     SimpleProfilerMixin,
 ):
+    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+        "scaling_factor": "scaling_factor"
+    }
+
+    def __init__(self, scaling_factor: int):
+        super().__init__()
+        self.scaling_factor = scaling_factor
+
     @torch.no_grad()
-    def run(self, modelpool: ModelPool):
-        modelpool = to_modelpool(modelpool)
+    def run(self, modelpool: Union[BaseModelPool, Dict[str, nn.Module]]):
+        if not isinstance(modelpool, BaseModelPool):
+            modelpool = BaseModelPool(modelpool)
+
         log.info("Fusing models using task arithmetic.")
         task_vector = None
         with self.profile("load model"):

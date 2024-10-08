@@ -7,11 +7,75 @@ import rich.tree
 from hydra.core.hydra_config import HydraConfig
 from lightning.fabric.utilities.rank_zero import rank_zero_only
 from omegaconf import DictConfig, OmegaConf, open_dict
+from rich import print
+from rich.columns import Columns
+from rich.console import Console
+from rich.panel import Panel
 from rich.prompt import Prompt
+from rich.syntax import Syntax
+from rich.text import Text
 
 from fusion_bench.utils import pylogger
 
 log = pylogger.RankedLogger(__name__, rank_zero_only=True)
+
+# List of available styles
+AVAILABLE_STYLES = [
+    "none",
+    "bold",
+    "dim",
+    "italic",
+    "underline",
+    "blink",
+    "blink2",
+    "reverse",
+    "conceal",
+    "strike",
+    "red",
+    "green",
+    "yellow",
+    "blue",
+    "magenta",
+    "cyan",
+    "white",
+    "bright_red",
+    "bright_green",
+    "bright_yellow",
+    "bright_blue",
+    "bright_magenta",
+    "bright_cyan",
+    "bright_white",
+]
+
+
+def display_available_styles():
+    """Display all available styles in a grid."""
+    console = Console()
+    style_samples = [
+        Panel(f"Style: {style}", expand=False, border_style=style)
+        for style in AVAILABLE_STYLES
+    ]
+    console.print(Columns(style_samples, equal=True, expand=False))
+
+
+def print_bordered(message, title=None, style="blue", code_style=None):
+    """
+    Print a message with a colored border.
+
+    Args:
+    message (str): The message to print.
+    title (str, optional): The title of the panel. Defaults to None.
+    style (str, optional): The color style for the border. Defaults to "cyan".
+    code_style (str, optional): The syntax highlighting style if the message is code.
+                                Set to None for plain text. Defaults to "python".
+    """
+    if code_style:
+        content = Syntax(message, code_style, theme="monokai", word_wrap=True)
+    else:
+        content = Text(message)
+
+    panel = Panel(content, title=title, border_style=style)
+    print(panel)
 
 
 @rank_zero_only
@@ -101,3 +165,22 @@ def enforce_tags(cfg: DictConfig, save_to_file: bool = False) -> None:
     if save_to_file:
         with open(Path(cfg.paths.output_dir, "tags.log"), "w") as file:
             rich.print(cfg.tags, file=file)
+
+
+if __name__ == "__main__":
+    print_bordered("Hello, World!", title="Greeting", style="green", code_style=None)
+    print_bordered(
+        "def hello_world():\n    print('Hello, World!')",
+        title="Python Function",
+        style="magenta",
+        code_style="python",
+    )
+    print_bordered(
+        "SELECT * FROM users WHERE age > 18;",
+        title="SQL Query",
+        style="yellow",
+        code_style="sql",
+    )
+
+    print("\nAvailable Styles:")
+    display_available_styles()

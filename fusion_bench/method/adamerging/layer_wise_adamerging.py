@@ -13,10 +13,10 @@ from torch import Tensor, nn
 from torch.utils.data import DataLoader
 from tqdm.autonotebook import tqdm
 
-from fusion_bench.method.base_algorithm import ModelFusionAlgorithm
+from fusion_bench.compat.method import ModelFusionAlgorithm
+from fusion_bench.compat.modelpool import ModelPool
 from fusion_bench.mixins.lightning_fabric import LightningFabricMixin
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
-from fusion_bench.modelpool import ModelPool
 from fusion_bench.models.wrappers.layer_wise_fusion import (
     LayerWiseMergedModel,
     get_layer_wise_weights,

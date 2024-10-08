@@ -1,11 +1,12 @@
 import heapq
+import logging
 import time
 from typing import List, Tuple, cast
-import logging
 
 import torch
 import torch.nn as nn
 from torch import Tensor
+from tqdm.auto import tqdm
 from transformers import LlamaForCausalLM, PreTrainedModel
 
 from fusion_bench import timeit_context
@@ -171,8 +172,8 @@ def llama_prune_wanda_(
             inps, outs, attention_mask, position_ids = (
                 inps.to(dev),
                 outs.to(dev),
-                attention_mask.to(dev),
-                position_ids.to(dev),
+                attention_mask.to(dev) if attention_mask is not None else None,
+                position_ids.to(dev) if position_ids is not None else None,
             )
 
         wrapped_layers = {}

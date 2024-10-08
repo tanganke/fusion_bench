@@ -1,7 +1,11 @@
 import importlib
 
+from . import data
+from .cache_utils import *
+from .devices import *
 from .dtype import parse_dtype
-from .parameters import print_parameters
+from .instantiate import instantiate
+from .parameters import *
 from .timer import timeit_context
 
 

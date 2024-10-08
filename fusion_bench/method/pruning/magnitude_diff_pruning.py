@@ -8,9 +8,9 @@ import torch
 from torch import Tensor, nn
 from tqdm.auto import tqdm
 
-from fusion_bench.method import ModelFusionAlgorithm
+from fusion_bench.method import BaseModelFusionAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
-from fusion_bench.modelpool import ModelPool, to_modelpool
+from fusion_bench.modelpool import BaseModelPool
 
 
 def _magnitude_prune(weight: Tensor, prune_ratio: float) -> Tensor:
@@ -48,10 +48,11 @@ def _is_name_matched(name: str, extract_names: List[str]):
     return False
 
 
-class MagnitudeDiffPruningAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
+class MagnitudeDiffPruningAlgorithm(BaseModelFusionAlgorithm, SimpleProfilerMixin):
     @torch.no_grad()
-    def run(self, modelpool: ModelPool):
-        modelpool = to_modelpool(modelpool)
+    def run(self, modelpool: BaseModelPool):
+        if not isinstance(modelpool, BaseModelPool):
+            modelpool = BaseModelPool(modelpool)
 
         assert (
             len(modelpool.model_names) == 1

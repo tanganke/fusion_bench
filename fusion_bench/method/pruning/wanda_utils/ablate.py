@@ -10,7 +10,6 @@ torch.backends.cudnn.allow_tf32 = False
 
 
 class AblateGPT:
-
     def __init__(self, layer):
         self.layer = layer
         self.dev = self.layer.weight.device

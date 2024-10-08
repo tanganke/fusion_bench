@@ -16,6 +16,8 @@ from transformers import (
     default_data_collator,
 )
 
+from fusion_bench.mixins import LightningFabricMixin
+from fusion_bench.taskpool import BaseTaskPool
 from fusion_bench.tasks import BaseTask
 from fusion_bench.tasks.flan_t5_text_generation.glue_evaluation import (
     evaluate_accuracy,
@@ -26,20 +28,25 @@ from fusion_bench.tasks.flan_t5_text_generation.glue_load_dataset import (
 )
 from fusion_bench.utils.parameters import count_parameters
 
-from .base_pool import TaskPool
-
 log = logging.getLogger(__name__)
 
 CLASSIFICATION_TASKS = [
     "cola",
+    "glue-cola",
     "mnli",
+    "glue-mnli",
     "mrpc",
+    "glue-mrpc",
     "qnli",
+    "glue-qnli",
     "qqp",
+    "glue-qqp",
     "rte",
+    "glue-rte",
     "sst2",
+    "glue-sst2",
 ]
-REGRESSION_TASKS = ["stsb"]
+REGRESSION_TASKS = ["stsb", "glue-stsb"]
 
 
 class FlanT5GLUETextGenerationTask(BaseTask):
@@ -103,32 +110,27 @@ class FlanT5GLUETextGenerationRegressionTask(FlanT5GLUETextGenerationTask):
         return result
 
 
-class FlanT5GLUETextGenerationTaskPool(TaskPool):
+class FlanT5GLUETextGenerationTaskPool(LightningFabricMixin, BaseTaskPool):
     """
     A task pool for FlanT5 GLUE text generation tasks.
     This class manages the tasks and provides methods for loading and evaluating tasks.
     """
 
-    _fabric: L.Fabric = None
-    _tokenizer = None
+    _tokenizer_instance = None
+
+    def __init__(self, tokenizer: DictConfig, **kwargs):
+        super().__init__(**kwargs)
 
     @property
     def tokenizer(self):
         """
         Returns the tokenizer. If it's not already initialized, it initializes it using the config's tokenizer.
         """
-        if self._tokenizer is None:
-            self._tokenizer = AutoTokenizer.from_pretrained(self.config.tokenizer)
-        return self._tokenizer
-
-    @property
-    def fabric(self):
-        if self._fabric is not None:
-            return self._fabric
-        else:
-            self._fabric = L.Fabric(devices=1)
-            self._fabric.launch()
-            return self._fabric
+        if self._tokenizer_instance is None:
+            self._tokenizer_instance = AutoTokenizer.from_pretrained(
+                self.config.tokenizer
+            )
+        return self._tokenizer_instance
 
     def load_task(self, task_name_or_config: str | DictConfig):
         """

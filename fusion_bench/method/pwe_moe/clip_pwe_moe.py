@@ -19,13 +19,12 @@ from transformers.models.clip.modeling_clip import CLIPEncoder, CLIPEncoderLayer
 from typing_extensions import override
 
 from fusion_bench.method.adamerging.entropy_loss import entropy_loss
-from fusion_bench.method.base_algorithm import ModelFusionAlgorithm
+from fusion_bench.method.base_algorithm import BaseModelFusionAlgorithm
 from fusion_bench.method.task_arithmetic import task_arithmetic_merge
 from fusion_bench.mixins.clip_classification import CLIPClassificationMixin
 from fusion_bench.mixins.lightning_fabric import LightningFabricMixin
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
-from fusion_bench.modelpool import ModelPool
-from fusion_bench.modelpool.huggingface_clip_vision import HuggingFaceClipVisionPool
+from fusion_bench.modelpool import CLIPVisionModelPool
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.models.separate_io import *
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
@@ -40,27 +39,73 @@ log = logging.getLogger(__name__)
 
 
 class PWEMoEAlgorithmForCLIP(
-    ModelFusionAlgorithm,
+    BaseModelFusionAlgorithm,
     SimpleProfilerMixin,
     CLIPClassificationMixin,
 ):
-    modelpool: HuggingFaceClipVisionPool = None
+    modelpool: CLIPVisionModelPool = None
+    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+        "upscale_mlp": "upscale_mlp",
+        "upscale_attn": "upscale_attn",
+        "init_lambda": "init_lambda",
+        "router_hidden_layers": "router_hidden_layers",
+        "lr": "lr",
+        "num_steps": "num_steps",
+        "save_interval": "save_interval",
+        "alpha": "alpha",
+        "checkpoint_path": "checkpoint_path",
+        "eval_grid": "eval_grid",
+        "eval_grid_n": "eval_grid_n",
+        "eval_grid_m": "eval_grid_m",
+        "_dataloader_kwargs": "dataloader_kwargs",
+    }
+
+    def __init__(
+        self,
+        *,
+        upscale_mlp: bool,
+        upscale_attn: bool,
+        init_lambda: float,
+        router_hidden_layers: int,
+        lr: float,
+        num_steps: int,
+        save_interval: int,
+        alpha: float,
+        checkpoint_path: str,
+        eval_grid: bool,
+        eval_grid_n: int,
+        eval_grid_m: int,
+        dataloader_kwargs: DictConfig,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.upscale_mlp = upscale_mlp
+        self.upscale_attn = upscale_attn
+        self.init_lambda = init_lambda
+        self.router_hidden_layers = router_hidden_layers
+        self.lr = lr
+        self.num_steps = num_steps
+        self.save_interval = save_interval
+        self.alpha = alpha
+        self.checkpoint_path = checkpoint_path
+        self.eval_grid = eval_grid
+        self.eval_grid_n = eval_grid_n
+        self.eval_grid_m = eval_grid_m
+        self._dataloader_kwargs = dataloader_kwargs
 
     @override
-    def run(self, modelpool: HuggingFaceClipVisionPool):
+    def run(self, modelpool: CLIPVisionModelPool):
         config = self.config
         self.modelpool = modelpool
 
         model = self.setup_model()
-        if config.checkpoint_path is not None:
-            model.load_state_dict(
-                torch.load(config.checkpoint_path, map_location="cpu")
-            )
+        if self.checkpoint_path is not None:
+            model.load_state_dict(torch.load(self.checkpoint_path, map_location="cpu"))
         else:
             train_loaders = self.setup_train_loaders()
             model = self.train(model, train_loaders)
 
-        if config.eval_grid:
+        if self.eval_grid:
             return map(
                 lambda m, r: {
                     "model": ParetoWeightEnsemblingModule.set_preferenece_vector(
@@ -72,7 +117,7 @@ class PWEMoEAlgorithmForCLIP(
                     "preference_vector": r,
                 },
                 itertools.cycle([model]),
-                generate_simplex_grid(config.eval_grid_n, config.eval_grid_m),
+                generate_simplex_grid(self.eval_grid_n, self.eval_grid_m),
             )
         return model
 
@@ -104,11 +149,11 @@ class PWEMoEAlgorithmForCLIP(
             model = deepcopy(pretrained_model)
 
             # merge the remaining layers using task arithmetic
-            if config.init_lambda != 0:
+            if self.init_lambda != 0:
                 task_arithmetic_merge(
                     model,
                     finetuned_models.values(),
-                    scaling_factor=config.init_lambda,
+                    scaling_factor=self.init_lambda,
                     inplace=True,
                 )
             # fix all parameters
@@ -119,7 +164,7 @@ class PWEMoEAlgorithmForCLIP(
                 CLIPEncoderLayer, m.vision_model.encoder.layers[i]
             )
             for layer_idx in tqdm(range(num_layers)):
-                if config.upscale_mlp:
+                if self.upscale_mlp:
                     # upscale the mlp layer
                     get_layer(model, layer_idx).mlp = ParetoWeightEnsemblingModule(
                         base_model=get_layer(pretrained_model, layer_idx).mlp,
@@ -127,12 +172,12 @@ class PWEMoEAlgorithmForCLIP(
                             get_layer(m, layer_idx).mlp
                             for m in finetuned_models.values()
                         ],
-                        init_lambda=config.init_lambda,
+                        init_lambda=self.init_lambda,
                         fix_base_model_and_experts=True,
-                        router_hidden_layers=config.router_hidden_layers,
+                        router_hidden_layers=self.router_hidden_layers,
                     )
 
-                if config.upscale_attn:
+                if self.upscale_attn:
                     # upscale the Attention layer
                     get_layer(model, layer_idx).self_attn = (
                         ParetoWeightEnsemblingModule(
@@ -141,9 +186,9 @@ class PWEMoEAlgorithmForCLIP(
                                 get_layer(m, layer_idx).self_attn
                                 for m in finetuned_models.values()
                             ],
-                            init_lambda=config.init_lambda,
+                            init_lambda=self.init_lambda,
                             fix_base_model_and_experts=True,
-                            router_hidden_layers=config.router_hidden_layers,
+                            router_hidden_layers=self.router_hidden_layers,
                         )
                     )
 
@@ -157,19 +202,13 @@ class PWEMoEAlgorithmForCLIP(
         """
         config = self.config
         train_datasets = {
-            dataset_name: self.modelpool.get_train_dataset(
+            dataset_name: self.modelpool.load_train_dataset(
                 dataset_name, self.clip_processor
             )
             for dataset_name in self.modelpool.model_names
         }
         train_loaders = {
-            dataset_name: DataLoader(
-                dataset,
-                batch_size=config.batch_size,
-                shuffle=True,
-                num_workers=config.num_workers,
-                pin_memory=True,
-            )
+            dataset_name: DataLoader(dataset, shuffle=True, **self._dataloader_kwargs)
             for dataset_name, dataset in train_datasets.items()
         }
         train_loaders = {
