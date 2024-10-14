@@ -20,6 +20,7 @@ from fusion_bench.taskpool import BaseTaskPool
 from fusion_bench.utils import import_object, instantiate, timeit_context
 from fusion_bench.utils.hydra_utils import get_hydra_output_dir
 from fusion_bench.utils.rich_utils import print_config_tree, print_bordered
+from fusion_bench.utils.json import print_json
 
 log = logging.getLogger(__name__)
 
@@ -110,10 +111,10 @@ class FabricModelFusionProgram(
                 config,
                 _recursive_=config.get("_recursive_", False),
             )
-            if hasattr(obj, "_program"):
-                obj._program = self
-            if hasattr(obj, "_fabric_instance") and self.fabric is not None:
-                obj._fabric_instance = self.fabric
+        if hasattr(obj, "_program"):
+            obj._program = self
+        if hasattr(obj, "_fabric_instance") and self.fabric is not None:
+            obj._fabric_instance = self.fabric
         return obj
 
     def save_merged_model(self, merged_model):
@@ -207,7 +208,7 @@ class FabricModelFusionProgram(
                 compat_load_fn="fusion_bench.compat.taskpool.load_taskpool_from_config",
             )
             report = self.evaluate_merged_model(self.taskpool, merged_model)
-            print(json.dumps(report))
+            print_json(report, print_type=False)
             if self.report_save_path is not None:
                 # save report (Dict) to a file
                 # if the directory of `save_report` does not exists, create it

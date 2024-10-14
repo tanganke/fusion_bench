@@ -4,20 +4,18 @@ import torch
 import torch.utils
 from torch import Tensor
 
-from fusion_bench.method import ModelFusionAlgorithm
-from fusion_bench.modelpool import ModelPool, to_modelpool
+from fusion_bench.compat.modelpool import ModelPool
+from fusion_bench.modelpool import BaseModelPool
 
 
-class TaskVectorCosSimilarity(ModelFusionAlgorithm):
+class TaskVectorCosSimilarity(ModelPool):
     """
     This class is similar to the Dummy algorithm,
     but it also print (or save) the cosine similarity matrix between the task vectors of the models in the model pool.
     """
 
     @torch.no_grad()
-    def run(self, modelpool: ModelPool):
-        modelpool = to_modelpool(modelpool)
-
+    def run(self, modelpool: BaseModelPool):
         pretrained_model = modelpool.load_model("_pretrained_")
         pretrained_sd = torch.nn.utils.parameters_to_vector(
             pretrained_model.parameters()

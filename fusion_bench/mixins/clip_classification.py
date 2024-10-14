@@ -24,6 +24,8 @@ log = logging.getLogger(__name__)
 
 TensorOrModule = TypeVar("TensorOrModule", torch.Tensor, torch.nn.Module, Any)
 
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 
 class CLIPClassificationMixin(LightningFabricMixin):
     """

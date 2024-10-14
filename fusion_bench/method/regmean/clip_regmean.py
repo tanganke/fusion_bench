@@ -13,12 +13,13 @@ from torch.utils.data import DataLoader
 from tqdm.autonotebook import tqdm
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 
-from fusion_bench.mixins import CLIPClassificationMixin, LightningFabricMixin
+from fusion_bench.dataset.clip_dataset import CLIPDataset
+from fusion_bench.mixins import CLIPClassificationMixin
 from fusion_bench.modelpool import CLIPVisionModelPool
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.utils import timeit_context
-
+import torch.utils.data
 from .regmean import RegMeanAlgorithm
 
 log = logging.getLogger(__name__)
@@ -26,7 +27,6 @@ log = logging.getLogger(__name__)
 
 class RegMeanAlgorithmForCLIP(
     RegMeanAlgorithm,
-    LightningFabricMixin,
     CLIPClassificationMixin,
 ):
     _config_mapping = {
@@ -51,7 +51,9 @@ class RegMeanAlgorithmForCLIP(
         image_embeds = image_embeds / image_embeds.norm(p=2, dim=-1, keepdim=True)
 
         # cosine similarity
-        logits_per_text = torch.matmul(text_embeds, image_embeds.t()) * self.logit_scale
+        logits_per_text = (
+            torch.matmul(text_embeds, image_embeds.t()) * self.logit_scale_exp
+        )
         logits_per_image = logits_per_text.t()
 
         return logits_per_image
@@ -60,10 +62,11 @@ class RegMeanAlgorithmForCLIP(
         self,
         model_name: str,
         model: Module,
-        train_dataset,
+        train_dataset: torch.utils.data.Dataset,
         linear_modules_to_merge: Dict[str, Module],
     ):
         # setup dataloader
+        train_dataset = CLIPDataset(train_dataset, self.clip_processor)
         train_dataloader = DataLoader(
             train_dataset, shuffle=True, **self._dataloader_kwargs
         )

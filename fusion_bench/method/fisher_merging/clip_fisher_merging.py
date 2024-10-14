@@ -15,7 +15,7 @@ from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 
 from fusion_bench.dataset import CLIPDataset, load_dataset_from_config
 from fusion_bench.mixins import CLIPClassificationMixin
-from fusion_bench.modelpool.huggingface_clip_vision import HuggingFaceClipVisionPool
+from fusion_bench.modelpool import CLIPVisionModelPool
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.utils import timeit_context
