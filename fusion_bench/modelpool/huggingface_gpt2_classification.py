@@ -4,14 +4,27 @@ from omegaconf import DictConfig
 from torch import nn
 from transformers import GPT2ForSequenceClassification, GPT2Model, GPT2Tokenizer
 
+from fusion_bench.compat.modelpool.base_pool import ModelPool
 from fusion_bench.dataset.gpt2_glue import TokenizedGLUE
-from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.utils import timeit_context
 
 log = logging.getLogger(__name__)
 
 
-class HuggingFaceGPT2ClassificationPool(BaseModelPool):
+def load_gpt2_tokenizer(pretrained_model_name_or_path: str):
+    tokenizer = GPT2Tokenizer.from_pretrained(pretrained_model_name_or_path)
+    tokenizer.model_max_length = 512
+    if tokenizer.pad_token is None:
+        if tokenizer.unk_token is not None:
+            tokenizer.pad_token = tokenizer.unk_token
+        elif tokenizer.eos_token is not None:
+            tokenizer.pad_token = tokenizer.eos_token
+        else:
+            raise ValueError
+    return tokenizer
+
+
+class HuggingFaceGPT2ClassificationPool(ModelPool):
     def __init__(self, modelpool_config: DictConfig):
         super().__init__(modelpool_config)
 
@@ -22,24 +35,13 @@ class HuggingFaceGPT2ClassificationPool(BaseModelPool):
         if self._tokenizer is None:
             log.info(f"Loading tokenizer classification model.")
             if "_pretrained_" in self._model_names:
-                tokenizer = GPT2Tokenizer.from_pretrained(
-                    self.get_model_config("_pretrained_")["path"]
-                )
+                path = self.get_model_config("_pretrained_")["path"]
             else:
                 log.warning(
                     "No pretrained model found in the model pool. Returning the first model."
                 )
-                tokenizer = GPT2Tokenizer.from_pretrained(
-                    self.get_model_config(self.model_names[0])["path"]
-                )
-            tokenizer.model_max_length = 512
-            if tokenizer.pad_token is None:
-                if tokenizer.unk_token is not None:
-                    tokenizer.pad_token = tokenizer.unk_token
-                elif tokenizer.eos_token is not None:
-                    tokenizer.pad_token = tokenizer.eos_token
-                else:
-                    raise ValueError
+                path = self.get_model_config(self.model_names[0])["path"]
+            tokenizer = load_gpt2_tokenizer(path)
             self._tokenizer = tokenizer
         return self._tokenizer
 

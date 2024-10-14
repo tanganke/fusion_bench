@@ -20,9 +20,6 @@ log = logging.getLogger(__name__)
 class EnsembleAlgorithm(BaseModelFusionAlgorithm):
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool | List[nn.Module]):
-        if not isinstance(modelpool, BaseModelPool):
-            modelpool = BaseModelPool(models=modelpool)
-
         log.info(f"Running ensemble algorithm with {len(modelpool)} models")
 
         models = [modelpool.load_model(m) for m in modelpool.model_names]
