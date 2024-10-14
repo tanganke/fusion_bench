@@ -103,7 +103,7 @@ class BaseModelPool(BaseYAMLSerializableModel):
         """
         return model_name.startswith("_") and model_name.endswith("_")
 
-    def get_model_config(self, model_name: str) -> DictConfig:
+    def get_model_config(self, model_name: str, return_copy: bool = True) -> DictConfig:
         """
         Get the configuration for the specified model.
 
@@ -115,6 +115,8 @@ class BaseModelPool(BaseYAMLSerializableModel):
         """
         model_config = self._models[model_name]
         assert isinstance(model_config, DictConfig), "Model config must be a DictConfig"
+        if return_copy:
+            model_config = deepcopy(model_config)
         return model_config
 
     def load_model(

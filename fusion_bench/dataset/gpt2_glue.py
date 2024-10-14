@@ -16,6 +16,8 @@ from functools import partial
 from pathlib import Path
 from typing import Literal
 
+from transformers import PreTrainedTokenizer
+
 from datasets import load_dataset, load_from_disk
 
 
@@ -97,7 +99,8 @@ def qqp_tokenize_function(examples, tokenizer):
 
 
 class TokenizedGLUE:
-    def __init__(self, tokenizer):
+
+    def __init__(self, tokenizer: PreTrainedTokenizer):
         super().__init__()
         self.tokenizer = tokenizer
 

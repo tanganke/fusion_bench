@@ -352,8 +352,8 @@ class FisherMergingAlgorithm(BaseModelFusionAlgorithm):
 
     def run(self, modelpool: BaseModelPool):
         log.info("Running Fisher Merging Algorithm")
-        if not isinstance(modelpool, BaseModelPool):
-            return BaseModelPool(modelpool)
+        if isinstance(modelpool, (dict, list, tuple)):
+            modelpool = BaseModelPool(modelpool)
 
         assert len(modelpool) > 0, "model pool is empty"
         assert (

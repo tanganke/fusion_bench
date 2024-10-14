@@ -67,7 +67,7 @@ class SimpleAverageAlgorithm(
         Returns:
             The fused model obtained by simple averaging.
         """
-        if not isinstance(modelpool, BaseModelPool):
+        if isinstance(modelpool, dict):
             modelpool = BaseModelPool(modelpool)
 
         log.info(

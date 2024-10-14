@@ -15,24 +15,36 @@ from transformers import GPT2ForSequenceClassification, GPT2Model
 from transformers.data import default_data_collator
 from transformers.models.gpt2.modeling_gpt2 import Conv1D
 
-from fusion_bench.dataset import CLIPDataset, load_dataset_from_config
-from fusion_bench.tasks.clip_classification import get_classnames_and_templates
+from fusion_bench.mixins import LightningFabricMixin
+from fusion_bench.modelpool import HuggingFaceGPT2ClassificationPool
 from fusion_bench.utils import timeit_context
 
 from .fisher_merging import FisherMergingAlgorithm, get_param_squared_gradients
 
 
-class FisherMergingAlgorithmForGPT2(FisherMergingAlgorithm):
-    _fabric: L.Fabric = None
+class FisherMergingAlgorithmForGPT2(
+    FisherMergingAlgorithm,
+    LightningFabricMixin,
+):
     classifiers = {}
+    modelpool: HuggingFaceGPT2ClassificationPool = None
+    _config_mapping = FisherMergingAlgorithm._config_mapping | {
+        "cache_dir": "cache_dir",
+        "batch_size": "batch_size",
+        "num_workers": "num_workers",
+    }
 
-    def __init__(self, algorithm_config: DictConfig):
-        super().__init__(algorithm_config)
-
-        # setup fabric
-        if self._fabric is None and torch.cuda.is_available():
-            self._fabric = L.Fabric(devices=self.config.get("devices", 1))
-            self._fabric.launch()
+    def __init__(
+        self,
+        cache_dir: str,
+        batch_size: int,
+        num_workers: int,
+        **kwargs,
+    ):
+        self.cache_dir = cache_dir
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+        super().__init__(**kwargs)
 
     def on_fisher_merging_start(self):
         for model_name in self.modelpool.model_names:
@@ -41,8 +53,7 @@ class FisherMergingAlgorithmForGPT2(FisherMergingAlgorithm):
                 self.modelpool.load_classifier(model_name),
             ).requires_grad_(False)
             classifier.transformer = None
-            if self._fabric is not None:
-                classifier = classifier.to(self._fabric.device)
+            classifier = classifier.to(self.fabric.device)
             self.classifiers[model_name] = classifier
 
     def compute_logits(self, module: GPT2Model, batch, task: str) -> Tensor:
@@ -71,9 +82,8 @@ class FisherMergingAlgorithmForGPT2(FisherMergingAlgorithm):
             num_workers=self.config.num_workers,
             pin_memory=True,
         )
-        if self._fabric is not None:
-            train_dataloader = self._fabric.setup_dataloaders(train_dataloader)
-            model = self._fabric.setup(model)
+        train_dataloader = self.fabric.setup_dataloaders(train_dataloader)
+        model = self.fabric.setup(model)
         num_fisher_examples = self.config.num_fisher_examples
         if num_fisher_examples % train_dataloader.batch_size != 0:
             print(

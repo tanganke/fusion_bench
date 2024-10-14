@@ -11,6 +11,7 @@ _import_structure = {
     "causal_lm": ["CausalLMPool", "CausalLMBackbonePool"],
     "seq2seq_lm": ["Seq2SeqLMPool"],
     "PeftModelForSeq2SeqLM": ["PeftModelForSeq2SeqLMPool"],
+    "huggingface_gpt2_classification":["HuggingFaceGPT2ClassificationPool"]
 }
 
 
@@ -19,6 +20,7 @@ if TYPE_CHECKING:
     from .causal_lm import CausalLMBackbonePool, CausalLMPool
     from .clip_vision import CLIPVisionModelPool
     from .huggingface_automodel import AutoModelPool
+    from .huggingface_gpt2_classification import HuggingFaceGPT2ClassificationPool
     from .nyuv2_modelpool import NYUv2ModelPool
     from .PeftModelForSeq2SeqLM import PeftModelForSeq2SeqLMPool
     from .seq2seq_lm import Seq2SeqLMPool

@@ -285,6 +285,7 @@ class RegMeanAlgorithm(BaseModelFusionAlgorithm):
         "num_regmean_examples": "num_regmean_examples",
         "exclude_param_names_regex": "exclude_param_names_regex",
         "reduce_non_diagonal_ratio": "reduce_non_diagonal_ratio",
+        "weight_transpose": "weight_transpose",
     }
 
     def __init__(
@@ -293,12 +294,14 @@ class RegMeanAlgorithm(BaseModelFusionAlgorithm):
         num_regmean_examples: int,
         exclude_param_names_regex: list,
         reduce_non_diagonal_ratio: float,
+        weight_transpose: bool,
         **kwargs,
     ):
-        super().__init__(**kwargs)
         self.num_regmean_examples = num_regmean_examples
         self.exclude_param_names_regex = exclude_param_names_regex
         self.reduce_non_diagonal_ratio = reduce_non_diagonal_ratio
+        self.weight_transpose = weight_transpose
+        super().__init__(**kwargs)
 
     def run(self, modelpool: BaseModelPool):
         if not isinstance(modelpool, BaseModelPool):
