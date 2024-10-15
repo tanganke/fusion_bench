@@ -7,7 +7,6 @@ from omegaconf import DictConfig
 from torch import nn
 from transformers import GPT2ForSequenceClassification, GPT2Model, GPT2Tokenizer
 
-from fusion_bench.compat.modelpool.base_pool import ModelPool
 from fusion_bench.dataset.gpt2_glue import TokenizedGLUE
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.utils import instantiate, timeit_context

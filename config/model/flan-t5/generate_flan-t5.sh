@@ -31,7 +31,7 @@ for model in flan-t5-base flan-t5-large; do
             rm ${file}
         fi
         echo "${task}:" >${file}
-        echo "  _target_: transformers.AutoModelForSeq2SeqLM.load_lora_model" >>${file}
+        echo "  _target_: fusion_bench.modelpool.seq2seq_lm.modelpool.load_lora_model" >>${file}
         echo "  base_model_path: google/${model}" >>${file}
         echo "  peft_model_path: tanganke/${model}_${task}_lora-16" >>${file}
     done

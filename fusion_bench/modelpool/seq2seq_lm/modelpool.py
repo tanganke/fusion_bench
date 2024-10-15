@@ -27,7 +27,7 @@ def load_lora_model(
         is_trainable=is_trainable,
     )
     if merge_and_unload:
-        model.merge_and_unload()
+        model = model.merge_and_unload()
     return model
 
 

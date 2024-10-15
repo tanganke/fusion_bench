@@ -62,7 +62,7 @@ class AlgorithmFactory:
         algorithm_cls = AlgorithmFactory._aglorithms[algorithm_name]
         if isinstance(algorithm_cls, str):
             if algorithm_cls.startswith("."):
-                algorithm_cls = f"fusion_bench.method.{algorithm_cls[1:]}"
+                algorithm_cls = f"fusion_bench.compat.method.{algorithm_cls[1:]}"
             algorithm_cls = import_object(algorithm_cls)
         return algorithm_cls(method_config)
 

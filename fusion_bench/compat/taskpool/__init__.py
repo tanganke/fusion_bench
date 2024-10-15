@@ -1,23 +1,15 @@
 from omegaconf import DictConfig
 
 from fusion_bench.taskpool.dummy import DummyTaskPool
-from fusion_bench.taskpool.flan_t5_glue_text_generation import (
-    FlanT5GLUETextGenerationTaskPool,
-)
-from fusion_bench.taskpool.gpt2_text_classification import (
-    GPT2TextClassificationTaskPool,
-)
 
 from .base_pool import TaskPool
-from .clip_image_classification import CLIPImageClassificationTaskPool
 
 
 class TaskPoolFactory:
     _taskpool_types = {
         "dummy": DummyTaskPool,
-        "clip_vit_classification": CLIPImageClassificationTaskPool,
-        "GPT2TextClassificationTaskPool": GPT2TextClassificationTaskPool,
-        "FlanT5GLUETextGenerationTaskPool": FlanT5GLUETextGenerationTaskPool,
+        "clip_vit_classification": ".clip_image_classification.CLIPImageClassificationTaskPool",
+        "FlanT5GLUETextGenerationTaskPool": ".flan_t5_glue_text_generation.FlanT5GLUETextGenerationTaskPool",
         "NYUv2TaskPool": ".nyuv2_taskpool.NYUv2TaskPool",
     }
 
@@ -36,7 +28,7 @@ class TaskPoolFactory:
         taskpool_cls = TaskPoolFactory._taskpool_types[taskpool_type]
         if isinstance(taskpool_cls, str):
             if taskpool_cls.startswith("."):
-                taskpool_cls = f"fusion_bench.taskpool.{taskpool_cls[1:]}"
+                taskpool_cls = f"fusion_bench.compat.taskpool.{taskpool_cls[1:]}"
             taskpool_cls = import_object(taskpool_cls)
         return taskpool_cls(taskpool_config)
 

@@ -105,7 +105,7 @@ Load pre-trained Flan-T5-base model and print the model information
 
 ```bash
 fusion_bench \
-    modelpool=flan-t5-base_glue \
+    modelpool=Seq2SeqLMPool/flan-t5-base_glue \
     method=dummy taskpool=dummy
 # {'model_info': {'trainable_params': 247577856, 'all_params': 247577856, 'trainable_percentage': 1.0}}
 ```
@@ -114,7 +114,7 @@ Load pre-trained Flan-T5-large model and print the model information
 
 ```bash
 fusion_bench \
-    modelpool=flan-t5-large_glue \
+    modelpool=Seq2SeqLMPool/flan-t5-large_glue_lora16 \
     method=dummy taskpool=dummy
 ```
 
@@ -125,10 +125,10 @@ Evaluate the pre-trained Flan-T5-base model on GLUE tasks
 ```bash
 fusion_bench \
     method=dummy \
-    modelpool=flan-t5-base_individual \
-        modelpool.models.0.path=google/flan-t5-base \
+    modelpool=Seq2SeqLMPool/flan-t5-base_individual \
+        modelpool.models._pretrained_.pretrained_model_name_or_path=google/flan-t5-base \
     taskpool=flan-t5_glue_text_generation \
-    save_report=outputs/flan-t5-base/pretrained.json
+    report_save_path=outputs/flan-t5-base/pretrained.json
 ```
 
 or evaluate the fine-tuned Flan-T5-base model on GLUE tasks
@@ -137,10 +137,10 @@ or evaluate the fine-tuned Flan-T5-base model on GLUE tasks
 for task in cola mnli mrpc qnli qqp rte sst2 stsb; do
     fusion_bench \
         method=dummy \
-        modelpool=flan-t5-base_individual \
-            modelpool.models.0.path=tanganke/flan-t5-base_glue-${task} \
+        modelpool=Seq2SeqLMPool/flan-t5-base_individual \
+            modelpool.models._pretrained_.pretrained_model_name_or_path=tanganke/flan-t5-base_glue-${task} \
         taskpool=flan-t5_glue_text_generation \
-        save_report=outputs/flan-t5-base/glue-$task.json
+        report_save_path=outputs/flan-t5-base/glue-$task.json
 done
 ```
 
@@ -152,13 +152,13 @@ Merge the Flan-T5 models on GLUE tasks using simple average and evaluate on the 
 # for full fine-tuned models
 fusion_bench \
     method=simple_average \
-    modelpool=flan-t5-base_glue \
+    modelpool=Seq2SeqLMPool/flan-t5-base_glue \
     taskpool=flan-t5_glue_text_generation
 
 # or using the LoRA fine-tuned models
 fusion_bench \
     method=simple_average \
-    modelpool=flan-t5-base_glue_lora16 \
+    modelpool=Seq2SeqLMPool/flan-t5-base_glue_lora16 \
     taskpool=flan-t5_glue_text_generation
 ```
 
@@ -172,7 +172,7 @@ Merge the Flan-T5 models on GLUE tasks using task arithmetic and evaluate on the
 fusion_bench \
     method=task_arithmetic \
         method.scaling_factor=0.3 \
-    modelpool=flan-t5-base_glue \
+    modelpool=Seq2SeqLMPool/flan-t5-base_glue \
     taskpool=flan-t5_glue_text_generation
 
 # use a for loop to evaluate the performance of task arithmetic with different scaling factors (LoRA fine-tuned models)
@@ -181,7 +181,7 @@ do
     fusion_bench \
         method=task_arithmetic \
             method.scaling_factor=$scaling_factor \
-        modelpool=flan-t5-base_glue_lora16 \
+        modelpool=Seq2SeqLMPool/flan-t5-base_glue_lora16 \
         taskpool=flan-t5_glue_text_generation
 done
 ```
@@ -209,7 +209,7 @@ or using ties-merging
 fusion_bench \
     method=ties_merging \
         method.scaling_factor=0.3 \
-    modelpool=flan-t5-base_glue \
+    modelpool=Seq2SeqLMPool/flan-t5-base_glue \
     taskpool=flan-t5_glue_text_generation
 
 # use a for loop to evaluate the performance of ties-merging with different scaling factors (LoRA fine-tuned models)
@@ -218,7 +218,7 @@ do
     fusion_bench \
         method=ties_merging \
             method.scaling_factor=$scaling_factor \
-        modelpool=flan-t5-base_glue_lora16 \
+        modelpool=Seq2SeqLMPool/flan-t5-base_glue_lora16 \
         taskpool=flan-t5_glue_text_generation
 done
 ```

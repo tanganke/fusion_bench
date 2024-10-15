@@ -40,7 +40,7 @@ class ModelPoolFactory:
         modelpool_cls = ModelPoolFactory._modelpool[modelpool_type]
         if isinstance(modelpool_cls, str):
             if modelpool_cls.startswith("."):
-                modelpool_cls = f"fusion_bench.modelpool.{modelpool_cls[1:]}"
+                modelpool_cls = f"fusion_bench.compat.modelpool.{modelpool_cls[1:]}"
             modelpool_cls = import_object(modelpool_cls)
         return modelpool_cls(modelpool_config)
 

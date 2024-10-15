@@ -1,6 +1,7 @@
 import functools
 import itertools
 import logging
+import os
 from copy import deepcopy
 
 import lightning as L
@@ -16,8 +17,8 @@ from transformers import (
     default_data_collator,
 )
 
+from fusion_bench.compat.taskpool import TaskPool
 from fusion_bench.mixins import LightningFabricMixin
-from fusion_bench.taskpool import BaseTaskPool
 from fusion_bench.tasks import BaseTask
 from fusion_bench.tasks.flan_t5_text_generation.glue_evaluation import (
     evaluate_accuracy,
@@ -29,6 +30,8 @@ from fusion_bench.tasks.flan_t5_text_generation.glue_load_dataset import (
 from fusion_bench.utils.parameters import count_parameters
 
 log = logging.getLogger(__name__)
+
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 CLASSIFICATION_TASKS = [
     "cola",
@@ -110,16 +113,13 @@ class FlanT5GLUETextGenerationRegressionTask(FlanT5GLUETextGenerationTask):
         return result
 
 
-class FlanT5GLUETextGenerationTaskPool(LightningFabricMixin, BaseTaskPool):
+class FlanT5GLUETextGenerationTaskPool(LightningFabricMixin, TaskPool):
     """
     A task pool for FlanT5 GLUE text generation tasks.
     This class manages the tasks and provides methods for loading and evaluating tasks.
     """
 
     _tokenizer_instance = None
-
-    def __init__(self, tokenizer: DictConfig, **kwargs):
-        super().__init__(**kwargs)
 
     @property
     def tokenizer(self):
