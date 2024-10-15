@@ -86,6 +86,22 @@ class FabricModelFusionProgram(
     def _instantiate_and_setup(
         self, config: DictConfig, compat_load_fn: Optional[str] = None
     ):
+        R"""
+        Instantiates and sets up an object based on the provided configuration.
+
+        This method performs the following steps:
+        1. Checks if the configuration dictionary contains the key "_target_".
+        2. If "_target_" is not found (for v0.1.x), attempts to instantiate the object using a compatible load function if provided.
+           - Logs a warning if "_target_" is missing.
+           - If `compat_load_fn` is provided, imports the function and uses it to instantiate the object.
+           - If `compat_load_fn` is not provided, raises a ValueError.
+        3. If "_target_" is found (for v.0.2.0 and above), attempts to import and instantiate the object using the `instantiate` function.
+           - Ensures the target can be imported.
+           - Uses the `instantiate` function with `_recursive_` set based on the configuration.
+        4. Sets the `_program` attribute of the instantiated object to `self` if the object has this attribute.
+        5. Sets the `_fabric_instance` attribute of the instantiated object to `self.fabric` if the object has this attribute and `self.fabric` is not None.
+        6. Returns the instantiated and set up object.
+        """
         if "_target_" not in config:
             log.warning(
                 "No '_target_' key found in config. Attempting to instantiate the object in a compatible way."
@@ -118,6 +134,9 @@ class FabricModelFusionProgram(
         return obj
 
     def save_merged_model(self, merged_model):
+        """
+        Saves the merged model to the specified path.
+        """
         if self.merged_model_save_path is not None:
             # path to save the merged model, use "{log_dir}" to refer to the logger directory
             save_path: str = self.merged_model_save_path
@@ -182,6 +201,9 @@ class FabricModelFusionProgram(
             raise ValueError(f"Invalid type for merged model: {type(merged_model)}")
 
     def run(self):
+        """
+        Executes the model fusion program.
+        """
         if self.seed is not None:
             L.seed_everything(self.seed)
 
@@ -220,16 +242,35 @@ class FabricModelFusionProgram(
             print("No task pool specified. Skipping evaluation.")
 
     def _link_hydra_output(self):
+        """
+        Creates a symbolic link to the Hydra output directory within the specified log directory.
+
+        If `self.log_dir` is not None, this method will:
+        1. Retrieve the Hydra output directory using `get_hydra_output_dir()`.
+        2. Create the log directory if it does not already exist.
+        3. Create a symbolic link named "hydra_output_<basename_of_hydra_output_dir>"
+           within the log directory, pointing to the Hydra output directory.
+
+        Note:
+            - The symbolic link is created only if the Hydra output directory is not None.
+            - The `target_is_directory` parameter is set to True to indicate that the target is a directory.
+
+        Raises:
+            OSError: If the symbolic link creation fails.
+        """
         if self.log_dir is not None:
             # make symlink to the hydra output directory
             hydra_output_dir = get_hydra_output_dir()
             if hydra_output_dir is not None:
                 os.makedirs(self.log_dir, exist_ok=True)
-                os.symlink(
-                    hydra_output_dir,
-                    os.path.join(
-                        self.log_dir,
-                        "hydra_output_" + os.path.basename(hydra_output_dir),
-                    ),
-                    target_is_directory=True,
-                )
+                try:
+                    os.symlink(
+                        hydra_output_dir,
+                        os.path.join(
+                            self.log_dir,
+                            "hydra_output_" + os.path.basename(hydra_output_dir),
+                        ),
+                        target_is_directory=True,
+                    )
+                except OSError as e:
+                    log.warning(f"Failed to create symbolic link: {e}")
