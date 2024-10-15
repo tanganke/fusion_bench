@@ -11,8 +11,8 @@ from torch import Tensor, nn
 from torch.utils.data import DataLoader
 from tqdm.autonotebook import tqdm
 
-from fusion_bench.method.base_algorithm import ModelFusionAlgorithm
-from fusion_bench.modelpool import ModelPool
+from fusion_bench.compat.method.base_algorithm import ModelFusionAlgorithm
+from fusion_bench.compat.modelpool import ModelPool
 from fusion_bench.models.we_moe import WeightEnsemblingMoE
 from fusion_bench.utils import timeit_context
 from fusion_bench.utils.parameters import print_parameters

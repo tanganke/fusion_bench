@@ -13,10 +13,12 @@ from torch.utils.data import DataLoader
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 from transformers.models.clip.modeling_clip import CLIPEncoder, CLIPEncoderLayer
 
-from fusion_bench.method.base_algorithm import ModelFusionAlgorithm
-from fusion_bench.method.task_arithmetic import task_arithmetic_merge
-from fusion_bench.modelpool import ModelPool
-from fusion_bench.modelpool.huggingface_clip_vision import HuggingFaceClipVisionPool
+from fusion_bench.compat.method.base_algorithm import ModelFusionAlgorithm
+from fusion_bench.compat.modelpool import ModelPool
+from fusion_bench.compat.modelpool.huggingface_clip_vision import (
+    HuggingFaceClipVisionPool,
+)
+from fusion_bench.method.task_arithmetic.task_arithmetic import task_arithmetic_merge
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.models.we_moe import WeightEnsemblingMoE
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates

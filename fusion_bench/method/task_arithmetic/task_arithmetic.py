@@ -1,3 +1,9 @@
+"""
+This script contains the general implementation of the Task Arithmetic method.
+
+http://arxiv.org/abs/2212.04089
+"""
+
 import logging
 from copy import deepcopy
 from typing import Dict, List, Mapping, TypeVar, Union

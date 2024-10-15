@@ -90,7 +90,8 @@ def train_validation_split(
         return training_dataset
     elif return_split == "val":
         return validation_dataset
-
+    else:
+        raise ValueError(f"Invalid return_split: {return_split}")
 
 def train_validation_test_split(
     dataset: Dataset,
@@ -137,3 +138,5 @@ def train_validation_test_split(
         return validation_dataset
     elif return_spilt == "test":
         return test_dataset
+    else:
+        raise ValueError(f"Invalid return_split: {return_spilt}")

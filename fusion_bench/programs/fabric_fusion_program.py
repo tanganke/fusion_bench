@@ -19,8 +19,8 @@ from fusion_bench.programs import BaseHydraProgram
 from fusion_bench.taskpool import BaseTaskPool
 from fusion_bench.utils import import_object, instantiate, timeit_context
 from fusion_bench.utils.hydra_utils import get_hydra_output_dir
-from fusion_bench.utils.rich_utils import print_config_tree, print_bordered
 from fusion_bench.utils.json import print_json
+from fusion_bench.utils.rich_utils import print_bordered, print_config_tree
 
 log = logging.getLogger(__name__)
 
@@ -188,6 +188,7 @@ class FabricModelFusionProgram(
         self._link_hydra_output()
 
         log.info("Running the model fusion program.")
+        # setup the modelpool, method, and taskpool
         log.info("loading model pool")
         self.modelpool = self._instantiate_and_setup(
             self._modelpool,
@@ -198,15 +199,16 @@ class FabricModelFusionProgram(
             self._method,
             compat_load_fn="fusion_bench.compat.method.load_algorithm_from_config",
         )
-        merged_model = self.method.run(self.modelpool)
-        self.save_merged_model(merged_model)
-
         if self._taskpool is not None:
             log.info("loading task pool")
             self.taskpool = self._instantiate_and_setup(
                 self._taskpool,
                 compat_load_fn="fusion_bench.compat.taskpool.load_taskpool_from_config",
             )
+
+        merged_model = self.method.run(self.modelpool)
+        self.save_merged_model(merged_model)
+        if self.taskpool is not None:
             report = self.evaluate_merged_model(self.taskpool, merged_model)
             print_json(report, print_type=False)
             if self.report_save_path is not None:
