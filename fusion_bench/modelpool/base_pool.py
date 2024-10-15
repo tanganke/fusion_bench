@@ -75,7 +75,7 @@ class BaseModelPool(BaseYAMLSerializableModel):
         Returns:
             List[str]: A list of all model names.
         """
-        return self._models
+        return [name for name in self._models]
 
     @property
     def model_names(self):
