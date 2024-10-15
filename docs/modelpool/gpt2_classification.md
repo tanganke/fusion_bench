@@ -76,7 +76,7 @@ merge GPT-2 models using [Fisher Merging](../algorithms/fisher_merging.md) and e
 
 ```bash
 fusion_bench \
-  method=gpt2_fisher_merging \
+  method=fisher_merging/gpt2_fisher_merging \
     method.batch_size=8 method.num_fisher_examples=512 \
   modelpool=gpt-2_glue \
   taskpool=gpt-2_glue
@@ -88,7 +88,7 @@ merge GPT-2 models using [RegMean](../algorithms/regmean.md) and evaluate the me
 
 ```bash
 fusion_bench \
-  method=gpt2_regmean \
+  method=regmean/gpt2_regmean \
   modelpool=gpt-2_glue \
   taskpool=gpt-2_glue
 ```

@@ -4,6 +4,9 @@ import torch
 from torch import Tensor, nn
 from torch.types import _device
 from transformers import CLIPModel, CLIPProcessor, CLIPTextModel, CLIPVisionModel
+from transformers.models.clip.modeling_clip import BaseModelOutputWithPooling
+
+from fusion_bench.utils.devices import get_device
 
 default_templates = [
     lambda c: f"a photo of a {c}",
@@ -91,7 +94,9 @@ class HFCLIPClassifier(nn.Module):
             for classname in classnames:
                 text = [template(classname) for template in templates]
                 inputs = processor(text=text, return_tensors="pt", padding=True)
-
+                inputs = {
+                    k: v.to(get_device(self.text_model)) for k, v in inputs.items()
+                }
                 embeddings = self.text_model(**inputs)[1]
                 embeddings = self.clip_model.text_projection(embeddings)
 
@@ -128,7 +133,10 @@ class HFCLIPClassifier(nn.Module):
         text_embeds = self.zeroshot_weights
 
         image_embeds = self.vision_model(images)
-        image_embeds = image_embeds[1]
+        if isinstance(image_embeds, Tensor):
+            pass
+        elif isinstance(image_embeds, BaseModelOutputWithPooling):
+            image_embeds = image_embeds[1]
         image_embeds = self.clip_model.visual_projection(image_embeds)
 
         # normalize embeddings

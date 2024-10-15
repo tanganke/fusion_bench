@@ -11,6 +11,7 @@ description: A Comprehensive Benchmark of Deep Model Fusion
 [![Downloads](https://static.pepy.tech/badge/fusion-bench/month)](https://pepy.tech/project/fusion-bench)
 [![Static Badge](https://img.shields.io/badge/doc-mkdocs-blue)](https://tanganke.github.io/fusion_bench/)
 [![Static Badge](https://img.shields.io/badge/code%20style-black-black)](https://github.com/psf/black)
+[![Static Badge](https://img.shields.io/badge/code%20style-yamlfmt-black)](https://github.com/google/yamlfmt)
 
 !!! warning "Testing Phase"
     
@@ -36,19 +37,35 @@ description: A Comprehensive Benchmark of Deep Model Fusion
 
 ### Installation
 
-install from [PyPI](https://pypi.org/project/fusion-bench/):
+Install from [PyPI](https://pypi.org/project/fusion-bench/):
 
 ```bash
 pip install fusion-bench
+
+# you can also install a specific version
+# pip install fusion-bench==0.1.6
 ```
 
-or install the latest version in development from github repository
+Or install the latest version in development from github repository
 
 ```bash
 git clone https://github.com/tanganke/fusion_bench.git
 cd fusion_bench
 
+# checkout to use a specific version. for example, v0.1.6
+# git checkout v0.1.6
+
 pip install -e . # install the package in editable mode
+```
+
+View documentation locally:
+
+```bash
+# install mkdocs and the required packages
+pip install -r mkdocs-requirements.txt
+
+# serve the documentation, by default it will be available at http://localhost:8000
+mkdocs serve
 ```
 
 ### Command Line Interface

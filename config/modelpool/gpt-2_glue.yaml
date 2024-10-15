@@ -1,50 +1,64 @@
-type: HF_GPT2ForSequenceClassification
+_target_: fusion_bench.modelpool.HuggingFaceGPT2ClassificationPool
+
+_model_loader: transformers.GPT2Model.from_pretrained
 models:
-  - name: _pretrained_
-    path: gpt2
-  - name: cola
-    path: tanganke/gpt2_cola
-  - name: mnli
-    path: tanganke/gpt2_mnli
-  - name: mrpc
-    path: tanganke/gpt2_mrpc
-  - name: qnli
-    path: tanganke/gpt2_qnli
-  - name: qqp
-    path: tanganke/gpt2_qqp
-  - name: rte
-    path: tanganke/gpt2_rte
-  - name: sst2
-    path: tanganke/gpt2_sst2
+  _pretrained_:
+    _target_: ${..._model_loader}
+    pretrained_model_name_or_path: gpt2
+  cola:
+    _target_: ${..._model_loader}
+    pretrained_model_name_or_path: tanganke/gpt2_cola
+  mnli:
+    _target_: ${..._model_loader}
+    pretrained_model_name_or_path: tanganke/gpt2_mnli
+  mrpc:
+    _target_: ${..._model_loader}
+    pretrained_model_name_or_path: tanganke/gpt2_mrpc
+  qnli:
+    _target_: ${..._model_loader}
+    pretrained_model_name_or_path: tanganke/gpt2_qnli
+  qqp:
+    _target_: ${..._model_loader}
+    pretrained_model_name_or_path: tanganke/gpt2_qqp
+  rte:
+    _target_: ${..._model_loader}
+    pretrained_model_name_or_path: tanganke/gpt2_rte
+  sst2:
+    _target_: ${..._model_loader}
+    pretrained_model_name_or_path: tanganke/gpt2_sst2
 
 # train datasets for RegMean, Fisher Merging ...
-dataset_type: GPT2ClassificationGLUETask
+_dataset_loader: fusion_bench.modelpool.huggingface_gpt2_classification.load_gpt2_dataset
 train_datasets:
-  - name: cola
-    dataset:
-      name: cola
-      split: train
-  - name: mnli
-    dataset:
-      name: mnli
-      split: train
-  - name: mrpc
-    dataset:
-      name: mrpc
-      split: train
-  - name: qnli
-    dataset:
-      name: qnli
-      split: train
-  - name: qqp
-    dataset:
-      name: qqp
-      split: train
-  - name: rte
-    dataset:
-      name: rte
-      split: train
-  - name: sst2
-    dataset:
-      name: sst2
-      split: train
+  cola:
+    _target_: ${..._dataset_loader}
+    name: cola
+    split: train
+  mnli:
+    _target_: ${..._dataset_loader}
+    name: mnli
+    split: train
+  mrpc:
+    _target_: ${..._dataset_loader}
+    name: mrpc
+    split: train
+  qnli:
+    _target_: ${..._dataset_loader}
+    name: qnli
+    split: train
+  qqp:
+    _target_: ${..._dataset_loader}
+    name: qqp
+    split: train
+  rte:
+    _target_: ${..._dataset_loader}
+    name: rte
+    split: train
+  sst2:
+    _target_: ${..._dataset_loader}
+    name: sst2
+    split: train
+
+tokenizer:
+  _target_: fusion_bench.modelpool.huggingface_gpt2_classification.load_gpt2_tokenizer
+  pretrained_model_name_or_path: gpt2

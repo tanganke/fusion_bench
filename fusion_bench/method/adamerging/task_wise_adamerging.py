@@ -11,15 +11,14 @@ from torch import Tensor, nn
 from torch.utils.data import DataLoader
 from tqdm.autonotebook import tqdm
 
+from fusion_bench.compat.method import ModelFusionAlgorithm
+from fusion_bench.compat.modelpool import ModelPool
 from fusion_bench.models.wrappers.task_wise_fusion import (
     TaskWiseMergedModel,
     get_task_wise_weights,
 )
 from fusion_bench.utils.state_dict_arithmetic import state_dict_sub
-
-from ...modelpool import ModelPool
-from ...utils.type import StateDictType
-from ..base_algorithm import ModelFusionAlgorithm
+from fusion_bench.utils.type import StateDictType
 
 log = logging.getLogger(__name__)
 

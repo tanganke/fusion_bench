@@ -6,13 +6,14 @@ from typing import Dict, List, Tuple
 
 import torch
 import torch.nn.functional as F
+from omegaconf import OmegaConf
 from torch import Tensor, nn
 from tqdm.auto import tqdm
 
-from fusion_bench.method import ModelFusionAlgorithm
+from fusion_bench.method import BaseModelFusionAlgorithm
 from fusion_bench.method.simple_average import simple_average
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
-from fusion_bench.modelpool import ModelPool, to_modelpool
+from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.models.utils import get_attr, set_attr
 from fusion_bench.utils.parameters import print_parameters
 
@@ -267,11 +268,58 @@ class SmileMoELinear(nn.Module):
         )
 
 
-class SmileUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
+class SmileUpscalingAlgorithm(
+    SimpleProfilerMixin,
+    BaseModelFusionAlgorithm,
+):
     _linear_layer_cls = (nn.Linear,)
+    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+        "device": "device",
+        "upscaling_accelerator": "upscaling_accelerator",
+        "full_matrices": "full_matrices",
+        "gate_k": "gate_k",
+        "k": "k",
+        "top_k": "top_k",
+        "routing_use_diff": "routing_use_diff",
+        "average_experts": "average_experts",
+        "model_path": "model_path",
+    }
+
+    def __init__(
+        self,
+        *,
+        device: str = "cuda",
+        upscaling_accelerator: str = None,
+        full_matrices: bool = True,
+        gate_k: int = 256,
+        k: int = 256,
+        top_k: int = 1,
+        routing_use_diff: bool = True,
+        average_experts: bool = False,
+        model_path: str = None,
+        **kwargs,
+    ):
+        super().__init__()
+        self.device = device
+        self.upscaling_accelerator = upscaling_accelerator
+        self.full_matrices = full_matrices
+        self.gate_k = gate_k
+        self.k = k
+        self.top_k = top_k
+        self.routing_use_diff = routing_use_diff
+        self.average_experts = average_experts
+        self.model_path = model_path
+        for key, value in kwargs.items():
+            log.warning(f"Unrecognized argument: {key}")
+            setattr(self, key, value)
+
+        # print `self.config` as yaml
+        print(f"=== Config for `{type(self).__name__}` ===")
+        print(OmegaConf.to_yaml(self.config))
+        print(f"=== Config for `{type(self).__name__}` ===")
 
     @torch.no_grad()
-    def run(self, modelpool: ModelPool):
+    def run(self, modelpool: BaseModelPool):
         """
         Executes the upscaling process.
 
@@ -281,7 +329,8 @@ class SmileUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
         Returns:
             nn.Module: The upscaled model.
         """
-        modelpool = to_modelpool(modelpool)
+        if not isinstance(modelpool, BaseModelPool):
+            modelpool = BaseModelPool(modelpool)
 
         if self.config.model_path is not None and os.path.exists(
             self.config.model_path
@@ -356,9 +405,9 @@ class SmileUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
                 gate_k=config.gate_k,
                 k=config.k,
                 top_k=config.top_k,
-                routing_use_diff=self.config.routing_use_diff,
-                full_matrices=self.config.full_matrices,
-                upscaling_accelerator=self.config.upscaling_accelerator,
+                routing_use_diff=self.routing_use_diff,
+                full_matrices=self.full_matrices,
+                upscaling_accelerator=self.upscaling_accelerator,
             )
         except ExpertNotTrainedError as e:
             print(f"skip {name} because the experts are not trained.")

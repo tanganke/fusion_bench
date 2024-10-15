@@ -6,4 +6,4 @@ We report the exact match accuracy metric for CoLA, MNLI, MRPC, QNLI, QQP, RTE, 
 
 ## References
 
-::: fusion_bench.taskpool.flan_t5_glue_text_generation
+::: fusion_bench.compat.taskpool.flan_t5_glue_text_generation

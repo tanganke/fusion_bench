@@ -10,10 +10,10 @@ from torch.utils.data import DataLoader
 from transformers import CLIPModel, CLIPProcessor
 
 from fusion_bench.dataset import CLIPDataset, load_dataset_from_config
-from fusion_bench.modelpool.huggingface_clip_vision import HuggingFaceClipVisionPool
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.utils import timeit_context
+from fusion_bench.modelpool import CLIPVisionModelPool
 
 from .task_wise_adamerging import TaskWiseAdaMergingAlgorithm
 
@@ -38,24 +38,12 @@ class InfiniteDataLoader:
 
 
 class CLIPTaskWiseAdaMergingAlgorithm(TaskWiseAdaMergingAlgorithm):
-    modelpool: HuggingFaceClipVisionPool = None
+    modelpool: CLIPVisionModelPool = None
     _clip_processor: CLIPProcessor = None
     zeroshot_weights = {}
 
     def __init__(self, algorithm_config: DictConfig):
         super().__init__(algorithm_config)
-
-    def get_task_config(self, task):
-        for task_config in self.modelpool.config.tta_datasets:
-            if task_config.name == task:
-                return task_config
-        raise ValueError(f"Task {task} not found in config")
-
-    def prepare_dataset_config(self, dataset_config: DictConfig):
-        if not hasattr(dataset_config, "type"):
-            with open_dict(dataset_config):
-                dataset_config["type"] = self.modelpool.config.dataset_type
-        return dataset_config
 
     @functools.cache
     def get_test_dataset(self, task: str):
@@ -63,10 +51,8 @@ class CLIPTaskWiseAdaMergingAlgorithm(TaskWiseAdaMergingAlgorithm):
         Load the test dataset for the task.
         This method is cached, so the dataset is loaded only once.
         """
-        dataset_config = self.get_task_config(task)["dataset"]
-        dataset_config = self.prepare_dataset_config(dataset_config)
-        log.info(f"Loading test dataset: {dataset_config.name}")
-        dataset = load_dataset_from_config(dataset_config)
+        log.info(f"Loading test dataset: {task}")
+        dataset = self.modelpool.load_test_dataset(task)
         dataset = CLIPDataset(dataset, self._clip_processor)
         return dataset
 
@@ -88,31 +74,34 @@ class CLIPTaskWiseAdaMergingAlgorithm(TaskWiseAdaMergingAlgorithm):
         Here we load the CLIP processor and construct the zero-shot classification head for each task.
         """
         clip_model_config = self.modelpool.get_model_config("_pretrained_")
+        pretrained_path = (
+            clip_model_config.pretrained_model_name_or_path
+            if hasattr(clip_model_config, "pretrained_model_name_or_path")
+            else clip_model_config.path
+        )
 
         with timeit_context("Loading CLIP processor and pretrained CLIP model."):
-            self._clip_processor = CLIPProcessor.from_pretrained(clip_model_config.path)
-            clip_model = CLIPModel.from_pretrained(clip_model_config.path)
+            self._clip_processor = CLIPProcessor.from_pretrained(pretrained_path)
+            clip_model: CLIPModel = CLIPModel.from_pretrained(pretrained_path)
 
             clip_classifier = HFCLIPClassifier(clip_model, self._clip_processor)
             self.visual_projection = clip_model.visual_projection.requires_grad_(False)
-            self.logit_scale = clip_model.logit_scale.exp()
+            self.logit_scale_exp = clip_model.logit_scale.exp()
             if self._fabric is not None:
                 self.visual_projection = self._fabric.to_device(self.visual_projection)
-                self.logit_scale = self._fabric.to_device(self.logit_scale)
+                self.logit_scale_exp = self._fabric.to_device(self.logit_scale_exp)
 
         for task in self.modelpool.model_names:
             cache_file = os.path.join(
                 self.config.cache_dir,
-                f"{os.path.basename(clip_model_config.path)}_{task}_zeroshot_weights.pt",
+                f"{os.path.basename(pretrained_path)}_{task}_zeroshot_weights.pt",
             )
             if os.path.exists(cache_file):
                 log.info(f"Loading cached zeroshot weights for task: {task}")
                 zeroshot_weights = torch.load(cache_file, map_location="cpu")
             else:
                 log.info(f"Construct zero shot classification head for task: {task}")
-                classnames, templates = get_classnames_and_templates(
-                    self.get_task_config(task)["dataset"].name
-                )
+                classnames, templates = get_classnames_and_templates(task)
                 clip_classifier.set_classification_task(classnames, templates)
                 zeroshot_weights = clip_classifier.zeroshot_weights
                 log.info(f"save zeroshot weights to {cache_file}")
@@ -134,7 +123,9 @@ class CLIPTaskWiseAdaMergingAlgorithm(TaskWiseAdaMergingAlgorithm):
         image_embeds = image_embeds / image_embeds.norm(p=2, dim=-1, keepdim=True)
 
         # cosine similarity
-        logits_per_text = torch.matmul(text_embeds, image_embeds.t()) * self.logit_scale
+        logits_per_text = (
+            torch.matmul(text_embeds, image_embeds.t()) * self.logit_scale_exp
+        )
         logits_per_image = logits_per_text.t()
 
         return logits_per_image

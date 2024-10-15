@@ -121,11 +121,7 @@ This is useful for tab completion in the shell. You can install shell completion
 
         By passing `merged_model_save_path` to the `fusion_bench` command, only the model and the save path will be passed to the `modelpool.save_model` method. For example, although the `AutoModelForCausalLMPool` class has a `save_model` method that can take additional arguments, such as `push_to_hub` and `save_tokenizer`, these arguments will not be passed to the `save_model` method. If you want to pass additional arguments to the `save_model` method, you need to implement the logic in method class.
 
-        ::: fusion_bench.modelpool.ModelPool.save_model
-            options:
-              show_root_full_path: true
-              show_root_toc_entry: false
-        ::: fusion_bench.modelpool.huggingface_llm.AutoModelForCausalLMPool.save_model
+        ::: fusion_bench.modelpool.CausalLMPool.save_model
             options:
               show_root_full_path: true
               show_root_toc_entry: false
@@ -281,8 +277,3 @@ Debugging in PyCharm with arguments needs to be configured in the `Run/Debug Con
     ![alt text](images/pycharm_debug_2.png)
 3. Provide the name, absolute path of the script (`fusion_bench/scripts/cli.py`) or select the script by clicking three dots (green arrow), script parameters, and python interpreter.  
     ![alt text](images/pycharm_debug_3.png)
-
-
-## References
-
-::: fusion_bench.scripts.cli.run_model_fusion

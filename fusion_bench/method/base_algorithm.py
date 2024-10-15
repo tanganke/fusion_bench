@@ -1,20 +1,22 @@
+import logging
 from abc import ABC, abstractmethod
 from typing import Optional
 
 from omegaconf import DictConfig
 
-__all__ = ["ModelFusionAlgorithm"]
+from fusion_bench.mixins import BaseYAMLSerializableModel
+from fusion_bench.modelpool import BaseModelPool
+
+__all__ = ["BaseModelFusionAlgorithm"]
+
+log = logging.getLogger(__name__)
 
 
-class ModelFusionAlgorithm(ABC):
-    def __init__(self, algorithm_config: Optional[DictConfig] = None):
-        super().__init__()
-        if algorithm_config is None:
-            algorithm_config = DictConfig({})
-        self.config = algorithm_config
+class BaseModelFusionAlgorithm(BaseYAMLSerializableModel):
+    _program = None
 
     @abstractmethod
-    def run(self, modelpool):
+    def run(self, modelpool: BaseModelPool):
         """
         Fuse the models in the given model pool.
 

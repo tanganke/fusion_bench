@@ -11,7 +11,6 @@ torch.backends.cudnn.allow_tf32 = False
 
 ## SparseGPT: https://github.com/IST-DASLab/sparsegpt/tree/f5c25005a61f96a0933ca2f95705a963585aafaa
 class SparseGPT:
-
     def __init__(self, layer):
         self.layer = layer
         self.dev = self.layer.weight.device

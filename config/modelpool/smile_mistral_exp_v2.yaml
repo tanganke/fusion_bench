@@ -6,5 +6,4 @@ models:
     path: mistralai/Mistral-7B-v0.1
   - name: expert_1
     path: cognitivecomputations/dolphin-2.1-mistral-7b
-
 dtype: float16

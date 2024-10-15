@@ -12,8 +12,8 @@ import torch
 from torch import Tensor, nn
 from tqdm.autonotebook import tqdm
 
-from fusion_bench.method import ModelFusionAlgorithm
-from fusion_bench.modelpool import ModelPool, to_modelpool
+from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.modelpool import BaseModelPool
 
 log = logging.getLogger(__name__)
 
@@ -279,11 +279,33 @@ def regmean_merging(
     return merged_params
 
 
-class RegMeanAlgorithm(ModelFusionAlgorithm):
+class RegMeanAlgorithm(BaseModelFusionAlgorithm):
     _include_module_type = [nn.Linear]
+    _config_mapping = {
+        "num_regmean_examples": "num_regmean_examples",
+        "exclude_param_names_regex": "exclude_param_names_regex",
+        "reduce_non_diagonal_ratio": "reduce_non_diagonal_ratio",
+        "weight_transpose": "weight_transpose",
+    }
 
-    def run(self, modelpool: ModelPool):
-        modelpool = to_modelpool(modelpool)
+    def __init__(
+        self,
+        *,
+        num_regmean_examples: int,
+        exclude_param_names_regex: list,
+        reduce_non_diagonal_ratio: float,
+        weight_transpose: bool,
+        **kwargs,
+    ):
+        self.num_regmean_examples = num_regmean_examples
+        self.exclude_param_names_regex = exclude_param_names_regex
+        self.reduce_non_diagonal_ratio = reduce_non_diagonal_ratio
+        self.weight_transpose = weight_transpose
+        super().__init__(**kwargs)
+
+    def run(self, modelpool: BaseModelPool):
+        if not isinstance(modelpool, BaseModelPool):
+            modelpool = BaseModelPool(modelpool)
         self.modelpool = modelpool
         self.on_regmean_start()
 
@@ -323,7 +345,7 @@ class RegMeanAlgorithm(ModelFusionAlgorithm):
                 regmean_weights = self.get_regmean_weights(
                     name,
                     model,
-                    train_dataset=modelpool.get_train_dataset(name),
+                    train_dataset=modelpool.load_train_dataset(name),
                     linear_modules_to_merge=linear_modules_to_merge,
                 )
                 models_to_merge_regmean_weights_list.append(regmean_weights)
@@ -332,7 +354,7 @@ class RegMeanAlgorithm(ModelFusionAlgorithm):
         merged_params = merging_with_regmean_weights(
             models_to_merge_param_dict=models_to_merge_param_dict,
             models_to_merge_regmean_weights_list=models_to_merge_regmean_weights_list,
-            reduce_non_diagonal_ratio=self.config.reduce_non_diagonal_ratio,
+            reduce_non_diagonal_ratio=self.reduce_non_diagonal_ratio,
             weight_transpose=self.config.get("weight_transpose", True),
         )
 

@@ -11,9 +11,8 @@ import torch
 from torch import Tensor, nn
 from tqdm.autonotebook import tqdm
 
-from fusion_bench.modelpool import ModelPool, to_modelpool
-
-from ..base_algorithm import ModelFusionAlgorithm
+from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.modelpool import BaseModelPool
 
 log = logging.getLogger(__name__)
 
@@ -328,13 +327,37 @@ def filter_state_dict(
     return filtered_state_dict
 
 
-class FisherMergingAlgorithm(ModelFusionAlgorithm):
-    def run(self, modelpool: ModelPool):
+class FisherMergingAlgorithm(BaseModelFusionAlgorithm):
+
+    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+        "exclude_param_names_regex": "exclude_param_names_regex",
+        "normalize_fisher_weight": "normalize_fisher_weight",
+        "minimal_fisher_weight": "minimal_fisher_weight",
+        "num_fisher_examples": "num_fisher_examples",
+    }
+
+    def __init__(
+        self,
+        *,
+        exclude_param_names_regex,
+        normalize_fisher_weight,
+        minimal_fisher_weight,
+        num_fisher_examples,
+    ):
+        super().__init__()
+        self.exclude_param_names_regex = exclude_param_names_regex
+        self.normalize_fisher_weight = normalize_fisher_weight
+        self.minimal_fisher_weight = minimal_fisher_weight
+        self.num_fisher_examples = num_fisher_examples
+
+    def run(self, modelpool: BaseModelPool):
         log.info("Running Fisher Merging Algorithm")
-        modelpool = to_modelpool(modelpool)
-        assert modelpool._model_names, "model pool is empty"
+        if isinstance(modelpool, (dict, list, tuple)):
+            modelpool = BaseModelPool(modelpool)
+
+        assert len(modelpool) > 0, "model pool is empty"
         assert (
-            "_pretrained_" in modelpool._model_names
+            modelpool.has_pretrained
         ), "no pretrained model (base model) in the model pool"
 
         self.modelpool = modelpool
@@ -366,7 +389,7 @@ class FisherMergingAlgorithm(ModelFusionAlgorithm):
             model_to_merge_fisher_weights = self.get_fisher_weights(
                 model_name=name,
                 model=model,
-                train_dataset=modelpool.get_train_dataset(name),
+                train_dataset=modelpool.load_train_dataset(name),
                 param_names_to_merge=param_names_to_merge,
             )
 

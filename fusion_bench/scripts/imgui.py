@@ -1,9 +1,10 @@
-import dearpygui.dearpygui as dpg
 import argparse
 import functools
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Union, Iterable
+from typing import Dict, Iterable, List, Optional, Union
+
+import dearpygui.dearpygui as dpg
 import hydra
 from hydra import compose, initialize_config_dir
 from omegaconf import DictConfig, ListConfig, OmegaConf
@@ -11,7 +12,7 @@ from omegaconf import DictConfig, ListConfig, OmegaConf
 from fusion_bench.scripts.cli import _get_default_config_path
 
 # Keeping the ConfigGroupNode and AppState classes as they are
-from fusion_bench.scripts.webui import ConfigGroupNode, AppState, priority_iterable
+from fusion_bench.scripts.webui import AppState, ConfigGroupNode, priority_iterable
 
 
 class App:
