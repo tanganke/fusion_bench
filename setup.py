@@ -1,35 +1,41 @@
 from setuptools import setup, find_packages
-import toml
-
-# Load the pyproject.toml file
-with open("pyproject.toml", "r") as f:
-    pyproject = toml.load(f)
-
-# Extract metadata
-project = pyproject["project"]
-build_system = pyproject["build-system"]
-setuptools_config = pyproject["tool"]["setuptools"]
 
 setup(
-    name=project["name"],
-    version=project["version"],
-    description=project["description"],
-    long_description=open(project["readme"]).read(),
+    name="fusion_bench",
+    version="0.2.0",
+    description="A Comprehensive Benchmark of Deep Model Fusion",
+    long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    author=project["authors"][0]["name"],
-    author_email=project["authors"][0]["email"],
-    url=project["urls"]["Homepage"],
+    author="Anke Tang",
+    author_email="tang.anke@foxmail.com",
+    url="https://github.com/tanganke/fusion_bench",
     project_urls={
-        "Repository": project["urls"]["Repository"],
-        "Issues": project["urls"]["Issues"],
+        "Repository": "https://github.com/tanganke/fusion_bench",
+        "Homepage": "https://github.com/tanganke/fusion_bench",
+        "Issues": "https://github.com/tanganke/fusion_bench/issues",
     },
-    license=project["license"]["file"],
-    python_requires=project["requires-python"],
-    install_requires=project["dependencies"],
-    keywords=project["keywords"],
-    packages=find_packages(where=setuptools_config["package-dir"]["fusion_bench"]),
-    include_package_data=setuptools_config["include-package-data"],
-    package_data={"fusion_bench": setuptools_config["package-data"]["fusion_bench"]},
+    license="LICENSE",
+    python_requires=">=3.10",
+    install_requires=[
+        "hydra-core",
+        "torch>=2.0.0",
+        "lightning",
+        "transformers",
+        "datasets",
+        "peft",
+        "huggingface_hub",
+        "matplotlib",
+        "tensorboard",
+        "tqdm",
+        "rich",
+        "scipy",
+        "h5py",
+        "pytest",
+    ],
+    keywords=["deep learning", "model fusion", "benchmark"],
+    packages=find_packages(where="fusion_bench"),
+    include_package_data=True,
+    package_data={"fusion_bench": ["../fusion_bench_config/**/*"]},
     entry_points={
         "console_scripts": [
             "fusion_bench=fusion_bench.scripts.cli:main",
