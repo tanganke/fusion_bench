@@ -33,7 +33,7 @@ setup(
         "pytest",
     ],
     keywords=["deep learning", "model fusion", "benchmark"],
-    packages=find_packages(where="fusion_bench"),
+    packages=["fusion_bench"],
     include_package_data=True,
     package_data={"fusion_bench": ["../fusion_bench_config/**/*"]},
     entry_points={
