@@ -228,8 +228,8 @@ fusion_bench \
 
 ## Reference
 
-::: fusion_bench.method.we_moe.we_moe
-::: fusion_bench.method.we_moe.clip_we_moe
+::: fusion_bench.compat.method.we_moe.we_moe
+::: fusion_bench.compat.method.we_moe.clip_we_moe
 
 
 [^1]: Anke Tang et.al. ICML 2024. Merging Multi-Task Models via Weight-Ensembling Mixture of Experts. http://arxiv.org/abs/2402.00433
