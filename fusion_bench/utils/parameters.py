@@ -1,5 +1,4 @@
-import logging
-from typing import Callable, Iterable, List, Mapping, Optional, Union
+from typing import List, Mapping, Union
 
 import torch
 from torch import nn

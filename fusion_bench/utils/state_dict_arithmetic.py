@@ -1,10 +1,9 @@
 from collections import OrderedDict
-from copy import deepcopy
 from numbers import Number
 from typing import Dict, List, Union, cast
 
 import torch
-from torch import Tensor, nn
+from torch import Tensor
 
 from .parameters import check_parameters_all_equal
 from .type import StateDictType

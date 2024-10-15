@@ -1,6 +1,7 @@
+# flake8: noqa: F401
 import importlib
 
-from . import data, utils
+from . import data
 from .cache_utils import *
 from .devices import *
 from .dtype import parse_dtype
