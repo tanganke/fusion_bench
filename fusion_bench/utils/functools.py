@@ -1,5 +1,5 @@
 import functools
-from typing import Any, Callable, Tuple, Union
+from typing import Callable, Union
 
 from fusion_bench.utils import import_object
 

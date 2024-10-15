@@ -1,3 +1,4 @@
+# flake8: noqa: F401
 from . import (
     constants,
     dataset,
@@ -15,4 +16,4 @@ from . import (
 from .models import separate_io
 from .utils import parse_dtype, print_parameters, timeit_context
 
-__version__ = "0.2"
+__version__ = "0.2.0"
