@@ -1,7 +1,6 @@
+# flake8: noqa F401
 import sys
 from typing import TYPE_CHECKING
-
-from omegaconf import DictConfig
 
 from fusion_bench.utils.lazy_imports import LazyImporter
 

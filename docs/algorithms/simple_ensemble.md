@@ -35,3 +35,6 @@ fusion_bench method=simple_ensemble \
   taskpool=clip-vit-classification_TA8 
 ```
 
+## References
+
+::: fusion_bench.method.EnsembleAlgorithm

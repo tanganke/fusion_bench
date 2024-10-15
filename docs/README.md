@@ -19,6 +19,12 @@ description: A Comprehensive Benchmark of Deep Model Fusion
     However, this project is still in testing phase as the API may be subject to change. 
     Please report any issues you encounter.
 
+!!! bug "Breaking Changes"
+
+    Recent upgrade to v0.2.0 may cause some breaking changes.
+    You can install a specific version by `pip install fusion-bench==0.1.6` or checkout to a specific version by `git checkout v0.1.6`.
+    If you encounter any issues, please feel free to raise an issue.
+
 !!! note
     
     - Any questions or comments can be directed to the [GitHub Issues](https://github.com/tanganke/fusion_bench/issues) page for this project.
@@ -96,6 +102,14 @@ report = taskpool.evaluate(merged_model)
 ```
 
 For detailed information on the options available, you can refer to this [page](cli/fusion_bench.md).
+
+### Implmentation of Fusion Algorithms
+
+Working in progress.
+
+<!-- ```markdown -->
+<!-- --8<-- "docs/supported_algorithms.md" -->
+<!-- ``` -->
 
 ## General Structure of FusionBench
 

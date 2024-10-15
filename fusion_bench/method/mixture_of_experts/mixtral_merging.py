@@ -1,9 +1,8 @@
 import logging
-from typing import List, Optional, Union, cast
+from typing import List, Optional, Union, cast  # noqa: F401
 
 import torch
 from omegaconf import open_dict
-from torch import nn
 from transformers import (
     LlamaForCausalLM,
     LlamaModel,

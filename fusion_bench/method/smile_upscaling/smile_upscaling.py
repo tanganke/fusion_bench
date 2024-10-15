@@ -1,8 +1,7 @@
 import logging
 import os
-import re
 from copy import deepcopy
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple  # noqa: F401
 
 import torch
 import torch.nn.functional as F
@@ -409,7 +408,7 @@ class SmileUpscalingAlgorithm(
                 full_matrices=self.full_matrices,
                 upscaling_accelerator=self.upscaling_accelerator,
             )
-        except ExpertNotTrainedError as e:
+        except ExpertNotTrainedError:
             print(f"skip {name} because the experts are not trained.")
             return
         set_attr(pretrained_model, name_list, moe_linear)

@@ -2,7 +2,6 @@ import logging
 from typing import Optional
 
 import torch
-from torch import nn
 from tqdm.autonotebook import tqdm
 from transformers import (
     LlamaConfig,
@@ -139,6 +138,24 @@ class MixtralUpscalingAlgorithm(BaseModelFusionAlgorithm):
     It inherits from the ModelFusionAlgorithm class.
     """
 
+    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+        "num_experts": "num_experts",
+        "experts_per_token": "experts_per_token",
+        "save_checkpoint": "save_checkpoint",
+    }
+
+    def __init__(
+        self,
+        num_experts: int,
+        experts_per_token: int,
+        save_checkpoint: str,
+        **kwargs,
+    ):
+        self.num_experts = num_experts
+        self.experts_per_token = experts_per_token
+        self.save_checkpoint = save_checkpoint
+        super().__init__(**kwargs)
+
     @torch.no_grad()
     def _run(
         self, modelpool: BaseModelPool | LlamaModel | MistralModel
@@ -187,6 +204,24 @@ class MixtralForCausalLMUpscalingAlgorithm(BaseModelFusionAlgorithm):
     This class is responsible for upscaling a model to a MixtralForCausalLM.
     It inherits from the ModelFusionAlgorithm class.
     """
+
+    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+        "num_experts": "num_experts",
+        "experts_per_token": "experts_per_token",
+        "save_checkpoint": "save_checkpoint",
+    }
+
+    def __init__(
+        self,
+        num_experts: int,
+        experts_per_token: int,
+        save_checkpoint: str,
+        **kwargs,
+    ):
+        self.num_experts = num_experts
+        self.experts_per_token = experts_per_token
+        self.save_checkpoint = save_checkpoint
+        super().__init__(**kwargs)
 
     @torch.no_grad()
     def _run(
