@@ -1,8 +1,7 @@
 import logging
-import os
 import re
 from copy import deepcopy
-from typing import Dict, List
+from typing import Dict, List  # noqa: F401
 
 import torch
 from torch import Tensor, nn
@@ -11,6 +10,8 @@ from tqdm.auto import tqdm
 from fusion_bench.method import BaseModelFusionAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
+
+log = logging.getLogger(__name__)
 
 
 def _magnitude_prune(weight: Tensor, prune_ratio: float) -> Tensor:
@@ -48,7 +49,25 @@ def _is_name_matched(name: str, extract_names: List[str]):
     return False
 
 
-class MagnitudeDiffPruningAlgorithm(BaseModelFusionAlgorithm, SimpleProfilerMixin):
+class MagnitudeDiffPruningAlgorithm(
+    BaseModelFusionAlgorithm,
+    SimpleProfilerMixin,
+):
+    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+        "prune_ratio": "prune_ratio",
+        "extract_names": "extract_names",
+    }
+
+    def __init__(
+        self,
+        prune_ratio: float,
+        extract_names: List[str] = None,
+        **kwargs,
+    ):
+        self.prune_ratio = prune_ratio
+        self.extract_names = extract_names
+        super().__init__(**kwargs)
+
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool):
         if not isinstance(modelpool, BaseModelPool):
@@ -70,8 +89,8 @@ class MagnitudeDiffPruningAlgorithm(BaseModelFusionAlgorithm, SimpleProfilerMixi
 
     def magnitude_prune(
         self,
-        pretrained_model,
-        finetuned_model,
+        pretrained_model: nn.Module,
+        finetuned_model: nn.Module,
         in_place: bool = True,
     ):
         if in_place:
@@ -79,9 +98,9 @@ class MagnitudeDiffPruningAlgorithm(BaseModelFusionAlgorithm, SimpleProfilerMixi
         else:
             model = deepcopy(pretrained_model)
 
-        if self.config.extract_names is not None:
+        if self.extract_names is not None:
             extract_names: List[str] = (
-                self.config.extract_names
+                self.extract_names
             )  # regular expressions for the names of the parameters
         else:
             # extract the weight matrix of each linear layer
@@ -102,7 +121,7 @@ class MagnitudeDiffPruningAlgorithm(BaseModelFusionAlgorithm, SimpleProfilerMixi
             # Prune the diff parameter if its name matches
             if _is_name_matched(name, extract_names):
                 w_diff = ft_state_dict[name] - param
-                w_diff = _magnitude_prune(w_diff, prune_ratio=self.config.prune_ratio)
+                w_diff = _magnitude_prune(w_diff, prune_ratio=self.prune_ratio)
                 param.data = param + w_diff
 
         return model

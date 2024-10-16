@@ -43,7 +43,7 @@ Here is a table of supported algorithms in the benchmark:
 
     | Algorithm Name    | Class                                                                      | Description                                                                             |
     | ----------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-    | Simple Ensemble   | [EnsembleAlgorithm][fusion_bench.method.SimpleEnsembleAlgorithm]                 | Simple ensemble algorithm that averages the predictions of multiple models.             |
+    | Simple Ensemble   | [SimpleEnsembleAlgorithm][fusion_bench.method.SimpleEnsembleAlgorithm]                 | Simple ensemble algorithm that averages the predictions of multiple models.             |
     | Weighted Ensemble | [WeightedEnsembleAlgorithm][fusion_bench.method.WeightedEnsembleAlgorithm] | Ensemble algorithm that averages the predictions of multiple models with given weights. |
 
 === "Others"
