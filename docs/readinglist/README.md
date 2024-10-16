@@ -20,6 +20,11 @@ This collection is designed to serve as a valuable starting point for those inte
 
 - [:simple-github:](https://github.com/EnnengYang/Awesome-Model-Merging-Methods-Theories-Applications) 
     E. Yang et al., “Model Merging in LLMs, MLLMs, and Beyond: Methods, Theories, Applications and Opportunities.” [arXiv, Aug. 14, 2024.](https://arxiv.org/pdf/2408.07666)
+
+    ??? quote
+
+        ![alt text](images/enneng2024survey.png){ width=900px }
+
 - :star: Yadav et al. A Survey on Model MoErging: Recycling and Routing Among Specialized Experts for Collaborative Learning [arXiv:2408.07057](http://arxiv.org/abs/2408.07057)
 - :star: 
     W. Li, Y. Peng, M. Zhang, L. Ding, H. Hu, and L. Shen, “Deep Model Fusion: A Survey.” [arXiv, Sep. 27, 2023. doi: 10.48550/arXiv.2309.15698.](http://arxiv.org/abs/2309.15698)
