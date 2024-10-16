@@ -1,5 +1,5 @@
 import logging
-from abc import ABC, abstractmethod
+from abc import ABC
 from copy import deepcopy
 from typing import Dict, List, Optional, Union
 

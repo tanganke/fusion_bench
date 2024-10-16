@@ -28,20 +28,20 @@ _import_structure = {
     ],
     "regmean": ["RegMeanAlgorithmForCLIP", "RegMeanAlgorithmForGPT2"],
     "ties_merging": ["TiesMergingAlgorithm"],
-    "adamerging": [
-        "CLIPTaskWiseAdaMergingAlgorithm",
-        "CLIPLayerWiseAdaMergingAlgorithm",
-    ],
+    # "adamerging": [
+    #     "CLIPTaskWiseAdaMergingAlgorithm",
+    #     "CLIPLayerWiseAdaMergingAlgorithm",
+    # ],
     "pwe_moe": [
         "PWEMoELinearScalarizationForCLIP",
         "PWEMoExactParetoOptimalForCLIP",
     ],
     # plug-and-play model merging methods
-    "concrete_subspace": [
-        "ConcreteTaskArithmeticAlgorithmForCLIP",
-        "ConcreteTaskWiseAdaMergingForCLIP",
-        "ConcreteLayerWiseAdaMergingForCLIP",
-    ],
+    # "concrete_subspace": [
+    #     "ConcreteTaskArithmeticAlgorithmForCLIP",
+    #     "ConcreteTaskWiseAdaMergingForCLIP",
+    #     "ConcreteLayerWiseAdaMergingForCLIP",
+    # ],
     # model mixing methods
     "depth_upscaling": ["DepthUpscalingAlgorithm", "DepthUpscalingForLlama"],
     "mixture_of_experts": [
@@ -73,18 +73,9 @@ _import_structure = {
 
 
 if TYPE_CHECKING:
-    from .adamerging import (
-        CLIPLayerWiseAdaMergingAlgorithm,
-        CLIPTaskWiseAdaMergingAlgorithm,
-    )
     from .analysis import TaskVectorCosSimilarity
     from .base_algorithm import BaseModelFusionAlgorithm
     from .classification import ImageClassificationFineTuningForCLIP
-    from .concrete_subspace import (
-        ConcreteLayerWiseAdaMergingForCLIP,
-        ConcreteTaskArithmeticAlgorithmForCLIP,
-        ConcreteTaskWiseAdaMergingForCLIP,
-    )
     from .dawe import DataAdaptiveWeightEnsemblingForCLIP
     from .depth_upscaling import DepthUpscalingAlgorithm, DepthUpscalingForLlama
     from .dummy import DummyAlgorithm

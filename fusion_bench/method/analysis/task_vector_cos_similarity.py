@@ -2,15 +2,25 @@ import pandas as pd
 import torch
 import torch.utils
 
-from fusion_bench.compat.modelpool import ModelPool
+from fusion_bench.method import BaseModelFusionAlgorithm
 from fusion_bench.modelpool import BaseModelPool
 
 
-class TaskVectorCosSimilarity(ModelPool):
+class TaskVectorCosSimilarity(BaseModelFusionAlgorithm):
     """
     This class is similar to the Dummy algorithm,
     but it also print (or save) the cosine similarity matrix between the task vectors of the models in the model pool.
     """
+
+    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+        "csv_save_path": "csv_save_path",
+        "plot_heatmap": "plot_heatmap",
+    }
+
+    def __init__(self, csv_save_path: str, plot_heatmap: bool, **kwargs):
+        self.csv_save_path = csv_save_path
+        self.plot_heatmap = plot_heatmap
+        super().__init__(**kwargs)
 
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool):
@@ -46,15 +56,15 @@ class TaskVectorCosSimilarity(ModelPool):
         )
 
         print(cos_sim_df)
-        if self.config.save_to_csv is not None:
-            cos_sim_df.to_csv(self.config.save_to_csv)
+        if self.csv_save_path is not None:
+            cos_sim_df.to_csv(self.csv_save_path)
 
-        if self.config.plot_heatmap:
-            self.plot_heatmap(self, cos_sim_df)
+        if self.plot_heatmap:
+            self.plot_and_show_heatmap(self, cos_sim_df)
 
         return pretrained_model
 
-    def plot_heatmap(self, data: pd.DataFrame, figsize=(4, 3)):
+    def plot_and_show_heatmap(self, data: pd.DataFrame, figsize=(4, 3)):
         """
         This function plots a heatmap of the provided data using seaborn.
 
