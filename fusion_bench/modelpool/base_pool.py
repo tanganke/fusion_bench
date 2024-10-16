@@ -145,6 +145,13 @@ class BaseModelPool(BaseYAMLSerializableModel):
             )
         return model
 
+    def load_pretrained_model(self, *args, **kwargs):
+        assert (
+            self.has_pretrained
+        ), "No pretrained model available. Check `_pretrained_` is in the `models` key."
+        model = self.load_model("_pretrained_", *args, **kwargs)
+        return model
+
     def load_pretrained_or_first_model(self, *args, **kwargs):
         """
         Load the pretrained model if available, otherwise load the first available model.

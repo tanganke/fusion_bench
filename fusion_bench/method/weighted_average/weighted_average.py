@@ -37,9 +37,17 @@ class WeightedAverageAlgorithm(BaseModelFusionAlgorithm, SimpleProfilerMixin):
         "weights": "weights",
     }
 
-    def __init__(self, normalize: bool, weights: List[float], **kwargs):
+    def __init__(
+        self,
+        normalize: bool,
+        weights: List[float],
+        verbose: bool = True,
+        **kwargs,
+    ):
         self.normalize = normalize
         self.weights = weights
+        self.verbose = verbose
+        log.disabled = not self.verbose
         super().__init__(**kwargs)
 
     @override
@@ -70,7 +78,8 @@ class WeightedAverageAlgorithm(BaseModelFusionAlgorithm, SimpleProfilerMixin):
             )
         if self.normalize:
             weights = weights / np.sum(weights)
-        print(f"weights: {weights}, normalized: {self.normalize}")
+        if self.verbose:
+            print(f"weights: {weights}, normalized: {self.normalize}")
 
         sd: Optional[StateDictType] = None
         forward_model = None
@@ -88,5 +97,6 @@ class WeightedAverageAlgorithm(BaseModelFusionAlgorithm, SimpleProfilerMixin):
                     )
 
         forward_model.load_state_dict(sd)
-        self.print_profile_summary()
+        if self.verbose:
+            self.print_profile_summary()
         return forward_model

@@ -1,5 +1,7 @@
 from typing import List
 
+from torch import nn
+
 
 def del_attr(obj, names: List[str]):
     """
@@ -45,3 +47,26 @@ def get_attr(obj, names: List[str]):
         return getattr(obj, names[0])
     else:
         return get_attr(getattr(obj, names[0]), names[1:])
+
+
+def find_layers_with_type(
+    module: nn.Module,
+    layer_types=[nn.Linear],
+    prefix="",
+):
+    """
+    Recursively find the layers of a certain type in a module.
+
+    Args:
+        module (nn.Module): PyTorch module.
+        layer_types (list): List of layer types to find.
+        prefix (str): A prefix to add to the layer names.
+
+    Returns:
+        dict: Dictionary of layers of the given type(s) within the module.
+    """
+    res = {}
+    for name, submodule in module.named_modules(prefix=prefix):
+        if isinstance(submodule, tuple(layer_types)):
+            res[name] = submodule
+    return res
