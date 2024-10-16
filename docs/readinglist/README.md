@@ -86,6 +86,18 @@ Mode connectivity is such an important concept in model merging that it deserves
         ![alt text](images/pwe_moe.png){ width=800px }
 
 - Rame et al. Rewarded soups: towards Pareto-optimal alignment by interpolating weights fine-tuned on diverse rewards [arXiv:2306.04488](http://arxiv.org/abs/2306.04488)
+- Huang et al. LoraHub: Efficient Cross-Task Generalization via Dynamic LoRA Composition [arXiv:2307.13269](http://arxiv.org/abs/2307.13269)
+
+    ??? quote
+
+        ![alt text](images/lorahub.png)
+
+- Wu et al. Pi-Tuning: Transferring Multimodal Foundation Models with Optimal Multi-task Interpolation
+        
+    ??? quote
+
+        ![alt text](images/pituning.png)
+
 - Chronopoulou et al. AdapterSoup: Weight Averaging to Improve Generalization of Pretrained Language Models [arXiv:2302.07027](http://arxiv.org/abs/2302.07027)
 
     ??? quote
@@ -130,6 +142,9 @@ Mode connectivity is such an important concept in model merging that it deserves
         ![alt text](images/branch_and_merging_alg.png){ width=450px }
 
 - :llama: Lu et al. Online Merging Optimizers for Boosting Rewards and Mitigating Tax in Alignment [arXiv:2405.17931](http://arxiv.org/abs/2405.17931)
+- Izmailov et al. Averaging Weights Leads to Wider Optima and Better Generalization
+- Kaddour et al. Stop Wasting My Time! Saving Days of ImageNet and BERT Training with Latest Weight Averaging [arXiv:2209.14981](http://arxiv.org/abs/2209.14981)
+- Zhang et al. Lookahead Optimizer: k steps forward, 1 step back [http://arxiv.org/abs/1907.08610](http://arxiv.org/abs/1907.08610)
 
 ## Model Mixing/Upscaling/Expansion
 
