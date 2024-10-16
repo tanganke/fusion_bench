@@ -26,22 +26,80 @@ It provides a common interface for different fusion techniques, allowing for sea
 
 #### Example Usage
 
+Implement your own model fusion algorithm:
+
 ```python
-from ..method import load_algorithm_from_config
-from ..modelpool import load_modelpool_from_config
+from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.modelpool import BaseModelPool
 
-def run_model_fusion(cfg: DictConfig):
-    modelpool = load_modelpool_from_config(cfg.modelpool)
-    algorithm = load_algorithm_from_config(cfg.method)
-    merged_model = algorithm.run(modelpool)
+class DerivedModelFusionAlgorithm(BaseModelFusionAlgorithm):
+    """
+    An example of a derived model fusion algorithm.
+    """
 
-    if hasattr(cfg, "taskpool") and cfg.taskpool is not None:
-        taskpool = load_taskpool_from_config(cfg.taskpool)
-        taskpool.evaluate(merged_model)
-    else:
-        print("No task pool specified. Skipping evaluation.")
+    # _config_mapping maps the attribution to the corresponding key in the configuration file.
+    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+        "hyperparam_attr_1": "hyperparam_1",
+        "hyperparam_attr_2": "hyperparam_2",
+    }
+
+    def __init__(self, hyperparam_1, hyperparam_2, **kwargs):
+        self.hyperparam_attr_1 = hyperparam_1
+        self.hyperparam_attr_2 = hyperparam_2
+        super().__init__(**kwargs)
+
+    def run(self, modelpool: BaseModelPool):
+        # implement the fusion algorithm here
+        raise NotImplementedError(
+            "DerivedModelFusionAlgorithm.run() is not implemented."
+        )
+```
+
+We provide a simple example to illustrate how the algorithm is used in the FusionBench as follows:
+
+```python
+import logging
+from typing import Dict, Optional
+from omegaconf import DictConfig
+
+from fusion_bench.utils import instantiate
+
+log = logging.getLogger(__name__)
+
+def run_model_fusion(
+    method_config: DictConfig,
+    modelpool_config: DictConfig,
+    taskpool_config: Optional[DictConfig] = None,
+    seed: Optional[int] = None,
+    print_config: bool = True,
+    **kwargs
+):
+    """
+    Run the model fusion process.
+
+    Args:
+        method_config: Configuration for the fusion method.
+        modelpool_config: Configuration for the model pool.
+        taskpool_config: Configuration for the task pool (optional).
+    """
+    # Instantiate components: modelpool, method, and taskpool
+    modelpool = instantiate(modelpool_config)
+    method = instantiate(method_config)
+    taskpool = None
+    if taskpool_config is not None:
+        taskpool = instantiate(taskpool_config)
+
+    # Run fusion
+    merged_model = method.run(modelpool)
+
+    # Evaluate if taskpool is provided
+    if taskpool is not None:
+        report = taskpool.evaluate(merged_model)
 ```
 
 In summary, the Fusion Algorithm module is vital for the model merging operations within FusionBench, leveraging sophisticated techniques to ensure optimal fusion and performance evaluation of deep learning models. This capability makes it an indispensable tool for researchers and practitioners focusing on model fusion strategies.
 
 
+### References
+
+::: fusion_bench.method.BaseModelFusionAlgorithm

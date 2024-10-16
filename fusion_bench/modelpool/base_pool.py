@@ -65,7 +65,7 @@ class BaseModelPool(BaseYAMLSerializableModel):
         return "_pretrained_" in self._models
 
     @property
-    def all_model_names(self):
+    def all_model_names(self) -> List[str]:
         """
         Get the names of all models in the pool, including special models.
 
@@ -75,7 +75,7 @@ class BaseModelPool(BaseYAMLSerializableModel):
         return [name for name in self._models]
 
     @property
-    def model_names(self):
+    def model_names(self) -> List[str]:
         """
         Get the names of regular models, excluding special models.
 

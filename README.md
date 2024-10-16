@@ -71,6 +71,56 @@ The CLI's design allows for easy extension to new fusion methods, model types, a
 
 Read the [CLI documentation](https://tanganke.github.io/fusion_bench/cli/fusion_bench/) for more information.
 
+## Implement your own model fusion algorithm
+
+```python
+from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.modelpool import BaseModelPool
+
+class DerivedModelFusionAlgorithm(BaseModelFusionAlgorithm):
+    """
+    An example of a derived model fusion algorithm.
+    """
+
+    # _config_mapping maps the attribution to the corresponding key in the configuration file.
+    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+        "hyperparam_attr_1": "hyperparam_1",
+        "hyperparam_attr_2": "hyperparam_2",
+    }
+
+    def __init__(self, hyperparam_1, hyperparam_2, **kwargs):
+        self.hyperparam_attr_1 = hyperparam_1
+        self.hyperparam_attr_2 = hyperparam_2
+        super().__init__(**kwargs)
+
+    def run(self, modelpool: BaseModelPool):
+        # modelpool is an object that responsible for managing the models and dataset to be loaded.
+        # implement the fusion algorithm here.
+        raise NotImplementedError(
+            "DerivedModelFusionAlgorithm.run() is not implemented."
+        )
+```
+
+A corresponding configuration file should be created to specify the class and hyperparameters of the algorithm. 
+Here we assume the configuration file is placed at `config/method/your_algorithm_config.yaml`.
+
+```yaml
+_target_: path_to_the_module.DerivedModelFusionAlgorithm
+
+hyperparam_1: some_value
+hyperparam_2: another_value
+```
+
+Use the algorithm in the FusionBench:
+
+```bash
+fusion_bench \
+  method=your_algorithm_config \
+  method.hyperparam_1=you_can_override_this \
+  method.hyperparam_2=and_this \
+  ... # other configurations
+```
+
 ### FusionBench Command Generator WebUI (for v0.1.x)
 
 FusionBench Command Generator is a user-friendly web interface for generating FusionBench commands based on configuration files. 
