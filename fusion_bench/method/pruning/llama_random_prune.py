@@ -1,14 +1,13 @@
-from typing import Literal, Optional, Union
+from typing import Literal, Optional, Union  # noqa: F401
 
 import torch
-from torch import Dict, Tensor, nn
+from torch import Dict, nn
 from tqdm.auto import tqdm
 from transformers import LlamaForCausalLM, LlamaModel
 
 from fusion_bench.method import BaseModelFusionAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import CausalLMPool
-from fusion_bench.utils.dtype import parse_dtype
 
 from . import prune_utils
 from .prune_utils import PruningType, find_linear_layers

@@ -18,7 +18,7 @@ from transformers import (
 
 from fusion_bench.dataset.clip_dataset import CLIPDataset
 from fusion_bench.method import BaseModelFusionAlgorithm
-from fusion_bench.compat.method.adamerging.entropy_loss import entropy_loss
+from fusion_bench.method.adamerging.entropy_loss import entropy_loss
 from fusion_bench.mixins import CLIPClassificationMixin
 from fusion_bench.modelpool import CLIPVisionModelPool
 from fusion_bench.utils import timeit_context

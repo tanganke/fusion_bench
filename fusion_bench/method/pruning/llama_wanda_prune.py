@@ -1,13 +1,9 @@
 import logging
-import os
-import re
 from abc import abstractmethod
-from copy import deepcopy
-from typing import Dict, List, Literal, Optional, Tuple, cast
+from typing import Dict, List, Literal, Optional, Tuple, cast  # noqa: F401
 
 import torch
 import torch.utils.hooks
-from omegaconf import DictConfig
 from torch import Tensor, nn
 from tqdm.auto import tqdm
 from transformers import LlamaForCausalLM
@@ -16,7 +12,7 @@ from fusion_bench.method import BaseModelFusionAlgorithm
 from fusion_bench.method.pruning.wanda_utils.data import get_loaders
 from fusion_bench.method.pruning.wanda_utils.prune import prepare_calibration_input
 from fusion_bench.mixins import SimpleProfilerMixin
-from fusion_bench.modelpool import BaseModelPool, CausalLMPool
+from fusion_bench.modelpool import CausalLMPool
 from fusion_bench.utils import timeit_context
 from fusion_bench.utils.cache_utils import cache_to_disk
 
@@ -27,7 +23,6 @@ from .prune_utils import (
     semistructured_magnitude_prune_,
     unstructured_magnitude_prune_,
 )
-from .wanda_utils.prune import llama_prune_wanda_
 
 log = logging.getLogger(__name__)
 
@@ -126,7 +121,6 @@ class WandaPruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
         self.model_save_path = model_save_path
 
     def run(self, modelpool: CausalLMPool):
-        config = self.config
 
         # load pre-trained model or the first model in the pool
         with self.profile("load_model"):
@@ -201,7 +195,8 @@ class WandaPruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
             if (
                 hasattr(model, "hf_device_map")
                 and f"model.layers.{layer_idx}" in model.hf_device_map
-            ):  ## handle the case for llama-30B and llama-65B, when the device map has multiple GPUs;
+            ):
+                # handle the case for llama-30B and llama-65B, when the device map has multiple GPUs;
                 dev = model.hf_device_map[f"model.layers.{layer_idx}"]
                 inps, outs, attention_mask, position_ids = (
                     inps.to(dev),

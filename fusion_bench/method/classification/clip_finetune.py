@@ -32,21 +32,22 @@ from omegaconf import OmegaConf
 from peft import LoraConfig, PeftModel, get_peft_model
 from peft.tuners.lora import LoraLayer
 from safetensors.torch import save_file
-from torch import Tensor, nn
+from torch import nn
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 from transformers.models.clip.modeling_clip import CLIPVisionTransformer
 
 from fusion_bench import print_parameters
-from fusion_bench.method import ModelFusionAlgorithm
+from fusion_bench.compat.method import ModelFusionAlgorithm
+from fusion_bench.compat.modelpool import to_modelpool
+from fusion_bench.compat.modelpool.huggingface_clip_vision import (
+    HuggingFaceClipVisionPool,
+)
+from fusion_bench.mixins import CLIPClassificationMixin
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
-from fusion_bench.modelpool import to_modelpool
-from fusion_bench.modelpool.huggingface_clip_vision import HuggingFaceClipVisionPool
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.models.linearized.linearized_model_utils import LinearizedModelWraper
-from fusion_bench.tasks.clip_classification import get_classnames_and_templates
-from fusion_bench.tasks.clip_classification.clip_mixin import CLIPClassificationMixin
 from fusion_bench.utils.data import InfiniteDataLoader
 
 

@@ -2,12 +2,11 @@ import logging
 from typing import Dict, List, Mapping, Optional, TypeVar, Union  # noqa: F401
 
 from typing_extensions import override
-from fusion_bench import timeit_context
 
+from fusion_bench import timeit_context
 from fusion_bench.method import TaskArithmeticAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import CausalLMBackbonePool, CausalLMPool
-
 
 log = logging.getLogger(__name__)
 

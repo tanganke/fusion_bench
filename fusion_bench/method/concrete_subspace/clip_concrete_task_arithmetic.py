@@ -12,26 +12,25 @@ fusion_bench \
 
 import logging
 import os
-from copy import deepcopy
 
 import torch
 from tqdm.autonotebook import tqdm
 
-from fusion_bench import separate_io
-from fusion_bench.method import ModelFusionAlgorithm
+from fusion_bench.compat.method import ModelFusionAlgorithm
+from fusion_bench.compat.modelpool import to_modelpool
+from fusion_bench.compat.modelpool.huggingface_clip_vision import (
+    HuggingFaceClipVisionPool,
+)
 from fusion_bench.method.adamerging.entropy_loss import entropy_loss
+from fusion_bench.mixins import CLIPClassificationMixin
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
-from fusion_bench.modelpool import ModelPool, to_modelpool
-from fusion_bench.modelpool.huggingface_clip_vision import HuggingFaceClipVisionPool
 from fusion_bench.models.masks import MaskModel, mask_sparsity
 from fusion_bench.models.wrappers.task_wise_fusion import (
     TaskWiseMergedModel,
     get_task_wise_weights,
 )
-from fusion_bench.tasks.clip_classification.clip_mixin import CLIPClassificationMixin
 from fusion_bench.utils.dtype import parse_dtype
 from fusion_bench.utils.parameters import print_parameters
-from fusion_bench.utils.type import StateDictType
 
 log = logging.getLogger(__name__)
 

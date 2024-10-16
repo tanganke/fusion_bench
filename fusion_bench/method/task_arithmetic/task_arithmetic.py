@@ -21,30 +21,28 @@ from fusion_bench.utils.state_dict_arithmetic import (
 )
 from fusion_bench.utils.type import StateDictType
 
-Module = TypeVar("Module", nn.Module)
-
 log = logging.getLogger(__name__)
 
 
 @torch.no_grad()
 def task_arithmetic_merge(
-    pretrained_model: Module,
-    finetuned_models: List[Module],
+    pretrained_model: nn.Module,
+    finetuned_models: List[nn.Module],
     scaling_factor: float,
     inplace: bool = True,
-) -> Module:
+) -> nn.Module:
     """
     Merges the task vectors from multiple fine-tuned models into a single pre-trained model.
 
     Args:
-        pretrained_model (Module): The pre-trained model to which the task vectors will be added.
-        finetuned_models (List[Module]): A list of fine-tuned models from which task vectors will be calculated.
+        pretrained_model (nn.Module): The pre-trained model to which the task vectors will be added.
+        finetuned_models (List[nn.Module]): A list of fine-tuned models from which task vectors will be calculated.
         scaling_factor (float): A factor by which the task vectors will be scaled before merging.
         inplace (bool, optional): If True, the pre-trained model will be modified in place.
                                   If False, a copy of the pre-trained model will be modified. Defaults to True.
 
     Returns:
-        Module: The pre-trained model with the merged task vectors.
+        nn.Module: The pre-trained model with the merged task vectors.
     """
     if not inplace:
         pretrained_model = deepcopy(pretrained_model)

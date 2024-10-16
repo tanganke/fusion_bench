@@ -1,7 +1,7 @@
 import logging
 import os
 from copy import deepcopy
-from typing import Any, Optional, Union, cast, TypeAlias  # noqa: F401
+from typing import Any, Optional, TypeAlias, Union, cast  # noqa: F401
 
 from omegaconf import DictConfig, flag_override
 from torch import nn

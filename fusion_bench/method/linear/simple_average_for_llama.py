@@ -2,10 +2,10 @@ from typing import Optional
 
 from typing_extensions import override
 
+from fusion_bench import timeit_context
 from fusion_bench.method.base_algorithm import BaseModelFusionAlgorithm
 from fusion_bench.method.simple_average import SimpleAverageAlgorithm
 from fusion_bench.modelpool import CausalLMBackbonePool, CausalLMPool
-from fusion_bench import timeit_context
 
 
 class SimpleAverageForLlama(BaseModelFusionAlgorithm):

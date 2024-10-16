@@ -1,5 +1,5 @@
 from enum import StrEnum
-from typing import Callable, Dict, Union
+from typing import Callable, Dict, Union  # noqa: F401
 
 import torch
 from torch import nn
@@ -88,7 +88,7 @@ def semistructured_magnitude_prune_(
         )
     W_mask = torch.zeros_like(W_metric, dtype=torch.bool)
     for col_idx in range(0, W_metric.shape[1], m):
-        tmp = W_metric[:, col_idx : (col_idx + m)].float()
+        tmp = W_metric[:, col_idx : (col_idx + m)].float()  # noqa: E203
         W_mask.scatter_(
             1,
             col_idx + torch.topk(tmp, n, dim=1, largest=False)[1],

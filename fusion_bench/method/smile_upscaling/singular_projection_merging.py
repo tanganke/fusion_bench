@@ -9,8 +9,8 @@ from torch import Tensor, nn
 from tqdm.auto import tqdm
 
 from fusion_bench.compat.method import ModelFusionAlgorithm
-from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.compat.modelpool import ModelPool, to_modelpool
+from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.models.utils import get_attr, set_attr
 
 log = logging.getLogger(__name__)

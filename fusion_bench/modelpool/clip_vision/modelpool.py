@@ -11,7 +11,6 @@ from fusion_bench.utils import instantiate, timeit_context
 from ..base_pool import BaseModelPool
 
 log = logging.getLogger(__name__)
-print("CLIPVisionModelPool")
 
 
 class CLIPVisionModelPool(BaseModelPool):

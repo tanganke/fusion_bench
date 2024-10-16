@@ -1,13 +1,13 @@
 import logging
 from abc import abstractmethod
-from typing import cast
+from typing import cast  # noqa: F401
 
 import lightning as L
 import lightning.fabric.wrappers
 import torch
 from lightning.pytorch.profilers import SimpleProfiler
 from omegaconf import DictConfig
-from torch import Tensor, nn
+from torch import Tensor
 from torch.utils.data import DataLoader
 from tqdm.autonotebook import tqdm
 

@@ -1,10 +1,9 @@
 import logging
-from copy import deepcopy
-from typing import List, Mapping, Union
+from typing import List, Mapping, Union  # noqa: F401
 
 import numpy as np
 import torch
-from torch import Tensor, nn
+from torch import nn
 
 from fusion_bench.method import BaseModelFusionAlgorithm
 from fusion_bench.modelpool import BaseModelPool
@@ -17,7 +16,7 @@ from fusion_bench.models.wrappers.ensemble import (
 log = logging.getLogger(__name__)
 
 
-class EnsembleAlgorithm(BaseModelFusionAlgorithm):
+class SimpleEnsembleAlgorithm(BaseModelFusionAlgorithm):
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool | List[nn.Module]):
         log.info(f"Running ensemble algorithm with {len(modelpool)} models")
@@ -28,6 +27,17 @@ class EnsembleAlgorithm(BaseModelFusionAlgorithm):
 
 
 class WeightedEnsembleAlgorithm(BaseModelFusionAlgorithm):
+
+    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+        "normalize": "normalize",
+        "weights": "weights",
+    }
+
+    def __init__(self, normalize: bool, weights: List[float], **kwargs):
+        self.normalize = normalize
+        self.weights = weights
+        super().__init__(**kwargs)
+
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool | List[nn.Module]):
         if not isinstance(modelpool, BaseModelPool):
@@ -36,10 +46,10 @@ class WeightedEnsembleAlgorithm(BaseModelFusionAlgorithm):
         log.info(f"Running weighted ensemble algorithm with {len(modelpool)} models")
 
         models = [modelpool.load_model(m) for m in modelpool.model_names]
-        if self.config.weights is None:
+        if self.weights is None:
             weights = np.ones(len(models)) / len(models)
         else:
-            weights = self.config.weights
+            weights = self.weights
         ensemble = WeightedEnsembleModule(
             models,
             weights=weights,

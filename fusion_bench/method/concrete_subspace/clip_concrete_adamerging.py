@@ -28,12 +28,13 @@ import torch
 from tqdm.autonotebook import tqdm
 
 from fusion_bench.compat.method import ModelFusionAlgorithm
-from fusion_bench.compat.method.adamerging.entropy_loss import entropy_loss
-from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.compat.modelpool import to_modelpool
 from fusion_bench.compat.modelpool.huggingface_clip_vision import (
     HuggingFaceClipVisionPool,
 )
+from fusion_bench.method.adamerging.entropy_loss import entropy_loss
+from fusion_bench.mixins import CLIPClassificationMixin
+from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.models.masks import MaskModel, mask_sparsity
 from fusion_bench.models.wrappers.layer_wise_fusion import (
     LayerWiseMergedModel,
@@ -43,7 +44,6 @@ from fusion_bench.models.wrappers.task_wise_fusion import (
     TaskWiseMergedModel,
     get_task_wise_weights,
 )
-from fusion_bench.mixins import CLIPClassificationMixin
 from fusion_bench.utils.dtype import parse_dtype
 from fusion_bench.utils.parameters import print_parameters
 

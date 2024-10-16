@@ -13,7 +13,7 @@ _import_structure = {
     "analysis": ["TaskVectorCosSimilarity"],
     # model ensemble methods
     "ensemble": [
-        "EnsembleAlgorithm",
+        "SimpleEnsembleAlgorithm",
         "WeightedEnsembleAlgorithm",
         "MaxModelPredictorAlgorithm",
     ],
@@ -28,20 +28,20 @@ _import_structure = {
     ],
     "regmean": ["RegMeanAlgorithmForCLIP", "RegMeanAlgorithmForGPT2"],
     "ties_merging": ["TiesMergingAlgorithm"],
-    # "adamerging": [
-    #     "CLIPTaskWiseAdaMergingAlgorithm",
-    #     "CLIPLayerWiseAdaMergingAlgorithm",
-    # ],
+    "adamerging": [
+        "CLIPTaskWiseAdaMergingAlgorithm",
+        "CLIPLayerWiseAdaMergingAlgorithm",
+    ],
     "pwe_moe": [
         "PWEMoELinearScalarizationForCLIP",
         "PWEMoExactParetoOptimalForCLIP",
     ],
     # plug-and-play model merging methods
-    # "concrete_subspace": [
-    #     "ConcreteTaskArithmeticAlgorithmForCLIP",
-    #     "ConcreteTaskWiseAdaMergingForCLIP",
-    #     "ConcreteLayerWiseAdaMergingForCLIP",
-    # ],
+    "concrete_subspace": [
+        "ConcreteTaskArithmeticAlgorithmForCLIP",
+        "ConcreteTaskWiseAdaMergingForCLIP",
+        "ConcreteLayerWiseAdaMergingForCLIP",
+    ],
     # model mixing methods
     "depth_upscaling": ["DepthUpscalingAlgorithm", "DepthUpscalingForLlama"],
     "mixture_of_experts": [
@@ -76,12 +76,17 @@ if TYPE_CHECKING:
     from .analysis import TaskVectorCosSimilarity
     from .base_algorithm import BaseModelFusionAlgorithm
     from .classification import ImageClassificationFineTuningForCLIP
+    from .concrete_subspace import (
+        ConcreteLayerWiseAdaMergingForCLIP,
+        ConcreteTaskArithmeticAlgorithmForCLIP,
+        ConcreteTaskWiseAdaMergingForCLIP,
+    )
     from .dawe import DataAdaptiveWeightEnsemblingForCLIP
     from .depth_upscaling import DepthUpscalingAlgorithm, DepthUpscalingForLlama
     from .dummy import DummyAlgorithm
     from .ensemble import (
-        EnsembleAlgorithm,
         MaxModelPredictorAlgorithm,
+        SimpleEnsembleAlgorithm,
         WeightedEnsembleAlgorithm,
     )
     from .fisher_merging import FisherMergingForCLIPVisionModel
@@ -105,7 +110,10 @@ if TYPE_CHECKING:
     )
     from .regmean import RegMeanAlgorithmForCLIP, RegMeanAlgorithmForGPT2
     from .simple_average import SimpleAverageAlgorithm
-    from .smile_upscaling import SmileUpscalingAlgorithm
+    from .smile_upscaling import (
+        SingularProjectionMergingAlgorithm,
+        SmileUpscalingAlgorithm,
+    )
     from .sparselo import (
         IterativeSparseLoForLlama,
         PCPSparseLoForLlama,
@@ -113,6 +121,7 @@ if TYPE_CHECKING:
     )
     from .task_arithmetic import TaskArithmeticAlgorithm
     from .ties_merging import TiesMergingAlgorithm
+    from .we_moe import CLIPWeightEnsemblingMoEAlgorithm
     from .weighted_average import WeightedAverageAlgorithm, WeightedAverageForLLama
 
 else:

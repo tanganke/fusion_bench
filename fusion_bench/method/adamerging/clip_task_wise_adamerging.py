@@ -9,10 +9,10 @@ from torch.utils.data import DataLoader
 from transformers import CLIPModel, CLIPProcessor
 
 from fusion_bench.dataset import CLIPDataset
+from fusion_bench.modelpool import CLIPVisionModelPool
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.utils import timeit_context
-from fusion_bench.modelpool import CLIPVisionModelPool
 
 from .task_wise_adamerging import TaskWiseAdaMergingAlgorithm
 

@@ -5,23 +5,13 @@ from .base_algorithm import ModelFusionAlgorithm
 
 class AlgorithmFactory:
     _aglorithms = {
-        "dummy": ".dummy.DummyAlgorithm",
         # single task learning (fine-tuning)
         "clip_finetune": ".classification.clip_finetune.ImageClassificationFineTuningForCLIP",
         # analysis
-        "TaskVectorCosSimilarity": ".analysis.task_vector_cos_similarity.TaskVectorCosSimilarity",
-        # model ensemble methods
-        "simple_ensemble": ".ensemble.EnsembleAlgorithm",
-        "weighted_ensemble": ".ensemble.WeightedEnsembleAlgorithm",
-        "max_model_predictor": ".ensemble.MaxModelPredictorAlgorithm",
         # model merging methods
         "simple_average": ".simple_average.SimpleAverageAlgorithm",
         "weighted_average": ".weighted_average.weighted_average.WeightedAverageAlgorithm",
         "weighted_average_for_llama": ".weighted_average.llama.WeightedAverageForLLama",
-        "clip_fisher_merging": ".fisher_merging.clip_fisher_merging.FisherMergingAlgorithmForCLIP",
-        "gpt2_fisher_merging": ".fisher_merging.gpt2_fisher_merging.FisherMergingAlgorithmForGPT2",
-        "clip_regmean": ".regmean.clip_regmean.RegMeanAlgorithmForCLIP",
-        "gpt2_regmean": ".regmean.gpt2_regmean.RegMeanAlgorithmForGPT2",
         "task_arithmetic": ".task_arithmetic.TaskArithmeticAlgorithm",
         "ties_merging": ".ties_merging.ties_merging.TiesMergingAlgorithm",
         "clip_task_wise_adamerging": ".adamerging.clip_task_wise_adamerging.CLIPTaskWiseAdaMergingAlgorithm",
@@ -62,7 +52,7 @@ class AlgorithmFactory:
         algorithm_cls = AlgorithmFactory._aglorithms[algorithm_name]
         if isinstance(algorithm_cls, str):
             if algorithm_cls.startswith("."):
-                algorithm_cls = f"fusion_bench.compat.method.{algorithm_cls[1:]}"
+                algorithm_cls = f"fusion_bench.method.{algorithm_cls[1:]}"
             algorithm_cls = import_object(algorithm_cls)
         return algorithm_cls(method_config)
 
