@@ -84,6 +84,42 @@ class BaseModelPool(BaseYAMLSerializableModel):
         """
         return [name for name in self._models if not self.is_special_model(name)]
 
+    @property
+    def train_dataset_names(self) -> List[str]:
+        """
+        Get the names of training datasets.
+
+        Returns:
+            List[str]: A list of training dataset names.
+        """
+        return (
+            list(self._train_datasets.keys())
+            if self._train_datasets is not None
+            else []
+        )
+
+    @property
+    def val_dataset_names(self) -> List[str]:
+        """
+        Get the names of validation datasets.
+
+        Returns:
+            List[str]: A list of validation dataset names.
+        """
+        return list(self._val_datasets.keys()) if self._val_datasets is not None else []
+
+    @property
+    def test_dataset_names(self) -> List[str]:
+        """
+        Get the names of testing datasets.
+
+        Returns:
+            List[str]: A list of testing dataset names.
+        """
+        return (
+            list(self._test_datasets.keys()) if self._test_datasets is not None else []
+        )
+
     def __len__(self):
         return len(self.model_names)
 
@@ -128,7 +164,7 @@ class BaseModelPool(BaseYAMLSerializableModel):
         Returns:
             nn.Module: The instantiated model.
         """
-        log.info(f"Loading model: {model_name_or_config}")
+        log.debug(f"Loading model: {model_name_or_config}")
         if isinstance(self._models, DictConfig):
             model_config = (
                 self._models[model_name_or_config]
@@ -185,6 +221,10 @@ class BaseModelPool(BaseYAMLSerializableModel):
         """
         return instantiate(self._train_datasets[model_name], *args, **kwargs)
 
+    def train_datasets(self):
+        for dataset_name in self.train_dataset_names:
+            yield self.load_train_dataset(dataset_name)
+
     def load_val_dataset(self, model_name: str, *args, **kwargs) -> Dataset:
         """
         Load the validation dataset for the specified model.
@@ -197,6 +237,10 @@ class BaseModelPool(BaseYAMLSerializableModel):
         """
         return instantiate(self._val_datasets[model_name], *args, **kwargs)
 
+    def val_datasets(self):
+        for dataset_name in self.val_dataset_names:
+            yield self.load_val_dataset(dataset_name)
+
     def load_test_dataset(self, model_name: str, *args, **kwargs) -> Dataset:
         """
         Load the testing dataset for the specified model.
@@ -208,6 +252,10 @@ class BaseModelPool(BaseYAMLSerializableModel):
             Dataset: The instantiated testing dataset.
         """
         return instantiate(self._test_datasets[model_name], *args, **kwargs)
+
+    def test_datasets(self):
+        for dataset_name in self.test_dataset_names:
+            yield self.load_test_dataset(dataset_name)
 
     def save_model(self, model: nn.Module, path: str):
         """

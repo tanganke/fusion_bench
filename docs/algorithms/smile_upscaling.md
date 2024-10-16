@@ -79,7 +79,7 @@ do
         modelpool=clip-vit-base-patch32_individual \
             modelpool.models.0.path=tanganke/clip-vit-base-patch32_${task} \
         taskpool=clip-vit-classification_TA8 \
-        save_report="outputs/ViT-B-32/single-task/clip-vit-base-patch32_${task}.json"
+        report_save_path="outputs/ViT-B-32/single-task/clip-vit-base-patch32_${task}.json"
 done
 
 # if you have multiple GPUs, you can run the following code to evaluate the CLIP-ViT-L/14 models in parallel
@@ -94,7 +94,7 @@ for i in "${!CUDA_DEVICES[@]}"; do
             modelpool.models.0.path=tanganke/clip-vit-large-patch14_${task} \
         taskpool=clip-vit-classification_TA8 \
             taskpool.clip_model=openai/clip-vit-large-patch14 \
-        save_report="outputs/ViT-L-14/single-task/clip-vit-large-patch14_${task}.json" &
+        report_save_path="outputs/ViT-L-14/single-task/clip-vit-large-patch14_${task}.json" &
 done
 ```
 
@@ -123,7 +123,7 @@ for gate_k in 1 2 4 8 16 32 64 128 256 512 768; do
                 method.gate_k=$gate_k method.k=$k \
             modelpool=clip-vit-base-patch32_TA8 \
             taskpool=clip-vit-classification_TA8 \
-            save_report="outputs/ViT-B-32/eight_tasks/gate_k\=${gate_k}_k\=${k}.json"
+            report_save_path="outputs/ViT-B-32/eight_tasks/gate_k\=${gate_k}_k\=${k}.json"
     done
 done
 ```
@@ -141,7 +141,7 @@ fusion_bench \
         method.gate_k=$gate_k method.k=$k \
     modelpool=clip-vit-base-patch32_TA8 \
     taskpool=clip-vit-classification_TA8 \
-    save_report="outputs/ViT-B-32/ablation/gate_k\=${gate_k}_k\=${k}.json"
+    report_save_path="outputs/ViT-B-32/ablation/gate_k\=${gate_k}_k\=${k}.json"
 done
 ```
 
@@ -158,7 +158,7 @@ for gate_k in 1 2 4 8 16 32 64 128; do
             modelpool=clip-vit-large-patch14_TA8 \
             taskpool=clip-vit-classification_TA8 \
                 taskpool.clip_model=openai/clip-vit-large-patch14 \
-            save_report="outputs/ViT-B-32/eight_tasks/gate_k\=${gate_k}_k\=${k}.json"
+            report_save_path="outputs/ViT-B-32/eight_tasks/gate_k\=${gate_k}_k\=${k}.json"
     done
 done
 ```
@@ -178,7 +178,7 @@ for gate_k in 4 8 16 32; do
                 method.gate_k=$gate_k method.k=$k \
             modelpool=flan-t5-base_glue \
             taskpool=flan-t5_glue_text_generation \
-            save_report="outputs/flan-t5-base/glue_text_generation/gate_k\=${gate_k}_k\=${k}.json"
+            report_save_path="outputs/flan-t5-base/glue_text_generation/gate_k\=${gate_k}_k\=${k}.json"
     done
 done
 
@@ -191,7 +191,7 @@ for gate_k in 2 4 8; do
                 method.gate_k=$gate_k method.k=$k \
             modelpool=flan-t5-base_glue_lora16 \
             taskpool=flan-t5_glue_text_generation \
-            save_report="outputs/flan-t5-base_lora16/glue_text_generation/gate_k\=${gate_k}_k\=${k}.json"
+            report_save_path="outputs/flan-t5-base_lora16/glue_text_generation/gate_k\=${gate_k}_k\=${k}.json"
     done
 done
 ```
@@ -323,7 +323,7 @@ Knowing the model architecture, we can upscale the Mistral-7B models using the f
             modelpool=smile_mistral_exp_v${version} \
                 modelpool.dtype=float32 \
             taskpool=dummy \
-            save_report="${output_dir}/model_info.json"
+            report_save_path="${output_dir}/model_info.json"
     }
 
     gate_k=8
@@ -405,7 +405,7 @@ do
             modelpool.models.1.name=${task} \
             modelpool.models.1.path=tanganke/clip-vit-base-patch32_${task} \
         taskpool=clip-vit-classification_TA8 \
-        save_report="outputs/ViT-B-32/single-task/projection_merging_zone1_${task}.json" &
+        report_save_path="outputs/ViT-B-32/single-task/projection_merging_zone1_${task}.json" &
 
     # Space II
     CUDA_VISIBLE_DEVICES=1 fusion_bench \
@@ -415,7 +415,7 @@ do
             modelpool.models.1.name=${task} \
             modelpool.models.1.path=tanganke/clip-vit-base-patch32_${task} \
         taskpool=clip-vit-classification_TA8 \
-        save_report="outputs/ViT-B-32/single-task/projection_merging_zone2_${task}.json" &
+        report_save_path="outputs/ViT-B-32/single-task/projection_merging_zone2_${task}.json" &
 
     # Space III
     CUDA_VISIBLE_DEVICES=2 fusion_bench \
@@ -425,7 +425,7 @@ do
             modelpool.models.1.name=${task} \
             modelpool.models.1.path=tanganke/clip-vit-base-patch32_${task} \
         taskpool=clip-vit-classification_TA8 \
-        save_report="outputs/ViT-B-32/single-task/projection_merging_zone23_${task}.json" &
+        report_save_path="outputs/ViT-B-32/single-task/projection_merging_zone23_${task}.json" &
     wait
 done
 ```

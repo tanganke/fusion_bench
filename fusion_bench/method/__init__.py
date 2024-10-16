@@ -36,6 +36,7 @@ _import_structure = {
         "PWEMoELinearScalarizationForCLIP",
         "PWEMoExactParetoOptimalForCLIP",
     ],
+    "ada_svd": ["AdaSVDMergingForCLIPVisionModel"],
     # plug-and-play model merging methods
     "concrete_subspace": [
         "ConcreteTaskArithmeticAlgorithmForCLIP",
@@ -73,6 +74,7 @@ _import_structure = {
 
 
 if TYPE_CHECKING:
+    from .ada_svd import AdaSVDMergingForCLIPVisionModel
     from .analysis import TaskVectorCosSimilarity
     from .base_algorithm import BaseModelFusionAlgorithm
     from .classification import ImageClassificationFineTuningForCLIP

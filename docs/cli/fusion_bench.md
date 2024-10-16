@@ -95,7 +95,7 @@ This is useful for tab completion in the shell. You can install shell completion
 - **save_report**: The path to save the report. If not specified or is `false`, the report will not be saved. The report will be saved as a JSON file. Default is `false`.
   For example, to save the report to `outputs/report.json`:
   ```bash
-  fusion_bench save_report=outputs/report.json
+  fusion_bench report_save_path=outputs/report.json
   ```
 - **print_config**: Whether to print the configuration to the console. If not specified or is `false`, the configuration will not be printed. Default is `true`.
   For example, to print the configuration:
