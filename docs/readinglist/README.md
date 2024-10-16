@@ -20,11 +20,16 @@ This collection is designed to serve as a valuable starting point for those inte
 
 - [:simple-github:](https://github.com/EnnengYang/Awesome-Model-Merging-Methods-Theories-Applications) 
     E. Yang et al., “Model Merging in LLMs, MLLMs, and Beyond: Methods, Theories, Applications and Opportunities.” [arXiv, Aug. 14, 2024.](https://arxiv.org/pdf/2408.07666)
+- :star: Yadav et al. A Survey on Model MoErging: Recycling and Routing Among Specialized Experts for Collaborative Learning [arXiv:2408.07057](http://arxiv.org/abs/2408.07057)
 - :star: 
     W. Li, Y. Peng, M. Zhang, L. Ding, H. Hu, and L. Shen, “Deep Model Fusion: A Survey.” [arXiv, Sep. 27, 2023. doi: 10.48550/arXiv.2309.15698.](http://arxiv.org/abs/2309.15698)
 - [:simple-github:](https://github.com/ruthless-man/Awesome-Learn-from-Model) 
     H. Zheng et al., “Learn From Model Beyond Fine-Tuning: A Survey.” [arXiv, Oct. 12, 2023.](http://arxiv.org/abs/2310.08184)
 
+## Findings on Model Fusion
+
+- :llama: Aakanksha et al. Mix Data or Merge Models? Optimizing for Diverse Multi-Task Learning [arXiv:2410.10801](http://arxiv.org/abs/2410.10801)
+- :star: Yadav et al. What Matters for Model Merging at Scale? [arXiv:2410.03617](http://arxiv.org/abs/2410.03617)
 
 ## Model Ensemble
 
@@ -61,14 +66,59 @@ Mode connectivity is such an important concept in model merging that it deserves
     X. Yi, S. Zheng, L. Wang, X. Wang, and L. He, “A safety realignment framework via subspace-oriented model fusion for large language models.” [arXiv, May 14, 2024. doi: 10.48550/arXiv.2405.09055.](http://arxiv.org/abs/2405.09055)
 - [:simple-github:](https://github.com/nik-dim/tall_masks) Wang K, Dimitriadis N, Ortiz-Jimenez G, et al. Localizing Task Information for Improved Model Merging and Compression. [arXiv preprint arXiv:2405.07813](http://arxiv.org/abs/2405.07813), 2024.
 
-## Model Mixing
+### Online Model Merging
+
+- :llama: Alexandrov el al. Mitigating Catastrophic Forgetting in Language Transfer via Model Merging [arXiv:2407.08699](http://arxiv.org/abs/2407.08699)
+
+    ??? quote
+
+        ![alt text](images/branch_and_merging.png){ width=450px }
+        ![alt text](images/branch_and_merging_alg.png){ width=450px }
+
+- :llama: Lu et al. Online Merging Optimizers for Boosting Rewards and Mitigating Tax in Alignment [arXiv:2405.17931](http://arxiv.org/abs/2405.17931)
+
+## Model Mixing/Upscaling/Expansion
+
+- :llama: Samragh et al. Scaling Smart: Accelerating Large Language Model Pre-training with Small Model Initialization [arXiv:2409.12903](http://arxiv.org/abs/2409.12903)
+
+    ??? quote
+        
+        ![alt text](images/scaling_smart.png){ width=800px }
+
+- Zhao et al. Merging LoRAs like Playing LEGO: Pushing the Modularity of LoRA to Extremes Through Rank-Wise Clustering [arXiv:2409.16167](http://arxiv.org/abs/2409.16167)
+
+    ??? quote
+
+        ![alt text](images/lora_lego.png){ width=800px }
+
+- Tang et al. SMILE: Zero-Shot Sparse Mixture of Low-Rank Experts Construction From Pre-Trained Foundation Models [arXiv:2408.10174](http://arxiv.org/abs/2408.10174)
+
+    ??? quote
+
+        ![alt text](images/smile_upscaling.png){ width=800px }
 
 - :llama: [:simple-github:](https://github.com/THUNLP-MT/ModelCompose) :hugging:
     C. Chen et al., “Model Composition for Multimodal Large Language Models.” [arXiv, Feb. 20, 2024. doi: 10.48550/arXiv.2402.12750.](http://arxiv.org/abs/2402.12750)
 - A. Tang, L. Shen, Y. Luo, N. Yin, L. Zhang, and D. Tao, “Merging Multi-Task Models via Weight-Ensembling Mixture of Experts,” Feb. 01, 2024, arXiv: arXiv:2402.00433. doi: 10.48550/arXiv.2402.00433.
 - :llama: [:simple-github:](https://github.com/LZY-the-boys/Twin-Merging) 
     Zhenyi Lu et al., "Twin-Merging: Dynamic Integration of Modular Expertise in Model Merging" [10.48550/arXiv.2406.15479](http://arxiv.org/abs/2406.15479)
+
+    ??? quote
+
+        ![alt text](images/twin_merging.png){ width=800px }
+
 - :llama: [:simple-github:](http://github.com/tanganke/fusion_bench) :hugging: Tang A, Shen L, Luo Y, et al. SMILE: Zero-Shot Sparse Mixture of Low-Rank Experts Construction From Pre-Trained Foundation Models. [arXiv](http://arxiv.org/abs/2408.10174), 2024.
+- :llama: Kim et al. SOLAR 10.7B: Scaling Large Language Models with Simple yet Effective Depth Up-Scaling [arXiv:2312.15166](http://arxiv.org/abs/2312.15166)
+
+    ??? quote
+
+        ![alt text](images/depth_upscaling.png){ width=800px }
+
+- Komatsuzaki et al. Sparse Upcycling: Training Mixture-of-Experts from Dense Checkpoints [arXiv:2212.05055](http://arxiv.org/abs/2212.05055)
+
+    ??? quote
+
+        ![alt text](images/sparse_upcycling.png){ width=800px }
 
 ## Libraries and Tools
 
