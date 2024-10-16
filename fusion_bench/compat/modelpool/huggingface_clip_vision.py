@@ -3,7 +3,7 @@ import logging
 from typing import Optional
 
 from omegaconf import DictConfig, open_dict
-from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
+from transformers import CLIPProcessor, CLIPVisionModel
 from typing_extensions import override
 
 from fusion_bench.dataset import CLIPDataset, load_dataset_from_config

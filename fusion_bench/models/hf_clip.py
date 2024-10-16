@@ -1,9 +1,8 @@
-from typing import Callable, Iterable, List
+from typing import Callable, Iterable, List  # noqa: F401
 
 import torch
 from torch import Tensor, nn
-from torch.types import _device
-from transformers import CLIPModel, CLIPProcessor, CLIPTextModel, CLIPVisionModel
+from transformers import CLIPModel, CLIPProcessor
 from transformers.models.clip.modeling_clip import BaseModelOutputWithPooling
 
 from fusion_bench.utils.devices import get_device

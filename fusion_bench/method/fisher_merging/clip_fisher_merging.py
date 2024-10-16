@@ -1,24 +1,16 @@
 import logging
-import os
-from copy import deepcopy
-from functools import cache
-from typing import Dict, List, cast
+from typing import Dict, List, cast  # noqa: F401
 
-import lightning as L
 import torch
 from omegaconf import DictConfig
-from torch import Tensor, nn
+from torch import Tensor
 from torch.nn.modules import Module
 from torch.utils.data import DataLoader
 from tqdm.autonotebook import tqdm
-from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
+from transformers import CLIPProcessor
 
-from fusion_bench.dataset import CLIPDataset, load_dataset_from_config
+from fusion_bench.dataset import CLIPDataset
 from fusion_bench.mixins import CLIPClassificationMixin
-from fusion_bench.modelpool import CLIPVisionModelPool
-from fusion_bench.models.hf_clip import HFCLIPClassifier
-from fusion_bench.tasks.clip_classification import get_classnames_and_templates
-from fusion_bench.utils import timeit_context
 
 from .fisher_merging import FisherMergingAlgorithm, get_param_squared_gradients
 
@@ -97,14 +89,14 @@ class FisherMergingForCLIPVisionModel(
         num_fisher_examples = self.config.num_fisher_examples
         if num_fisher_examples % train_dataloader.batch_size != 0:
             print(
-                f"warning: the number of examples for computing fisher cannot be fully divided by the batch size for model, "
+                "warning: the number of examples for computing fisher cannot be fully divided by the batch size for model, "
                 "which may lead to a slightly different number of the actually used examples."
             )
         num_computed_examples = 0
         batches_fisher_weights_list = []
         for step, batch in tqdm(
             enumerate(train_dataloader),
-            desc=f"computing fisher weights",
+            desc="computing fisher weights",
             total=num_fisher_examples // train_dataloader.batch_size,
         ):
             if num_computed_examples >= num_fisher_examples:

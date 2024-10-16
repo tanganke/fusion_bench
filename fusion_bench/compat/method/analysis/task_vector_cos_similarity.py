@@ -1,8 +1,6 @@
-import numpy as np
 import pandas as pd
 import torch
 import torch.utils
-from torch import Tensor
 
 from fusion_bench.compat.modelpool import ModelPool
 from fusion_bench.modelpool import BaseModelPool

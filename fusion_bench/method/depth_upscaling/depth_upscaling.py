@@ -1,10 +1,9 @@
 import logging
-import random
 from copy import deepcopy
-from typing import List, Mapping, Union
+from typing import List, Mapping, Union  # noqa: F401
 
 import torch
-from torch import Tensor, nn
+from torch import nn
 from tqdm.autonotebook import tqdm
 
 from fusion_bench.method import BaseModelFusionAlgorithm

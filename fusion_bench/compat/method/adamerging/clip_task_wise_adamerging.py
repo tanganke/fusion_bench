@@ -1,15 +1,14 @@
 import functools
-import itertools
 import logging
 import os
 
 import torch
-from omegaconf import DictConfig, open_dict
+from omegaconf import DictConfig
 from torch import Tensor
 from torch.utils.data import DataLoader
 from transformers import CLIPModel, CLIPProcessor
 
-from fusion_bench.dataset import CLIPDataset, load_dataset_from_config
+from fusion_bench.dataset import CLIPDataset
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.utils import timeit_context

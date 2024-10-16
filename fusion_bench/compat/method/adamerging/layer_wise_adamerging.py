@@ -1,15 +1,12 @@
 import logging
 import os
 from abc import abstractmethod
-from copy import deepcopy
-from typing import Any, List, Mapping, Union, cast
+from typing import Any, List, Mapping, Union, cast  # noqa: F401
 
-import lightning as L
-import numpy as np
 import torch
 from lightning.fabric.utilities.rank_zero import rank_zero_only
 from omegaconf import DictConfig
-from torch import Tensor, nn
+from torch import Tensor
 from torch.utils.data import DataLoader
 from tqdm.autonotebook import tqdm
 
@@ -22,8 +19,6 @@ from fusion_bench.models.wrappers.layer_wise_fusion import (
     get_layer_wise_weights,
 )
 from fusion_bench.utils.data import load_tensor_from_file
-from fusion_bench.utils.state_dict_arithmetic import state_dict_sub
-from fusion_bench.utils.type import StateDictType
 
 from .entropy_loss import entropy_loss
 
@@ -141,7 +136,6 @@ class LayerWiseAdaMergingAlgorithm(
 
     def test_time_adaptation(self, module: LayerWiseMergedModel):
         self.on_test_time_adaptation_start()
-        config = self.config
 
         # configure optimizer
         if self.config.optimizer == "adam":
