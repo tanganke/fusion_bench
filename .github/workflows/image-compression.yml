@@ -8,6 +8,8 @@ on:
       - "**.jpeg"
       - "**.png"
       - "**.webp"
+  workflow_dispatch:
+
 jobs:
   build:
     name: calibreapp/image-actions
