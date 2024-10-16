@@ -23,19 +23,30 @@ import torch
 from torch import Tensor, nn
 from typing_extensions import override
 
-from fusion_bench.method.base_algorithm import ModelFusionAlgorithm
-from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
-from fusion_bench.modelpool import ModelPool, to_modelpool
+from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.mixins import SimpleProfilerMixin
+from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.utils.state_dict_arithmetic import state_dict_add, state_dict_mul
 from fusion_bench.utils.type import StateDictType
 
 log = logging.getLogger(__name__)
 
 
-class WeightedAverageAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
+class WeightedAverageAlgorithm(BaseModelFusionAlgorithm, SimpleProfilerMixin):
+
+    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+        "normalize": "normalize",
+        "weights": "weights",
+    }
+
+    def __init__(self, normalize: bool, weights: List[float], **kwargs):
+        self.normalize = normalize
+        self.weights = weights
+        super().__init__(**kwargs)
+
     @override
     @torch.no_grad()
-    def run(self, modelpool: ModelPool):
+    def run(self, modelpool: BaseModelPool):
         """
         Fuses the models in the model pool using a weighted average approach.
 
@@ -48,18 +59,20 @@ class WeightedAverageAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
         Returns
             forward_model (torch.nn.Module): The resulting model after fusion.
         """
-        modelpool = to_modelpool(modelpool)
+        if not isinstance(modelpool, BaseModelPool):
+            modelpool = BaseModelPool(modelpool)
+
         log.info("Fusing models using weighted average.")
-        weights = np.asarray(self.config.weights)
+        weights = np.asarray(self.weights)
         if len(weights) != len(modelpool.model_names):
             raise ValueError(
                 "Number of weights must match the number of models.,"
                 f"but got {len(weights)} weights and {len(modelpool.model_names)} models."
                 f"weights: {weights}, models: {modelpool.model_names}"
             )
-        if self.config.normalize:
+        if self.normalize:
             weights = weights / np.sum(weights)
-        print(f"weights: {weights}, normalized: {self.config.normalize}")
+        print(f"weights: {weights}, normalized: {self.normalize}")
 
         sd: Optional[StateDictType] = None
         forward_model = None

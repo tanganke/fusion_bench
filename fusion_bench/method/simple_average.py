@@ -3,7 +3,7 @@ from copy import deepcopy
 from typing import Dict, List, Mapping, Optional, Union
 
 import torch
-from torch import Tensor, nn
+from torch import nn
 
 from fusion_bench.method.base_algorithm import BaseModelFusionAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
