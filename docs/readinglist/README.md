@@ -60,6 +60,18 @@ Mode connectivity is such an important concept in model merging that it deserves
 
         ![image](images/watt.png){ width=800px }
 
+- Jiang et al. ForkMerge: Mitigating Negative Transfer in Auxiliary-Task Learning
+
+    ??? quote
+
+        ![alt text](images/forkmerge.png){ width=800px }
+
+- Chronopoulou et al. Language and Task Arithmetic with Parameter-Efficient Layers for Zero-Shot Summarization [arXiv:2311.09344](http://arxiv.org/abs/2311.09344)
+
+    ??? quote
+
+        ![alt text](images/Chronopoulou2023.png){ width=900px }
+
 - :llama: [:simple-github:](https://github.com/yule-BUAA/MergeLM)
     L. Yu, B. Yu, H. Yu, F. Huang, and Y. Li, “Language Models are Super Mario: Absorbing Abilities from Homologous Models as a Free Lunch,” Nov. 06, 2023, arXiv: arXiv:2311.03099. Available: http://arxiv.org/abs/2311.03099
 - :star: [:simple-github:](https://github.com/EnnengYang/AdaMerging) 
@@ -67,6 +79,12 @@ Mode connectivity is such an important concept in model merging that it deserves
 - :star: P. Yadav, D. Tam, L. Choshen, C. Raffel, and M. Bansal, “Resolving Interference When Merging Models,” Jun. 02, 2023, arXiv: arXiv:2306.01708. Available: http://arxiv.org/abs/2306.01708
 - :star: Guillermo Ortiz-Jimenez, Alessandro Favero, and Pascal Frossard, “Task Arithmetic in the Tangent Space: Improved Editing of Pre-Trained Models,” May 30, 2023, arXiv: arXiv:2305.12827. doi: 10.48550/arXiv.2305.12827.
 - :star: G. Ilharco et al., “Editing Models with Task Arithmetic,” Mar. 31, 2023, arXiv: arXiv:2212.04089. doi: 10.48550/arXiv.2212.04089.
+- Tang et al. Towards Efficient Pareto Set Approximation via Mixture of Experts Based Model Fusion
+
+    ??? quote
+
+        ![alt text](images/pwe_moe.png){ width=800px }
+
 - Rame et al. Rewarded soups: towards Pareto-optimal alignment by interpolating weights fine-tuned on diverse rewards [arXiv:2306.04488](http://arxiv.org/abs/2306.04488)
 - Chronopoulou et al. AdapterSoup: Weight Averaging to Improve Generalization of Pretrained Language Models [arXiv:2302.07027](http://arxiv.org/abs/2302.07027)
 
