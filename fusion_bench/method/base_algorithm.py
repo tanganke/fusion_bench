@@ -1,8 +1,6 @@
 import logging
-from abc import ABC, abstractmethod
-from typing import Optional
-
-from omegaconf import DictConfig
+from abc import abstractmethod
+from typing import Optional  # noqa: F401
 
 from fusion_bench.mixins import BaseYAMLSerializableModel
 from fusion_bench.modelpool import BaseModelPool
@@ -23,7 +21,7 @@ class BaseModelFusionAlgorithm(BaseYAMLSerializableModel):
         Examples:
             >>> algorithm = SimpleAverageAlgorithm()
             >>> modelpool = ModelPool()
-            >>> merged_model = algorithm.fuse(modelpool)
+            >>> merged_model = algorithm.run(modelpool)
 
         Args:
             modelpool (_type_): _description_

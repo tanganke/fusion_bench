@@ -6,10 +6,10 @@ http://arxiv.org/abs/2212.04089
 
 import logging
 from copy import deepcopy
-from typing import Dict, List, Mapping, TypeVar, Union
+from typing import Dict, List, Mapping, TypeVar, Union  # noqa: F401
 
 import torch
-from torch import Tensor, nn
+from torch import nn
 
 from fusion_bench.method.base_algorithm import BaseModelFusionAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
@@ -21,7 +21,7 @@ from fusion_bench.utils.state_dict_arithmetic import (
 )
 from fusion_bench.utils.type import StateDictType
 
-Module = TypeVar("Module")
+Module = TypeVar("Module", nn.Module)
 
 log = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ def task_arithmetic_merge(
     """
     if not inplace:
         pretrained_model = deepcopy(pretrained_model)
-    task_vector = None
+    task_vector: StateDictType = None
     # Calculate the total task vector
     for model in finetuned_models:
         if task_vector is None:

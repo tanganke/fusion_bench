@@ -1,25 +1,18 @@
 import logging
-from copy import deepcopy
-from typing import Dict, List, Mapping, Optional, TypeVar, Union
+from typing import Dict, List, Mapping, Optional, TypeVar, Union  # noqa: F401
 
-import torch
-from torch import Tensor, nn
 from typing_extensions import override
 from fusion_bench import timeit_context
 
 from fusion_bench.method import TaskArithmeticAlgorithm
-from fusion_bench.method.base_algorithm import BaseModelFusionAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
-from fusion_bench.modelpool import BaseModelPool, CausalLMBackbonePool, CausalLMPool
-from fusion_bench.utils.state_dict_arithmetic import (
-    state_dict_add,
-    state_dict_mul,
-    state_dict_sub,
-)
-from fusion_bench.utils.type import StateDictType
+from fusion_bench.modelpool import CausalLMBackbonePool, CausalLMPool
 
 
-class TaskArithmeticForLlama(TaskArithmeticAlgorithm):
+log = logging.getLogger(__name__)
+
+
+class TaskArithmeticForLlama(TaskArithmeticAlgorithm, SimpleProfilerMixin):
     R"""
     Examples:
 

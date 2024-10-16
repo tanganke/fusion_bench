@@ -4,11 +4,8 @@ A dummy method that does nothing, but returns the `_pretrained` model.
 
 import logging
 
-from omegaconf import DictConfig
-
+from fusion_bench.method import BaseModelFusionAlgorithm
 from fusion_bench.modelpool import BaseModelPool
-
-from .base_algorithm import BaseModelFusionAlgorithm
 
 log = logging.getLogger(__name__)
 

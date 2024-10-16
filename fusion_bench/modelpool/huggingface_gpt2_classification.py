@@ -1,15 +1,13 @@
 import functools
 import logging
-from copy import deepcopy
 from typing import Optional
 
 from omegaconf import DictConfig
-from torch import nn
-from transformers import GPT2ForSequenceClassification, GPT2Model, GPT2Tokenizer
+from transformers import GPT2ForSequenceClassification, GPT2Tokenizer
 
 from fusion_bench.dataset.gpt2_glue import TokenizedGLUE
 from fusion_bench.modelpool import BaseModelPool
-from fusion_bench.utils import instantiate, timeit_context
+from fusion_bench.utils import instantiate
 
 log = logging.getLogger(__name__)
 tokenizer: GPT2Tokenizer = None

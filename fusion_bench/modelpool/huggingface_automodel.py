@@ -1,6 +1,4 @@
-import functools
 import logging
-from typing import Optional
 
 from omegaconf import DictConfig
 from torch.nn.modules import Module

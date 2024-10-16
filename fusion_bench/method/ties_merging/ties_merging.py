@@ -1,6 +1,5 @@
 import logging
-from copy import deepcopy
-from typing import Dict, List, Literal, Mapping, Union
+from typing import Dict, List, Literal, Mapping, Union  # noqa: F401
 
 import torch
 from torch import Tensor, nn
@@ -57,10 +56,10 @@ class TiesMergingAlgorithm(BaseModelFusionAlgorithm):
         ptm_check: StateDictType = pretrained_model.state_dict(keep_vars=True)
 
         # compute the task vectors
-        flat_ft = torch.vstack(
+        flat_ft: Tensor = torch.vstack(
             [state_dict_to_vector(check, remove_keys) for check in ft_checks]
         )
-        flat_ptm = state_dict_to_vector(ptm_check, remove_keys)
+        flat_ptm: Tensor = state_dict_to_vector(ptm_check, remove_keys)
         tv_flat_checks = flat_ft - flat_ptm
 
         # Ties Merging

@@ -1,4 +1,4 @@
-"""
+R"""
 Examples:
 
 The following command merges eight clip-ViT models using a weighted average approach.
@@ -6,21 +6,19 @@ Because `method.normalize` is set to true, the weights are normalized to sum to 
 
 ```bash
 fusion_bench \
-    method=weighted_average \
+    method=linear/weighted_average \
     method.normalize=true \
     method.weights=[0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3] \
-    modelpool=clip-vit-base-patch32_TA8_model_only \
-    taskpool=clip-vit-classification_TA8
+    modelpool=... \
+    taskpool=...
 ```
 """
 
 import logging
-from copy import deepcopy
-from typing import List, Mapping, Optional, Union
+from typing import List, Mapping, Optional, Union  # noqa: F401
 
 import numpy as np
 import torch
-from torch import Tensor, nn
 from typing_extensions import override
 
 from fusion_bench.method import BaseModelFusionAlgorithm

@@ -1,10 +1,9 @@
-import functools
 import logging
 import os
 from copy import deepcopy
-from typing import Any, Optional, Union, cast, TypeAlias
+from typing import Any, Optional, Union, cast, TypeAlias  # noqa: F401
 
-from omegaconf import DictConfig, OmegaConf, flag_override
+from omegaconf import DictConfig, flag_override
 from torch import nn
 from torch.nn.modules import Module
 from transformers import (
@@ -16,7 +15,7 @@ from transformers import (
 from typing_extensions import override
 
 from fusion_bench.modelpool import BaseModelPool
-from fusion_bench.utils import instantiate, timeit_context
+from fusion_bench.utils import instantiate
 from fusion_bench.utils.dtype import parse_dtype
 
 log = logging.getLogger(__name__)
@@ -85,7 +84,7 @@ class CausalLMPool(BaseModelPool):
 
     def load_tokenizer(self, *args, **kwargs) -> PreTrainedTokenizer:
         assert self._tokenizer is not None, "Tokenizer is not defined in the config"
-        log.info(f"Loading tokenizer.")
+        log.info("Loading tokenizer.")
         tokenizer = instantiate(self._tokenizer, *args, **kwargs)
         return tokenizer
 
