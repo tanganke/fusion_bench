@@ -34,7 +34,17 @@ This collection is designed to serve as a valuable starting point for those inte
 ## Model Ensemble
 
 - Liu T Y, Soatto S. Tangent Model Composition for Ensembling and Continual Fine-tuning. arXiv, 2023.
+- :llama: Wan et al. Knowledge Fusion of Large Language Models [arXiv:2401.10491](http://arxiv.org/abs/2401.10491)
+
+    ??? quote
+
+        ![alt text](images/fusellm.png){ width=800px }
+
 - :llama: Wan F, Yang Z, Zhong L, et al. FuseChat: Knowledge Fusion of Chat Models. arXiv, 2024.
+
+    ??? quote
+
+        ![alt text](images/fusechat.png){ width=800px }
 
 ## Model Merging
 
@@ -44,19 +54,45 @@ Mode connectivity is such an important concept in model merging that it deserves
 
 ### Weight Interpolation
 
-- G. Ilharco et al., “Editing Models with Task Arithmetic,” Mar. 31, 2023, arXiv: arXiv:2212.04089. doi: 10.48550/arXiv.2212.04089.
-- Guillermo Ortiz-Jimenez, Alessandro Favero, and Pascal Frossard, “Task Arithmetic in the Tangent Space: Improved Editing of Pre-Trained Models,” May 30, 2023, arXiv: arXiv:2305.12827. doi: 10.48550/arXiv.2305.12827.
-- P. Yadav, D. Tam, L. Choshen, C. Raffel, and M. Bansal, “Resolving Interference When Merging Models,” Jun. 02, 2023, arXiv: arXiv:2306.01708. Accessed: Jun. 12, 2023. [Online]. Available: http://arxiv.org/abs/2306.01708
-- [:simple-github:](https://github.com/EnnengYang/AdaMerging) 
-    E. Yang et al., “AdaMerging: Adaptive Model Merging for Multi-Task Learning,” ICLR 2024, arXiv: arXiv:2310.02575. doi: 10.48550/arXiv.2310.02575.
+- Osowiechi et al. WATT: Weight Average Test-Time Adaptation of CLIP [arXiv:2406.13875](http://arxiv.org/abs/2406.13875)
+
+    ??? quote
+
+        ![image](images/watt.png){ width=800px }
+
 - :llama: [:simple-github:](https://github.com/yule-BUAA/MergeLM)
-    L. Yu, B. Yu, H. Yu, F. Huang, and Y. Li, “Language Models are Super Mario: Absorbing Abilities from Homologous Models as a Free Lunch,” Nov. 06, 2023, arXiv: arXiv:2311.03099. Accessed: Nov. 07, 2023. [Online]. Available: http://arxiv.org/abs/2311.03099
+    L. Yu, B. Yu, H. Yu, F. Huang, and Y. Li, “Language Models are Super Mario: Absorbing Abilities from Homologous Models as a Free Lunch,” Nov. 06, 2023, arXiv: arXiv:2311.03099. Available: http://arxiv.org/abs/2311.03099
+- :star: [:simple-github:](https://github.com/EnnengYang/AdaMerging) 
+    E. Yang et al., “AdaMerging: Adaptive Model Merging for Multi-Task Learning,” ICLR 2024, arXiv: arXiv:2310.02575. doi: 10.48550/arXiv.2310.02575.
+- :star: P. Yadav, D. Tam, L. Choshen, C. Raffel, and M. Bansal, “Resolving Interference When Merging Models,” Jun. 02, 2023, arXiv: arXiv:2306.01708. Available: http://arxiv.org/abs/2306.01708
+- :star: Guillermo Ortiz-Jimenez, Alessandro Favero, and Pascal Frossard, “Task Arithmetic in the Tangent Space: Improved Editing of Pre-Trained Models,” May 30, 2023, arXiv: arXiv:2305.12827. doi: 10.48550/arXiv.2305.12827.
+- :star: G. Ilharco et al., “Editing Models with Task Arithmetic,” Mar. 31, 2023, arXiv: arXiv:2212.04089. doi: 10.48550/arXiv.2212.04089.
+- Rame et al. Rewarded soups: towards Pareto-optimal alignment by interpolating weights fine-tuned on diverse rewards [arXiv:2306.04488](http://arxiv.org/abs/2306.04488)
+- Chronopoulou et al. AdapterSoup: Weight Averaging to Improve Generalization of Pretrained Language Models [arXiv:2302.07027](http://arxiv.org/abs/2302.07027)
+
+    ??? quote
+
+        ![alt text](images/adapter_soup.png){ width=450px }
+
+- Zimmer et al. Sparse Model Soups: A Recipe for Improved Pruning via Model Averaging [arXiv:2306.16788](http://arxiv.org/abs/2306.16788)
+
+    ??? quote
+
+        ![alt text](images/sparse-modelsoups.png){ width=800px }
+
+- :star: Wortsman et al. Model soups: averaging weights of multiple fine-tuned models improves accuracy without increasing inference time [arXiv:2203.05482](http://arxiv.org/abs/2203.05482)
 
 
 ### Alignment-based Methods
 
+- Kinderman et al. Foldable SuperNets: Scalable Merging of Transformers with Different Initializations and Tasks [arXiv:2410.01483](http://arxiv.org/abs/2410.01483)
+
+    ??? quote
+
+        ![alt text](images/fs-merge.png){ width=800px }
+
 - S. K. Ainsworth, J. Hayase, and S. Srinivasa, “Git Re-Basin: Merging Models modulo Permutation Symmetries,” ICLR 2023. Available: http://arxiv.org/abs/2209.04836
-- George Stoica, Daniel Bolya, Jakob Bjorner, Taylor Hearn, and Judy Hoffman, “ZipIt! Merging Models from Different Tasks without Training,” May 04, 2023, arXiv: arXiv:2305.03053. Accessed: May 06, 2023. [Online]. Available: http://arxiv.org/abs/2305.03053
+- George Stoica, Daniel Bolya, Jakob Bjorner, Taylor Hearn, and Judy Hoffman, “ZipIt! Merging Models from Different Tasks without Training,” May 04, 2023, arXiv: arXiv:2305.03053. Available: http://arxiv.org/abs/2305.03053
 
 
 ### Subspace-based Methods
@@ -120,6 +156,11 @@ Mode connectivity is such an important concept in model merging that it deserves
 
         ![alt text](images/sparse_upcycling.png){ width=800px }
 
+## Benchmarks
+
+- Tam et al. Realistic Evaluation of Model Merging for Compositional Generalization [arXiv:2409.18314](http://arxiv.org/abs/2409.18314)
+- :star: Tang et al. FusionBench: A Comprehensive Benchmark of Deep Model Fusion.
+
 ## Libraries and Tools
 
 ### Fine-tuning, Preparing models for fusion
@@ -135,6 +176,10 @@ Mode connectivity is such an important concept in model merging that it deserves
     FusionBench: A Comprehensive Benchmark of Deep Model Fusion.
 - :star: :llama: [:simple-github:](https://github.com/arcee-ai/mergekit) 
     MergeKit: A PyTorch library for merging large language models.
+
+### Version Control
+
+- Kandpal et al. Git-Theta: A Git Extension for Collaborative Development of Machine Learning Models [arXiv:2306.04529](http://arxiv.org/abs/2306.04529)
 
 ## Other Applications of Model Fusion
 
