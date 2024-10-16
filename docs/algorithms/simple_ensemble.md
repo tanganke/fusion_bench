@@ -37,4 +37,4 @@ fusion_bench method=simple_ensemble \
 
 ## References
 
-::: fusion_bench.method.EnsembleAlgorithm
+::: fusion_bench.method.SimpleEnsembleAlgorithm
