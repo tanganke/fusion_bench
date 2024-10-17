@@ -1,4 +1,5 @@
 !*.template
+/temp/
 /datasets/
 /datasets
 /lm-evaluation-harness/

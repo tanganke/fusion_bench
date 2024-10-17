@@ -8,6 +8,7 @@ from .dtype import parse_dtype
 from .instantiate import instantiate
 from .parameters import *
 from .timer import timeit_context
+from typing import Iterable
 
 
 def import_object(abs_obj_name: str):
@@ -23,3 +24,7 @@ def import_object(abs_obj_name: str):
     module_name, obj_name = abs_obj_name.rsplit(".", 1)
     module = importlib.import_module(module_name)
     return getattr(module, obj_name)
+
+
+def first(iterable: Iterable):
+    return next(iter(iterable))
