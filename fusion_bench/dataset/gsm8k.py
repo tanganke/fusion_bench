@@ -1,6 +1,7 @@
 import re
 from typing import Literal
 
+import datasets
 from datasets import load_dataset
 
 
@@ -36,3 +37,10 @@ def load_gsm8k_question_label_data(
         questions.append(sample["question"])
 
     return questions, labels
+
+
+def load_gsm8k_question_label_dataset(
+    dataset_name: Literal["train", "test", "train_socratic", "test_socratic"]
+):
+    question, labels = load_gsm8k_question_label_data(dataset_name)
+    return datasets.Dataset.from_dict({"question": question, "label": labels})
