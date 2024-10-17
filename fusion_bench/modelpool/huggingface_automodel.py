@@ -4,7 +4,7 @@ from omegaconf import DictConfig
 from torch.nn.modules import Module
 from transformers import AutoModel
 
-from .base_pool import ModelPool
+from fusion_bench.compat.modelpool import ModelPool
 
 log = logging.getLogger(__name__)
 
