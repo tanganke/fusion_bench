@@ -1,3 +1,4 @@
+# flake8: noqa F401
 from omegaconf import DictConfig
 
 from fusion_bench.modelpool.huggingface_gpt2_classification import (

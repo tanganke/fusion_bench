@@ -1,5 +1,6 @@
 # flake8: noqa: F401
 import importlib
+from typing import Iterable
 
 from . import data
 from .cache_utils import *
@@ -8,7 +9,6 @@ from .dtype import parse_dtype
 from .instantiate import instantiate
 from .parameters import *
 from .timer import timeit_context
-from typing import Iterable
 
 
 def import_object(abs_obj_name: str):

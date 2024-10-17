@@ -1,12 +1,10 @@
-import logging
-from abc import ABC, abstractmethod
 from typing import Union
 
 from omegaconf import DictConfig
 from tqdm.autonotebook import tqdm
 
 
-class TaskPool(ABC):
+class TaskPool:
     _program = None
 
     def __init__(self, taskpool_config: DictConfig):

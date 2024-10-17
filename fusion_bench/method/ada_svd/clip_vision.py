@@ -9,7 +9,7 @@ After the upscaled model is created, the algorithm reduces and unload the MoE mo
 """
 
 from copy import deepcopy
-from typing import Dict, List, Literal, Optional, Tuple, Union, cast, Iterable
+from typing import Dict, Iterable, List, Literal, Optional, Tuple, Union, cast
 
 import lightning as L
 import torch
