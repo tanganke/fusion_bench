@@ -9,11 +9,18 @@ log = logging.getLogger(__name__)
 
 
 class LinearInterpolationAlgorithm(BaseModelFusionAlgorithm):
+    R"""
+    LinearInterpolationAlgorithm performs linear interpolation between two models.
+    Returns a model with the state dict that is a linear interpolation of the state dicts of the two models.
+    $\theta = (1-t) \theta_1 + t \theta_2$
+    """
+
     _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
         "t": "t",
     }
 
     def __init__(self, t: float, **kwargs):
+        assert 0 <= t <= 1, "t should be in the range [0, 1]"
         self.t = t
         super().__init__(**kwargs)
 
