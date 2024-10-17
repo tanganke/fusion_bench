@@ -18,7 +18,11 @@ _import_structure = {
         "MaxModelPredictorAlgorithm",
     ],
     # model merging methods
-    "linear": ["SimpleAverageForLlama", "TaskArithmeticForLlama"],
+    "linear": [
+        "SimpleAverageForLlama",
+        "TaskArithmeticForLlama",
+        "LinearInterpolationAlgorithm",
+    ],
     "simple_average": ["SimpleAverageAlgorithm"],
     "weighted_average": ["WeightedAverageAlgorithm", "WeightedAverageForLLama"],
     "task_arithmetic": ["TaskArithmeticAlgorithm"],
@@ -92,7 +96,11 @@ if TYPE_CHECKING:
         WeightedEnsembleAlgorithm,
     )
     from .fisher_merging import FisherMergingForCLIPVisionModel
-    from .linear import SimpleAverageForLlama, TaskArithmeticForLlama
+    from .linear import (
+        LinearInterpolationAlgorithm,
+        SimpleAverageForLlama,
+        TaskArithmeticForLlama,
+    )
     from .mixture_of_experts import (
         MixtralForCausalLMMergingAlgorithm,
         MixtralForCausalLMUpscalingAlgorithm,
