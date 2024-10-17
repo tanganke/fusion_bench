@@ -1,20 +1,15 @@
 import logging
 from pathlib import Path
-from typing import Dict, cast
 
 import lightning as L
-import torch
 from omegaconf import DictConfig
-from torch import Tensor, nn
-from torch.nn.modules import Module
+from torch import nn
 from torch.utils.data import DataLoader
 
+from fusion_bench.compat.taskpool.base_pool import TaskPool
 from fusion_bench.dataset.nyuv2 import NYUv2
-from fusion_bench.models.nyuv2.aspp import DeepLabHead
-from fusion_bench.models.nyuv2.lightning_module import NYUv2Model, NYUv2MTLModule
-from fusion_bench.models.nyuv2.resnet_dilated import ResnetDilated, resnet_dilated
-
-from .base_pool import TaskPool
+from fusion_bench.models.nyuv2.lightning_module import NYUv2MTLModule
+from fusion_bench.models.nyuv2.resnet_dilated import ResnetDilated
 
 log = logging.getLogger(__name__)
 

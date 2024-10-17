@@ -1,20 +1,14 @@
 import functools
 import logging
 import os
-from abc import abstractmethod
 from copy import deepcopy
-from typing import List
 
-import lightning as L
 import torch
-from omegaconf import DictConfig
-from torch import Tensor, nn
+from torch import Tensor
 from torch.utils.data import DataLoader
-from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
-from transformers.models.clip.modeling_clip import CLIPEncoder, CLIPEncoderLayer
+from transformers import CLIPModel, CLIPProcessor
+from transformers.models.clip.modeling_clip import CLIPEncoder
 
-from fusion_bench.compat.method.base_algorithm import ModelFusionAlgorithm
-from fusion_bench.compat.modelpool import ModelPool
 from fusion_bench.compat.modelpool.huggingface_clip_vision import (
     HuggingFaceClipVisionPool,
 )
