@@ -26,12 +26,13 @@ _import_structure = {
     "simple_average": ["SimpleAverageAlgorithm"],
     "weighted_average": ["WeightedAverageAlgorithm", "WeightedAverageForLLama"],
     "task_arithmetic": ["TaskArithmeticAlgorithm"],
+    "ties_merging": ["TiesMergingAlgorithm"],
+    "dare": ["DareTaskArithmetic"],
     "fisher_merging": [
         "FisherMergingForCLIPVisionModel",
         "FisherMergingAlgorithmForGPT2",
     ],
     "regmean": ["RegMeanAlgorithmForCLIP", "RegMeanAlgorithmForGPT2"],
-    "ties_merging": ["TiesMergingAlgorithm"],
     "adamerging": [
         "CLIPTaskWiseAdaMergingAlgorithm",
         "CLIPLayerWiseAdaMergingAlgorithm",
@@ -87,6 +88,7 @@ if TYPE_CHECKING:
         ConcreteTaskArithmeticAlgorithmForCLIP,
         ConcreteTaskWiseAdaMergingForCLIP,
     )
+    from .dare import DareTaskArithmetic
     from .dawe import DataAdaptiveWeightEnsemblingForCLIP
     from .depth_upscaling import DepthUpscalingAlgorithm, DepthUpscalingForLlama
     from .dummy import DummyAlgorithm
