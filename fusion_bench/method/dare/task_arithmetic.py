@@ -12,6 +12,12 @@ from .utils import (
 
 
 class DareTaskArithmetic(BaseModelFusionAlgorithm):
+    """
+    Implementation of Task Arithmetic w/ DARE.
+
+    - Yu et al. Language Models are Super Mario: Absorbing Abilities from Homologous Models as a Free Lunch. 2023. http://arxiv.org/abs/2311.03099
+    """
+
     def __init__(
         self,
         scaling_factor: float,
