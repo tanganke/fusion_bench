@@ -81,7 +81,7 @@ class DerivedModelFusionAlgorithm(BaseModelFusionAlgorithm):
 
     # _config_mapping maps the attribution to the corresponding key in the configuration file.
     # this is optional and can be used to serialize the object to a configuration file.
-    # self.config.`hyperparam_1` will be mapped to the attribute `hyperparam_attr_1`.
+    # `self.config.hyperparam_1` will be mapped to the attribute `hyperparam_attr_1`.
     _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
         "hyperparam_attr_1": "hyperparam_1",
         "hyperparam_attr_2": "hyperparam_2",

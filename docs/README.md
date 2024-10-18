@@ -1,9 +1,9 @@
 ---
 title: FusionBench
-description: A Comprehensive Benchmark of Deep Model Fusion
+description: A Comprehensive Benchmark/Toolkit of Deep Model Fusion
 ---
 
-# FusionBench: A Comprehensive Benchmark of Deep Model Fusion
+# FusionBench: A Comprehensive Benchmark/Toolkit of Deep Model Fusion
 
 [![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](http://arxiv.org/abs/2406.03280)
 [![GitHub License](https://img.shields.io/github/license/tanganke/fusion_bench)](https://github.com/tanganke/fusion_bench/blob/main/LICENSE)
