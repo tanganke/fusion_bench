@@ -4,10 +4,9 @@ import logging
 from copy import deepcopy
 from typing import Optional
 
-import lightning as L
 import torch
 import torch.nn.functional as F
-from omegaconf import DictConfig, open_dict
+from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 from torchmetrics import Accuracy, MeanMetric
 from tqdm.autonotebook import tqdm

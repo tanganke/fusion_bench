@@ -2,14 +2,12 @@ import logging
 from copy import deepcopy
 from typing import Optional
 
-import peft
 from omegaconf import DictConfig, flag_override
-from peft import PeftConfig, PeftModel
-from torch import nn
+from peft import PeftModel
 from transformers import AutoModelForSeq2SeqLM
 
 from fusion_bench.modelpool import BaseModelPool
-from fusion_bench.utils import parse_dtype, timeit_context
+from fusion_bench.utils import parse_dtype
 
 log = logging.getLogger(__name__)
 

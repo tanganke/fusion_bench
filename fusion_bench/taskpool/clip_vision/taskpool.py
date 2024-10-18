@@ -1,11 +1,9 @@
-import functools
 import itertools
 import json
 import logging
 import os
-from typing import Any, Callable, Dict, List, Union, cast
+from typing import Any, Callable, Dict, List, Union, cast  # noqa: F401
 
-import lightning as L
 import torch
 from omegaconf import DictConfig
 from torch import Tensor, nn
@@ -18,7 +16,7 @@ from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 from transformers.models.clip.modeling_clip import CLIPVisionTransformer
 
 from fusion_bench.dataset import CLIPDataset
-from fusion_bench.mixins import LightningFabricMixin, YAMLSerializationMixin
+from fusion_bench.mixins import LightningFabricMixin
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.taskpool import BaseTaskPool
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
@@ -36,7 +34,10 @@ def raw_image_collate_fn(batch):
     return images, labels
 
 
-class CLIPVisionModelTaskPool(LightningFabricMixin, BaseTaskPool):
+class CLIPVisionModelTaskPool(
+    BaseTaskPool,
+    LightningFabricMixin,
+):
     """
     This class is used to define the image classification task for CLIP models.
     """

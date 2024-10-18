@@ -18,8 +18,8 @@ log = logging.getLogger(__name__)
 
 def join_list(list_of_list: List[List]):
     ans = []
-    for l in list_of_list:
-        ans.extend(l)
+    for item in list_of_list:
+        ans.extend(item)
     return ans
 
 

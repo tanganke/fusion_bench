@@ -1,6 +1,4 @@
-import heapq
 import logging
-import time
 from typing import List, Tuple, cast
 
 import torch
@@ -270,7 +268,7 @@ def llama_prune_wanda_(
 
 @torch.no_grad()
 def prune_sparsegpt(args, model, tokenizer, dev, prune_n=0, prune_m=0):
-    ## SparseGPT code available at: https://github.com/IST-DASLab/sparsegpt/tree/f5c25005a61f96a0933ca2f95705a963585aafaa
+    # SparseGPT code available at: https://github.com/IST-DASLab/sparsegpt/tree/f5c25005a61f96a0933ca2f95705a963585aafaa
     print("Starting ...")
     dataloader, _ = get_loaders(
         "c4",

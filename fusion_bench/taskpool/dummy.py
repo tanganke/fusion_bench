@@ -2,11 +2,7 @@
 This is the dummy task pool that is used for debugging purposes.
 """
 
-import os
 from typing import Optional
-
-import torch
-from omegaconf import DictConfig
 
 from fusion_bench.models.separate_io import separate_save
 from fusion_bench.taskpool.base_pool import BaseTaskPool

@@ -1,17 +1,12 @@
 import functools
-import itertools
 import logging
 import os
 from copy import deepcopy
 
-import lightning as L
 import torch
-import torch.nn.functional as F
-from omegaconf import DictConfig, open_dict
+from omegaconf import DictConfig
 from torch.utils.data import DataLoader
-from tqdm.autonotebook import tqdm
 from transformers import (
-    AutoModelForSeq2SeqLM,
     AutoTokenizer,
     T5ForConditionalGeneration,
     default_data_collator,

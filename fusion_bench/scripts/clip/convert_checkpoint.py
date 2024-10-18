@@ -4,8 +4,6 @@ convert checkpoint from pytorch lightning to huggingface
 
 import argparse
 import logging
-import os
-from typing import Optional
 
 import torch
 from transformers import CLIPProcessor, CLIPVisionModel
