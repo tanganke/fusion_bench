@@ -1,7 +1,12 @@
 # `fusion_bench`: The Command Line Interface for FusionBench
 
+**`fusion_bench`: FusionBench 的命令行界面**
+
 `fusion_bench` is the command line interface for running model fusion benchmarks in the FusionBench project. 
 It provides a flexible way to configure and execute various fusion algorithms on different model pools and evaluate them across multiple tasks.
+
+> `fusion_bench` 是 FusionBench 项目中用于运行模型融合基准测试的命令行界面。
+> 它提供了一种灵活的方式来配置和执行各种融合算法，并在不同的模型池上评估它们在多个任务中的表现。
 
 ## Details and Options
 
@@ -92,7 +97,7 @@ This is useful for tab completion in the shell. You can install shell completion
 
 ### Application Options
 
-- **save_report**: The path to save the report. If not specified or is `false`, the report will not be saved. The report will be saved as a JSON file. Default is `false`.
+- **report_save_path**: The path to save the report. If not specified or is `false`, the report will not be saved. The report will be saved as a JSON file. Default is `false`.
   For example, to save the report to `outputs/report.json`:
   ```bash
   fusion_bench report_save_path=outputs/report.json
@@ -167,45 +172,16 @@ fusion_bench method=task_arithmetic \
 
 The overall configuration is as follows:
 
-```yaml linenums="1" hl_lines="1 4 13"
+```yaml linenums="1" hl_lines="1 3 5"
 method: # (1)!
-  name: task_arithmetic
-  scaling_factor: 0.5
+  ...
 modelpool: # (2)!
-   type: huggingface_clip_vision
-   models:
-   - name: _pretrained_
-     path: openai/clip-vit-base-patch32
-   - name: svhn
-     path: tanganke/clip-vit-base-patch32_svhn
-   - name: mnist
-     path: tanganke/clip-vit-base-patch32_mnist
+  ...
 taskpool: # (3)!
-  type: clip_vit_classification
-  name: clip-vit-base-patch32_svhn_and_mnist
-  dataset_type: huggingface_image_classification
-  tasks:
-  - name: svhn
-    dataset:
-      type: instantiate
-      name: svhn
-      object:
-        _target_: datasets.load_dataset
-        _args_:
-        - svhn
-        - cropped_digits
-        split: test
-  - name: mnist
-    dataset:
-      name: mnist
-      split: test
-  clip_model: openai/clip-vit-base-patch32
-  batch_size: 128
-  num_workers: 16
-  fast_dev_run: ${fast_dev_run}
+  ...
 fast_dev_run: false
 print_config: true
-save_report: false
+report_save_path: false
 ```
 
 1. Configuration for method, `fusion_bench.method.load_algorithm_from_config` checks the 'name' attribute of the configuration and returns an instance of the corresponding algorithm.
