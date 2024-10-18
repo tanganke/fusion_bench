@@ -1,4 +1,4 @@
-# FusionBench: A Comprehensive Benchmark of Deep Model Fusion
+# FusionBench: A Comprehensive Benchmark/ToolKit of Deep Model Fusion
 
 [![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](http://arxiv.org/abs/2406.03280)
 [![GitHub License](https://img.shields.io/github/license/tanganke/fusion_bench)](https://github.com/tanganke/fusion_bench/blob/main/LICENSE)
@@ -72,8 +72,7 @@ Read the [CLI documentation](https://tanganke.github.io/fusion_bench/cli/fusion_
 ## Implement your own model fusion algorithm
 
 ```python
-from fusion_bench.method import BaseModelFusionAlgorithm
-from fusion_bench.modelpool import BaseModelPool
+from fusion_bench import BaseModelFusionAlgorithm, BaseModelPool
 
 class DerivedModelFusionAlgorithm(BaseModelFusionAlgorithm):
     """
@@ -81,6 +80,8 @@ class DerivedModelFusionAlgorithm(BaseModelFusionAlgorithm):
     """
 
     # _config_mapping maps the attribution to the corresponding key in the configuration file.
+    # this is optional and can be used to serialize the object to a configuration file.
+    # self.config.`hyperparam_1` will be mapped to the attribute `hyperparam_attr_1`.
     _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
         "hyperparam_attr_1": "hyperparam_1",
         "hyperparam_attr_2": "hyperparam_2",
