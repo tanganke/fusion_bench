@@ -18,14 +18,13 @@ description: A Comprehensive Benchmark/Toolkit of Deep Model Fusion
 ??? bug "Breaking Changes in v0.2 (重大变更)"
 
     Recent upgrade to v0.2.0 may cause some breaking changes. Make some documented instructions may be outdated.
-    > 最近升级到 v0.2.0 可能会导致一些重大变更，使得文档中的一些指令可能已过时，需要更新。
-
     You can install a specific version by `pip install fusion-bench==0.1.6` or checkout to a specific version by `git checkout v0.1.6`.
     If you encounter any issues, please feel free to raise an issue.
+    We are working on the documentation and will update it as soon as possible. Use version >=0.2.0 is recommended.
+
+    > 最近升级到 v0.2.0 可能会导致一些重大变更，使得文档中的一些指令可能已过时，需要更新。
     > 您可以通过 `pip install fusion-bench==0.1.6` 安装特定版本，或者通过 `git checkout v0.1.6` 切换到特定版本。
     > 如果遇到任何问题，请随时提出问题。
-
-    We are working on the documentation and will update it as soon as possible. Use version >=0.2.0 is recommended.
     > 我们正在努力更新文档，并会尽快更新。建议使用 >=0.2.0 版本。
 
 !!! note
