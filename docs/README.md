@@ -13,12 +13,6 @@ description: A Comprehensive Benchmark of Deep Model Fusion
 [![Static Badge](https://img.shields.io/badge/code%20style-black-black)](https://github.com/psf/black)
 [![Static Badge](https://img.shields.io/badge/code%20style-yamlfmt-black)](https://github.com/google/yamlfmt)
 
-!!! warning "Testing Phase"
-    
-    The documented experiments should be reproducible. 
-    However, this project is still in testing phase as the API may be subject to change. 
-    Please report any issues you encounter.
-
 !!! bug "Breaking Changes"
 
     Recent upgrade to v0.2.0 may cause some breaking changes.

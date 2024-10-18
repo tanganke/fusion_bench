@@ -8,8 +8,6 @@
 [![Static Badge](https://img.shields.io/badge/code%20style-black-black)](https://github.com/psf/black)
 [![Static Badge](https://img.shields.io/badge/code%20style-yamlfmt-black)](https://github.com/google/yamlfmt)
 
-> [!WARNING]  
-> This project is still in testing phase as the API may be subject to change. Please report any issues you encounter.
 
 > [!TIP]  
 > Documentation is available at [tanganke.github.io/fusion_bench/](https://tanganke.github.io/fusion_bench/).
