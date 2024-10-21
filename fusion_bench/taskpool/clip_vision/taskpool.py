@@ -3,7 +3,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union, cast  # noqa: F401
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast  # noqa: F401
 
 import torch
 from omegaconf import DictConfig
@@ -41,14 +41,14 @@ class LayerWiseFeatureSaver:
         self.save_path = save_path
         self.features = []
 
-    def __call__(self, module, input, output: Tensor):
+    def __call__(self, module, input, output: Tuple[Tensor]):
         self.features.append(output[0].detach().cpu())
 
-    def save_features(self, layer):
+    def save_features(self):
         features = torch.cat(self.features, dim=0)
         if self.save_path is not None:
             self.save_path.parent.mkdir(parents=True, exist_ok=True)
-            print(f"Saving features for layer {layer} to {self.save_path}")
+            print(f"Saving features to {self.save_path}")
             torch.save(features, self.save_path)
 
 
@@ -61,8 +61,11 @@ class CLIPVisionModelTaskPool(
     """
 
     _is_setup = False
+
+    # hooks and handles for saving layer-wise features
     _layer_wise_feature_save_hooks: Dict[int, LayerWiseFeatureSaver] = {}
     _layer_wise_feature_save_hook_handles: Dict[int, RemovableHandle] = {}
+
     _config_mapping = BaseTaskPool._config_mapping | {
         "_test_datasets": "test_datasets",
         "_processor": "processor",
@@ -225,42 +228,43 @@ class CLIPVisionModelTaskPool(
             total=len(self.test_dataloaders),
         ):
             classnames, templates = get_classnames_and_templates(task_name)
-            if self.layer_wise_feature_save_path is not None:
-                # setup hooks for saving layer-wise features
-                assert isinstance(
-                    classifier.clip_model.vision_model,
-                    (CLIPVisionTransformer, CLIPVisionModel),
-                ), "Vision model is expected to be a CLIPVisionTransformer"
-                vision_model = classifier.clip_model.vision_model
-                if isinstance(vision_model, CLIPVisionModel):
-                    vision_model = vision_model.vision_model
-                # assign forward hooks for each layer
-                for i, layer in enumerate(vision_model.encoder.layers):
-                    self._layer_wise_feature_save_hooks[i] = LayerWiseFeatureSaver(
-                        self.layer_wise_feature_save_path / task_name / f"layer_{i}.pth"
-                    )
-                    self._layer_wise_feature_save_hook_handles[i] = (
-                        layer.register_forward_hook(
-                            self._layer_wise_feature_save_hooks[i]
-                        )
-                    )
-
+            self.on_task_evaluation_begin(classifier, task_name)
             classifier.set_classification_task(classnames, templates)
             result = self._evaluate(
                 classifier,
                 test_dataloader,
                 num_classes=len(classnames),
             )
-
-            if self.layer_wise_feature_save_path is not None:
-                # save features and remove hooks after evaluation
-                for i, hook in self._layer_wise_feature_save_hooks.items():
-                    hook.save_features(i)
-                    self._layer_wise_feature_save_hook_handles[i].remove()
-
             report[task_name] = result
+            self.on_task_evaluation_end()
         log.info(f"Evaluation Result: {report}")
         if self.fabric.is_global_zero and len(self.fabric._loggers) > 0:
             with open(os.path.join(self.log_dir, "report.json"), "w") as fp:
                 json.dump(report, fp)
         return report
+
+    def on_task_evaluation_end(self):
+        if self.layer_wise_feature_save_path is not None:
+            # save features and remove hooks after evaluation
+            for i, hook in self._layer_wise_feature_save_hooks.items():
+                hook.save_features()
+                self._layer_wise_feature_save_hook_handles[i].remove()
+
+    def on_task_evaluation_begin(self, classifier: HFCLIPClassifier, task_name: str):
+        if self.layer_wise_feature_save_path is not None:
+            # setup hooks for saving layer-wise features
+            assert isinstance(
+                classifier.clip_model.vision_model,
+                (CLIPVisionTransformer, CLIPVisionModel),
+            ), "Vision model is expected to be a CLIPVisionTransformer"
+            vision_model = classifier.clip_model.vision_model
+            if isinstance(vision_model, CLIPVisionModel):
+                vision_model = vision_model.vision_model
+                # assign forward hooks for each layer
+            for i, layer in enumerate(vision_model.encoder.layers):
+                self._layer_wise_feature_save_hooks[i] = LayerWiseFeatureSaver(
+                    self.layer_wise_feature_save_path / task_name / f"layer_{i}.pth"
+                )
+                self._layer_wise_feature_save_hook_handles[i] = (
+                    layer.register_forward_hook(self._layer_wise_feature_save_hooks[i])
+                )

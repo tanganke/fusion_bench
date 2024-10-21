@@ -1,4 +1,5 @@
 !*.template
+/results/
 /temp/
 /datasets/
 /datasets
