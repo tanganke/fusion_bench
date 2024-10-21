@@ -32,6 +32,7 @@ class AlgorithmFactory:
         "clip_weight_ensembling_moe": ".we_moe.clip_we_moe.CLIPWeightEnsemblingMoEAlgorithm",
         "model_recombination": ".model_recombination.ModelRecombinationAlgorithm",
         "smile_upscaling": ".smile_upscaling.smile_upscaling.SmileUpscalingAlgorithm",
+        "sparse_clip_weight_ensembling_moe": "fusion_bench.method.SparseCLIPWeightEnsemblingMoEAlgorithm",
         "smile_mistral_upscaling": ".smile_upscaling.smile_mistral_upscaling.SmileMistralUpscalingAlgorithm",
         # pruning methods
         "magnitude_diff_pruning": ".pruning.MagnitudeDiffPruningAlgorithm",
