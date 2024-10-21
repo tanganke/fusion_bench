@@ -1,6 +1,7 @@
 _usage_: |
   defaults:
     - CLIPVisionModelTaskPool@: _template
+      
 _target_: fusion_bench.taskpool.CLIPVisionModelTaskPool
 _version_: "0.2"
 _recursive_: false
@@ -21,4 +22,4 @@ dataloader_kwargs:
   shuffle: False
 # The path to save the features to, if none then the features are not saved
 # This is the path to a directory, the features of task `task_name` will be saved in `feature_save_path/task_name.csv`
-feature_save_path: null
+layer_wise_feature_save_path: null

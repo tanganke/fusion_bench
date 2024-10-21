@@ -190,7 +190,7 @@ class SparseWeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
         self.modelpool = modelpool
 
         with timeit_context("upscaling models to a weight-ensembling MoE model"):
-            if self.config.shard_gate:
+            if self.config.shared_gate:
                 moe_model = self.construct_moe_model_sharedgate()
             else:
                 moe_model = self.construct_moe_model()

@@ -19,7 +19,7 @@ post_sparse_gate: False
 gate_prune_ratio: 0.0
 
 # shared gate
-shard_gate: true
+shared_gate: true
 position_encoding: false
 position_encoding_dim: 8
 

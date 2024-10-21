@@ -28,3 +28,4 @@ dataloader_kwargs:
   pin_memory: True
   drop_last: False
   shuffle: False
+layer_wise_feature_save_path: null
