@@ -2,7 +2,8 @@ import itertools
 import json
 import logging
 import os
-from typing import Any, Callable, Dict, List, Union, cast  # noqa: F401
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Union, cast  # noqa: F401
 
 import torch
 from omegaconf import DictConfig
@@ -49,6 +50,7 @@ class CLIPVisionModelTaskPool(
         "_data_processor": "data_processor",
         "_clip_model": "clip_model",
         "_dataloader_kwargs": "dataloader_kwargs",
+        "_feature_save_path": "feature_save_path",
         "fast_dev_run": "fast_dev_run",
         "_version_": "_version",
     }
@@ -61,6 +63,7 @@ class CLIPVisionModelTaskPool(
         data_processor: Union[DictConfig, CLIPProcessor],
         clip_model: Union[DictConfig, CLIPModel],
         dataloader_kwargs: DictConfig = None,
+        feature_save_path: Optional[str] = None,
         fast_dev_run: bool = False,
         _version_: str = None,
         **kwargs,
@@ -71,6 +74,10 @@ class CLIPVisionModelTaskPool(
         self._data_processor = data_processor
         self._clip_model = clip_model
         self._dataloader_kwargs = dataloader_kwargs or {}
+        self._feature_save_path = feature_save_path
+        self.feature_save_path = (
+            Path(feature_save_path) if feature_save_path is not None else None
+        )
         self.fast_dev_run = fast_dev_run
         self._version_ = _version_
         log.warning(f"Unrecognized arguments: {list(kwargs.keys())}")
@@ -124,7 +131,13 @@ class CLIPVisionModelTaskPool(
         self._is_setup = True
 
     @torch.no_grad()
-    def _evaluate(self, classifier: nn.Module, test_loader, num_classes: int):
+    def _evaluate(
+        self,
+        classifier: HFCLIPClassifier,
+        test_loader: DataLoader,
+        num_classes: int,
+        image_embeds_save_file=None,
+    ):
         accuracy: MulticlassAccuracy = Accuracy(
             task="multiclass", num_classes=num_classes
         )
@@ -143,7 +156,14 @@ class CLIPVisionModelTaskPool(
             )
         ):
             inputs, targets = batch
-            logits: Tensor = classifier(inputs)
+            outputs = classifier(inputs, return_image_embeds=True, return_dict=True)
+            logits: Tensor = outputs["logits"]
+
+            if image_embeds_save_file is not None:
+                for image_embed in outputs["image_embeds"].cpu().numpy():
+                    image_embeds_save_file.write(
+                        ",".join(map(str, image_embed.tolist())) + "\n"
+                    )
 
             loss = F.cross_entropy(logits, targets)
             loss_metric.update(loss.detach().cpu())
@@ -186,9 +206,19 @@ class CLIPVisionModelTaskPool(
         ):
             classnames, templates = get_classnames_and_templates(task_name)
             classifier.set_classification_task(classnames, templates)
+            if self.feature_save_path is not None:
+                self.feature_save_path.mkdir(parents=True, exist_ok=True)
+                image_embeds_save_file = open(
+                    self.feature_save_path / f"{task_name}.csv", "w"
+                )
             result = self._evaluate(
-                classifier, test_dataloader, num_classes=len(classnames)
+                classifier,
+                test_dataloader,
+                num_classes=len(classnames),
+                image_embeds_save_file=image_embeds_save_file,
             )
+            if self.feature_save_path is not None:
+                image_embeds_save_file.close()
             report[task_name] = result
         log.info(f"Evaluation Result: {report}")
         if self.fabric.is_global_zero and len(self.fabric._loggers) > 0:

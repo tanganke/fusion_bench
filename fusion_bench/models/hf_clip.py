@@ -111,7 +111,7 @@ class HFCLIPClassifier(nn.Module):
 
         self.zeroshot_weights = zeroshot_weights
 
-    def forward(self, images):
+    def forward(self, images, return_image_embeds=False, return_dict=False):
         """
         Perform forward pass for zero-shot image classification.
 
@@ -146,4 +146,13 @@ class HFCLIPClassifier(nn.Module):
         logits_per_text = torch.matmul(text_embeds, image_embeds.t()) * logit_scale
         logits_per_image = logits_per_text.t()
 
-        return logits_per_image
+        if return_dict:
+            ret = {"logits": logits_per_image}
+            if return_image_embeds:
+                ret.update({"image_embeds": image_embeds})
+            return ret
+        else:
+            if return_image_embeds:
+                return logits_per_image, image_embeds
+            else:
+                return logits_per_image
