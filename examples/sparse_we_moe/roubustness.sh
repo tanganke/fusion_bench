@@ -40,7 +40,7 @@ for tv_prune_ratio in 0.9; do
         fast_dev_run=false \
         modelpool=CLIPVisionModelPool/clip-vit-base-patch16_robustness_clean \
         taskpool=CLIPVisionModelTaskPool/clip-vit-base-patch16_robustness_clean \
-        save_report=outputs/sparse_we_moe/robustness/clip-vit-base-patch16/sparse_we_moe_ratio_${prune_ratio_name}_corruption_clean.json
+        report_save_path=outputs/sparse_we_moe/robustness/clip-vit-base-patch16/sparse_we_moe_ratio_${prune_ratio_name}_corruption_clean.json
 done
 
 for tv_prune_ratio in 0.9; do
@@ -56,6 +56,6 @@ for tv_prune_ratio in 0.9; do
             modelpool.corruption=${corruption} \
             taskpool=CLIPVisionModelTaskPool/clip-vit-base-patch16_robustness_corrupted \
             taskpool.corruption=${corruption} \
-            save_report=outputs/sparse_we_moe/robustness/clip-vit-base-patch16/sparse_we_moe_ratio_${prune_ratio_name}_corruption_${corruption}.json
+            report_save_path=outputs/sparse_we_moe/robustness/clip-vit-base-patch16/sparse_we_moe_ratio_${prune_ratio_name}_corruption_${corruption}.json
     done
 done
