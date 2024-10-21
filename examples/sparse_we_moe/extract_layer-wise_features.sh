@@ -7,7 +7,7 @@ for TASK in sun397 stanford-cars resisc45 eurosat svhn gtsrb mnist dtd; do
         modelpool.models._pretrained_.pretrained_model_name_or_path=${MODEL_PATH} \
         taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
         taskpool.dataloader_kwargs.shuffle=true \
-        taskpool.layer_wise_feature_save_path=results/layer_wise_features/clip-vit-base-patch32_${TASK} \
+        taskpool.layer_wise_feature_save_path=outputs/layer_wise_features/clip-vit-base-patch32_${TASK} \
         taskpool.layer_wise_feature_first_token_only=true \
         taskpool.layer_wise_feature_max_num=1000
 done
@@ -20,15 +20,16 @@ fusion_bench \
     modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
     taskpool=CLIPVisionModelTaskPool/clip_sparse_wemoe_clip-vit-classification_TA8 \
     taskpool.dataloader_kwargs.shuffle=true \
-    taskpool.layer_wise_routing_weights_save_path=results/layer_wise_routing_weights/clip-vit-base-patch32_TA8/ \
+    taskpool.layer_wise_routing_weights_save_path=outputs/layer_wise_routing_weights/clip-vit-base-patch32_TA8/ \
     taskpool.layer_wise_routing_weights_max_num=1000
 
 fusion_bench \
     method=wemoe/sparse_weight_ensembling_moe \
     method.name=sparse_clip_weight_ensembling_moe \
     method.shared_gate=true \
+    method.save_checkpoint=outputs/sparse_we_moe/clip-vit-base-patch32/clip-vit-base-patch32_TA8_sparse_we_moe_checkpoint.ckpt \
     modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
     taskpool=CLIPVisionModelTaskPool/clip_sparse_wemoe_clip-vit-classification_TA8 \
     taskpool.dataloader_kwargs.shuffle=true \
-    taskpool.layer_wise_routing_weights_save_path=results/layer_wise_routing_weights/clip-vit-base-patch32_TA8/ \
+    taskpool.layer_wise_routing_weights_save_path=outputs/layer_wise_routing_weights/clip-vit-base-patch32_TA8/ \
     taskpool.layer_wise_routing_weights_max_num=1000

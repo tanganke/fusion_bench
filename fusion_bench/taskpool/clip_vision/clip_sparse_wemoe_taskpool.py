@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Any
 
 import torch
 from torch import Tensor
@@ -8,7 +8,10 @@ from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 from transformers.models.clip.modeling_clip import CLIPVisionTransformer
 
 from fusion_bench.models.hf_clip import HFCLIPClassifier
-from fusion_bench.models.sparse_we_moe import SparseWeightEnsemblingMoE
+from fusion_bench.models.sparse_we_moe import (
+    SparseWeightEnsemblingMoE,
+    SparseWeightEnsemblingMoE_ShardGate,
+)
 
 from .taskpool import CLIPVisionModelTaskPool
 
@@ -19,8 +22,10 @@ class LayerWiseRoutingWeightSaver:
         self.routing_weights = []
         self.max_num = max_num
 
-    def __call__(self, module, input, output: Tuple[Tensor]):
-        routing_weights = output[0].detach().cpu()
+    def __call__(self, module, input: Tuple[Tensor], output: Tensor):
+        assert isinstance(output, Tensor), "Output is expected to be a Tensor"
+        # (batch_size, num_tokens, num_experts)
+        routing_weights = output.detach().cpu()
         if self.max_num is not None and self.max_num > 0:
             if len(self.routing_weights) > self.max_num:
                 return
@@ -45,7 +50,7 @@ class SparseWEMoECLIPVisionModelTaskPool(CLIPVisionModelTaskPool):
 
     # hooks and handles for saving layer-wise routing weights
     _layer_wise_routing_weights_save_hooks = {}
-    _layer_wise_routing_weights_save_hook_handles: Dict[int, RemovableHandle] = {}
+    _layer_wise_routing_weights_save_hook_handles: Dict[Any, RemovableHandle] = {}
 
     _config_mapping = CLIPVisionModelTaskPool._config_mapping | {
         "_layer_wise_routing_weights_save_path": "layer_wise_routing_weights_save_path",
@@ -83,7 +88,11 @@ class SparseWEMoECLIPVisionModelTaskPool(CLIPVisionModelTaskPool):
                 # assign forward hooks for each layer
             for i, layer in enumerate(vision_model.encoder.layers):
                 mlp = layer.mlp
-                assert isinstance(mlp, SparseWeightEnsemblingMoE)
+                assert isinstance(
+                    mlp,
+                    (SparseWeightEnsemblingMoE, SparseWeightEnsemblingMoE_ShardGate),
+                ), f"MLP is expected to be a SparseWeightEnsemblingMoE or SparseWeightEnsemblingMoE_ShardGate, but got {type(mlp)}"
+                # layer-wise routing weights
                 hook = LayerWiseRoutingWeightSaver(
                     self.layer_wise_routing_weights_save_path
                     / task_name
