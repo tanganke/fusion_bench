@@ -6,7 +6,9 @@ for TASK in sun397 stanford-cars resisc45 eurosat svhn gtsrb mnist dtd; do
         modelpool=CLIPVisionModelPool/clip-vit-base-patch32_individual \
         modelpool.models._pretrained_.pretrained_model_name_or_path=${MODEL_PATH} \
         taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
-        taskpool.layer_wise_feature_save_path=results/layer_wise_features/clip-vit-base-patch32_${TASK}/
+        taskpool.dataloader_kwargs.shuffle=true \
+        taskpool.layer_wise_feature_save_path=results/layer_wise_features/clip-vit-base-patch32_${TASK} \
+        taskpool.layer_wise_feature_max_num=1000
 done
 
 # extract layer-wise routing weights of the sparse we-moe model
@@ -15,15 +17,17 @@ fusion_bench \
     method.name=sparse_clip_weight_ensembling_moe \
     method.shared_gate=false \
     modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
-    taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
-    taskpool."_target_"=fusion_bench.taskpool.SparseWEMoECLIPVisionModelTaskPool \
-    +taskpool.layer_wise_routing_weights_save_path=results/layer_wise_routing_weights/clip-vit-base-patch32_TA8_not_shared/
+    taskpool=CLIPVisionModelTaskPool/clip_sparse_wemoe_clip-vit-classification_TA8 \
+    taskpool.dataloader_kwargs.shuffle=true \
+    taskpool.layer_wise_routing_weights_save_path=results/layer_wise_routing_weights/clip-vit-base-patch32_TA8/ \
+    taskpool.layer_wise_routing_weights_max_num=1000
 
 fusion_bench \
     method=wemoe/sparse_weight_ensembling_moe \
     method.name=sparse_clip_weight_ensembling_moe \
     method.shared_gate=true \
     modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
-    taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
-    taskpool."_target_"=fusion_bench.taskpool.SparseWEMoECLIPVisionModelTaskPool \
-    +taskpool.layer_wise_routing_weights_save_path=results/layer_wise_routing_weights/clip-vit-base-patch32_TA8/
+    taskpool=CLIPVisionModelTaskPool/clip_sparse_wemoe_clip-vit-classification_TA8 \
+    taskpool.dataloader_kwargs.shuffle=true \
+    taskpool.layer_wise_routing_weights_save_path=results/layer_wise_routing_weights/clip-vit-base-patch32_TA8/ \
+    taskpool.layer_wise_routing_weights_max_num=1000

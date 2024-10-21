@@ -37,12 +37,26 @@ def raw_image_collate_fn(batch):
 
 
 class LayerWiseFeatureSaver:
-    def __init__(self, save_path: Path):
+    def __init__(
+        self,
+        save_path: Path,
+        max_num: Optional[int] = None,
+    ):
         self.save_path = save_path
         self.features = []
+        self.max_num = max_num
 
     def __call__(self, module, input, output: Tuple[Tensor]):
-        self.features.append(output[0].detach().cpu())
+        features = output[0].detach().cpu()
+        if self.max_num is not None and self.max_num > 0:
+            if len(self.features) > self.max_num:
+                return
+            elif features.size(0) + len(self.features) > self.max_num:
+                self.features.append(features[: self.max_num - len(self.features)])
+            else:
+                self.features.append(features)
+        else:
+            self.features.append(features)
 
     def save_features(self):
         features = torch.cat(self.features, dim=0)
@@ -72,10 +86,8 @@ class CLIPVisionModelTaskPool(
         "_data_processor": "data_processor",
         "_clip_model": "clip_model",
         "_dataloader_kwargs": "dataloader_kwargs",
-        "_feature_save_path": "feature_save_path",
         "_layer_wise_feature_save_path": "layer_wise_feature_save_path",
         "fast_dev_run": "fast_dev_run",
-        "_version_": "_version",
     }
 
     def __init__(
@@ -86,31 +98,28 @@ class CLIPVisionModelTaskPool(
         data_processor: Union[DictConfig, CLIPProcessor],
         clip_model: Union[DictConfig, CLIPModel],
         dataloader_kwargs: DictConfig = None,
-        feature_save_path: Optional[str] = None,
         layer_wise_feature_save_path: Optional[str] = None,
+        layer_wise_feature_max_num: Optional[int] = None,
         fast_dev_run: bool = False,
-        _version_: str = None,
         **kwargs,
     ):
-        super().__init__()
         self._test_datasets = test_datasets
         self._processor = processor
         self._data_processor = data_processor
         self._clip_model = clip_model
         self._dataloader_kwargs = dataloader_kwargs or {}
-        self._feature_save_path = feature_save_path
-        self.feature_save_path = (
-            Path(feature_save_path) if feature_save_path is not None else None
-        )
+
+        # layer-wise feature saving
         self._layer_wise_feature_save_path = layer_wise_feature_save_path
         self.layer_wise_feature_save_path = (
             Path(layer_wise_feature_save_path)
             if layer_wise_feature_save_path is not None
             else None
         )
+        self.layer_wise_feature_max_num = layer_wise_feature_max_num
+
         self.fast_dev_run = fast_dev_run
-        self._version_ = _version_
-        log.warning(f"Unrecognized arguments: {list(kwargs.keys())}")
+        super().__init__(**kwargs)
 
     def setup(self):
         # setup processor and clip model
@@ -243,13 +252,6 @@ class CLIPVisionModelTaskPool(
                 json.dump(report, fp)
         return report
 
-    def on_task_evaluation_end(self):
-        if self.layer_wise_feature_save_path is not None:
-            # save features and remove hooks after evaluation
-            for i, hook in self._layer_wise_feature_save_hooks.items():
-                hook.save_features()
-                self._layer_wise_feature_save_hook_handles[i].remove()
-
     def on_task_evaluation_begin(self, classifier: HFCLIPClassifier, task_name: str):
         if self.layer_wise_feature_save_path is not None:
             # setup hooks for saving layer-wise features
@@ -263,8 +265,16 @@ class CLIPVisionModelTaskPool(
                 # assign forward hooks for each layer
             for i, layer in enumerate(vision_model.encoder.layers):
                 self._layer_wise_feature_save_hooks[i] = LayerWiseFeatureSaver(
-                    self.layer_wise_feature_save_path / task_name / f"layer_{i}.pth"
+                    self.layer_wise_feature_save_path / task_name / f"layer_{i}.pth",
+                    max_num=self.layer_wise_feature_max_num,
                 )
                 self._layer_wise_feature_save_hook_handles[i] = (
                     layer.register_forward_hook(self._layer_wise_feature_save_hooks[i])
                 )
+
+    def on_task_evaluation_end(self):
+        if self.layer_wise_feature_save_path is not None:
+            # save features and remove hooks after evaluation
+            for i, hook in self._layer_wise_feature_save_hooks.items():
+                hook.save_features()
+                self._layer_wise_feature_save_hook_handles[i].remove()

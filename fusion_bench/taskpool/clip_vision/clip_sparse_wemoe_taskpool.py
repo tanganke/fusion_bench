@@ -14,12 +14,24 @@ from .taskpool import CLIPVisionModelTaskPool
 
 
 class LayerWiseRoutingWeightSaver:
-    def __init__(self, save_path: Path):
+    def __init__(self, save_path: Path, max_num: Optional[int] = None):
         self.save_path = save_path
         self.routing_weights = []
+        self.max_num = max_num
 
     def __call__(self, module, input, output: Tuple[Tensor]):
-        self.routing_weights.append(output[0].detach().cpu())
+        routing_weights = output[0].detach().cpu()
+        if self.max_num is not None and self.max_num > 0:
+            if len(self.routing_weights) > self.max_num:
+                return
+            elif routing_weights.size(0) + len(self.routing_weights) > self.max_num:
+                self.routing_weights.append(
+                    routing_weights[: self.max_num - len(self.routing_weights)]
+                )
+            else:
+                self.routing_weights.append(routing_weights)
+        else:
+            self.routing_weights.append(routing_weights)
 
     def save_routing_weights(self):
         routing_weights = torch.cat(self.routing_weights, dim=0)
@@ -39,7 +51,13 @@ class SparseWEMoECLIPVisionModelTaskPool(CLIPVisionModelTaskPool):
         "_layer_wise_routing_weights_save_path": "layer_wise_routing_weights_save_path",
     }
 
-    def __init__(self, layer_wise_routing_weights_save_path: Optional[str], **kwargs):
+    def __init__(
+        self,
+        layer_wise_routing_weights_save_path: Optional[str],
+        layer_wise_routing_weights_max_num: Optional[int] = None,
+        **kwargs,
+    ):
+        # save path for layer-wise routing weights
         self._layer_wise_routing_weights_save_path = (
             layer_wise_routing_weights_save_path
         )
@@ -48,6 +66,8 @@ class SparseWEMoECLIPVisionModelTaskPool(CLIPVisionModelTaskPool):
             if layer_wise_routing_weights_save_path is not None
             else None
         )
+        self.layer_wise_routing_weights_max_num = layer_wise_routing_weights_max_num
+        super().__init__(**kwargs)
 
     def on_task_evaluation_begin(self, classifier: HFCLIPClassifier, task_name: str):
         super().on_task_evaluation_begin(classifier, task_name)
@@ -67,7 +87,8 @@ class SparseWEMoECLIPVisionModelTaskPool(CLIPVisionModelTaskPool):
                 hook = LayerWiseRoutingWeightSaver(
                     self.layer_wise_routing_weights_save_path
                     / task_name
-                    / f"layer_{i}.pt"
+                    / f"layer_{i}.pt",
+                    max_num=self.layer_wise_routing_weights_max_num,
                 )
                 self._layer_wise_routing_weights_save_hooks[i] = hook
                 self._layer_wise_routing_weights_save_hook_handles[i] = (
