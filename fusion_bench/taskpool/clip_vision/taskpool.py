@@ -40,14 +40,18 @@ class LayerWiseFeatureSaver:
     def __init__(
         self,
         save_path: Path,
+        first_token_only: bool = True,
         max_num: Optional[int] = None,
     ):
         self.save_path = save_path
-        self.features = []
+        self.first_token_only = first_token_only
         self.max_num = max_num
+        self.features = []
 
     def __call__(self, module, input, output: Tuple[Tensor]):
         features = output[0].detach().cpu()
+        if self.first_token_only:
+            features = features[:, 0]
         if self.max_num is not None and self.max_num > 0:
             if len(self.features) > self.max_num:
                 return
@@ -99,6 +103,7 @@ class CLIPVisionModelTaskPool(
         clip_model: Union[DictConfig, CLIPModel],
         dataloader_kwargs: DictConfig = None,
         layer_wise_feature_save_path: Optional[str] = None,
+        layer_wise_feature_first_token_only: bool = True,
         layer_wise_feature_max_num: Optional[int] = None,
         fast_dev_run: bool = False,
         **kwargs,
@@ -116,6 +121,7 @@ class CLIPVisionModelTaskPool(
             if layer_wise_feature_save_path is not None
             else None
         )
+        self.layer_wise_feature_first_token_only = layer_wise_feature_first_token_only
         self.layer_wise_feature_max_num = layer_wise_feature_max_num
 
         self.fast_dev_run = fast_dev_run
@@ -266,6 +272,7 @@ class CLIPVisionModelTaskPool(
             for i, layer in enumerate(vision_model.encoder.layers):
                 self._layer_wise_feature_save_hooks[i] = LayerWiseFeatureSaver(
                     self.layer_wise_feature_save_path / task_name / f"layer_{i}.pth",
+                    first_token_only=self.layer_wise_feature_first_token_only,
                     max_num=self.layer_wise_feature_max_num,
                 )
                 self._layer_wise_feature_save_hook_handles[i] = (

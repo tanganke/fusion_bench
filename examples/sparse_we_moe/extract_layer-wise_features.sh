@@ -8,6 +8,7 @@ for TASK in sun397 stanford-cars resisc45 eurosat svhn gtsrb mnist dtd; do
         taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
         taskpool.dataloader_kwargs.shuffle=true \
         taskpool.layer_wise_feature_save_path=results/layer_wise_features/clip-vit-base-patch32_${TASK} \
+        taskpool.layer_wise_feature_first_token_only=true \
         taskpool.layer_wise_feature_max_num=1000
 done
 

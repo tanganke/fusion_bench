@@ -1,10 +1,11 @@
-_usage_: |
-  defaults:
-    - CLIPVisionModelTaskPool@: _template
+# Usage:
+#
+# defaults:
+#   - CLIPVisionModelTaskPool@: _template
 
 _target_: fusion_bench.taskpool.CLIPVisionModelTaskPool
-_version_: "0.2"
 _recursive_: false
+
 test_datasets: ??? # The datasets to evaluate the model on
 base_model: openai/clip-vit-base-patch32
 clip_model:
@@ -25,5 +26,6 @@ dataloader_kwargs:
 # The path to save the features to, if none then the features are not saved
 # This is the path to a directory, the features of task `task_name` will be saved in `feature_save_path/task_name.csv`
 layer_wise_feature_save_path: null
+layer_wise_feature_first_token_only: true
 # The maximum number of samples to save the features for
 layer_wise_feature_max_num: 1000
