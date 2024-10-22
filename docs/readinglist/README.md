@@ -43,13 +43,13 @@ This collection is designed to serve as a valuable starting point for those inte
 
     ??? quote
 
-        ![alt text](images/fusellm.png){ width=800px }
+        ![image](images/fusellm.png){ width=800px }
 
 - :llama: Wan F, Yang Z, Zhong L, et al. FuseChat: Knowledge Fusion of Chat Models. arXiv, 2024.
 
     ??? quote
 
-        ![alt text](images/fusechat.png){ width=800px }
+        ![image](images/fusechat.png){ width=800px }
 
 ## Model Merging
 
@@ -69,13 +69,13 @@ Mode connectivity is such an important concept in model merging that it deserves
 
     ??? quote
 
-        ![alt text](images/forkmerge.png){ width=800px }
+        ![image](images/forkmerge.png){ width=800px }
 
 - Chronopoulou et al. Language and Task Arithmetic with Parameter-Efficient Layers for Zero-Shot Summarization [arXiv:2311.09344](http://arxiv.org/abs/2311.09344)
 
     ??? quote
 
-        ![alt text](images/Chronopoulou2023.png){ width=900px }
+        ![image](images/Chronopoulou2023.png){ width=900px }
 
 - :llama: [:simple-github:](https://github.com/yule-BUAA/MergeLM)
     L. Yu, B. Yu, H. Yu, F. Huang, and Y. Li, “Language Models are Super Mario: Absorbing Abilities from Homologous Models as a Free Lunch,” Nov. 06, 2023, arXiv: arXiv:2311.03099. Available: http://arxiv.org/abs/2311.03099
@@ -95,25 +95,25 @@ Mode connectivity is such an important concept in model merging that it deserves
 
     ??? quote
 
-        ![alt text](images/lorahub.png)
+        ![image](images/lorahub.png)
 
 - Wu et al. Pi-Tuning: Transferring Multimodal Foundation Models with Optimal Multi-task Interpolation
         
     ??? quote
 
-        ![alt text](images/pituning.png)
+        ![image](images/pituning.png)
 
 - Chronopoulou et al. AdapterSoup: Weight Averaging to Improve Generalization of Pretrained Language Models [arXiv:2302.07027](http://arxiv.org/abs/2302.07027)
 
     ??? quote
 
-        ![alt text](images/adapter_soup.png){ width=450px }
+        ![image](images/adapter_soup.png){ width=450px }
 
 - Zimmer et al. Sparse Model Soups: A Recipe for Improved Pruning via Model Averaging [arXiv:2306.16788](http://arxiv.org/abs/2306.16788)
 
     ??? quote
 
-        ![alt text](images/sparse-modelsoups.png){ width=800px }
+        ![image](images/sparse-modelsoups.png){ width=800px }
 
 - :star: Wortsman et al. Model soups: averaging weights of multiple fine-tuned models improves accuracy without increasing inference time [arXiv:2203.05482](http://arxiv.org/abs/2203.05482)
 
@@ -124,7 +124,7 @@ Mode connectivity is such an important concept in model merging that it deserves
 
     ??? quote
 
-        ![alt text](images/fs-merge.png){ width=800px }
+        ![image](images/fs-merge.png){ width=800px }
 
 - S. K. Ainsworth, J. Hayase, and S. Srinivasa, “Git Re-Basin: Merging Models modulo Permutation Symmetries,” ICLR 2023. Available: http://arxiv.org/abs/2209.04836
 - George Stoica, Daniel Bolya, Jakob Bjorner, Taylor Hearn, and Judy Hoffman, “ZipIt! Merging Models from Different Tasks without Training,” May 04, 2023, arXiv: arXiv:2305.03053. Available: http://arxiv.org/abs/2305.03053
@@ -143,8 +143,8 @@ Mode connectivity is such an important concept in model merging that it deserves
 
     ??? quote
 
-        ![alt text](images/branch_and_merging.png){ width=450px }
-        ![alt text](images/branch_and_merging_alg.png){ width=450px }
+        ![image](images/branch_and_merging.png){ width=450px }
+        ![image](images/branch_and_merging_alg.png){ width=450px }
 
 - :llama: Lu et al. Online Merging Optimizers for Boosting Rewards and Mitigating Tax in Alignment [arXiv:2405.17931](http://arxiv.org/abs/2405.17931)
 - Izmailov et al. Averaging Weights Leads to Wider Optima and Better Generalization
@@ -157,19 +157,19 @@ Mode connectivity is such an important concept in model merging that it deserves
 
     ??? quote
         
-        ![alt text](images/scaling_smart.png){ width=800px }
+        ![image](images/scaling_smart.png){ width=800px }
 
 - Zhao et al. Merging LoRAs like Playing LEGO: Pushing the Modularity of LoRA to Extremes Through Rank-Wise Clustering [arXiv:2409.16167](http://arxiv.org/abs/2409.16167)
 
     ??? quote
 
-        ![alt text](images/lora_lego.png){ width=800px }
+        ![image](images/lora_lego.png){ width=800px }
 
 - Tang et al. SMILE: Zero-Shot Sparse Mixture of Low-Rank Experts Construction From Pre-Trained Foundation Models [arXiv:2408.10174](http://arxiv.org/abs/2408.10174)
 
     ??? quote
 
-        ![alt text](images/smile_upscaling.png){ width=800px }
+        ![image](images/smile_upscaling.png){ width=800px }
 
 - :llama: [:simple-github:](https://github.com/THUNLP-MT/ModelCompose) :hugging:
     C. Chen et al., “Model Composition for Multimodal Large Language Models.” [arXiv, Feb. 20, 2024. doi: 10.48550/arXiv.2402.12750.](http://arxiv.org/abs/2402.12750)
@@ -179,20 +179,20 @@ Mode connectivity is such an important concept in model merging that it deserves
 
     ??? quote
 
-        ![alt text](images/twin_merging.png){ width=800px }
+        ![image](images/twin_merging.png){ width=800px }
 
 - :llama: [:simple-github:](http://github.com/tanganke/fusion_bench) :hugging: Tang A, Shen L, Luo Y, et al. SMILE: Zero-Shot Sparse Mixture of Low-Rank Experts Construction From Pre-Trained Foundation Models. [arXiv](http://arxiv.org/abs/2408.10174), 2024.
 - :llama: Kim et al. SOLAR 10.7B: Scaling Large Language Models with Simple yet Effective Depth Up-Scaling [arXiv:2312.15166](http://arxiv.org/abs/2312.15166)
 
     ??? quote
 
-        ![alt text](images/depth_upscaling.png){ width=800px }
+        ![image](images/depth_upscaling.png){ width=800px }
 
 - Komatsuzaki et al. Sparse Upcycling: Training Mixture-of-Experts from Dense Checkpoints [arXiv:2212.05055](http://arxiv.org/abs/2212.05055)
 
     ??? quote
 
-        ![alt text](images/sparse_upcycling.png){ width=800px }
+        ![image](images/sparse_upcycling.png){ width=800px }
 
 ## Benchmarks
 
