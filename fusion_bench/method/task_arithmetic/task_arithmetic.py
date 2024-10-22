@@ -76,16 +76,42 @@ class TaskArithmeticAlgorithm(
     BaseModelFusionAlgorithm,
     SimpleProfilerMixin,
 ):
+    """
+    Task Arithmetic Algorithm for model fusion.
+
+    This class implements the Task Arithmetic method for fusing models. It inherits from
+    BaseModelFusionAlgorithm and SimpleProfilerMixin to provide the necessary functionality
+    for model fusion and profiling.
+
+    Attributes:
+        scaling_factor (int): The factor by which the task vectors will be scaled before merging.
+    """
+
     _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
         "scaling_factor": "scaling_factor"
     }
 
     def __init__(self, scaling_factor: int):
+        """
+        Initializes the TaskArithmeticAlgorithm with the given scaling factor.
+
+        Args:
+            scaling_factor (int): The factor by which the task vectors will be scaled before merging.
+        """
         self.scaling_factor = scaling_factor
         super().__init__()
 
     @torch.no_grad()
     def run(self, modelpool: Union[BaseModelPool, Dict[str, nn.Module]]):
+        """
+        Runs the Task Arithmetic Algorithm to fuse models in the given model pool.
+
+        Args:
+            modelpool (Union[BaseModelPool, Dict[str, nn.Module]]): The pool of models to fuse.
+
+        Returns:
+            nn.Module: The pre-trained model with the merged task vectors.
+        """
         if not isinstance(modelpool, BaseModelPool):
             modelpool = BaseModelPool(modelpool)
 

@@ -28,30 +28,57 @@ class CLIPWeightEnsemblingMoEAlgorithm(
     WeightEnsemblingMoEAlgorithm,
     CLIPClassificationMixin,
 ):
+    """
+    CLIPWeightEnsemblingMoEAlgorithm is a class that implements the WeightEnsemblingMoEAlgorithm
+    for CLIP models. It extends the WeightEnsemblingMoEAlgorithm and CLIPClassificationMixin classes.
+
+    Attributes:
+        modelpool (CLIPVisionModelPool): The model pool containing the CLIP models.
+    """
     modelpool: CLIPVisionModelPool = None
 
     def load_checkpoint(self, model, checkpoint):
+        """
+        Load the checkpoint file.
+
+        Args:
+            model: The model to load the checkpoint into.
+            checkpoint: The path to the checkpoint file.
+        """
         state = {"model": model}
         self._fabric.load(checkpoint, state)
 
     def save_checkpoint(self, model, checkpoint):
+        """
+        Save the checkpoint file.
+
+        Args:
+            model: The model to save the checkpoint from.
+            checkpoint: The path to the checkpoint file.
+        """
         self._fabric.save(checkpoint, {"model": model})
 
     def construct_moe_model(self) -> WeightEnsemblingMoE:
+        """
+        Construct the Mixture of Experts (MoE) model using the models in the model pool.
+
+        Returns:
+            WeightEnsemblingMoE: The constructed MoE model.
+        """
         base_model = self.modelpool.load_model("_pretrained_")
         expert_models = [
             self.modelpool.load_model(m) for m in self.modelpool.model_names
         ]
 
-        # merge the models using task arithmetic
+        # Merge the models using task arithmetic
         moe_model = task_arithmetic_merge(
-            # this function modifies the model in place, so we need to pass a deepcopy
+            # This function modifies the model in place, so we need to pass a deepcopy
             deepcopy(base_model),
             expert_models,
             scaling_factor=self.config.init_lambda,
         ).requires_grad_(False)
 
-        # up-scale MLP modules
+        # Up-scale MLP modules
         base_encoder: CLIPEncoder = base_model.vision_model.encoder
         moe_encoder: CLIPEncoder = moe_model.vision_model.encoder
         expert_encoders = [m.vision_model.encoder for m in expert_models]
@@ -66,7 +93,7 @@ class CLIPWeightEnsemblingMoEAlgorithm(
                 base_model=base_mlp,
                 expert_models=expert_mlps,
                 init_lambda=self.config.init_lambda,
-                batch_first=True,  # for open_clip models this is False
+                batch_first=True,  # For open_clip models this is False
                 router_hidden_layers=self.config.router_hidden_layers,
                 batch_reduce=self.config.batch_reduce,
             )
@@ -75,6 +102,15 @@ class CLIPWeightEnsemblingMoEAlgorithm(
 
     @functools.cache
     def get_shuffled_test_loader_iter(self, tta_dataset: str):
+        """
+        Get an iterator for the shuffled test data loader.
+
+        Args:
+            tta_dataset (str): The name of the test-time adaptation dataset.
+
+        Returns:
+            Iterator: An iterator for the shuffled test data loader.
+        """
         dataset = self.modelpool.load_test_dataset(tta_dataset)
         dataset = CLIPDataset(dataset, processor=self.clip_processor)
         log.info("get_shuffled_test_loader_iter")
@@ -90,21 +126,32 @@ class CLIPWeightEnsemblingMoEAlgorithm(
 
     def on_test_time_adaptation_start(self):
         """
-        Here we load the CLIP processor and construct the zero-shot classification head for each task.
+        Load the CLIP processor and construct the zero-shot classification head for each task.
         """
         self.setup_zero_shot_classification_head()
 
     def compute_logits(self, module, batch, task) -> Tensor:
+        """
+        Compute the logits for the given batch and task.
+
+        Args:
+            module: The model module.
+            batch: The input batch.
+            task: The task name.
+
+        Returns:
+            Tensor: The computed logits.
+        """
         images, _ = batch
         text_embeds = self.zeroshot_weights[task]
 
         image_embeds = module(images)[1]
         image_embeds = self.visual_projection(image_embeds)
 
-        # normalize embeddings
+        # Normalize embeddings
         image_embeds = image_embeds / image_embeds.norm(p=2, dim=-1, keepdim=True)
 
-        # cosine similarity
+        # Cosine similarity
         logits_per_text = (
             torch.matmul(text_embeds, image_embeds.t()) * self.logit_scale_exp
         )
