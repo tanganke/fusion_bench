@@ -128,6 +128,9 @@ class FabricModelFusionProgram(
             obj._program = self
         if hasattr(obj, "_fabric_instance") and self.fabric is not None:
             obj._fabric_instance = self.fabric
+        if hasattr(obj, "_fabric") and self.fabric is not None:
+            # for v0.1.x compatibility
+            obj._fabric = self.fabric
         return obj
 
     def save_merged_model(self, merged_model):

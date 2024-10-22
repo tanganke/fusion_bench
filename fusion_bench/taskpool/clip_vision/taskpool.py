@@ -2,13 +2,15 @@ import itertools
 import json
 import logging
 import os
-from typing import Any, Callable, Dict, List, Union, cast  # noqa: F401
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast  # noqa: F401
 
 import torch
 from omegaconf import DictConfig
 from torch import Tensor, nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, Dataset
+from torch.utils.hooks import RemovableHandle
 from torchmetrics import Accuracy, MeanMetric
 from torchmetrics.classification.accuracy import MulticlassAccuracy
 from tqdm.autonotebook import tqdm
@@ -34,6 +36,40 @@ def raw_image_collate_fn(batch):
     return images, labels
 
 
+class LayerWiseFeatureSaver:
+    def __init__(
+        self,
+        save_path: Path,
+        first_token_only: bool = True,
+        max_num: Optional[int] = None,
+    ):
+        self.save_path = save_path
+        self.first_token_only = first_token_only
+        self.max_num = max_num
+        self.features = []
+
+    def __call__(self, module, input, output: Tuple[Tensor]):
+        features = output[0].detach().cpu()
+        if self.first_token_only:
+            features = features[:, 0]
+        if self.max_num is not None and self.max_num > 0:
+            if len(self.features) > self.max_num:
+                return
+            elif features.size(0) + len(self.features) > self.max_num:
+                self.features.append(features[: self.max_num - len(self.features)])
+            else:
+                self.features.append(features)
+        else:
+            self.features.append(features)
+
+    def save_features(self):
+        features = torch.cat(self.features, dim=0)
+        if self.save_path is not None:
+            self.save_path.parent.mkdir(parents=True, exist_ok=True)
+            print(f"Saving features to {self.save_path}")
+            torch.save(features, self.save_path)
+
+
 class CLIPVisionModelTaskPool(
     BaseTaskPool,
     LightningFabricMixin,
@@ -43,14 +79,19 @@ class CLIPVisionModelTaskPool(
     """
 
     _is_setup = False
+
+    # hooks and handles for saving layer-wise features
+    _layer_wise_feature_save_hooks: Dict[int, LayerWiseFeatureSaver] = {}
+    _layer_wise_feature_save_hook_handles: Dict[int, RemovableHandle] = {}
+
     _config_mapping = BaseTaskPool._config_mapping | {
         "_test_datasets": "test_datasets",
         "_processor": "processor",
         "_data_processor": "data_processor",
         "_clip_model": "clip_model",
         "_dataloader_kwargs": "dataloader_kwargs",
+        "_layer_wise_feature_save_path": "layer_wise_feature_save_path",
         "fast_dev_run": "fast_dev_run",
-        "_version_": "_version",
     }
 
     def __init__(
@@ -61,19 +102,30 @@ class CLIPVisionModelTaskPool(
         data_processor: Union[DictConfig, CLIPProcessor],
         clip_model: Union[DictConfig, CLIPModel],
         dataloader_kwargs: DictConfig = None,
+        layer_wise_feature_save_path: Optional[str] = None,
+        layer_wise_feature_first_token_only: bool = True,
+        layer_wise_feature_max_num: Optional[int] = None,
         fast_dev_run: bool = False,
-        _version_: str = None,
         **kwargs,
     ):
-        super().__init__()
         self._test_datasets = test_datasets
         self._processor = processor
         self._data_processor = data_processor
         self._clip_model = clip_model
         self._dataloader_kwargs = dataloader_kwargs or {}
+
+        # layer-wise feature saving
+        self._layer_wise_feature_save_path = layer_wise_feature_save_path
+        self.layer_wise_feature_save_path = (
+            Path(layer_wise_feature_save_path)
+            if layer_wise_feature_save_path is not None
+            else None
+        )
+        self.layer_wise_feature_first_token_only = layer_wise_feature_first_token_only
+        self.layer_wise_feature_max_num = layer_wise_feature_max_num
+
         self.fast_dev_run = fast_dev_run
-        self._version_ = _version_
-        log.warning(f"Unrecognized arguments: {list(kwargs.keys())}")
+        super().__init__(**kwargs)
 
     def setup(self):
         # setup processor and clip model
@@ -124,7 +176,12 @@ class CLIPVisionModelTaskPool(
         self._is_setup = True
 
     @torch.no_grad()
-    def _evaluate(self, classifier: nn.Module, test_loader, num_classes: int):
+    def _evaluate(
+        self,
+        classifier: HFCLIPClassifier,
+        test_loader: DataLoader,
+        num_classes: int,
+    ):
         accuracy: MulticlassAccuracy = Accuracy(
             task="multiclass", num_classes=num_classes
         )
@@ -143,7 +200,8 @@ class CLIPVisionModelTaskPool(
             )
         ):
             inputs, targets = batch
-            logits: Tensor = classifier(inputs)
+            outputs = classifier(inputs, return_image_embeds=True, return_dict=True)
+            logits: Tensor = outputs["logits"]
 
             loss = F.cross_entropy(logits, targets)
             loss_metric.update(loss.detach().cpu())
@@ -171,7 +229,7 @@ class CLIPVisionModelTaskPool(
         # CLIPVisionModel works the same with CLIPVisonTransformer, so we can use it directly
         self.clip_model.vision_model = model
         classifier = HFCLIPClassifier(self.clip_model, processor=self.processor)
-        classifier = self.fabric.to_device(classifier)
+        classifier = cast(HFCLIPClassifier, self.fabric.to_device(classifier))
         # collect basic model information
         training_params, all_params = count_parameters(model)
         report["model_info"] = {
@@ -185,13 +243,45 @@ class CLIPVisionModelTaskPool(
             total=len(self.test_dataloaders),
         ):
             classnames, templates = get_classnames_and_templates(task_name)
+            self.on_task_evaluation_begin(classifier, task_name)
             classifier.set_classification_task(classnames, templates)
             result = self._evaluate(
-                classifier, test_dataloader, num_classes=len(classnames)
+                classifier,
+                test_dataloader,
+                num_classes=len(classnames),
             )
             report[task_name] = result
+            self.on_task_evaluation_end()
         log.info(f"Evaluation Result: {report}")
         if self.fabric.is_global_zero and len(self.fabric._loggers) > 0:
             with open(os.path.join(self.log_dir, "report.json"), "w") as fp:
                 json.dump(report, fp)
         return report
+
+    def on_task_evaluation_begin(self, classifier: HFCLIPClassifier, task_name: str):
+        if self.layer_wise_feature_save_path is not None:
+            # setup hooks for saving layer-wise features
+            assert isinstance(
+                classifier.clip_model.vision_model,
+                (CLIPVisionTransformer, CLIPVisionModel),
+            ), "Vision model is expected to be a CLIPVisionTransformer"
+            vision_model = classifier.clip_model.vision_model
+            if isinstance(vision_model, CLIPVisionModel):
+                vision_model = vision_model.vision_model
+                # assign forward hooks for each layer
+            for i, layer in enumerate(vision_model.encoder.layers):
+                self._layer_wise_feature_save_hooks[i] = LayerWiseFeatureSaver(
+                    self.layer_wise_feature_save_path / task_name / f"layer_{i}.pth",
+                    first_token_only=self.layer_wise_feature_first_token_only,
+                    max_num=self.layer_wise_feature_max_num,
+                )
+                self._layer_wise_feature_save_hook_handles[i] = (
+                    layer.register_forward_hook(self._layer_wise_feature_save_hooks[i])
+                )
+
+    def on_task_evaluation_end(self):
+        if self.layer_wise_feature_save_path is not None:
+            # save features and remove hooks after evaluation
+            for i, hook in self._layer_wise_feature_save_hooks.items():
+                hook.save_features()
+                self._layer_wise_feature_save_hook_handles[i].remove()

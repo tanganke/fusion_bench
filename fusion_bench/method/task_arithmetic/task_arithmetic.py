@@ -81,8 +81,8 @@ class TaskArithmeticAlgorithm(
     }
 
     def __init__(self, scaling_factor: int):
-        super().__init__()
         self.scaling_factor = scaling_factor
+        super().__init__()
 
     @torch.no_grad()
     def run(self, modelpool: Union[BaseModelPool, Dict[str, nn.Module]]):

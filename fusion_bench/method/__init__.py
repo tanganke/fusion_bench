@@ -58,6 +58,10 @@ _import_structure = {
     ],
     "dawe": ["DataAdaptiveWeightEnsemblingForCLIP"],
     "we_moe": ["CLIPWeightEnsemblingMoEAlgorithm"],
+    "sparse_we_moe": [
+        "SparseWeightEnsemblingMoEAlgorithm",
+        "SparseCLIPWeightEnsemblingMoEAlgorithm",
+    ],
     "model_recombination": ["ModelRecombinationAlgorithm"],
     "smile_upscaling": [
         "SmileUpscalingAlgorithm",
@@ -125,6 +129,10 @@ if TYPE_CHECKING:
     from .smile_upscaling import (
         SingularProjectionMergingAlgorithm,
         SmileUpscalingAlgorithm,
+    )
+    from .sparse_we_moe import (
+        SparseWeightEnsemblingMoEAlgorithm,
+        SparseCLIPWeightEnsemblingMoEAlgorithm,
     )
     from .sparselo import (
         IterativeSparseLoForLlama,
