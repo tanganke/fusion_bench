@@ -20,6 +20,12 @@ FusionBench is a benchmark suite designed to evaluate the performance of various
 Projects based on FusionBench:
 
 <details>
+  <summary>Jinluan Yang et al. Mitigating the Backdoor Effect for Multi-Task Model Merging via Safety-Aware Subspace. Oct, 2024. http://arxiv.org/abs/2410.13910</summary>
+
+  <img width="1018" alt="image" src="https://github.com/user-attachments/assets/679aaa7e-0506-4e09-a12a-345c12cf529f">
+
+</details>
+<details>
   <summary>Anke Tang et al. SMILE: Zero-Shot Sparse Mixture of Low-Rank Experts Construction From Pre-Trained Foundation Models. Aug, 2024. http://arxiv.org/abs/2408.10174</summary>
 
   Example notebooks can be found at [examples/smile_upscaling](examples/smile_upscaling).  
