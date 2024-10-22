@@ -44,6 +44,12 @@ class SparseWeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
     modelpool: BaseModelPool = None
 
     def __init__(self, algorithm_config: DictConfig):
+        """
+        Initialize the SparseWeightEnsemblingMoEAlgorithm with the given configuration.
+
+        Args:
+            algorithm_config (DictConfig): The configuration for the algorithm.
+        """
         super().__init__(algorithm_config)
 
         self.profiler = SimpleProfiler(
@@ -54,6 +60,10 @@ class SparseWeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
     def load_checkpoint(self, model, checkpoint):
         """
         Load the checkpoint file.
+
+        Args:
+            model (nn.Module): The model to load the checkpoint into.
+            checkpoint (str): The path to the checkpoint file.
         """
         pass
 
@@ -61,6 +71,10 @@ class SparseWeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
     def save_checkpoint(self, model, checkpoint):
         """
         Save the checkpoint file.
+
+        Args:
+            model (nn.Module): The model to save the checkpoint from.
+            checkpoint (str): The path to the checkpoint file.
         """
         pass
 
@@ -68,6 +82,9 @@ class SparseWeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
     def construct_moe_model(self) -> SparseWeightEnsemblingMoE:
         """
         Construct the Mixture of Experts model using the models in the model pool.
+
+        Returns:
+            SparseWeightEnsemblingMoE: The constructed Mixture of Experts model.
         """
         pass
 
@@ -75,32 +92,84 @@ class SparseWeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
     def construct_moe_model_sharedgate(self) -> SparseWeightEnsemblingMoE_ShardGate:
         """
         Construct the Mixture of Experts model using the models in the model pool.
+
+        Returns:
+            SparseWeightEnsemblingMoE_ShardGate: The constructed Mixture of Experts model with shared gate.
         """
         pass
 
     def on_test_time_adaptation_start(self):
+        """
+        Hook that is called at the start of test-time adaptation.
+        """
         pass
 
     @abstractmethod
     def get_shuffled_test_loader_iter(self, task: str) -> DataLoader:
+        """
+        Get an iterator for the shuffled test DataLoader for a specific task.
+
+        Args:
+            task (str): The task for which to get the DataLoader iterator.
+
+        Returns:
+            DataLoader: The DataLoader iterator for the specified task.
+        """
         pass
 
     @abstractmethod
     def compute_logits(self, module, batch, task) -> Tensor:
+        """
+        Compute the logits for a given batch and task.
+
+        Args:
+            module (nn.Module): The model module.
+            batch (Any): The input batch.
+            task (str): The task for which to compute the logits.
+
+        Returns:
+            Tensor: The computed logits.
+        """
         pass
 
     def dynamic_prune(self, module, prune_ratio):
+        """
+        Dynamically prune the parameters of a module based on the given prune ratio.
+
+        Args:
+            module (nn.Module): The module to prune.
+            prune_ratio (float): The ratio of parameters to prune.
+        """
         for param in module.parameters():
             if param.requires_grad:
                 param.data = _magnitude_prune(param, prune_ratio)
 
     def l1_regularization(self, module, l1_lambda):
+        """
+        Compute the L1 regularization loss for a module.
+
+        Args:
+            module (nn.Module): The module for which to compute the L1 regularization loss.
+            l1_lambda (float): The L1 regularization coefficient.
+
+        Returns:
+            Tensor: The L1 regularization loss.
+        """
         l1_norm = sum(
             param.abs().sum() for param in module.parameters() if param.requires_grad
         )
         return l1_lambda * l1_norm
 
     def test_time_adaptation(self, module: SparseWeightEnsemblingMoE):
+        """
+        Perform test-time adaptation for the given module.
+
+        Args:
+            module (SparseWeightEnsemblingMoE): The module to adapt.
+
+        Returns:
+            SparseWeightEnsemblingMoE: The adapted module.
+        """
         self.on_test_time_adaptation_start()
 
         # configure optimizer
@@ -169,6 +238,13 @@ class SparseWeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
     def construct_post_spare_gate_model(self, moe_model, gate_prune_ratio):
         """
         Construct a (post) sparse gated model.
+
+        Args:
+            moe_model (SparseWeightEnsemblingMoE): The Mixture of Experts model.
+            gate_prune_ratio (float): The ratio of parameters to prune in the gate.
+
+        Returns:
+            SparseWeightEnsemblingMoE: The constructed (post) sparse gated model.
         """
         moe_encoder = moe_model.vision_model.encoder
         num_layers = len(moe_encoder.layers)
@@ -179,6 +255,15 @@ class SparseWeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
         return moe_model
 
     def run(self, modelpool: BaseModelPool):
+        """
+        Run the SparseWeightEnsemblingMoEAlgorithm with the given model pool.
+
+        Args:
+            modelpool (BaseModelPool): The model pool to use for the algorithm.
+
+        Returns:
+            SparseWeightEnsemblingMoE: The final Mixture of Experts model.
+        """
         log.info("Fusing models using WeightEnsembling Mixture of Experts modules.")
         self.modelpool = modelpool
 

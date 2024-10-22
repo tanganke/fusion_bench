@@ -33,13 +33,22 @@ class SparseCLIPWeightEnsemblingMoEAlgorithm(
     modelpool: CLIPVisionModelPool = None
 
     def load_checkpoint(self, model, checkpoint):
+        """
+        Load the checkpoint file.
+        """
         state = {"model": model}
         self._fabric.load(checkpoint, state)
 
     def save_checkpoint(self, model, checkpoint):
+        """
+        Save the checkpoint file.
+        """
         self._fabric.save(checkpoint, {"model": model})
 
     def construct_moe_model(self) -> SparseWeightEnsemblingMoE:
+        """
+        Construct the Mixture of Experts model using the models in the model pool.
+        """
         base_model = self.modelpool.load_model("_pretrained_")
         expert_models = [
             self.modelpool.load_model(m) for m in self.modelpool.model_names
@@ -79,6 +88,9 @@ class SparseCLIPWeightEnsemblingMoEAlgorithm(
         return moe_model
 
     def construct_moe_model_sharedgate(self) -> SparseWeightEnsemblingMoE_ShardGate:
+        """
+        Construct the Mixture of Experts model using the models in the model pool with a shared gate.
+        """
         base_model = self.modelpool.load_model("_pretrained_")
         expert_models = [
             self.modelpool.load_model(m) for m in self.modelpool.model_names
@@ -181,6 +193,9 @@ class SparseCLIPWeightEnsemblingMoEAlgorithm(
 
     @functools.cache
     def get_shuffled_test_loader_iter(self, tta_dataset: str):
+        """
+        Get an iterator for the shuffled test data loader.
+        """
         log.info("get_shuffled_test_loader_iter")
         dataset = self.modelpool.load_test_dataset(tta_dataset)
         dataset = CLIPDataset(dataset, processor=self.clip_processor)
@@ -204,6 +219,17 @@ class SparseCLIPWeightEnsemblingMoEAlgorithm(
     def compute_logits(
         self, module: CLIPVisionModel, batch: Tuple[Tensor, Tensor], task: str
     ) -> Tensor:
+        """
+        Compute the logits for the given batch and task.
+
+        Args:
+            module (CLIPVisionModel): The vision model to use for computing logits.
+            batch (Tuple[Tensor, Tensor]): The batch of data.
+            task (str): The task for which to compute logits.
+
+        Returns:
+            Tensor: The computed logits.
+        """
         images, _ = batch
         text_embeds = self.zeroshot_weights[task]
 
