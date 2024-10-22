@@ -76,6 +76,17 @@ class CLIPVisionModelTaskPool(
 ):
     """
     This class is used to define the image classification task for CLIP models.
+
+    Attributes:
+        test_datasets (Union[DictConfig, Dict[str, Dataset]]): The test datasets to evaluate the model on.
+        processor (Union[DictConfig, CLIPProcessor]): The processor used for preprocessing the input data.
+        data_processor (Union[DictConfig, CLIPProcessor]): The data processor used for processing the input data.
+        clip_model (Union[DictConfig, CLIPModel]): The CLIP model used for evaluation.
+        dataloader_kwargs (DictConfig): Keyword arguments for the data loader.
+        layer_wise_feature_save_path (Optional[str]): Path to save the layer-wise features.
+        layer_wise_feature_first_token_only (bool): Boolean indicating whether to save only the first token of the features.
+        layer_wise_feature_max_num (Optional[int]): Maximum number of features to save.
+        fast_dev_run (bool): Boolean indicating whether to run in fast development mode.
     """
 
     _is_setup = False
@@ -108,6 +119,9 @@ class CLIPVisionModelTaskPool(
         fast_dev_run: bool = False,
         **kwargs,
     ):
+        """
+        Initialize the CLIPVisionModelTaskPool.
+        """
         self._test_datasets = test_datasets
         self._processor = processor
         self._data_processor = data_processor
@@ -128,6 +142,9 @@ class CLIPVisionModelTaskPool(
         super().__init__(**kwargs)
 
     def setup(self):
+        """
+        Set up the processor, data processor, CLIP model, test datasets, and data loaders.
+        """
         # setup processor and clip model
         self.processor = (
             instantiate(self._processor)
@@ -182,6 +199,17 @@ class CLIPVisionModelTaskPool(
         test_loader: DataLoader,
         num_classes: int,
     ):
+        """
+        Evaluate the classifier on the test dataset.
+
+        Args:
+            classifier (HFCLIPClassifier): The classifier to evaluate.
+            test_loader (DataLoader): The data loader for the test dataset.
+            num_classes (int): The number of classes in the classification task.
+
+        Returns:
+            Dict[str, float]: A dictionary containing the accuracy and loss of the classifier on the test dataset.
+        """
         accuracy: MulticlassAccuracy = Accuracy(
             task="multiclass", num_classes=num_classes
         )
@@ -221,6 +249,12 @@ class CLIPVisionModelTaskPool(
     def evaluate(self, model: Union[CLIPVisionModel, CLIPVisionTransformer]):
         """
         Evaluate the model on the image classification task.
+
+        Args:
+            model (Union[CLIPVisionModel, CLIPVisionTransformer]): The model to evaluate.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the evaluation results for each task.
         """
         if not self._is_setup:
             self.setup()
@@ -259,6 +293,13 @@ class CLIPVisionModelTaskPool(
         return report
 
     def on_task_evaluation_begin(self, classifier: HFCLIPClassifier, task_name: str):
+        """
+        Called at the beginning of task evaluation to set up hooks for saving layer-wise features.
+
+        Args:
+            classifier (HFCLIPClassifier): The classifier being evaluated.
+            task_name (str): The name of the task being evaluated.
+        """
         if self.layer_wise_feature_save_path is not None:
             # setup hooks for saving layer-wise features
             assert isinstance(
@@ -280,6 +321,9 @@ class CLIPVisionModelTaskPool(
                 )
 
     def on_task_evaluation_end(self):
+        """
+        Called at the end of task evaluation to save features and remove hooks.
+        """
         if self.layer_wise_feature_save_path is not None:
             # save features and remove hooks after evaluation
             for i, hook in self._layer_wise_feature_save_hooks.items():
