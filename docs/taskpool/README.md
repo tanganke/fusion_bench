@@ -14,5 +14,4 @@ A taskpool is specified by a `yaml` configuration file, which often contains the
 
 ### References
 
-
 ::: fusion_bench.taskpool.BaseTaskPool

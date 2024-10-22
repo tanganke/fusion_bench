@@ -102,6 +102,55 @@ fusion_bench method=dummy \
 
 Simply remove some of the datasets from the `train_datasets` field in the model pool configuration.
 
+### Using the `clip_finetune` Method
+
+The `clip_finetune` method is a new feature in FusionBench that allows for fine-tuning CLIP models. Below are the instructions for using this method.
+
+#### Configuration
+
+Create a configuration file for the `clip_finetune` method. Here is an example:
+
+```yaml
+name: clip_finetune
+seed: 42
+learning_rate: 1e-5
+weight_decay: 0
+num_steps: 4000
+batch_size: 64
+num_workers: 8
+save_interval: 500
+# if `state_dict_load_path` is not null, the training will be resumed from the state_dict_path
+state_dict_load_path: null
+# if `state_dict_save_path` is not null, the state_dict will be saved to the path after training
+state_dict_save_path: null
+# if `skip_training` is true, use with `state_dict_load_path` to skip training and only evaluate
+skip_training: false
+# === LoRA ===
+use_lora: false
+lora_config:
+  r: 16
+  lora_alpha: 32
+  target_modules:
+    - q_proj
+    - v_proj
+  lora_dropout: 0.1
+  bias: none
+# === L-LoRA ===
+use_l_lora: false
+```
+
+#### Running the Fine-Tuning
+
+To run the fine-tuning process, use the following command:
+
+```bash
+fusion_bench \
+    method=clip_finetune \
+    modelpool=clip-vit-base-patch32_mtl \
+    taskpool=dummy
+```
+
+This command will fine-tune the CLIP model according to the specified configuration.
 
 ## References
 
