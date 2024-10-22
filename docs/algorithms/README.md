@@ -7,7 +7,7 @@ This module provides the mechanisms necessary to combine multiple models from th
 
 - Adaptive Fusion: The module supports advanced fusion techniques, such as AdaMerging, that adaptively learn the best coefficients for model merging using sophisticated methods like entropy minimization.
 - Algorithm Configuration: Algorithms are defined and loaded based on configuration files, ensuring flexibility and ease of experimentation. This modular approach allows researchers to switch between different fusion methods seamlessly.
-- Model Integration: It facilitates the integration of multiple models, combining their strengths and mitigating individual weaknesses. The result is a single, merged model that ideally performs better than any individual model alone or have multitasking capability.
+- Model Integration: It facilitates the integration of multiple models, combining their strengths and mitigating individual weaknesses. The result is a single, merged model that ideally performs better than any individual model alone or has multitasking capability.
 - Evaluation Support: Once the model fusion process is completed, the merged model can interface with the TaskPool to evaluate the performance of the merged model across various tasks, providing a comprehensive assessment of its capabilities.
 
 #### Example Capabilities

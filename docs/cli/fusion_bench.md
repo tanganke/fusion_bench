@@ -10,7 +10,7 @@ It provides a flexible way to configure and execute various fusion algorithms on
 
 ## Details and Options
 
-`fusion_bench` takes a configuration file as input, which specifies the models, fusion method to be used, and the datasets to be evaluated. runing `fusion_bench` is equivalent to running `python fusion_bench/scripts/cli.py`.
+`fusion_bench` takes a configuration file as input, which specifies the models, fusion method to be used, and the datasets to be evaluated. running `fusion_bench` is equivalent to running `python fusion_bench/scripts/cli.py`.
 
 ```bash
 fusion_bench [--config-path CONFIG_PATH] [--config-name CONFIG_NAME] \
@@ -21,7 +21,7 @@ python fusion_bench/scripts/cli.py [--config-path CONFIG_PATH] [--config-name CO
     OPTION_1=VALUE_1 OPTION_2=VALUE_2 ...
 ```
 
-`fusion_bench` has the following options, `method`, `modelpool`, and `taskpool` are the most important ones ammong these options:
+`fusion_bench` has the following options, `method`, `modelpool`, and `taskpool` are the most important ones among these options:
 
 ### Hydra options
 

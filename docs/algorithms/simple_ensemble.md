@@ -27,12 +27,13 @@ Configuration template for the ensemble algorithm:
 name: simple_ensemble
 ```
 
-create a simple ensemble of CLIP-ViT models for image classification
+create a simple ensemble of CLIP-ViT models for image classification tasks.
 
 ```bash
-fusion_bench method=simple_ensemble \
-  modelpool=clip-vit-base-patch32_TA8 \
-  taskpool=clip-vit-classification_TA8 
+fusion_bench \
+  method=ensemble/simple_ensemble \
+  modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 
 ```
 
 ## References
