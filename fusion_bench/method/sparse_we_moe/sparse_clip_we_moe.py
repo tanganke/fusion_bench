@@ -73,7 +73,7 @@ class SparseCLIPWeightEnsemblingMoEAlgorithm(
                 batch_reduce=self.config.batch_reduce,
                 num_layers=num_layers,
                 layer_idx=layer_idx,
-                prune_ratio=self.config.prune_ratio,
+                tv_prune_ratio=self.config.tv_prune_ratio,
             )
 
         return moe_model

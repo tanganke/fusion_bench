@@ -46,13 +46,6 @@ class SparseWeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
     def __init__(self, algorithm_config: DictConfig):
         super().__init__(algorithm_config)
 
-        if self._fabric is None and torch.cuda.is_available():
-            self._fabric = L.Fabric(
-                devices=self.config.get("devices", 1),
-            )
-            self._fabric.launch()
-        else:
-            assert "No CUDA device available."
         self.profiler = SimpleProfiler(
             self.config.get("cache_dir", "outputs"), "we_moe_profiler.txt"
         )
