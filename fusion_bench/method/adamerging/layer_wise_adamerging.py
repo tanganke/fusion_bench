@@ -30,7 +30,20 @@ class LayerWiseAdaMergingAlgorithm(
     LightningFabricMixin,
     SimpleProfilerMixin,
 ):
+    """
+    Implements the Layer-Wise AdaMerging Algorithm.
+
+    This class merges the layers of a pretrained model with those of several fine-tuned models.
+    The merging is controlled by layer-wise weights, which can be initialized based on a provided configuration or loaded from a file.
+    """
+
     def __init__(self, algorithm_config: DictConfig):
+        """
+        Initialize the LayerWiseAdaMergingAlgorithm with the given configuration.
+
+        Args:
+            algorithm_config (DictConfig): The configuration for the algorithm.
+        """
         super().__init__(algorithm_config)
 
     @torch.no_grad()
@@ -84,6 +97,13 @@ class LayerWiseAdaMergingAlgorithm(
 
     @rank_zero_only
     def save_merging_weights(self, file_path: str, merging_weights: torch.Tensor):
+        """
+        Save the merging weights to a file.
+
+        Args:
+            file_path (str): The path to save the merging weights.
+            merging_weights (torch.Tensor): The merging weights to save.
+        """
         if self.fabric.is_global_zero and self.config.get(
             "save_merging_weights", False
         ):
@@ -98,6 +118,17 @@ class LayerWiseAdaMergingAlgorithm(
             torch.save(merging_weights.detach().cpu(), save_path)
 
     def run(self, modelpool: ModelPool):
+        """
+        Run the Layer-Wise AdaMerging Algorithm.
+
+        This method constructs the wrapped model and performs test-time adaptation if necessary.
+
+        Args:
+            modelpool (ModelPool): The model pool containing the pretrained and fine-tuned models.
+
+        Returns:
+            LayerWiseMergedModel: The merged model after test-time adaptation.
+        """
         log.info("Fusing models using layer-wise adaptive merging.")
         self.modelpool = modelpool
         self.log_hyperparams(self.config)
@@ -127,14 +158,42 @@ class LayerWiseAdaMergingAlgorithm(
     def get_shuffled_test_loader_iter(self, task: str) -> DataLoader:
         """
         Loader of test dataset for test-time adaptation. labels are not needed.
+
+        Args:
+            task (str): The name of the task.
+
+        Returns:
+            DataLoader: The data loader for the test dataset.
         """
         pass
 
     @abstractmethod
     def compute_logits(self, module, images: Tensor, task: str) -> Tensor:
+        """
+        Compute the logits for the given images and task.
+
+        Args:
+            module: The model module.
+            images (Tensor): The input images.
+            task (str): The name of the task.
+
+        Returns:
+            Tensor: The computed logits.
+        """
         pass
 
     def test_time_adaptation(self, module: LayerWiseMergedModel):
+        """
+        Perform test-time adaptation on the merged model.
+
+        This method adapts the merging weights during test-time to improve performance.
+
+        Args:
+            module (LayerWiseMergedModel): The merged model.
+
+        Returns:
+            LayerWiseMergedModel: The adapted merged model.
+        """
         self.on_test_time_adaptation_start()
 
         # configure optimizer

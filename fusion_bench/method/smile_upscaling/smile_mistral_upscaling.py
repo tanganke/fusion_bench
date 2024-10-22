@@ -38,6 +38,15 @@ class ExpertNotTrainedError(Exception):
 
 
 def _is_all_zeros(tensor: Tensor | List[Tensor]) -> bool:
+    """
+    Check if a tensor or a list of tensors are all zeros.
+
+    Args:
+        tensor (Tensor | List[Tensor]): The tensor or list of tensors to check.
+
+    Returns:
+        bool: True if all elements are zeros, False otherwise.
+    """
     if isinstance(tensor, Tensor):
         return torch.allclose(tensor, torch.zeros_like(tensor))
     else:
@@ -45,6 +54,16 @@ def _is_all_zeros(tensor: Tensor | List[Tensor]) -> bool:
 
 
 def _svd(w: Tensor, full_matrices=False) -> Tuple[Tensor, Tensor, Tensor]:
+    """
+    Perform Singular Value Decomposition (SVD) on a tensor.
+
+    Args:
+        w (Tensor): The input tensor.
+        full_matrices (bool, optional): Whether to compute the full-sized U and V matrices. Defaults to False.
+
+    Returns:
+        Tuple[Tensor, Tensor, Tensor]: The U, S, and V matrices from SVD.
+    """
     device = w.device
     if w.device != torch.float32 or w.device != torch.float64:
         w = w.float()
@@ -65,6 +84,17 @@ def _svd(w: Tensor, full_matrices=False) -> Tuple[Tensor, Tensor, Tensor]:
 def svd(
     w: Tensor, full_matrices=True, accelerator=None
 ) -> Tuple[Tensor, Tensor, Tensor]:
+    """
+    Perform SVD on a tensor with optional acceleration.
+
+    Args:
+        w (Tensor): The input tensor.
+        full_matrices (bool, optional): Whether to compute the full-sized U and V matrices. Defaults to True.
+        accelerator (optional): The device to perform the computation on. Defaults to None.
+
+    Returns:
+        Tuple[Tensor, Tensor, Tensor]: The U, S, and V matrices from SVD.
+    """
     if accelerator is None:
         return _svd(w, full_matrices=full_matrices)
     original_device = w.device
@@ -77,6 +107,18 @@ def svd(
 def upscale_to_smile_linear(
     base: nn.Linear, experts: List[nn.Linear], target: SmileLinear, accelerator=None
 ):
+    """
+    Upscale a base linear layer to a SmileLinear layer using expert models.
+
+    Args:
+        base (nn.Linear): The base linear layer.
+        experts (List[nn.Linear]): A list of expert linear layers.
+        target (SmileLinear): The target SmileLinear layer.
+        accelerator (optional): The device to perform the computation on. Defaults to None.
+
+    Returns:
+        SmileLinear: The upscaled SmileLinear layer.
+    """
     w = base.weight
     w_ft_list = [e.weight for e in experts]
     dw_list = [w_ft - w for w_ft in w_ft_list]

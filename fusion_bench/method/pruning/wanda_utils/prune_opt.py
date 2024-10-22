@@ -32,6 +32,15 @@ def find_layers(module, layers=[nn.Linear], name=""):
 
 
 def check_sparsity(model):
+    """
+    Check the sparsity of the model.
+
+    Args:
+        model (nn.Module): The model to check sparsity for.
+
+    Returns:
+        float: The sparsity ratio of the model.
+    """
     use_cache = model.config.use_cache
     model.config.use_cache = False
 
@@ -59,6 +68,17 @@ def check_sparsity(model):
 
 
 def prepare_calibration_input(model, dataloader, device):
+    """
+    Prepare the calibration input for the model.
+
+    Args:
+        model (nn.Module): The model to prepare calibration input for.
+        dataloader (DataLoader): The dataloader to use for calibration.
+        device (torch.device): The device to use for calibration.
+
+    Returns:
+        tuple: A tuple containing the input tensor, output tensor, and attention mask.
+    """
     use_cache = model.config.use_cache
     model.config.use_cache = False
     layers = model.model.decoder.layers
@@ -100,6 +120,19 @@ def prepare_calibration_input(model, dataloader, device):
 
 
 def return_given_alpha(alpha, sort_res, W_metric, tmp_metric, sum_before):
+    """
+    Return the mask and current sparsity given an alpha value.
+
+    Args:
+        alpha (float): The alpha value.
+        sort_res (tuple): The sorted result.
+        W_metric (torch.Tensor): The weight metric tensor.
+        tmp_metric (torch.Tensor): The temporary metric tensor.
+        sum_before (torch.Tensor): The sum before tensor.
+
+    Returns:
+        tuple: A tuple containing the mask and current sparsity.
+    """
     thres_cumsum = sum_before * alpha
     sort_mask = tmp_metric <= thres_cumsum.reshape((-1, 1))
     thres = torch.gather(
@@ -113,6 +146,17 @@ def return_given_alpha(alpha, sort_res, W_metric, tmp_metric, sum_before):
 def prune_magnitude(
     args, model, tokenizer, device=torch.device("cuda:0"), prune_n=0, prune_m=0
 ):
+    """
+    Perform magnitude pruning on the model.
+
+    Args:
+        args: The arguments for pruning.
+        model (nn.Module): The model to prune.
+        tokenizer: The tokenizer to use.
+        device (torch.device, optional): The device to use for pruning. Defaults to torch.device("cuda:0").
+        prune_n (int, optional): The number of elements to prune in each block. Defaults to 0.
+        prune_m (int, optional): The size of each block. Defaults to 0.
+    """
     layers = model.model.decoder.layers
 
     for i in range(len(layers)):
@@ -144,10 +188,21 @@ def prune_magnitude(
 def prune_wanda(
     args, model, tokenizer, device=torch.device("cuda:0"), prune_n=0, prune_m=0
 ):
+    """
+    Perform Wanda pruning on the model.
+
+    Args:
+        args: The arguments for pruning.
+        model (nn.Module): The model to prune.
+        tokenizer: The tokenizer to use.
+        device (torch.device, optional): The device to use for pruning. Defaults to torch.device("cuda:0").
+        prune_n (int, optional): The number of elements to prune in each block. Defaults to 0.
+        prune_m (int, optional): The size of each block. Defaults to 0.
+    """
     use_cache = model.config.use_cache
     model.config.use_cache = False
 
-    print("loading calibdation data")
+    print("loading calibration data")
     dataloader, _ = get_loaders(
         "c4",
         nsamples=args.nsamples,
@@ -234,6 +289,17 @@ def prune_wanda(
 
 @torch.no_grad()
 def prune_sparsegpt(args, model, tokenizer, dev, prune_n=0, prune_m=0):
+    """
+    Perform SparseGPT pruning on the model.
+
+    Args:
+        args: The arguments for pruning.
+        model (nn.Module): The model to prune.
+        tokenizer: The tokenizer to use.
+        dev (torch.device): The device to use for pruning.
+        prune_n (int, optional): The number of elements to prune in each block. Defaults to 0.
+        prune_m (int, optional): The size of each block. Defaults to 0.
+    """
     ## SparseGPT code available at: https://github.com/IST-DASLab/sparsegpt/tree/f5c25005a61f96a0933ca2f95705a963585aafaa
     print("Starting ...")
     dataloader, _ = get_loaders(
@@ -342,6 +408,17 @@ def prune_sparsegpt(args, model, tokenizer, dev, prune_n=0, prune_m=0):
 
 @torch.no_grad()
 def prune_ablate(args, model, tokenizer, dev, prune_n=0, prune_m=0):
+    """
+    Perform ablation pruning on the model.
+
+    Args:
+        args: The arguments for pruning.
+        model (nn.Module): The model to prune.
+        tokenizer: The tokenizer to use.
+        dev (torch.device): The device to use for pruning.
+        prune_n (int, optional): The number of elements to prune in each block. Defaults to 0.
+        prune_m (int, optional): The size of each block. Defaults to 0.
+    """
     ## SparseGPT code available at: https://github.com/IST-DASLab/sparsegpt/tree/f5c25005a61f96a0933ca2f95705a963585aafaa
     print("Starting ...")
     dataloader, _ = get_loaders(

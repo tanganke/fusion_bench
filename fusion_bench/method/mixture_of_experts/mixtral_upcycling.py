@@ -40,6 +40,14 @@ def _convert_config_to_mixtral(
         Mergekit is model merging library dedicated to large language models.
 
         Credit to https://github.com/arcee-ai/mergekit/blob/main/mergekit/moe/mixtral.py
+
+    Args:
+        base_config (LlamaConfig | MistralConfig): The base configuration of the model.
+        num_experts (int): The number of experts in the Mixtral model.
+        experts_per_token (Optional[int]): The number of experts per token. Defaults to 2.
+
+    Returns:
+        MixtralConfig: The configuration for the Mixtral model.
     """
     if not isinstance(base_config, MistralConfig):
         mistral_config = MistralConfig(**base_config.to_dict())
@@ -64,6 +72,16 @@ def _convert_config_to_mixtral(
 def _convert_mlp(
     input_mlp: LlamaMLP | MistralMLP, output_mlp: MixtralBlockSparseTop2MLP
 ):
+    """
+    Convert the MLP layers from the input model to the output model.
+
+    Args:
+        input_mlp (LlamaMLP | MistralMLP): The MLP layer from the input model.
+        output_mlp (MixtralBlockSparseTop2MLP): The MLP layer in the output model.
+
+    Returns:
+        None
+    """
     output_mlp.w1.load_state_dict(input_mlp.gate_proj.state_dict())
     output_mlp.w2.load_state_dict(input_mlp.down_proj.state_dict())
     output_mlp.w3.load_state_dict(input_mlp.up_proj.state_dict())
@@ -76,6 +94,13 @@ def _upscale_decoder_layer(
     """
     Copy the weights from the input layer to the output layer.
     This will modify the output layer in place.
+
+    Args:
+        input_layer (LlamaDecoderLayer | MistralDecoderLayer): The decoder layer from the input model.
+        output_layer (MixtralDecoderLayer): The decoder layer in the output model.
+
+    Returns:
+        None
     """
     output_layer.input_layernorm.load_state_dict(
         input_layer.input_layernorm.state_dict()
@@ -151,6 +176,15 @@ class MixtralUpscalingAlgorithm(BaseModelFusionAlgorithm):
         save_checkpoint: str,
         **kwargs,
     ):
+        """
+        Initialize the MixtralUpscalingAlgorithm.
+
+        Args:
+            num_experts (int): The number of experts in the Mixtral model.
+            experts_per_token (int): The number of experts per token.
+            save_checkpoint (str): The path to save the checkpoint.
+            **kwargs: Additional keyword arguments.
+        """
         self.num_experts = num_experts
         self.experts_per_token = experts_per_token
         self.save_checkpoint = save_checkpoint
@@ -160,6 +194,15 @@ class MixtralUpscalingAlgorithm(BaseModelFusionAlgorithm):
     def _run(
         self, modelpool: BaseModelPool | LlamaModel | MistralModel
     ) -> MixtralModel:
+        """
+        Internal method to run the upscaling process.
+
+        Args:
+            modelpool (BaseModelPool | LlamaModel | MistralModel): The model to be upscaled.
+
+        Returns:
+            MixtralModel: The upscaled model.
+        """
         if isinstance(modelpool, BaseModelPool):
             assert modelpool.has_pretrained, "ModelPool must have pretrained model."
             pretrained_model = modelpool.load_model("_pretrained_")
@@ -218,6 +261,15 @@ class MixtralForCausalLMUpscalingAlgorithm(BaseModelFusionAlgorithm):
         save_checkpoint: str,
         **kwargs,
     ):
+        """
+        Initialize the MixtralForCausalLMUpscalingAlgorithm.
+
+        Args:
+            num_experts (int): The number of experts in the Mixtral model.
+            experts_per_token (int): The number of experts per token.
+            save_checkpoint (str): The path to save the checkpoint.
+            **kwargs: Additional keyword arguments.
+        """
         self.num_experts = num_experts
         self.experts_per_token = experts_per_token
         self.save_checkpoint = save_checkpoint
@@ -227,6 +279,15 @@ class MixtralForCausalLMUpscalingAlgorithm(BaseModelFusionAlgorithm):
     def _run(
         self, modelpool: BaseModelPool | LlamaForCausalLM | MistralForCausalLM
     ) -> MixtralForCausalLM:
+        """
+        Internal method to run the upscaling process.
+
+        Args:
+            modelpool (BaseModelPool | LlamaForCausalLM | MistralForCausalLM): The model to be upscaled.
+
+        Returns:
+            MixtralForCausalLM: The upscaled model.
+        """
         if isinstance(modelpool, BaseModelPool):
             assert modelpool.has_pretrained, "ModelPool must have pretrained model."
             pretrained_model = modelpool.load_model("_pretrained_")

@@ -19,6 +19,19 @@ def slerp_on_state_dicts(
     DOT_THRESHOLD: float = 0.9995,
     epsilon: float = 1e-8,
 ):
+    """
+    Perform spherical linear interpolation (slerp) on the state dictionaries of two models.
+
+    Args:
+        t (float): The interpolation factor, typically between 0 and 1.
+        primary_state_dict (dict): The state dictionary of the primary model.
+        secondary_state_dict (dict): The state dictionary of the secondary model.
+        DOT_THRESHOLD (float, optional): Threshold for considering the vectors as collinear. Defaults to 0.9995.
+        epsilon (float, optional): Small value to avoid division by zero. Defaults to 1e-8.
+
+    Returns:
+        dict: The interpolated state dictionary.
+    """
     state_dict = {}
     for key in secondary_state_dict:
         v0 = primary_state_dict[key]
@@ -46,6 +59,8 @@ class SlerpMergeAlgorithm(BaseModelFusionAlgorithm):
 
     def __init__(self, t: float, DOT_THRESHOLD: float = 0.9995, epsilon: float = 1e-8):
         """
+        Initialize the SlerpMergeAlgorithm.
+
         Args:
             t (float): The interpolation parameter. Must be in the range [0, 1].
             DOT_THRESHOLD (float, optional): The threshold for the dot product of the two vectors. Defaults to 0.9995.
@@ -58,6 +73,15 @@ class SlerpMergeAlgorithm(BaseModelFusionAlgorithm):
 
     @override
     def run(self, modelpool: BaseModelPool):
+        """
+        Run the SlerpMergeAlgorithm on the given model pool.
+
+        Args:
+            modelpool (BaseModelPool): The pool of models to fuse.
+
+        Returns:
+            nn.Module: The fused model.
+        """
         assert len(modelpool.all_model_names) == 2, "Slerp expect exactly 2 models"
         primary_model = modelpool.load_model(modelpool.all_model_names[0])
         secondary_model = modelpool.load_model(modelpool.all_model_names[1])

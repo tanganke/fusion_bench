@@ -38,6 +38,17 @@ class WeightedAverageForLLama(BaseModelFusionAlgorithm):
         push_to_hub: bool,
         **kwargs,
     ):
+        """
+        Initialize the WeightedAverageForLLama class with the given parameters.
+
+        Args:
+            normalize (bool): Whether to normalize the weights.
+            weights (List[float]): The weights for averaging the models.
+            backbone_only (bool): Whether to use only the backbone of the models.
+            merged_model_save_path (str): The path to save the merged model.
+            save_tokenizer (bool): Whether to save the tokenizer.
+            push_to_hub (bool): Whether to push the model to the hub.
+        """
         self.normalize = normalize
         self.weights = weights
         self.backbone_only = backbone_only

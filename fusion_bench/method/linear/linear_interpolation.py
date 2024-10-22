@@ -20,11 +20,30 @@ class LinearInterpolationAlgorithm(BaseModelFusionAlgorithm):
     }
 
     def __init__(self, t: float, **kwargs):
+        """
+        Initialize the LinearInterpolationAlgorithm with the given interpolation parameter.
+
+        Args:
+            t (float): The interpolation parameter, should be in the range [0, 1].
+            **kwargs: Additional keyword arguments.
+        """
         assert 0 <= t <= 1, "t should be in the range [0, 1]"
         self.t = t
         super().__init__(**kwargs)
 
     def run(self, modelpool: BaseModelPool):
+        """
+        Run the linear interpolation algorithm on the given model pool.
+
+        This method performs linear interpolation between two models in the model pool
+        and returns a model with the interpolated state dict.
+
+        Args:
+            modelpool (BaseModelPool): The pool of models to interpolate.
+
+        Returns:
+            nn.Module: The model with the interpolated state dict.
+        """
         assert (
             modelpool.all_model_names == 2
         ), "linear interpolation expect exactly 2 models"

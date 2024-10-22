@@ -33,6 +33,16 @@ def find_layers(module: nn.Module, layers=[nn.Linear], prefix=""):
 
 
 def compute_sparsity(model: Union[LlamaForCausalLM, LlamaModel]):
+    """
+    Compute the sparsity of the model by calculating the ratio of zero weights.
+    sparsity_ratio = number_of_zero_weights / number_of_all_weights
+
+    Args:
+        model (Union[LlamaForCausalLM, LlamaModel]): The model for which to compute sparsity.
+
+    Returns:
+        float: The sparsity ratio of the model.
+    """
     if isinstance(model, LlamaForCausalLM):
         layers = model.model.layers
     elif isinstance(model, LlamaModel):
@@ -51,6 +61,18 @@ def compute_sparsity(model: Union[LlamaForCausalLM, LlamaModel]):
 def unstructured_magnitude_prune_(
     model: Union[LlamaForCausalLM, LlamaModel], sparsity_ratio: float, dtype, device
 ):
+    """
+    Apply unstructured magnitude pruning to the model.
+
+    Args:
+        model (Union[LlamaForCausalLM, LlamaModel]): The model to prune.
+        sparsity_ratio (float): The ratio of weights to prune.
+        dtype: The data type for the pruning process.
+        device: The device to perform the pruning on.
+
+    Returns:
+        Union[LlamaForCausalLM, LlamaModel]: The pruned model.
+    """
     if isinstance(model, LlamaForCausalLM):
         layers = model.model.layers
     elif isinstance(model, LlamaModel):
@@ -72,6 +94,19 @@ def unstructured_magnitude_prune_(
 def semistructured_magnitude_prune_(
     model: Union[LlamaForCausalLM, LlamaModel], n: int, m: int, dtype, device
 ):
+    """
+    Apply semi-structured (N:M structured pruning) magnitude pruning to the model.
+
+    Args:
+        model (Union[LlamaForCausalLM, LlamaModel]): The model to prune.
+        n (int): The number of weights to keep in each group.
+        m (int): The total number of weights in each group.
+        dtype: The data type for the pruning process.
+        device: The device to perform the pruning on.
+
+    Returns:
+        Union[LlamaForCausalLM, LlamaModel]: The pruned model.
+    """
     if isinstance(model, LlamaForCausalLM):
         layers = model.model.layers
     elif isinstance(model, LlamaModel):
@@ -133,6 +168,15 @@ class MagnitudePruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
 
     @torch.no_grad()
     def run(self, modelpool: CausalLMPool):
+        """
+        Execute the pruning process on the first model from the given model pool.
+
+        Args:
+            modelpool (CausalLMPool): The model pool containing the models to prune.
+
+        Returns:
+            nn.Module: The pruned model.
+        """
         config = self.config
 
         # load pre-trained model or the first model in the pool

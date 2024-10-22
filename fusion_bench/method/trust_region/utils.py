@@ -5,7 +5,18 @@ from torch import nn
 
 
 # Model conversion utils
+
 def state_dict_to_vector(state_dict, remove_keys=[]):
+    """
+    Convert a state dictionary to a vector.
+
+    Args:
+        state_dict (dict): The state dictionary to convert.
+        remove_keys (list, optional): List of keys to remove from the state dictionary. Defaults to [].
+
+    Returns:
+        torch.Tensor: The converted vector.
+    """
     shared_state_dict = copy.deepcopy(state_dict)
     for key in remove_keys:
         if key in shared_state_dict:
@@ -17,6 +28,17 @@ def state_dict_to_vector(state_dict, remove_keys=[]):
 
 
 def vector_to_state_dict(vector, state_dict, remove_keys=[]):
+    """
+    Convert a vector to a state dictionary.
+
+    Args:
+        vector (torch.Tensor): The vector to convert.
+        state_dict (dict): The reference state dictionary to define the order of the vector.
+        remove_keys (list, optional): List of keys to remove from the reference state dictionary. Defaults to [].
+
+    Returns:
+        dict: The converted state dictionary.
+    """
     # create a reference dict to define the order of the vector
     reference_dict = copy.deepcopy(state_dict)
     for key in remove_keys:
@@ -24,7 +46,7 @@ def vector_to_state_dict(vector, state_dict, remove_keys=[]):
             del reference_dict[key]
     sorted_reference_dict = OrderedDict(sorted(reference_dict.items()))
 
-    # create a shared state dict using the refence dict
+    # create a shared state dict using the reference dict
     nn.utils.vector_to_parameters(vector, sorted_reference_dict.values())
 
     # add back the encoder and decoder embedding weights.
