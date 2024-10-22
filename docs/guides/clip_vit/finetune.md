@@ -17,7 +17,7 @@ Fine-tune CLIP-ViT-B/32:
 ```bash
 fusion_bench \
     method=clip_finetune \
-    modelpool=clip-vit-base-patch32_mtl \
+    modelpool=CLIPVisionModelPool/clip-vit-base-patch32_mtl \
     taskpool=dummy
 ```
 
@@ -28,8 +28,8 @@ fusion_bench \
     fabric.devices=8 \
     method=clip_finetune \
         method.batch_size=2 \
-    modelpool=clip-vit-base-patch32_mtl \
-        modelpool.models.0.path=openai/clip-vit-large-patch14 \
+    modelpool=CLIPVisionModelPool/clip-vit-base-patch32_mtl \
+        modelpool.models._pretrained_.pretrained_model_name_or_path=openai/clip-vit-large-patch14 \
     taskpool=dummy
 ```
 
@@ -54,30 +54,8 @@ Subsequently, we can use `fusion_bench/scripts/clip/convert_checkpoint.py` to co
 
 === "model pool configuration"
 
-    ```yaml title="config/modelpool/clip-vit-base-patch32_mtl.yaml"
-    type: huggingface_clip_vision
-    models:
-      - name: _pretrained_
-        path: openai/clip-vit-base-patch32
-    
-    dataset_type: huggingface_image_classification
-    train_datasets:
-      - name: svhn
-        dataset:
-          type: instantiate
-          name: svhn
-          object:
-            _target_: datasets.load_dataset
-            _args_:
-              - svhn
-              - cropped_digits
-            split: train
-      - name: stanford_cars
-        dataset:
-          name: tanganke/stanford_cars
-          split: train
-      # other datasets
-      # ...
+    ```yaml title="config/modelpool/CLIPVisionModelPool/clip-vit-base-patch32_mtl.yaml"
+    --8<-- "config/modelpool/CLIPVisionModelPool/clip-vit-base-patch32_mtl.yaml"
     ```
 
 ```bash
@@ -93,64 +71,14 @@ For example, you can use the following command to evaluate the model on the eigh
 ```bash
 path_to_clip_model=/path/to/converted/output
 fusion_bench method=dummy \
-  modelpool=clip-vit-base-patch32_individual \
-    modelpool.models.0.path="'${path_to_clip_model}'" \
+  modelpool=CLIPVisionModelPool/clip-vit-base-patch32_individual \
+    modelpool.models._pretrained_.pretrained_model_name_or_path="'${path_to_clip_model}'" \
   taskpool=clip-vit-classification_TA8
 ```
 
 ### Single-Task Learning
 
 Simply remove some of the datasets from the `train_datasets` field in the model pool configuration.
-
-### Using the `clip_finetune` Method
-
-The `clip_finetune` method is a new feature in FusionBench that allows for fine-tuning CLIP models. Below are the instructions for using this method.
-
-#### Configuration
-
-Create a configuration file for the `clip_finetune` method. Here is an example:
-
-```yaml
-name: clip_finetune
-seed: 42
-learning_rate: 1e-5
-weight_decay: 0
-num_steps: 4000
-batch_size: 64
-num_workers: 8
-save_interval: 500
-# if `state_dict_load_path` is not null, the training will be resumed from the state_dict_path
-state_dict_load_path: null
-# if `state_dict_save_path` is not null, the state_dict will be saved to the path after training
-state_dict_save_path: null
-# if `skip_training` is true, use with `state_dict_load_path` to skip training and only evaluate
-skip_training: false
-# === LoRA ===
-use_lora: false
-lora_config:
-  r: 16
-  lora_alpha: 32
-  target_modules:
-    - q_proj
-    - v_proj
-  lora_dropout: 0.1
-  bias: none
-# === L-LoRA ===
-use_l_lora: false
-```
-
-#### Running the Fine-Tuning
-
-To run the fine-tuning process, use the following command:
-
-```bash
-fusion_bench \
-    method=clip_finetune \
-    modelpool=clip-vit-base-patch32_mtl \
-    taskpool=dummy
-```
-
-This command will fine-tune the CLIP model according to the specified configuration.
 
 ## References
 
