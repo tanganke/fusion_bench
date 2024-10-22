@@ -16,6 +16,16 @@ from .prune_utils import PruningType, find_linear_layers
 def unstructured_magnitude_prune_(
     model: Union[LlamaForCausalLM, LlamaModel], sparsity_ratio: float
 ):
+    """
+    Perform unstructured magnitude pruning on the given model.
+
+    Args:
+        model (Union[LlamaForCausalLM, LlamaModel]): The model to be pruned.
+        sparsity_ratio (float): The ratio of weights to be pruned.
+
+    Returns:
+        The pruned model.
+    """
     if isinstance(model, LlamaForCausalLM):
         layers = model.model.layers
     elif isinstance(model, LlamaModel):
@@ -35,6 +45,17 @@ def unstructured_magnitude_prune_(
 def semistructured_magnitude_prune_(
     model: Union[LlamaForCausalLM, LlamaModel], n: int, m: int
 ):
+    """
+    Perform semi-structured (N:M structured) magnitude pruning on the given model.
+
+    Args:
+        model (Union[LlamaForCausalLM, LlamaModel]): The model to be pruned.
+        n (int): The number of weights to be pruned in each group.
+        m (int): The total number of weights in each group.
+
+    Returns:
+        The pruned model.
+    """
     if isinstance(model, LlamaForCausalLM):
         layers = model.model.layers
     elif isinstance(model, LlamaModel):
@@ -53,6 +74,15 @@ def semistructured_magnitude_prune_(
 
 
 class RandomPruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
+    """
+    A class to perform random pruning for Llama models.
+
+    Attributes:
+        prune_type (PruningType): The type of pruning to be performed.
+        sparsity_ratio (float): The ratio of weights to be pruned.
+        n (int): The number of weights to be pruned in each group (for semistructured pruning).
+        m (int): The total number of weights in each group (for semistructured pruning).
+    """
     _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
         "prune_type": "prune_type",
         "sparsity_ratio": "sparsity_ratio",
@@ -69,6 +99,16 @@ class RandomPruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
         m: int,
         **kwargs,
     ):
+        """
+        Initialize the RandomPruningForLlama class.
+
+        Args:
+            prune_type (PruningType): The type of pruning to be performed.
+            sparsity_ratio (float): The ratio of weights to be pruned.
+            n (int): The number of weights to be pruned in each group (for semistructured pruning).
+            m (int): The total number of weights in each group (for semistructured pruning).
+            **kwargs: Additional keyword arguments.
+        """
         self.prune_type = prune_type
         self.sparsity_ratio = sparsity_ratio
         self.n = n
@@ -77,6 +117,15 @@ class RandomPruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
 
     @torch.no_grad()
     def run(self, modelpool: CausalLMPool):
+        """
+        Run the pruning algorithm on the first model from the given model pool.
+
+        Args:
+            modelpool (CausalLMPool): The pool of models to be pruned.
+
+        Returns:
+            The pruned model.
+        """
         # load pre-trained model or the first model in the pool
         base_model = modelpool.load_pretrained_or_first_model()
 

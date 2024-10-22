@@ -29,6 +29,9 @@ class HuggingFaceClipVisionPool(ModelPool):
 
     @property
     def clip_processor(self):
+        """
+        Returns the CLIP processor. If it's not already initialized, it initializes it using the path of the pretrained model.
+        """
         if self._clip_processor is None:
             if "_pretrained_" in self._model_names:
                 self._clip_processor = CLIPProcessor.from_pretrained(
@@ -76,12 +79,33 @@ class HuggingFaceClipVisionPool(ModelPool):
             model.save_pretrained(path)
 
     def get_tta_dataset_config(self, dataset: str):
+        """
+        Retrieve the configuration for a TTA (Test-Time Adaptation) dataset.
+
+        Args:
+            dataset (str): The name of the dataset for which to retrieve the configuration.
+
+        Returns:
+            DictConfig: The configuration dictionary for the specified dataset.
+
+        Raises:
+            ValueError: If the specified dataset is not found in the configuration.
+        """
         for dataset_config in self.config.tta_datasets:
             if dataset_config.name == dataset:
                 return dataset_config
         raise ValueError(f"Dataset {dataset} not found in config")
 
     def prepare_dataset_config(self, dataset_config: DictConfig):
+        """
+        Prepare the dataset configuration by setting the dataset type if it's not already set.
+
+        Args:
+            dataset_config (DictConfig): The configuration dictionary for the dataset.
+
+        Returns:
+            DictConfig: The updated configuration dictionary for the dataset.
+        """
         if not hasattr(dataset_config, "type"):
             with open_dict(dataset_config):
                 dataset_config["type"] = self.config.dataset_type
@@ -94,6 +118,13 @@ class HuggingFaceClipVisionPool(ModelPool):
         """
         Load the test dataset for the task.
         This method is cached, so the dataset is loaded only once.
+
+        Args:
+            tta_dataset (str): The name of the TTA dataset to load.
+            clip_processor (Optional[CLIPProcessor]): The CLIP processor to use for preprocessing the dataset. If None, the default processor is used.
+
+        Returns:
+            CLIPDataset: The loaded and preprocessed TTA test dataset.
         """
         if clip_processor is None:
             # if clip_processor is not provided, try to load the clip_processor from pre-trained model
@@ -106,6 +137,18 @@ class HuggingFaceClipVisionPool(ModelPool):
         return dataset
 
     def get_train_dataset_config(self, model_name: str):
+        """
+        Retrieve the configuration for a specific training dataset.
+
+        Args:
+            model_name (str): The name of the model for which to retrieve the training dataset configuration.
+
+        Returns:
+            DictConfig: The configuration dictionary for the specified training dataset.
+
+        Raises:
+            ValueError: If the specified training dataset is not found in the configuration.
+        """
         for dataset_config in self.config.train_datasets:
             if dataset_config.name == model_name:
                 return dataset_config
@@ -114,6 +157,16 @@ class HuggingFaceClipVisionPool(ModelPool):
     def get_train_dataset(
         self, model_name: str, clip_processor: Optional[CLIPProcessor] = None
     ):
+        """
+        Load the training dataset for the specified model.
+
+        Args:
+            model_name (str): The name of the model for which to load the training dataset.
+            clip_processor (Optional[CLIPProcessor]): The CLIP processor to use for preprocessing the dataset. If None, the default processor is used.
+
+        Returns:
+            CLIPDataset: The loaded and preprocessed training dataset.
+        """
         if clip_processor is None:
             # if clip_processor is not provided, try to load the clip_processor from pre-trained model
             clip_processor = self.clip_processor

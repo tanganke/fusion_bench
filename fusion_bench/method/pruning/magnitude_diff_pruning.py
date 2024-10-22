@@ -53,6 +53,20 @@ class MagnitudeDiffPruningAlgorithm(
     BaseModelFusionAlgorithm,
     SimpleProfilerMixin,
 ):
+    """
+    Implements magnitude-based pruning on the difference between pretrained and fine-tuned model parameters.
+
+    This class supports pruning the difference between the pretrained and fine-tuned model parameters
+    based on their magnitude. It allows specifying the ratio of weights to prune and the names of
+    parameters to extract for pruning.
+
+    Methods:
+        run(modelpool: BaseModelPool) -> nn.Module:
+            Executes the pruning process on the model pool and returns the pruned model.
+        magnitude_prune(pretrained_model: nn.Module, finetuned_model: nn.Module, in_place: bool = True) -> nn.Module:
+            Prunes the difference between the pretrained and fine-tuned model parameters.
+    """
+
     _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
         "prune_ratio": "prune_ratio",
         "extract_names": "extract_names",
@@ -64,12 +78,32 @@ class MagnitudeDiffPruningAlgorithm(
         extract_names: List[str] = None,
         **kwargs,
     ):
+        """
+        Initialize the MagnitudeDiffPruningAlgorithm with the given configuration.
+
+        Args:
+            prune_ratio (float): The ratio of weights to prune.
+            extract_names (List[str], optional): List of regular expressions to match the parameter names for pruning. Defaults to None.
+            **kwargs: Additional keyword arguments.
+        """
         self.prune_ratio = prune_ratio
         self.extract_names = extract_names
         super().__init__(**kwargs)
 
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool):
+        """
+        Execute the pruning process on the model pool.
+
+        This method loads the pretrained and fine-tuned models from the model pool,
+        prunes the difference between their parameters, and returns the pruned model.
+
+        Args:
+            modelpool (BaseModelPool): The model pool containing the models to prune.
+
+        Returns:
+            nn.Module: The pruned model.
+        """
         if not isinstance(modelpool, BaseModelPool):
             modelpool = BaseModelPool(modelpool)
 
@@ -93,6 +127,21 @@ class MagnitudeDiffPruningAlgorithm(
         finetuned_model: nn.Module,
         in_place: bool = True,
     ):
+        """
+        Prune the difference between the pretrained and fine-tuned model parameters.
+
+        This method calculates the difference between the pretrained and fine-tuned model parameters,
+        prunes the difference based on their magnitude, and updates the pretrained model parameters
+        with the pruned difference.
+
+        Args:
+            pretrained_model (nn.Module): The pretrained model.
+            finetuned_model (nn.Module): The fine-tuned model.
+            in_place (bool, optional): Whether to perform the pruning in place. Defaults to True.
+
+        Returns:
+            nn.Module: The pruned model.
+        """
         if in_place:
             model = pretrained_model
         else:

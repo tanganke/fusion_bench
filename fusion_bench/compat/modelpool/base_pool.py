@@ -18,11 +18,19 @@ log = logging.getLogger(__name__)
 class ModelPool(ABC):
     """
     This is the base class for all modelpools.
+    For verison v0.1.x, deprecated.
+    Please implemente new algorithms use `fusion_bench.modelpool.BaseModelPool`.
     """
 
     _model_names = None
 
     def __init__(self, modelpool_config: Optional[DictConfig] = None):
+        """
+        Initialize the ModelPool with the given configuration.
+
+        Args:
+            modelpool_config (Optional[DictConfig]): The configuration for the model pool.
+        """
         super().__init__()
         self.config = modelpool_config
 
@@ -35,6 +43,12 @@ class ModelPool(ABC):
             self._model_names = model_names
 
     def __len__(self):
+        """
+        Return the number of models in the model pool, exclude special models such as `_pretrained_`.
+
+        Returns:
+            int: The number of models in the model pool.
+        """
         return len(self.model_names)
 
     @property
@@ -55,6 +69,9 @@ class ModelPool(ABC):
     def has_pretrained(self):
         """
         Check if the pretrained model is available in the model pool.
+
+        Returns:
+            bool: True if the pretrained model is available, False otherwise.
         """
         for model_config in self.config["models"]:
             if model_config.get("name", None) == "_pretrained_":
@@ -121,22 +138,46 @@ class ModelPool(ABC):
             torch.save(model.state_dict(), path)
 
     def models(self):
+        """
+        Generator that yields models from the model pool.
+
+        Yields:
+            nn.Module: The next model in the model pool.
+        """
         for model_name in self.model_names:
             yield self.load_model(model_name)
 
     def named_models(self):
+        """
+        Generator that yields model names and models from the model pool.
+
+        Yields:
+            tuple: A tuple containing the model name and the model.
+        """
         for model_name in self.model_names:
             yield model_name, self.load_model(model_name)
 
     def get_train_dataset(self, model_name: str):
         """
         Get the training dataset for the model.
+
+        Args:
+            model_name (str): The name of the model for which to get the training dataset.
+
+        Returns:
+            Any: The training dataset for the model.
         """
         raise NotImplementedError
 
     def get_test_dataset(self, model_name: str):
         """
         Get the testing dataset for the model.
+
+        Args:
+            model_name (str): The name of the model for which to get the testing dataset.
+
+        Returns:
+            Any: The testing dataset for the model.
         """
         raise NotImplementedError
 
@@ -144,18 +185,27 @@ class ModelPool(ABC):
         """
         Setup the taskpool before evaluation.
         Such as setting the fabric, processor, tokenizer, etc.
+
+        Args:
+            taskpool (Any): The taskpool to setup.
         """
         pass
 
     def to_modellist(self) -> List[nn.Module]:
         """
         Convert the model pool to a list of models.
+
+        Returns:
+            list: A list of models.
         """
         return [self.load_model(m) for m in self.model_names]
 
     def to_modeldict(self) -> Dict[str, nn.Module]:
         """
         Convert the model pool to a dictionary of models.
+
+        Returns:
+            dict: A dictionary of models.
         """
         return {m: self.load_model(m) for m in self.model_names}
 
@@ -170,6 +220,13 @@ class ListModelPool(ModelPool):
         models: List[nn.Module],
         has_pretraned: bool = False,
     ):
+        """
+        Initialize the ListModelPool with the given list of models.
+
+        Args:
+            models (List[nn.Module]): The list of models.
+            has_pretraned (bool): Whether the first model in the list is pretrained.
+        """
         modelpool_config = {}
         modelpool_config["models"] = []
         model_dict = {}
@@ -188,6 +245,16 @@ class ListModelPool(ModelPool):
         super().__init__(DictConfig(modelpool_config))
 
     def load_model(self, model_config: str | DictConfig, copy=True) -> nn.Module:
+        """
+        Load the model from the model pool.
+
+        Args:
+            model_config (str | DictConfig): The model name or the configuration dictionary for the model to load.
+            copy (bool): Whether to return a copy of the model, defaults to `True`.
+
+        Returns:
+            nn.Module: The loaded model.
+        """
         if isinstance(model_config, str):
             model_config = self.get_model_config(model_config)
         model_name = model_config["name"]
@@ -203,6 +270,12 @@ class DictModelPool(ModelPool):
     """
 
     def __init__(self, model_dict: Dict[str, nn.Module]):
+        """
+        Initialize the DictModelPool with the given dictionary of models.
+
+        Args:
+            model_dict (Dict[str, nn.Module]): The dictionary of models.
+        """
         modelpool_config = {}
         modelpool_config["models"] = []
         for model_name, model in model_dict.items():
@@ -211,6 +284,16 @@ class DictModelPool(ModelPool):
         super().__init__(DictConfig(modelpool_config))
 
     def load_model(self, model_config: str | DictConfig, copy=True) -> nn.Module:
+        """
+        Load the model from the model pool.
+
+        Args:
+            model_config (str | DictConfig): The configuration dictionary for the model to load.
+            copy (bool): Whether to return a copy of the model.
+
+        Returns:
+            nn.Module: The loaded model.
+        """
         if isinstance(model_config, str):
             model_config = self.get_model_config(model_config)
         model_name = model_config["name"]
@@ -221,6 +304,18 @@ class DictModelPool(ModelPool):
 
 
 def to_modelpool(obj: List[nn.Module], **kwargs):
+    """
+    Convert the given object to a model pool.
+
+    Args:
+        obj (List[nn.Module]): The object to convert to a model pool.
+
+    Returns:
+        ModelPool: The converted model pool.
+
+    Raises:
+        ValueError: If the object cannot be converted to a model pool.
+    """
     if isinstance(obj, (ModelPool, BaseModelPool)):
         return obj
     elif isinstance(obj, (list, tuple)) and all(isinstance(m, nn.Module) for m in obj):

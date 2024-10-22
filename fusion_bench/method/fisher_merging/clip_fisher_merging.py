@@ -21,6 +21,13 @@ class FisherMergingForCLIPVisionModel(
     CLIPClassificationMixin,
     FisherMergingAlgorithm,
 ):
+    """
+    Implements Fisher Merging for CLIP Vision Models.
+
+    This class extends the FisherMergingAlgorithm and CLIPClassificationMixin to handle
+    the specifics of merging CLIP Vision models using Fisher weights.
+    """
+
     _clip_processor: CLIPProcessor = None
     zeroshot_weights = {}
 
@@ -40,6 +47,18 @@ class FisherMergingForCLIPVisionModel(
         zeroshot_weights_cache_dir=None,
         **kwargs,
     ):
+        """
+        Initialize the FisherMergingForCLIPVisionModel with the given configuration.
+
+        Args:
+            exclude_param_names_regex (list): List of regex patterns to exclude certain parameter names.
+            normalize_fisher_weight (bool): Whether to normalize Fisher weights.
+            minimal_fisher_weight (float): Minimal value for Fisher weights to avoid numerical issues.
+            num_fisher_examples (int): Number of examples to compute Fisher weights.
+            dataloader_kwargs (DictConfig): Configuration for the dataloader.
+            zeroshot_weights_cache_dir (str, optional): Directory to cache zero-shot weights. Defaults to None.
+            **kwargs: Additional keyword arguments.
+        """
         super().__init__(
             exclude_param_names_regex=exclude_param_names_regex,
             normalize_fisher_weight=normalize_fisher_weight,
@@ -53,9 +72,23 @@ class FisherMergingForCLIPVisionModel(
             setattr(self, key, value)
 
     def on_fisher_merging_start(self):
+        """
+        Setup the zero-shot classification head before starting the Fisher merging process.
+        """
         self.setup_zero_shot_classification_head()
 
     def compute_logits(self, module, batch, task: str) -> Tensor:
+        """
+        Compute the logits for the given images and task.
+
+        Args:
+            module (Module): The model module.
+            batch (tuple): A batch of data containing images and labels.
+            task (str): The name of the task.
+
+        Returns:
+            Tensor: The computed logits.
+        """
         images, _ = batch
         text_embeds = self.zeroshot_weights[task]
 
@@ -80,6 +113,18 @@ class FisherMergingForCLIPVisionModel(
         train_dataset,
         param_names_to_merge: List[str],
     ) -> Dict[str, Tensor]:
+        """
+        Compute the Fisher weights for the given model and training dataset.
+
+        Args:
+            model_name (str): The name of the model.
+            model (Module): The model module.
+            train_dataset: The training dataset.
+            param_names_to_merge (List[str]): List of parameter names to merge.
+
+        Returns:
+            Dict[str, Tensor]: The computed Fisher weights for each parameter.
+        """
         # setup dataloader
         train_dataset = CLIPDataset(train_dataset, self.clip_processor)
         train_dataloader = DataLoader(train_dataset, **self._dataloader_kwargs)
@@ -104,7 +149,7 @@ class FisherMergingForCLIPVisionModel(
             logits = self.compute_logits(model, batch, model_name)
             # Tensor, shape (batch_size, num_label_classes)
 
-            # compute fisher weights for classifxication task
+            # compute fisher weights for classification task
             # use detach() to detach from the computation graph
             # Tensor, shape (batch_size, num_label_classes)
             labels_probabilities = torch.softmax(logits, dim=-1).detach()

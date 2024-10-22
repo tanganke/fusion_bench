@@ -10,6 +10,17 @@ from .depth_upscaling import DepthUpscalingAlgorithm
 
 
 class DepthUpscalingForLlama(DepthUpscalingAlgorithm):
+    """
+    Implements depth upscaling for Llama models.
+
+    This class extends the DepthUpscalingAlgorithm to handle Llama models specifically.
+    It supports saving the upscaled model to a specified path.
+
+    Args:
+        layer_indices (list): List of layer indices to upscale.
+        model_save_path (Optional[str]): Path to save the upscaled model.
+        **kwargs: Additional keyword arguments.
+    """
 
     def __init__(self, layer_indices: list, model_save_path: Optional[str], **kwargs):
         if isinstance(model_save_path, str):
@@ -19,6 +30,19 @@ class DepthUpscalingForLlama(DepthUpscalingAlgorithm):
 
     @override
     def run(self, modelpool: CausalLMPool):
+        """
+        Executes the depth upscaling algorithm on a given model pool.
+
+        This method loads the pretrained model or the first model in the pool,
+        applies the depth upscaling algorithm, and updates the number of hidden layers in the model configuration.
+        If a save path is provided, it saves the upscaled model and tokenizer to the specified path.
+
+        Args:
+            modelpool (CausalLMPool): The pool of models to upscale.
+
+        Returns:
+            CausalLM: The upscaled model.
+        """
         if self.model_save_path is not None:
             tokenizer = modelpool.load_tokenizer()
 

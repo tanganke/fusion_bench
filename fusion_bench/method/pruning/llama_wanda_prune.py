@@ -28,16 +28,25 @@ log = logging.getLogger(__name__)
 
 
 class BaseLoSparseHookFn:
+    """
+    Base class for low-sparsity hook functions.
+    """
 
     def __init__(self, linear):
         self.linear = linear
 
     @abstractmethod
     def compute(self) -> Tensor:
+        """
+        Compute the importance scores.
+        """
         pass
 
     @abstractmethod
     def __call__(self, linear, inp: Tuple[Tensor], out: Tensor):
+        """
+        Hook function to be called during the forward pass.
+        """
         pass
 
 
@@ -81,6 +90,10 @@ class WandaHookFn(BaseLoSparseHookFn):
 
 
 class WandaPruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
+    """
+    Class for Wanda pruning for Llama models.
+    """
+
     _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
         "nsamples": "nsamples",
         "seed": "seed",
@@ -108,6 +121,22 @@ class WandaPruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
         model_save_path: Optional[str] = None,
         **kwargs,
     ):
+        """
+        Initialize the WandaPruningForLlama class.
+
+        Args:
+            nsamples (int): Number of samples for calibration.
+            seed (int): Random seed.
+            use_variant (bool): Whether to use a variant of the pruning method.
+            prune_type (PruningType): Type of pruning to perform.
+            device (str): Device to use for computation.
+            dtype (str): Data type to use for computation.
+            sparsity_ratio (float): Sparsity ratio for pruning.
+            n (int): Number of elements to keep in semi-structured pruning.
+            m (int): Number of elements in a group for semi-structured pruning.
+            model_save_path (Optional[str]): Path to save the pruned model.
+            **kwargs: Additional arguments.
+        """
         super().__init__(**kwargs)
         self.nsamples = nsamples
         self.seed = seed
@@ -121,6 +150,15 @@ class WandaPruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
         self.model_save_path = model_save_path
 
     def run(self, modelpool: CausalLMPool):
+        """
+        Run the pruning algorithm on the model pool.
+
+        Args:
+            modelpool (CausalLMPool): Pool of causal language models.
+
+        Returns:
+            LlamaForCausalLM: Pruned model.
+        """
 
         # load pre-trained model or the first model in the pool
         with self.profile("load_model"):
@@ -150,6 +188,16 @@ class WandaPruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
         return model
 
     def _prepare_calibration_data(self, model, tokenizer):
+        """
+        Prepare calibration data for pruning.
+
+        Args:
+            model (LlamaForCausalLM): Model to be pruned.
+            tokenizer: Tokenizer for the model.
+
+        Returns:
+            Tuple: Calibration data (inputs, outputs, attention mask, position IDs).
+        """
         with timeit_context("loading calibration data"):
             dataloader, _ = get_loaders(
                 "c4",
@@ -167,6 +215,16 @@ class WandaPruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
         return inps, outs, attention_mask, position_ids
 
     def prepare_calibration_data(self, model: LlamaForCausalLM, tokenizer):
+        """
+        Prepare calibration data for pruning with caching.
+
+        Args:
+            model (LlamaForCausalLM): Model to be pruned.
+            tokenizer: Tokenizer for the model.
+
+        Returns:
+            Tuple: Calibration data (inputs, outputs, attention mask, position IDs).
+        """
 
         @cache_to_disk(
             f"outputs/cache/{model.config.name_or_path.split('/')[-1]}/calibration_data.pkl"
@@ -185,6 +243,16 @@ class WandaPruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
         attention_mask,
         position_ids,
     ):
+        """
+        Prune the model using calibration data.
+
+        Args:
+            model (LlamaForCausalLM): Model to be pruned.
+            inps: Calibration inputs.
+            outs: Calibration outputs.
+            attention_mask: Attention mask for calibration data.
+            position_ids: Position IDs for calibration data.
+        """
         layers = model.model.layers
         for layer_idx, layer in tqdm(
             enumerate(layers),
@@ -273,6 +341,16 @@ class WandaPruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
 
     @torch.no_grad()
     def check_sparsity(self, weight: Tensor, tol: float = 0.01):
+        """
+        Check the sparsity of the weight tensor.
+
+        Args:
+            weight (Tensor): Weight tensor.
+            tol (float): Tolerance for sparsity check.
+
+        Raises:
+            ValueError: If the pruning type is invalid.
+        """
         if self.prune_type == PruningType.UNSTRUCTURED:
             assert (compute_sparsity(weight) - self.sparsity_ratio).abs() < tol
         elif self.prune_type == PruningType.SEMISTRUCTURED:
