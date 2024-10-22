@@ -23,6 +23,9 @@ fusion_bench \
     taskpool.layer_wise_routing_weights_save_path=outputs/layer_wise_routing_weights/clip-vit-base-patch32_TA8/ \
     taskpool.layer_wise_routing_weights_max_num=1000
 
+# add option:
+#    method.checkpoint=outputs/sparse_we_moe/clip-vit-base-patch32/clip-vit-base-patch32_TA8_sparse_we_moe_checkpoint.ckpt \
+# to skip the training process
 fusion_bench \
     method=wemoe/sparse_weight_ensembling_moe \
     method.name=sparse_clip_weight_ensembling_moe \

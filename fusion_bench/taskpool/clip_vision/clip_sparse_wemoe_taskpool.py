@@ -1,5 +1,6 @@
+from copy import deepcopy
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Any
+from typing import Any, Dict, Optional, Tuple
 
 import torch
 from torch import Tensor
@@ -19,8 +20,8 @@ from .taskpool import CLIPVisionModelTaskPool
 class LayerWiseRoutingWeightSaver:
     def __init__(self, save_path: Path, max_num: Optional[int] = None):
         self.save_path = save_path
-        self.routing_weights = []
         self.max_num = max_num
+        self.routing_weights = []
 
     def __call__(self, module, input: Tuple[Tensor], output: Tensor):
         assert isinstance(output, Tensor), "Output is expected to be a Tensor"
@@ -49,7 +50,7 @@ class LayerWiseRoutingWeightSaver:
 class SparseWEMoECLIPVisionModelTaskPool(CLIPVisionModelTaskPool):
 
     # hooks and handles for saving layer-wise routing weights
-    _layer_wise_routing_weights_save_hooks = {}
+    _layer_wise_routing_weights_save_hooks: Dict[Any, LayerWiseRoutingWeightSaver] = {}
     _layer_wise_routing_weights_save_hook_handles: Dict[Any, RemovableHandle] = {}
 
     _config_mapping = CLIPVisionModelTaskPool._config_mapping | {
@@ -86,6 +87,7 @@ class SparseWEMoECLIPVisionModelTaskPool(CLIPVisionModelTaskPool):
             if isinstance(vision_model, CLIPVisionModel):
                 vision_model = vision_model.vision_model
                 # assign forward hooks for each layer
+            shared_gate = None
             for i, layer in enumerate(vision_model.encoder.layers):
                 mlp = layer.mlp
                 assert isinstance(
@@ -100,6 +102,11 @@ class SparseWEMoECLIPVisionModelTaskPool(CLIPVisionModelTaskPool):
                     max_num=self.layer_wise_routing_weights_max_num,
                 )
                 self._layer_wise_routing_weights_save_hooks[i] = hook
+                if isinstance(mlp, SparseWeightEnsemblingMoE_ShardGate):
+                    # if use shared gate, copy the gate to all layers to avoid multiple hooks
+                    if shared_gate is None:
+                        shared_gate = mlp.gate
+                    mlp.gate = deepcopy(shared_gate)
                 self._layer_wise_routing_weights_save_hook_handles[i] = (
                     mlp.gate.register_forward_hook(hook)
                 )
@@ -109,5 +116,5 @@ class SparseWEMoECLIPVisionModelTaskPool(CLIPVisionModelTaskPool):
         if self.layer_wise_routing_weights_save_path is not None:
             # remove hooks for saving layer-wise routing weights
             for i, handle in self._layer_wise_routing_weights_save_hook_handles.items():
-                handle.remove()
                 self._layer_wise_routing_weights_save_hooks[i].save_routing_weights()
+                handle.remove()
