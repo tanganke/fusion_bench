@@ -20,6 +20,18 @@ log = logging.getLogger(__name__)
 
 
 class InfiniteDataLoader:
+    """
+    A wrapper class for DataLoader to create an infinite data loader.
+    This is useful in case we are only interested in the number of steps and not the number of epochs.
+
+    This class wraps a DataLoader and provides an iterator that resets
+    when the end of the dataset is reached, creating an infinite loop.
+
+    Attributes:
+        data_loader (DataLoader): The DataLoader to wrap.
+        data_iter (iterator): An iterator over the DataLoader.
+    """
+
     def __init__(self, data_loader):
         self.data_loader = data_loader
         self.data_iter = iter(data_loader)
@@ -37,6 +49,19 @@ class InfiniteDataLoader:
 
 
 class CLIPTaskWiseAdaMergingAlgorithm(TaskWiseAdaMergingAlgorithm):
+    """
+    A class for task-wise adaptive merging of CLIP models.
+
+    This class extends the TaskWiseAdaMergingAlgorithm to provide specific
+    functionality for CLIP models, including loading datasets, constructing
+    zero-shot classification heads, and computing logits.
+
+    Attributes:
+        modelpool (CLIPVisionModelPool): The model pool containing CLIP models.
+        _clip_processor (CLIPProcessor): The CLIP processor for preparing inputs.
+        zeroshot_weights (dict): A dictionary to store zero-shot weights for each task.
+    """
+
     modelpool: CLIPVisionModelPool = None
     _clip_processor: CLIPProcessor = None
     zeroshot_weights = {}
@@ -49,6 +74,12 @@ class CLIPTaskWiseAdaMergingAlgorithm(TaskWiseAdaMergingAlgorithm):
         """
         Load the test dataset for the task.
         This method is cached, so the dataset is loaded only once.
+
+        Args:
+            task (str): The name of the task.
+
+        Returns:
+            CLIPDataset: The test dataset for the task.
         """
         log.info(f"Loading test dataset: {task}")
         dataset = self.modelpool.load_test_dataset(task)
@@ -57,6 +88,15 @@ class CLIPTaskWiseAdaMergingAlgorithm(TaskWiseAdaMergingAlgorithm):
 
     @functools.cache
     def get_shuffled_test_loader_iter(self, task: str):
+        """
+        Get an iterator over the shuffled test DataLoader for the task.
+
+        Args:
+            task (str): The name of the task.
+
+        Returns:
+            iterator: An iterator over the shuffled test DataLoader.
+        """
         loader = DataLoader(
             self.get_test_dataset(task),
             batch_size=self.config.batch_size,
@@ -70,7 +110,10 @@ class CLIPTaskWiseAdaMergingAlgorithm(TaskWiseAdaMergingAlgorithm):
 
     def on_test_time_adaptation_start(self):
         """
-        Here we load the CLIP processor and construct the zero-shot classification head for each task.
+        Prepare for test-time adaptation.
+
+        This method loads the CLIP processor and constructs the zero-shot
+        classification head for each task.
         """
         clip_model_config = self.modelpool.get_model_config("_pretrained_")
         pretrained_path = (
@@ -112,6 +155,20 @@ class CLIPTaskWiseAdaMergingAlgorithm(TaskWiseAdaMergingAlgorithm):
                 )
 
     def compute_logits(self, module, batch, task: str) -> Tensor:
+        """
+        Compute the logits for the given batch and task.
+
+        This method computes the image embeddings, normalizes them, and calculates
+        the cosine similarity with the text embeddings to produce classification logits.
+
+        Args:
+            module (nn.Module): The model module.
+            batch (tuple): A batch of input data.
+            task (str): The name of the task.
+
+        Returns:
+            Tensor: The classification logits for the batch.
+        """
         images, _ = batch
         text_embeds = self.zeroshot_weights[task]
 

@@ -12,6 +12,13 @@ from .huggingface_clip_vision import HuggingFaceClipVisionPool
 
 
 class ModelPoolFactory:
+    """
+    Factory class to create and manage different model pools.
+
+    This class provides methods to create model pools based on a given configuration,
+    register new model pools, and list available model pools.
+    """
+
     _modelpool = {
         "NYUv2ModelPool": ".nyuv2_modelpool.NYUv2ModelPool",
         "huggingface_clip_vision": HuggingFaceClipVisionPool,
@@ -28,6 +35,21 @@ class ModelPoolFactory:
 
     @staticmethod
     def create_modelpool(modelpool_config: DictConfig) -> ModelPool:
+        """
+        Create an instance of a model pool based on the provided configuration.
+        This is for v0.1.x versions, deprecated.
+        For implementing new model pool, use `fusion_bench.modelpool.BaseModelPool` instead.
+
+        Args:
+            modelpool_config (DictConfig): The configuration for the model pool.
+            Must contain a 'type' attribute that specifies the type of the model pool.
+
+        Returns:
+            ModelPool: An instance of the specified model pool.
+
+        Raises:
+            ValueError: If 'type' attribute is not found in the configuration or does not match any known model pool types.
+        """
         from fusion_bench.utils import import_object
 
         modelpool_type = modelpool_config.get("type")
@@ -47,10 +69,23 @@ class ModelPoolFactory:
 
     @staticmethod
     def register_modelpool(name: str, modelpool_cls):
+        """
+        Register a new model pool with the factory.
+
+        Args:
+            name (str): The name of the model pool.
+            modelpool_cls: The class of the model pool to register.
+        """
         ModelPoolFactory._modelpool[name] = modelpool_cls
 
     @classmethod
     def available_modelpools(cls):
+        """
+        Get a list of available model pools.
+
+        Returns:
+            list: A list of available model pool names.
+        """
         return list(cls._modelpool.keys())
 
 

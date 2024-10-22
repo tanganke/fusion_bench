@@ -4,6 +4,13 @@ from .base_algorithm import ModelFusionAlgorithm
 
 
 class AlgorithmFactory:
+    """
+    Factory class to create and manage different model fusion algorithms.
+
+    This class provides methods to create algorithms based on a given configuration,
+    register new algorithms, and list available algorithms.
+    """
+
     _aglorithms = {
         # single task learning (fine-tuning)
         "clip_finetune": ".classification.clip_finetune.ImageClassificationFineTuningForCLIP",
@@ -42,6 +49,18 @@ class AlgorithmFactory:
 
     @staticmethod
     def create_algorithm(method_config: DictConfig) -> ModelFusionAlgorithm:
+        """
+        Create an instance of a model fusion algorithm based on the provided configuration.
+
+        Args:
+            method_config (DictConfig): The configuration for the algorithm. Must contain a 'name' attribute that specifies the type of the algorithm.
+
+        Returns:
+            ModelFusionAlgorithm: An instance of the specified algorithm.
+
+        Raises:
+            ValueError: If 'name' attribute is not found in the configuration or does not match any known algorithm names.
+        """
         from fusion_bench.utils import import_object
 
         algorithm_name = method_config.name
@@ -59,10 +78,23 @@ class AlgorithmFactory:
 
     @staticmethod
     def register_algorithm(name: str, algorithm_cls):
+        """
+        Register a new algorithm with the factory.
+
+        Args:
+            name (str): The name of the algorithm.
+            algorithm_cls: The class of the algorithm to register.
+        """
         AlgorithmFactory._aglorithms[name] = algorithm_cls
 
     @classmethod
     def available_algorithms(cls):
+        """
+        Get a list of available algorithms.
+
+        Returns:
+            list: A list of available algorithm names.
+        """
         return list(cls._aglorithms.keys())
 
 

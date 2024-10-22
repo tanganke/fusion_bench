@@ -40,8 +40,28 @@ class ConcreteTaskArithmeticAlgorithmForCLIP(
     SimpleProfilerMixin,
     ModelFusionAlgorithm,
 ):
+    """
+    ConcreteTaskArithmeticAlgorithmForCLIP is a class for performing task arithmetic on CLIP models with learned masking.
+
+    This class extends the CLIPClassificationMixin, SimpleProfilerMixin, and ModelFusionAlgorithm classes.
+    It provides methods for setting up models, training masks, and running the task arithmetic algorithm.
+
+    Attributes:
+        merge_dtype (torch.dtype): The data type for merging weights.
+        modelpool (HuggingFaceClipVisionPool): The model pool containing the pretrained and fine-tuned models.
+    """
+
     @torch.no_grad()
     def setup_models(self):
+        """
+        Set up the pretrained model, fine-tuned models, and mask model.
+
+        This method loads the pretrained model, constructs the PGE mask model, and loads the fine-tuned models.
+        It also creates a wrapped model with task-wise weights.
+
+        Returns:
+            Tuple[TaskWiseMergedModel, MaskModel]: The wrapped model and mask model.
+        """
         config = self.config
         self.merge_dtype = parse_dtype(config.get("merge_dtype", None))
         modelpool = self.modelpool
@@ -88,6 +108,15 @@ class ConcreteTaskArithmeticAlgorithmForCLIP(
         return module, mask_model
 
     def train_mask(self, module: TaskWiseMergedModel, mask_model: MaskModel):
+        """
+        Train the mask model using the provided module.
+
+        This method configures the optimizer, sets up the mask model, and performs test-time adaptation to train the mask model.
+
+        Args:
+            module (TaskWiseMergedModel): The wrapped model with task-wise weights.
+            mask_model (MaskModel): The mask model to be trained.
+        """
         config = self.config
         # mask_model: MaskModel = self.fabric.to_device(mask_model)
 
@@ -192,6 +221,17 @@ class ConcreteTaskArithmeticAlgorithmForCLIP(
                 self.print_profile_summary()
 
     def run(self, modelpool: HuggingFaceClipVisionPool):
+        """
+        Run the Concrete Task Arithmetic algorithm.
+
+        This method sets up the models, trains the mask model if necessary, and performs the final merging of weights.
+
+        Args:
+            modelpool (HuggingFaceClipVisionPool): The model pool containing the pretrained and fine-tuned models.
+
+        Returns:
+            torch.nn.Module: The final merged model.
+        """
         self.modelpool = to_modelpool(modelpool)
         config = self.config
         self.log_hyperparams(config, filename="method_config.yaml")
