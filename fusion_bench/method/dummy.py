@@ -1,8 +1,10 @@
 """
-A dummy method that does nothing, but returns the `_pretrained` model.
+A dummy method that does nothing, but returns the `_pretrained_` model.
 """
 
 import logging
+
+from torch import nn
 
 from fusion_bench.method import BaseModelFusionAlgorithm
 from fusion_bench.modelpool import BaseModelPool
@@ -19,6 +21,11 @@ class DummyAlgorithm(BaseModelFusionAlgorithm):
         Raises:
             AssertionError: If the model is not found in the model pool.
         """
+        if isinstance(modelpool, nn.Module):
+            return modelpool
+        elif not isinstance(modelpool, BaseModelPool):
+            modelpool = BaseModelPool(modelpool)
+
         model = modelpool.load_pretrained_or_first_model()
 
         assert model is not None, "Model is not found in the model pool."
