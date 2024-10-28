@@ -20,6 +20,12 @@ FusionBench is a benchmark suite designed to evaluate the performance of various
 Projects based on FusionBench:
 
 <details>
+  <summary>Li Shen, Anke Tang, Enneng Yang et al. Efficient and Effective Weight-Ensembling Mixture of Experts for Multi-Task Model Merging. Oct, 2024. https://github.com/EnnengYang/Efficient-WEMoE</summary>
+ 
+  <img width="1018" alt="image" src="https://github.com/user-attachments/assets/b7e1279e-87fc-4016-8867-1bff7700e271">
+
+</details>
+<details>
   <summary>Jinluan Yang et al. Mitigating the Backdoor Effect for Multi-Task Model Merging via Safety-Aware Subspace. Oct, 2024. http://arxiv.org/abs/2410.13910</summary>
 
   <img width="1018" alt="image" src="https://github.com/user-attachments/assets/679aaa7e-0506-4e09-a12a-345c12cf529f">
