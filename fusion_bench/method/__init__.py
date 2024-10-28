@@ -19,6 +19,7 @@ _import_structure = {
     ],
     # model merging methods
     "linear": [
+        "ExPOAlgorithm",
         "SimpleAverageForLlama",
         "TaskArithmeticForLlama",
         "LinearInterpolationAlgorithm",
@@ -103,6 +104,7 @@ if TYPE_CHECKING:
     )
     from .fisher_merging import FisherMergingForCLIPVisionModel
     from .linear import (
+        ExPOAlgorithm,
         LinearInterpolationAlgorithm,
         SimpleAverageForLlama,
         TaskArithmeticForLlama,
@@ -131,8 +133,8 @@ if TYPE_CHECKING:
         SmileUpscalingAlgorithm,
     )
     from .sparse_we_moe import (
-        SparseWeightEnsemblingMoEAlgorithm,
         SparseCLIPWeightEnsemblingMoEAlgorithm,
+        SparseWeightEnsemblingMoEAlgorithm,
     )
     from .sparselo import (
         IterativeSparseLoForLlama,
