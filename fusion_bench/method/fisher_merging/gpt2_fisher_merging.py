@@ -26,6 +26,19 @@ class FisherMergingAlgorithmForGPT2(
     FisherMergingAlgorithm,
     LightningFabricMixin,
 ):
+    """
+    Implements the Fisher Merging Algorithm for GPT-2 models on text classification tasks.
+
+    This class extends the FisherMergingAlgorithm to handle GPT-2 models specifically.
+    It supports caching, batch processing, and multi-worker data loading.
+
+    Attributes:
+        classifiers (dict): A dictionary to store classifiers for each model.
+        modelpool (HuggingFaceGPT2ClassificationPool): The model pool containing the GPT-2 models.
+        cache_dir (str): Directory to cache data.
+        batch_size (int): Batch size for data loading.
+        num_workers (int): Number of workers for data loading.
+    """
     classifiers = {}
     modelpool: HuggingFaceGPT2ClassificationPool = None
     _config_mapping = FisherMergingAlgorithm._config_mapping | {
@@ -41,12 +54,24 @@ class FisherMergingAlgorithmForGPT2(
         num_workers: int,
         **kwargs,
     ):
+        """
+        Initialize the FisherMergingAlgorithmForGPT2 with the given configuration.
+
+        Args:
+            cache_dir (str): Directory to cache data.
+            batch_size (int): Batch size for data loading.
+            num_workers (int): Number of workers for data loading.
+            **kwargs: Additional keyword arguments.
+        """
         self.cache_dir = cache_dir
         self.batch_size = batch_size
         self.num_workers = num_workers
         super().__init__(**kwargs)
 
     def on_fisher_merging_start(self):
+        """
+        Setup the classifiers for each model in the model pool before starting the Fisher merging process.
+        """
         for model_name in self.modelpool.model_names:
             classifier = cast(
                 GPT2ForSequenceClassification,
@@ -57,6 +82,17 @@ class FisherMergingAlgorithmForGPT2(
             self.classifiers[model_name] = classifier
 
     def compute_logits(self, module: GPT2Model, batch, task: str) -> Tensor:
+        """
+        Compute the logits for the given batch and task.
+
+        Args:
+            module (GPT2Model): The GPT-2 model module.
+            batch (dict): The input batch.
+            task (str): The name of the task.
+
+        Returns:
+            Tensor: The computed logits.
+        """
         self.classifiers[task].transformer = module
         input_ids = batch["input_ids"]
         attention_mask = batch["attention_mask"]
@@ -73,6 +109,18 @@ class FisherMergingAlgorithmForGPT2(
         train_dataset,
         param_names_to_merge: List[str],
     ) -> Dict[str, Tensor]:
+        """
+        Compute the Fisher weights for the given model and training dataset.
+
+        Args:
+            model_name (str): The name of the model.
+            model (Module): The model module.
+            train_dataset: The training dataset.
+            param_names_to_merge (List[str]): List of parameter names to merge.
+
+        Returns:
+            Dict[str, Tensor]: The computed Fisher weights for each parameter.
+        """
         # setup dataloader
         train_dataloader = DataLoader(
             train_dataset,

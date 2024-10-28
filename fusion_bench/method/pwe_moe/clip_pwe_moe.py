@@ -1,12 +1,10 @@
 import itertools
 import logging
-import os
 from abc import abstractmethod
 from copy import deepcopy
 from pathlib import Path
 from typing import Dict, List, Tuple, cast
 
-import lightning as L
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -14,20 +12,15 @@ from omegaconf import DictConfig
 from torch import Tensor, nn
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
-from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
-from transformers.models.clip.modeling_clip import CLIPEncoder, CLIPEncoderLayer
+from transformers import CLIPVisionModel
+from transformers.models.clip.modeling_clip import CLIPEncoderLayer
 from typing_extensions import override
 
-from fusion_bench.method.adamerging.entropy_loss import entropy_loss
 from fusion_bench.method.base_algorithm import BaseModelFusionAlgorithm
 from fusion_bench.method.task_arithmetic import task_arithmetic_merge
 from fusion_bench.mixins.clip_classification import CLIPClassificationMixin
-from fusion_bench.mixins.lightning_fabric import LightningFabricMixin
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import CLIPVisionModelPool
-from fusion_bench.models.hf_clip import HFCLIPClassifier
-from fusion_bench.models.separate_io import *
-from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.utils import timeit_context
 from fusion_bench.utils.data import InfiniteDataLoader
 from fusion_bench.utils.parameters import print_parameters
@@ -95,7 +88,6 @@ class PWEMoEAlgorithmForCLIP(
 
     @override
     def run(self, modelpool: CLIPVisionModelPool):
-        config = self.config
         self.modelpool = modelpool
 
         model = self.setup_model()
@@ -141,7 +133,6 @@ class PWEMoEAlgorithmForCLIP(
         return pretrained_model, finetuned_models
 
     def setup_model(self):
-        config = self.config
         pretrained_model, finetuned_models = self.load_clip_models()
         self.setup_zero_shot_classification_head()
 
@@ -160,9 +151,10 @@ class PWEMoEAlgorithmForCLIP(
             model.requires_grad_(False)
 
             num_layers = len(model.vision_model.encoder.layers)
-            get_layer = lambda m, i: cast(
-                CLIPEncoderLayer, m.vision_model.encoder.layers[i]
-            )
+
+            def get_layer(m, i):
+                return cast(CLIPEncoderLayer, m.vision_model.encoder.layers[i])
+
             for layer_idx in tqdm(range(num_layers)):
                 if self.upscale_mlp:
                     # upscale the mlp layer
@@ -200,7 +192,6 @@ class PWEMoEAlgorithmForCLIP(
         """
         Loads the datasets specified in the configuration.
         """
-        config = self.config
         train_datasets = {
             dataset_name: self.modelpool.load_train_dataset(
                 dataset_name, self.clip_processor

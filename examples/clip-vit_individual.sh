@@ -6,7 +6,7 @@ do
         modelpool=clip-vit-base-patch32_individual \
             modelpool.models.0.path=$model \
         taskpool=clip-vit-classification_TA8 \
-        save_report=outputs/clip-vit-base-patch32_individual_${model_name}_dummy.json
+        report_save_path=outputs/clip-vit-base-patch32_individual_${model_name}_dummy.json
 done
 
 for model in openai/clip-vit-large-patch14 tanganke/clip-vit-large-patch14_sun397 tanganke/clip-vit-large-patch14_stanford-cars tanganke/clip-vit-large-patch14_resisc45 tanganke/clip-vit-large-patch14_eurosat tanganke/clip-vit-large-patch14_svhn tanganke/clip-vit-large-patch14_gtsrb tanganke/clip-vit-large-patch14_mnist tanganke/clip-vit-large-patch14_dtd
@@ -18,5 +18,5 @@ do
             modelpool.models.0.path=$model \
         taskpool=clip-vit-classification_TA8 \
             taskpool.clip_model=openai/clip-vit-large-patch14 \
-        save_report=outputs/clip-vit-large-patch14_individual_${model_name}_dummy.json
+        report_save_path=outputs/clip-vit-large-patch14_individual_${model_name}_dummy.json
 done

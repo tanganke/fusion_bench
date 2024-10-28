@@ -1,7 +1,6 @@
 import functools
 import logging
-from copy import deepcopy
-from typing import List, Optional
+from typing import List
 
 import torch
 import torch.func
@@ -9,10 +8,6 @@ from torch import Tensor, nn
 from torch.func import functional_call
 from torch.nn import functional as F
 
-from fusion_bench.utils.state_dict_arithmetic import (
-    state_dict_sub,
-    state_dict_weighted_sum,
-)
 from fusion_bench.utils.type import StateDictType
 
 log = logging.getLogger(__name__)

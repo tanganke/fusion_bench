@@ -42,8 +42,8 @@ PWEMoE-LS on eight image classification tasks using CLIP-ViT-B/32 models, and th
 ```bash
 fusion_bench \
     method=pwe_moe_ls_for_clip \
-    modelpool=clip-vit-base-patch32_TA8 \
-    taskpool=clip-vit-classification_TA8 \
+    modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
+    taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
     fabric_logger.root_dir=outputs/logs/ViT-B-32 \
     fabric_logger.name=PWEMoE-LS-8tasks
 ```

@@ -1,8 +1,6 @@
 import logging
-from abc import ABC, abstractmethod
-from typing import Optional
-
-from omegaconf import DictConfig
+from abc import abstractmethod
+from typing import Optional  # noqa: F401
 
 from fusion_bench.mixins import BaseYAMLSerializableModel
 from fusion_bench.modelpool import BaseModelPool
@@ -13,6 +11,13 @@ log = logging.getLogger(__name__)
 
 
 class BaseModelFusionAlgorithm(BaseYAMLSerializableModel):
+    """
+    Base class for model fusion algorithms.
+
+    This class provides a template for implementing model fusion algorithms.
+    Subclasses must implement the `run` method to define the fusion logic.
+    """
+
     _program = None
 
     @abstractmethod
@@ -20,12 +25,14 @@ class BaseModelFusionAlgorithm(BaseYAMLSerializableModel):
         """
         Fuse the models in the given model pool.
 
+        This method must be implemented by subclasses to define the fusion logic.
+
         Examples:
             >>> algorithm = SimpleAverageAlgorithm()
             >>> modelpool = ModelPool()
-            >>> merged_model = algorithm.fuse(modelpool)
+            >>> merged_model = algorithm.run(modelpool)
 
         Args:
-            modelpool (_type_): _description_
+            modelpool (BaseModelPool): The pool of models to fuse.
         """
         pass

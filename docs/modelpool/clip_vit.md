@@ -63,7 +63,7 @@ do
         modelpool=clip-vit-base-patch32_individual \
             modelpool.models.0.path=tanganke/clip-vit-base-patch32_${task} \
         taskpool=clip-vit-classification_TA8 \
-        save_report="outputs/ViT-B-32/single-task/clip-vit-base-patch32_${task}.json"
+        report_save_path="outputs/ViT-B-32/single-task/clip-vit-base-patch32_${task}.json"
 done
 ```
 
@@ -81,7 +81,7 @@ for i in "${!CUDA_DEVICES[@]}"; do
             modelpool.models.0.path=tanganke/clip-vit-large-patch14_${task} \
         taskpool=clip-vit-classification_TA8 \
             taskpool.clip_model=openai/clip-vit-large-patch14 \
-        save_report="outputs/ViT-L-14/single-task/clip-vit-large-patch14_${task}.json" &
+        report_save_path="outputs/ViT-L-14/single-task/clip-vit-large-patch14_${task}.json" &
 done
 ```
 
@@ -267,7 +267,7 @@ do
         modelpool=CLIPVisionModelPool/clip-vit-base-patch32_individual \
             modelpool.models._pretrained_.pretrained_model_name_or_path=tanganke/clip-vit-base-patch32_${task} \
         taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
-        save_report="outputs/ViT-B-32/single-task/clip-vit-base-patch32_${task}.json"
+        report_save_path="outputs/ViT-B-32/single-task/clip-vit-base-patch32_${task}.json"
 done
 ```
 

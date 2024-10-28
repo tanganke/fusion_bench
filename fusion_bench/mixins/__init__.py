@@ -1,3 +1,4 @@
+# flake8: noqa F401
 import sys
 
 from typing_extensions import TYPE_CHECKING

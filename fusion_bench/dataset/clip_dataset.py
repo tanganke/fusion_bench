@@ -1,5 +1,5 @@
 """
-This module provodes a class to convert dataset whose object is a list of dictionaries with keys "image" and "label" to dataset whose object is a tuple of tensors (inputs, label) for CLIP models.
+This module provides a class to convert a dataset whose object is a list of dictionaries with keys "image" and "label" to a dataset whose object is a tuple of tensors (inputs, label) for CLIP models.
 """
 
 from typing import Optional
@@ -58,9 +58,11 @@ class CLIPDataset(torch.utils.data.Dataset):
         image = item["image"]
         if self.processor is not None:
             if isinstance(self.processor, ProcessorMixin):
+                # Apply the processor to the image to get the input tensor
                 inputs = self.processor(images=[image], return_tensors="pt")[
                     "pixel_values"
                 ][0]
         else:
+            # if processor is None, return the raw image directly
             inputs = image
         return inputs, item["label"]

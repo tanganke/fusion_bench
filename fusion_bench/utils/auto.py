@@ -1,11 +1,9 @@
-from abc import ABC, abstractmethod
-
 from omegaconf import DictConfig
 
 from fusion_bench.utils import import_object
 
 
-class BaseFactoryClass(ABC):
+class BaseFactoryClass:
     _registry = {}
 
     @classmethod

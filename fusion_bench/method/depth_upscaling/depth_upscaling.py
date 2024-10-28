@@ -1,10 +1,9 @@
 import logging
-import random
 from copy import deepcopy
-from typing import List, Mapping, Union
+from typing import List, Mapping, Union  # noqa: F401
 
 import torch
-from torch import Tensor, nn
+from torch import nn
 from tqdm.autonotebook import tqdm
 
 from fusion_bench.method import BaseModelFusionAlgorithm
@@ -14,6 +13,18 @@ log = logging.getLogger(__name__)
 
 
 class DepthUpscalingAlgorithm(BaseModelFusionAlgorithm):
+    R"""
+    Implements the Depth Upscaling Algorithm.
+
+    - Kim et al. SOLAR 10.7B: Scaling Large Language Models with Simple yet Effective Depth Up-Scaling. http://arxiv.org/abs/2312.15166
+
+    This class extends the `BaseModelFusionAlgorithm` to handle depth upscaling of models.
+    It supports upscaling the depth of a model by duplicating specified layers.
+
+    Args:
+        layer_indices (list): List of layer indices to duplicate.
+        **kwargs: Additional keyword arguments.
+    """
 
     _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
         "layer_indices": "layer_indices",

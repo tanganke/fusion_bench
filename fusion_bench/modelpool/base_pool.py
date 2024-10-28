@@ -1,19 +1,16 @@
 import logging
-from abc import ABC, abstractmethod
 from copy import deepcopy
-from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 import torch
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 from torch import nn
 from torch.utils.data import Dataset
 
 from fusion_bench.mixins import BaseYAMLSerializableModel
 from fusion_bench.utils import instantiate, timeit_context
-from fusion_bench.utils.rich_utils import print_config_tree
 
-__all__ = ["BaseModelPool", "DictModelPool", "ListModelPool", "to_modelpool"]
+__all__ = ["BaseModelPool"]
 
 log = logging.getLogger(__name__)
 
@@ -68,17 +65,17 @@ class BaseModelPool(BaseYAMLSerializableModel):
         return "_pretrained_" in self._models
 
     @property
-    def all_model_names(self):
+    def all_model_names(self) -> List[str]:
         """
         Get the names of all models in the pool, including special models.
 
         Returns:
             List[str]: A list of all model names.
         """
-        return self._models
+        return [name for name in self._models]
 
     @property
-    def model_names(self):
+    def model_names(self) -> List[str]:
         """
         Get the names of regular models, excluding special models.
 
@@ -86,6 +83,42 @@ class BaseModelPool(BaseYAMLSerializableModel):
             List[str]: A list of regular model names.
         """
         return [name for name in self._models if not self.is_special_model(name)]
+
+    @property
+    def train_dataset_names(self) -> List[str]:
+        """
+        Get the names of training datasets.
+
+        Returns:
+            List[str]: A list of training dataset names.
+        """
+        return (
+            list(self._train_datasets.keys())
+            if self._train_datasets is not None
+            else []
+        )
+
+    @property
+    def val_dataset_names(self) -> List[str]:
+        """
+        Get the names of validation datasets.
+
+        Returns:
+            List[str]: A list of validation dataset names.
+        """
+        return list(self._val_datasets.keys()) if self._val_datasets is not None else []
+
+    @property
+    def test_dataset_names(self) -> List[str]:
+        """
+        Get the names of testing datasets.
+
+        Returns:
+            List[str]: A list of testing dataset names.
+        """
+        return (
+            list(self._test_datasets.keys()) if self._test_datasets is not None else []
+        )
 
     def __len__(self):
         return len(self.model_names)
@@ -131,7 +164,7 @@ class BaseModelPool(BaseYAMLSerializableModel):
         Returns:
             nn.Module: The instantiated model.
         """
-        log.info(f"Loading model: {model_name_or_config}")
+        log.debug(f"Loading model: {model_name_or_config}")
         if isinstance(self._models, DictConfig):
             model_config = (
                 self._models[model_name_or_config]
@@ -146,6 +179,13 @@ class BaseModelPool(BaseYAMLSerializableModel):
                 "The model pool configuration is not in the expected format."
                 f"We expected a DictConfig or Dict, but got {type(self._models)}."
             )
+        return model
+
+    def load_pretrained_model(self, *args, **kwargs):
+        assert (
+            self.has_pretrained
+        ), "No pretrained model available. Check `_pretrained_` is in the `models` key."
+        model = self.load_model("_pretrained_", *args, **kwargs)
         return model
 
     def load_pretrained_or_first_model(self, *args, **kwargs):
@@ -181,6 +221,10 @@ class BaseModelPool(BaseYAMLSerializableModel):
         """
         return instantiate(self._train_datasets[model_name], *args, **kwargs)
 
+    def train_datasets(self):
+        for dataset_name in self.train_dataset_names:
+            yield self.load_train_dataset(dataset_name)
+
     def load_val_dataset(self, model_name: str, *args, **kwargs) -> Dataset:
         """
         Load the validation dataset for the specified model.
@@ -193,6 +237,10 @@ class BaseModelPool(BaseYAMLSerializableModel):
         """
         return instantiate(self._val_datasets[model_name], *args, **kwargs)
 
+    def val_datasets(self):
+        for dataset_name in self.val_dataset_names:
+            yield self.load_val_dataset(dataset_name)
+
     def load_test_dataset(self, model_name: str, *args, **kwargs) -> Dataset:
         """
         Load the testing dataset for the specified model.
@@ -204,6 +252,10 @@ class BaseModelPool(BaseYAMLSerializableModel):
             Dataset: The instantiated testing dataset.
         """
         return instantiate(self._test_datasets[model_name], *args, **kwargs)
+
+    def test_datasets(self):
+        for dataset_name in self.test_dataset_names:
+            yield self.load_test_dataset(dataset_name)
 
     def save_model(self, model: nn.Module, path: str):
         """

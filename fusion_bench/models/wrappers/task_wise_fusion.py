@@ -16,17 +16,12 @@ outputs = merged_model(inputs)
 
 import functools
 import logging
-import types
-import warnings
-from collections import defaultdict
-from copy import deepcopy
-from typing import Any, Callable, Dict, Iterator, List, Optional
+from typing import Any, Callable, Dict, Iterator, List, Optional  # noqa: F401
 
 import torch
 from torch import Tensor, nn
 from torch.func import functional_call
 
-from fusion_bench.utils.timer import timeit_context
 from fusion_bench.utils.type import StateDictType
 
 log = logging.getLogger(__name__)

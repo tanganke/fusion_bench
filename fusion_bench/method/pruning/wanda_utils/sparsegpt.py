@@ -11,7 +11,25 @@ torch.backends.cudnn.allow_tf32 = False
 
 ## SparseGPT: https://github.com/IST-DASLab/sparsegpt/tree/f5c25005a61f96a0933ca2f95705a963585aafaa
 class SparseGPT:
+    """
+    A class to perform pruning on GPT models using SparseGPT techniques.
+
+    Attributes:
+        layer (nn.Module): The layer to be pruned.
+        dev (torch.device): The device on which the layer is located.
+        rows (int): The number of rows in the weight matrix.
+        columns (int): The number of columns in the weight matrix.
+        H (torch.Tensor): The Hessian matrix.
+        nsamples (int): The number of samples processed.
+    """
+
     def __init__(self, layer):
+        """
+        Initialize the SparseGPT class.
+
+        Args:
+            layer (nn.Module): The layer to be pruned.
+        """
         self.layer = layer
         self.dev = self.layer.weight.device
         W = layer.weight.data.clone()
@@ -25,6 +43,13 @@ class SparseGPT:
         self.nsamples = 0
 
     def add_batch(self, inp, out):
+        """
+        Add a batch of input and output to the Hessian matrix.
+
+        Args:
+            inp (torch.Tensor): The input tensor.
+            out (torch.Tensor): The output tensor.
+        """
         if len(inp.shape) == 2:
             inp = inp.unsqueeze(0)
         tmp = inp.shape[0]
@@ -40,6 +65,16 @@ class SparseGPT:
         self.H += inp.matmul(inp.t())
 
     def fasterprune(self, sparsity, prune_n=0, prune_m=0, blocksize=128, percdamp=0.01):
+        """
+        Perform faster pruning on the layer.
+
+        Args:
+            sparsity (float): The sparsity ratio.
+            prune_n (int, optional): The number of elements to prune in each block. Defaults to 0.
+            prune_m (int, optional): The size of each block. Defaults to 0.
+            blocksize (int, optional): The size of each block for pruning. Defaults to 128.
+            percdamp (float, optional): The percentage of damping. Defaults to 0.01.
+        """
         W = self.layer.weight.data.clone()
         if isinstance(self.layer, nn.Conv2d):
             W = W.flatten(1)
@@ -123,5 +158,8 @@ class SparseGPT:
         )
 
     def free(self):
+        """
+        Free the memory used by the Hessian matrix.
+        """
         self.H = None
         torch.cuda.empty_cache()

@@ -4,24 +4,21 @@ from .base_algorithm import ModelFusionAlgorithm
 
 
 class AlgorithmFactory:
+    """
+    Factory class to create and manage different model fusion algorithms.
+
+    This class provides methods to create algorithms based on a given configuration,
+    register new algorithms, and list available algorithms.
+    """
+
     _aglorithms = {
-        "dummy": ".dummy.DummyAlgorithm",
         # single task learning (fine-tuning)
         "clip_finetune": ".classification.clip_finetune.ImageClassificationFineTuningForCLIP",
         # analysis
-        "TaskVectorCosSimilarity": ".analysis.task_vector_cos_similarity.TaskVectorCosSimilarity",
-        # model ensemble methods
-        "simple_ensemble": ".ensemble.EnsembleAlgorithm",
-        "weighted_ensemble": ".ensemble.WeightedEnsembleAlgorithm",
-        "max_model_predictor": ".ensemble.MaxModelPredictorAlgorithm",
         # model merging methods
         "simple_average": ".simple_average.SimpleAverageAlgorithm",
         "weighted_average": ".weighted_average.weighted_average.WeightedAverageAlgorithm",
         "weighted_average_for_llama": ".weighted_average.llama.WeightedAverageForLLama",
-        "clip_fisher_merging": ".fisher_merging.clip_fisher_merging.FisherMergingAlgorithmForCLIP",
-        "gpt2_fisher_merging": ".fisher_merging.gpt2_fisher_merging.FisherMergingAlgorithmForGPT2",
-        "clip_regmean": ".regmean.clip_regmean.RegMeanAlgorithmForCLIP",
-        "gpt2_regmean": ".regmean.gpt2_regmean.RegMeanAlgorithmForGPT2",
         "task_arithmetic": ".task_arithmetic.TaskArithmeticAlgorithm",
         "ties_merging": ".ties_merging.ties_merging.TiesMergingAlgorithm",
         "clip_task_wise_adamerging": ".adamerging.clip_task_wise_adamerging.CLIPTaskWiseAdaMergingAlgorithm",
@@ -42,6 +39,7 @@ class AlgorithmFactory:
         "clip_weight_ensembling_moe": ".we_moe.clip_we_moe.CLIPWeightEnsemblingMoEAlgorithm",
         "model_recombination": ".model_recombination.ModelRecombinationAlgorithm",
         "smile_upscaling": ".smile_upscaling.smile_upscaling.SmileUpscalingAlgorithm",
+        "sparse_clip_weight_ensembling_moe": "fusion_bench.method.SparseCLIPWeightEnsemblingMoEAlgorithm",
         "smile_mistral_upscaling": ".smile_upscaling.smile_mistral_upscaling.SmileMistralUpscalingAlgorithm",
         # pruning methods
         "magnitude_diff_pruning": ".pruning.MagnitudeDiffPruningAlgorithm",
@@ -51,6 +49,18 @@ class AlgorithmFactory:
 
     @staticmethod
     def create_algorithm(method_config: DictConfig) -> ModelFusionAlgorithm:
+        """
+        Create an instance of a model fusion algorithm based on the provided configuration.
+
+        Args:
+            method_config (DictConfig): The configuration for the algorithm. Must contain a 'name' attribute that specifies the type of the algorithm.
+
+        Returns:
+            ModelFusionAlgorithm: An instance of the specified algorithm.
+
+        Raises:
+            ValueError: If 'name' attribute is not found in the configuration or does not match any known algorithm names.
+        """
         from fusion_bench.utils import import_object
 
         algorithm_name = method_config.name
@@ -62,16 +72,29 @@ class AlgorithmFactory:
         algorithm_cls = AlgorithmFactory._aglorithms[algorithm_name]
         if isinstance(algorithm_cls, str):
             if algorithm_cls.startswith("."):
-                algorithm_cls = f"fusion_bench.compat.method.{algorithm_cls[1:]}"
+                algorithm_cls = f"fusion_bench.method.{algorithm_cls[1:]}"
             algorithm_cls = import_object(algorithm_cls)
         return algorithm_cls(method_config)
 
     @staticmethod
     def register_algorithm(name: str, algorithm_cls):
+        """
+        Register a new algorithm with the factory.
+
+        Args:
+            name (str): The name of the algorithm.
+            algorithm_cls: The class of the algorithm to register.
+        """
         AlgorithmFactory._aglorithms[name] = algorithm_cls
 
     @classmethod
     def available_algorithms(cls):
+        """
+        Get a list of available algorithms.
+
+        Returns:
+            list: A list of available algorithm names.
+        """
         return list(cls._aglorithms.keys())
 
 

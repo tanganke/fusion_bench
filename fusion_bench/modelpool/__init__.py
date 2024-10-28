@@ -1,3 +1,4 @@
+# flake8: noqa F401
 import sys
 from typing import TYPE_CHECKING
 
@@ -11,7 +12,7 @@ _import_structure = {
     "causal_lm": ["CausalLMPool", "CausalLMBackbonePool"],
     "seq2seq_lm": ["Seq2SeqLMPool"],
     "PeftModelForSeq2SeqLM": ["PeftModelForSeq2SeqLMPool"],
-    "huggingface_gpt2_classification":["HuggingFaceGPT2ClassificationPool"]
+    "huggingface_gpt2_classification": ["HuggingFaceGPT2ClassificationPool"],
 }
 
 

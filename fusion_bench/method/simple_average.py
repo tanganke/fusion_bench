@@ -3,7 +3,7 @@ from copy import deepcopy
 from typing import Dict, List, Mapping, Optional, Union
 
 import torch
-from torch import Tensor, nn
+from torch import nn
 
 from fusion_bench.method.base_algorithm import BaseModelFusionAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
@@ -85,11 +85,14 @@ class SimpleAverageAlgorithm(
                 print(f"load model of type: {type(model).__name__}")
             with self.profile("merge weights"):
                 if sd is None:
+                    # Initialize the state dictionary with the first model's state dictionary
                     sd = model.state_dict(keep_vars=True)
                     forward_model = model
                 else:
+                    # Add the current model's state dictionary to the accumulated state dictionary
                     sd = state_dict_add(sd, model.state_dict(keep_vars=True))
         with self.profile("merge weights"):
+            # Divide the accumulated state dictionary by the number of models to get the average
             sd = state_dict_mul(sd, 1 / len(modelpool.model_names))
 
         forward_model.load_state_dict(sd)

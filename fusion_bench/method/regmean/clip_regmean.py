@@ -1,25 +1,17 @@
 import logging
-import os
-from copy import deepcopy
-from functools import cache
-from typing import Dict, List, cast
+from typing import Dict, List, cast  # noqa: F401
 
-import lightning as L
 import torch
+import torch.utils.data
 from omegaconf import DictConfig
 from torch import Tensor, nn
 from torch.nn.modules import Module
 from torch.utils.data import DataLoader
 from tqdm.autonotebook import tqdm
-from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 
 from fusion_bench.dataset.clip_dataset import CLIPDataset
 from fusion_bench.mixins import CLIPClassificationMixin
-from fusion_bench.modelpool import CLIPVisionModelPool
-from fusion_bench.models.hf_clip import HFCLIPClassifier
-from fusion_bench.tasks.clip_classification import get_classnames_and_templates
-from fusion_bench.utils import timeit_context
-import torch.utils.data
+
 from .regmean import RegMeanAlgorithm
 
 log = logging.getLogger(__name__)
@@ -127,7 +119,7 @@ class RegMeanAlgorithmForCLIP(
                 and list(num_actual_examples.values())[0] >= self.num_regmean_examples
             ):
                 break
-            logits = self.compute_logits(model, batch, model_name)
+            logits = self.compute_logits(model, batch, model_name)  # noqa: F841
 
         # remove the added hook
         for handle in handles:

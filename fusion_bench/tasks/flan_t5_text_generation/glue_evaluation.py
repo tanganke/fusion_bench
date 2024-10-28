@@ -56,7 +56,10 @@ def evaluate_accuracy(model, val_loader: DataLoader, tokenizer):
             outputs = model.generate(batch["input_ids"], max_length=10)
             output_text = tokenizer.batch_decode(outputs, skip_special_tokens=True)
 
-            labels = [remove_special_tokens(tokenizer, l) for l in batch["labels"]]
+            labels = [
+                remove_special_tokens(tokenizer, label_token)
+                for label_token in batch["labels"]
+            ]
             labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
 
             # compare output_text and labels
@@ -93,7 +96,10 @@ def evaluate_spearman_rho(model, val_loader: DataLoader, tokenizer):
             outputs = model.generate(batch["input_ids"], max_length=10)
             output_text = tokenizer.batch_decode(outputs, skip_special_tokens=True)
 
-            labels = [remove_special_tokens(tokenizer, l) for l in batch["labels"]]
+            labels = [
+                remove_special_tokens(tokenizer, label_token)
+                for label_token in batch["labels"]
+            ]
             labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
 
             all_preds.extend(output_text)
@@ -115,11 +121,9 @@ def evaluate_spearman_rho(model, val_loader: DataLoader, tokenizer):
     from scipy.stats import spearmanr
 
     def parse_flost(s: str):
-        import math
-
         try:
             return float(s)
-        except:
+        except Exception:
             return 0.0
 
     all_preds = np.array([parse_flost(pred) for pred in all_preds])

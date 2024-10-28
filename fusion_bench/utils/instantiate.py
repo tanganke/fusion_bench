@@ -2,7 +2,6 @@
 # Modified from Hydra
 import copy
 import functools
-import inspect
 from enum import Enum
 from textwrap import dedent
 from typing import Any, Callable, Dict, List, Sequence, Tuple, Union
@@ -366,7 +365,7 @@ def instantiate_node(
         raise TypeError(msg)
 
     if not isinstance(partial, bool):
-        msg = f"Instantiation: _partial_ flag must be a bool, got {type( partial )}"
+        msg = f"Instantiation: _partial_ flag must be a bool, got {type(partial)}"
         if node and full_key:
             msg += f"\nfull_key: {full_key}"
         raise TypeError(msg)

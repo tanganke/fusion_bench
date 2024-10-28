@@ -1,4 +1,6 @@
-name: mixtral_for_causal_lm_moe_upscaling # or "mixtral_moe_upscaling"
+# or fusion_bench.method.MixtralUpscalingAlgorithm
+_target_: fusion_bench.method.MixtralForCausalLMUpscalingAlgorithm 
+
 num_experts: 4
 experts_per_token: 2
 # path to save the upscaled model

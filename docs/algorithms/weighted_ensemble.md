@@ -78,3 +78,7 @@ fusion_bench method=weighted_ensemble \
   modelpool=... \
   taskpool=...
 ```
+
+## References
+
+::: fusion_bench.method.WeightedEnsembleAlgorithm

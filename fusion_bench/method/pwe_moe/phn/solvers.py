@@ -147,10 +147,10 @@ class ExactParetoLP(object):
         self.gamma = 0  # Stores the latest Optimum value of the LP problem
         self.mu_rl = 0  # Stores the latest non-uniformity
 
-    def get_alpha(self, l, G: Tensor, r=None, C: bool = False, relax=False):
+    def get_alpha(self, loss_terms, G: Tensor, r=None, C: bool = False, relax=False):
         r = self.r if r is None else r
-        assert len(l) == len(G) == len(r) == self.m, "length != m"
-        rl, self.mu_rl, self.a.value = adjustments(l, r)
+        assert len(loss_terms) == len(G) == len(r) == self.m, "length != m"
+        rl, self.mu_rl, self.a.value = adjustments(loss_terms, r)
         self.C.value = G if C else G @ G.T
         self.Ca.value = self.C.value @ self.a.value
 

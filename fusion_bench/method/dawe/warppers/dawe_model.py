@@ -8,6 +8,7 @@ from torch import Tensor, nn
 from torch.func import functional_call
 from typing_extensions import override
 
+from fusion_bench.method.pruning import prune_utils
 from fusion_bench.mixins import SimpleProfilerMixin
 from fusion_bench.models.utils import del_attr, get_attr
 from fusion_bench.utils.devices import get_device
@@ -16,7 +17,6 @@ from fusion_bench.utils.state_dict_arithmetic import (
     StateDictType,
     state_dict_weighted_sum,
 )
-from fusion_bench.method.pruning import prune_utils
 
 log = logging.getLogger(__name__)
 

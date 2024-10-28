@@ -32,5 +32,4 @@ fusion_bench \
 
 ## References
 
-[^1]: Xisen Jin, et al. "Dataless Knowledge Fusion by Merging Weights of Language Models". http://arxiv.org/abs/2212.09849
-
+[^1]: Xisen Jin, et al. "Dataless Knowledge Fusion by Merging Weights of Language Models." http://arxiv.org/abs/2212.09849

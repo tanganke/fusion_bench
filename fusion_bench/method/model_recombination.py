@@ -1,10 +1,9 @@
 import logging
 import random
-from copy import deepcopy
-from typing import List, Mapping, Union
+from typing import List, Mapping, Union  # noqa: F401
 
 import torch
-from torch import Tensor, nn
+from torch import nn
 
 from fusion_bench.method import BaseModelFusionAlgorithm
 from fusion_bench.modelpool import BaseModelPool
@@ -57,6 +56,14 @@ class ModelRecombinationAlgorithm(BaseModelFusionAlgorithm):
     """
     Model recombination recombinates the layers of the given models, to create a new set of models.
     """
+
+    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+        "return_modelpool": "return_modelpool",
+    }
+
+    def __init__(self, return_modelpool: bool, **kwargs):
+        self.return_modelpool = return_modelpool
+        super().__init__(**kwargs)
 
     @torch.no_grad()
     def run(

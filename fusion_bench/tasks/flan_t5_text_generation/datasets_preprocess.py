@@ -5,7 +5,7 @@ This scripts preprocess any NLP dataset into a text-to-text format.
 import json
 import os
 from pathlib import Path
-from typing import Any, Callable, Dict, Union
+from typing import Any, Callable, Dict, Union  # noqa: F401
 
 from transformers import AutoTokenizer
 

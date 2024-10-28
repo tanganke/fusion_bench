@@ -1,8 +1,6 @@
 import logging
 
-import peft
 from omegaconf import DictConfig
-from peft import PeftModel
 from transformers import AutoModelForSeq2SeqLM
 
 from fusion_bench.utils import timeit_context

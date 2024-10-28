@@ -1,10 +1,7 @@
-import json
-
-
-def _is_list_of_dict(l) -> bool:
-    if not isinstance(l, list):
+def _is_list_of_dict(obj) -> bool:
+    if not isinstance(obj, list):
         return False
-    for i in l:
+    for i in obj:
         if not isinstance(i, dict):
             return False
     return True
@@ -56,7 +53,7 @@ def print_json(j: dict, indent="  ", verbose: bool = False, print_type: bool = T
                 else:
                     print(_sprint(k) + ": [")
                     _print_json(j[k][0], level + 2)
-                    print(_sprint(f"{indent}] ... {len(j[k])-1} more"))
+                    print(_sprint(f"{indent}] ... {len(j[k]) - 1} more"))
             else:
                 if print_type:
                     print(f"{_sprint(k)}: {_sprint_json_entry(j[k])}")
