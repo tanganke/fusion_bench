@@ -18,13 +18,31 @@ def human_readable(num: int) -> str:
     return "%.2f%s" % (num, ["", "K", "M", "B", "T", "P"][magnitude])
 
 
+def _numel(param: torch.Tensor, non_zero_only: bool = False) -> int:
+    """
+    Count the number of elements in a tensor.
+
+    Args:
+        param (torch.Tensor): The tensor for which to count the number of elements.
+        non_zero_only (bool, optional): If True, only non-zero elements are counted. If False, all elements are counted. Defaults to False.
+
+    Returns:
+        int: The number of elements in the tensor.
+    """
+    if non_zero_only:
+        return torch.sum(param != 0).item()
+    else:
+        return param.numel()
+
+
 @torch.no_grad()
-def count_parameters(module: nn.Module):
+def count_parameters(module: nn.Module, non_zero_only: bool = False) -> tuple[int, int]:
     """
     Counts the number of trainable and total parameters in a PyTorch model.
 
     Args:
         model (nn.Module): The PyTorch model for which to count parameters.
+        non_zero_only (bool, optional): If True, only non-zero parameters are counted. If False, all parameters are counted. Defaults to False.
 
     Returns:
         tuple: A tuple containing the number of trainable parameters and the total number of parameters.
@@ -39,9 +57,9 @@ def count_parameters(module: nn.Module):
     trainable_params = 0
     all_param = 0
     for name, param in module.named_parameters():
-        all_param += param.numel()
+        all_param += _numel(param, non_zero_only)
         if param.requires_grad:
-            trainable_params += param.numel()
+            trainable_params += _numel(param, non_zero_only)
     return trainable_params, all_param
 
 
