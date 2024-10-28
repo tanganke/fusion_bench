@@ -62,9 +62,21 @@ In this benchmark, we evaluate the performance of different fusion methods on a 
 The project is structured as follows:
 
 - `fusion_bench/`: the main package of the benchmark.
+  - `method`: contains the implementation of the fusion methods.
+    > **naming convention**: `fusion_bench/method/{method_name}/{variant}.py` contains the implementation of the specific method or its variants.
+      For example, `fusion_bench/method/regmean/clip_regmean.py` contains the implementation of the RegMean algorithm for CLIP vision models.
+  - `modelpool`: contains the implementation of the model pool, responsible for managing the models and dataset to be loaded.
+  - `taskpool`: contains the implementation of the task pool, responsible for evaluating the performance of models returned by the algorithm.
 - `config/`: configuration files for the benchmark. We use [Hydra](https://hydra.cc/) to manage the configurations.
+  - `method`: configuration files for the fusion methods.
+    > **naming convention**: `config/method/{method_name}/{variant}.yaml` contains the configuration for the specific method or its variants.
+  - `modelpool`: configuration files for the model pool.
+  - `taskpool`: configuration files for the task pool.
+  - `model`: configuration files for the models.
+  - `dataset`: configuration files for the datasets.
 - `docs/`: documentation for the benchmark. We use [mkdocs](https://www.mkdocs.org/) to generate the documentation. Start the documentation server locally with `mkdocs serve`. The required packages can be installed with `pip install -r mkdocs-requirements.txt`.
 - `examples/`: example scripts for running some of the experiments.
+  > **naming convention**: `examples/{method_name}/` contains the files such as bash scripts and jupyter notebooks for the specific method.
 - `tests/`: unit tests for the benchmark.
 
 ## A Unified Command Line Interface
@@ -76,6 +88,9 @@ The CLI's design allows for easy extension to new fusion methods, model types, a
 Read the [CLI documentation](https://tanganke.github.io/fusion_bench/cli/fusion_bench/) for more information.
 
 ## Implement your own model fusion algorithm
+
+First, create a new Python file for the algorithm in the `fusion_bench/method` directory.
+Following the naming convention, the file should be named `{method_name_or_class}/{variant}.py`.
 
 ```python
 from fusion_bench import BaseModelFusionAlgorithm, BaseModelPool
@@ -108,6 +123,9 @@ class DerivedModelFusionAlgorithm(BaseModelFusionAlgorithm):
 
 A corresponding configuration file should be created to specify the class and hyperparameters of the algorithm. 
 Here we assume the configuration file is placed at `config/method/your_algorithm_config.yaml`.
+
+> [!NOTE]
+> In fact, you can place your implementation anywhere you like, as long as the `_target_` in the configuration file points to the correct class.
 
 ```yaml
 _target_: path_to_the_module.DerivedModelFusionAlgorithm

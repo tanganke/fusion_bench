@@ -3,7 +3,7 @@ import os
 import pickle
 from functools import wraps
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Union
 
 __all__ = ["cache_to_disk"]
 
@@ -11,7 +11,7 @@ __all__ = ["cache_to_disk"]
 log = logging.getLogger(__name__)
 
 
-def cache_to_disk(file_path: str | Path) -> Callable:
+def cache_to_disk(file_path: Union[str, Path]) -> Callable:
     """
     A decorator to cache the result of a function to a file. If the file exists,
     the result is loaded from the file. Otherwise, the function is executed and
