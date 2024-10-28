@@ -1,16 +1,17 @@
 import logging
-import os
 import re
 from copy import deepcopy
-from typing import Dict, List
+from typing import Dict, List  # noqa: F401
 
 import torch
 from torch import Tensor, nn
 from tqdm.auto import tqdm
 
-from fusion_bench.method import ModelFusionAlgorithm
+from fusion_bench.method import BaseModelFusionAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
-from fusion_bench.modelpool import ModelPool, to_modelpool
+from fusion_bench.modelpool import BaseModelPool
+
+log = logging.getLogger(__name__)
 
 
 def _magnitude_prune(weight: Tensor, prune_ratio: float) -> Tensor:
@@ -48,10 +49,63 @@ def _is_name_matched(name: str, extract_names: List[str]):
     return False
 
 
-class MagnitudeDiffPruningAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
+class MagnitudeDiffPruningAlgorithm(
+    BaseModelFusionAlgorithm,
+    SimpleProfilerMixin,
+):
+    """
+    Implements magnitude-based pruning on the difference between pretrained and fine-tuned model parameters.
+
+    This class supports pruning the difference between the pretrained and fine-tuned model parameters
+    based on their magnitude. It allows specifying the ratio of weights to prune and the names of
+    parameters to extract for pruning.
+
+    Methods:
+        run(modelpool: BaseModelPool) -> nn.Module:
+            Executes the pruning process on the model pool and returns the pruned model.
+        magnitude_prune(pretrained_model: nn.Module, finetuned_model: nn.Module, in_place: bool = True) -> nn.Module:
+            Prunes the difference between the pretrained and fine-tuned model parameters.
+    """
+
+    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+        "prune_ratio": "prune_ratio",
+        "extract_names": "extract_names",
+    }
+
+    def __init__(
+        self,
+        prune_ratio: float,
+        extract_names: List[str] = None,
+        **kwargs,
+    ):
+        """
+        Initialize the MagnitudeDiffPruningAlgorithm with the given configuration.
+
+        Args:
+            prune_ratio (float): The ratio of weights to prune.
+            extract_names (List[str], optional): List of regular expressions to match the parameter names for pruning. Defaults to None.
+            **kwargs: Additional keyword arguments.
+        """
+        self.prune_ratio = prune_ratio
+        self.extract_names = extract_names
+        super().__init__(**kwargs)
+
     @torch.no_grad()
-    def run(self, modelpool: ModelPool):
-        modelpool = to_modelpool(modelpool)
+    def run(self, modelpool: BaseModelPool):
+        """
+        Execute the pruning process on the model pool.
+
+        This method loads the pretrained and fine-tuned models from the model pool,
+        prunes the difference between their parameters, and returns the pruned model.
+
+        Args:
+            modelpool (BaseModelPool): The model pool containing the models to prune.
+
+        Returns:
+            nn.Module: The pruned model.
+        """
+        if not isinstance(modelpool, BaseModelPool):
+            modelpool = BaseModelPool(modelpool)
 
         assert (
             len(modelpool.model_names) == 1
@@ -69,18 +123,33 @@ class MagnitudeDiffPruningAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
 
     def magnitude_prune(
         self,
-        pretrained_model,
-        finetuned_model,
+        pretrained_model: nn.Module,
+        finetuned_model: nn.Module,
         in_place: bool = True,
     ):
+        """
+        Prune the difference between the pretrained and fine-tuned model parameters.
+
+        This method calculates the difference between the pretrained and fine-tuned model parameters,
+        prunes the difference based on their magnitude, and updates the pretrained model parameters
+        with the pruned difference.
+
+        Args:
+            pretrained_model (nn.Module): The pretrained model.
+            finetuned_model (nn.Module): The fine-tuned model.
+            in_place (bool, optional): Whether to perform the pruning in place. Defaults to True.
+
+        Returns:
+            nn.Module: The pruned model.
+        """
         if in_place:
             model = pretrained_model
         else:
             model = deepcopy(pretrained_model)
 
-        if self.config.extract_names is not None:
+        if self.extract_names is not None:
             extract_names: List[str] = (
-                self.config.extract_names
+                self.extract_names
             )  # regular expressions for the names of the parameters
         else:
             # extract the weight matrix of each linear layer
@@ -101,7 +170,7 @@ class MagnitudeDiffPruningAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
             # Prune the diff parameter if its name matches
             if _is_name_matched(name, extract_names):
                 w_diff = ft_state_dict[name] - param
-                w_diff = _magnitude_prune(w_diff, prune_ratio=self.config.prune_ratio)
+                w_diff = _magnitude_prune(w_diff, prune_ratio=self.prune_ratio)
                 param.data = param + w_diff
 
         return model

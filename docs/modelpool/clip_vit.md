@@ -63,7 +63,7 @@ do
         modelpool=clip-vit-base-patch32_individual \
             modelpool.models.0.path=tanganke/clip-vit-base-patch32_${task} \
         taskpool=clip-vit-classification_TA8 \
-        save_report="outputs/ViT-B-32/single-task/clip-vit-base-patch32_${task}.json"
+        report_save_path="outputs/ViT-B-32/single-task/clip-vit-base-patch32_${task}.json"
 done
 ```
 
@@ -81,7 +81,7 @@ for i in "${!CUDA_DEVICES[@]}"; do
             modelpool.models.0.path=tanganke/clip-vit-large-patch14_${task} \
         taskpool=clip-vit-classification_TA8 \
             taskpool.clip_model=openai/clip-vit-large-patch14 \
-        save_report="outputs/ViT-L-14/single-task/clip-vit-large-patch14_${task}.json" &
+        report_save_path="outputs/ViT-L-14/single-task/clip-vit-large-patch14_${task}.json" &
 done
 ```
 
@@ -130,31 +130,20 @@ done
 
 To use these models from our FusionBench library, you can specify the modelpool configuration file as follows:
 
-```yaml title="config/modelpool/clip-vit-base-patch32_TA8.yaml"
-type: huggingface_clip_vision
-models:
-  - name: _pretrained_
-    path: openai/clip-vit-base-patch32
-  - name: sun397
-    path: tanganke/clip-vit-base-patch32_sun397
-  - name: stanford_cars
-    path: tanganke/clip-vit-base-patch32_stanford-cars
-  - name: resisc45
-    path: tanganke/clip-vit-base-patch32_resisc45
-  - name: eurosat
-    path: tanganke/clip-vit-base-patch32_eurosat
-  - name: svhn
-    path: tanganke/clip-vit-base-patch32_svhn
-  - name: gtsrb
-    path: tanganke/clip-vit-base-patch32_gtsrb
-  - name: mnist
-    path: tanganke/clip-vit-base-patch32_mnist
-  - name: dtd
-    path: tanganke/clip-vit-base-patch32_dtd
+```yaml title="config/modelpool/CLIPVisionModelPool/clip-vit-base-patch32_TA8.yaml"
+--8<-- "config/modelpool/CLIPVisionModelPool/clip-vit-base-patch32_TA8.yaml"
 ```
 
+The configuration uses YAML's inheritance feature with the defaults key.
+It inherits from a template (`_template.yaml`) and overrides specific values.
+Some values are set to `???` or null, indicating that they need to be specified or can be optionally set when using this configuration.
+This configuration structure allows for modular and reusable setups, making it easier to manage different model configurations within the FusionBench library.
 
-The type of the modelpool is `huggingface_clip_vision`, corresponding to the modelpool class `HuggingFaceClipVisionPool`.
+```yaml title="config/modelpool/CLIPVisionModelPool/_template.yaml"
+--8<-- "config/modelpool/CLIPVisionModelPool/_template.yaml"
+```
+
+The type of the modelpool is `fusion_bench.modelpool.CLIPVisionModelPool`.
 
 ### LoRA and L-LoRA
 
@@ -226,7 +215,7 @@ Print the basic information of the CLIP-ViT-B/32 model and CLIP-ViT-L/14 model
 ```bash
 fusion_bench \
   method=dummy \
-  modelpool=clip-vit-base-patch32_individual \
+  modelpool=CLIPVisionModelPool/clip-vit-base-patch32_individual \
   taskpool=dummy  # a dummy task that just report the basic information of model (e.g., number of parameters)
 
 # Output:
@@ -235,7 +224,7 @@ fusion_bench \
 # or use the following command to inspect the CLIP-ViT-L/14 model
 fusion_bench \
   method=dummy \
-  modelpool=clip-vit-large-patch14_individual \
+  modelpool=CLIPVisionModelPool/clip-vit-large-patch14_individual \
   taskpool=dummy
 
 # Output:
@@ -247,43 +236,26 @@ fusion_bench \
 evaluate a single CLIP-ViT-B/32 model on the eight downstream tasks:
 
 ```bash
-fusion_bench method=dummy \
-  modelpool=clip-vit-base-patch32_individual \
-    modelpool.models.0.path="'${path_to_clip_model}'" \
-  taskpool=clip-vit-classification_TA8
+path_to_clip_model="tanganke/clip-vit-base-patch32_sun397"
+
+fusion_bench \
+  method=dummy \
+  modelpool=CLIPVisionModelPool/clip-vit-base-patch32_individual \
+    modelpool.models._pretrained_.pretrained_model_name_or_path="'${path_to_clip_model}'" \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
 ```
 
 Here:
 
 - The `dummy` method is a special method used to skip the model merging process, it loads the pre-trained model in the modelpool and return the model without any modification (or the first model when a model with the name `_pretrained_` does not exist in modelpool), see [dummy method](../algorithms/dummy.md) for more information. 
-- The `clip-vit-base-patch32_individual` modelpool contains a single model. By passing argument `modelpool.models.0.path=...`, we override the path of the model with the specified path.
-```yaml title="config/modelpool/clip-vit-base-patch32_individual.yaml"
-type: huggingface_clip_vision
-models:
-  - name: _pretrained_
-    path: openai/clip-vit-base-patch32
+- The `CLIPVisionModelPool/clip-vit-base-patch32_individual` modelpool contains a single model. By passing argument `modelpool.models.0.path=...`, we override the path of the model with the specified path.
+```yaml title="config/modelpool/CLIPVisionModelPool/clip-vit-base-patch32_individual.yaml"
+--8<-- "config/modelpool/CLIPVisionModelPool/clip-vit-base-patch32_individual.yaml"
 ```
-- The `clip-vit-classification_TA8` taskpool is used to evaluate the model on the eight tasks.
+- The `CLIPVisionModelTaskPool/clip-vit-classification_TA8` taskpool is used to evaluate the model on the eight tasks.
   if `$path_to_clip_model` is not specified, the pre-trained model from HuggingFace will be used by default.
-```yaml title="config/taskpool/clip-vit-classification_TA8.yaml"
-type: clip_vit_classification
-name: clip-vit-classification_TA8
-
-dataset_type: huggingface_image_classification
-tasks:
-  - name: svhn
-    dataset:
-      ...
-  - name: stanford_cars
-    dataset:
-      ...
-  - name: resisc45
-    dataset:
-      ...
-  ...
-
-clip_model: openai/clip-vit-base-patch32
-...
+```yaml title="config/taskpool/CLIPVisionModelTaskPool/clip-vit-classification_TA8.yaml"
+--8<-- "config/taskpool/CLIPVisionModelTaskPool/clip-vit-classification_TA8.yaml"
 ```
 
 Use a for loop to evaluate multiple CLIP-ViT-B/32 model on the eight tasks, and save reports to json files:
@@ -292,10 +264,10 @@ Use a for loop to evaluate multiple CLIP-ViT-B/32 model on the eight tasks, and 
 for task in sun397 stanford-cars resisc45 eurosat svhn gtsrb mnist dtd
 do
     fusion_bench method=dummy \
-        modelpool=clip-vit-base-patch32_individual \
-            modelpool.models.0.path=tanganke/clip-vit-base-patch32_${task} \
-        taskpool=clip-vit-classification_TA8 \
-        save_report="outputs/ViT-B-32/single-task/clip-vit-base-patch32_${task}.json"
+        modelpool=CLIPVisionModelPool/clip-vit-base-patch32_individual \
+            modelpool.models._pretrained_.pretrained_model_name_or_path=tanganke/clip-vit-base-patch32_${task} \
+        taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
+        report_save_path="outputs/ViT-B-32/single-task/clip-vit-base-patch32_${task}.json"
 done
 ```
 
@@ -303,10 +275,9 @@ evaluate the CLIP-ViT-L/14 model on the eight tasks
 
 ```bash
 fusion_bench method=dummy \
-  modelpool=clip-vit-large-patch14_individual \
-    modelpool.models.0.path="'${path_to_clip_model}'" \
-  taskpool=clip-vit-classification_TA8 \
-    taskpool.clip_model=openai/clip-vit-large-patch14
+  modelpool=CLIPVisionModelPool/clip-vit-large-patch14_individual \
+    modelpool.models._pretrained_.pretrained_model_name_or_path="'${path_to_clip_model}'" \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8_L14
 ```
 
 ### Simple Averaging
@@ -314,9 +285,10 @@ fusion_bench method=dummy \
 merge CLIP-ViT-B/32 models using simple average and evaluate on the eight tasks
 
 ```bash
-fusion_bench method=simple_average \
-  modelpool=clip-vit-base-patch32_TA8 \
-  taskpool=clip-vit-classification_TA8 
+fusion_bench \
+  method=simple_average \
+  modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8_model_only \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 
 
 # results
 {
@@ -335,8 +307,8 @@ merge CLIP-ViT-L/14 models using simple average and evaluate on the eight tasks
 
 ```bash
 fusion_bench method=simple_average \
-  modelpool=clip-vit-large-patch14_TA8 \
-  taskpool=clip-vit-classification_TA8 taskpool.clip_model=openai/clip-vit-large-patch14 # because when evaluate the model, we need text encoder, so we need to specify the clip model
+  modelpool=CLIPVisionModelPool/clip-vit-large-patch14_TA8_model_only \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8_L14
 ```
 
 ### Fisher Merging
@@ -344,20 +316,20 @@ fusion_bench method=simple_average \
 merge CLIP-ViT-B/32 models using Fisher Merging and evaluate on the eight tasks
 
 ```bash
-fusion_bench method=clip_fisher_merging \
-  modelpool=clip-vit-base-patch32_TA8 \
-  taskpool=clip-vit-classification_TA8
+fusion_bench \
+  method=fisher_merging/clip_fisher_merging \
+  modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
 ```
 
 merge CLIP-ViT-L/14 models using Fisher Merging and evaluate on the eight tasks
 
 ```bash
 fusion_bench \
-  method=clip_fisher_merging \
-    method.batch_size=8 method.num_workers=4 \
-  modelpool=clip-vit-large-patch14_TA8 \
-  taskpool=clip-vit-classification_TA8 \
-    taskpool.clip_model=openai/clip-vit-large-patch14
+  method=fisher_merging/clip_fisher_merging \
+    method.dataloader_kwargs.batch_size=8 method.dataloader_kwargs.num_workers=4 \
+  modelpool=CLIPVisionModelPool/clip-vit-large-patch14_TA8 \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8_L14
 ```
 
 ### RegMean
@@ -365,20 +337,19 @@ fusion_bench \
 merge CLIP-ViT-B/32 models using RegMean and evaluate on the eight tasks
 
 ```bash
-fusion_bench method=clip_regmean \
-  modelpool=clip-vit-base-patch32_TA8 \
-  taskpool=clip-vit-classification_TA8
+fusion_bench method=regmean/clip_regmean \
+  modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
 ```
 
 For CLIP-ViT-L/14 models:
 
 ```bash
 fusion_bench \
-  method=clip_regmean \
-    method.batch_size=8 method.num_workers=4 \
-  modelpool=clip-vit-large-patch14_TA8 \
-  taskpool=clip-vit-classification_TA8 \
-    taskpool.clip_model=openai/clip-vit-large-patch14
+  method=regmean/clip_regmean \
+    method.dataloader_kwargs.batch_size=8 method.dataloader_kwargs.num_workers=4 \
+  modelpool=CLIPVisionModelPool/clip-vit-large-patch14_TA8 \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8_L14
 ```
 
 ### Task Arithmetic
@@ -387,8 +358,8 @@ merge CLIP-ViT-B/32 models using task arithmetic and evaluate on the eight tasks
 
 ```bash
 fusion_bench method=task_arithmetic method.scaling_factor=0.3\
-  modelpool=clip-vit-base-patch32_TA8 \
-  taskpool=clip-vit-classification_TA8
+  modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
 
 # results
 {
@@ -409,10 +380,10 @@ fusion_bench method=task_arithmetic method.scaling_factor=0.3\
 for scaling_factor in 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
 do
   fusion_bench \
-    method=task_arithmetic method.scaling_factor=$scaling_factor\
-    modelpool=clip-vit-base-patch32_TA8 \
-    taskpool=clip-vit-classification_TA8 \
-    save_report=outputs/clip-vit-base-patch32_TA8_task_arithmetic_scaling_factor_${scaling_factor}.json
+    method=task_arithmetic method.scaling_factor=$scaling_factor \
+    modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
+    taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
+    report_save_path=outputs/clip-vit-base-patch32_TA8_task_arithmetic_scaling_factor_${scaling_factor}.json
 done
 ```
 
@@ -420,8 +391,8 @@ merge CLIP-ViT-L/14 models using task arithmetic and evaluate on the eight tasks
 
 ```bash
 fusion_bench method=task_arithmetic method.scaling_factor=0.3\
-  modelpool=clip-vit-large-patch14_TA8 \
-  taskpool=clip-vit-classification_TA8 taskpool.clip_model=openai/clip-vit-large-patch14
+  modelpool=CLIPVisionModelPool/clip-vit-large-patch14_TA8 \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8_L14
 ```
 
 ### Ties-Merging
@@ -430,8 +401,8 @@ merge CLIP-ViT-B/32 models using Ties-Merging and evaluate on the eight tasks
 
 ```bash
 fusion_bench method=ties_merging method.scaling_factor=0.3 method.threshold=20 \
-  modelpool=clip-vit-base-patch32_TA8 \
-  taskpool=clip-vit-classification_TA8
+  modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
 ```
 
 ```bash
@@ -441,9 +412,9 @@ for scaling_factor in 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
 do
   fusion_bench \
     method=ties_merging method.scaling_factor=$scaling_factor method.threshold=20 \
-    modelpool=clip-vit-base-patch32_TA8 \
-    taskpool=clip-vit-classification_TA8 \
-    save_report=outputs/clip-vit-base-patch32_TA8_ties_merging_scaling_factor_${scaling_factor}.json
+    modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
+    taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
+    report_save_path=outputs/clip-vit-base-patch32_TA8_ties_merging_scaling_factor_${scaling_factor}.json
 done
 ```
 
@@ -451,8 +422,8 @@ merge CLIP-ViT-L/14 models using Ties-Merging and evaluate on the eight tasks
 
 ```bash
 fusion_bench method=ties_merging method.scaling_factor=0.3 method.threshold=20 \
-  modelpool=clip-vit-large-patch14_TA8 \
-  taskpool=clip-vit-classification_TA8 taskpool.clip_model=openai/clip-vit-large-patch14
+  modelpool=CLIPVisionModelPool/clip-vit-large-patch14_TA8 \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8_L14
 ```
 
 
@@ -465,8 +436,8 @@ fusion_bench \
   method=adamerging \
     method.name=clip_task_wise_adamerging \
     method.save_merging_weights=outputs/clip-vit-base-patch32_TA8_task_wise_adamerging_weights.pt \
-  modelpool=clip-vit-base-patch32_TA8 \
-  taskpool=clip-vit-classification_TA8
+  modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
 ```
 
 merge CLIP-ViT-L/14 models using task-wise AdaMerging and evaluate on the eight tasks, and save the merging weights by specifying the `method.save_merging_weights` parameter.
@@ -480,7 +451,7 @@ fusion_bench print_config=false \
     method.name=clip_task_wise_adamerging \
     method.save_merging_weights=outputs/clip-vit-large-patch14_TA8_task_wise_adamerging_weights.pt \
     method.devices=4 method.batch_size=4 \
-  modelpool=clip-vit-large-patch14_TA8 \
+  modelpool=CLIPVisionModelPool/clip-vit-large-patch14_TA8 \
   taskpool=dummy # dummy taskpool is used to skip the evaluation process
 
 # by specifying the learned merging weights, we skip the training process and directly evaluate the model
@@ -488,8 +459,8 @@ fusion_bench print_config=false \
   method=adamerging \
     method.name=clip_task_wise_adamerging \
     method.weights=outputs/clip-vit-large-patch14_TA8_task_wise_adamerging_weights.pt \
-  modelpool=clip-vit-large-patch14_TA8 \
-  taskpool=clip-vit-classification_TA8 taskpool.clip_model=openai/clip-vit-large-patch14
+  modelpool=CLIPVisionModelPool/clip-vit-large-patch14_TA8 \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8_L14
 ```
 
 merge CLIP-ViT-B/32 models using layer-wise AdaMerging and evaluate on the eight tasks
@@ -499,8 +470,8 @@ fusion_bench \
     method=adamerging \
         method.name=clip_layer_wise_adamerging \
         method.save_merging_weights=merging_weights.pt \
-    modelpool=clip-vit-base-patch32_TA8 \
-    taskpool=clip-vit-classification_TA8 \
+    modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
+    taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
     fabric_logger.root_dir=outputs/logs/ViT-B-32 \
     fabric_logger.name=clip_layer_wise_adamerging_adam
 ```
@@ -515,7 +486,7 @@ fusion_bench print_config=false \
     method.name=clip_layer_wise_adamerging \
     method.save_merging_weights=outputs/clip-vit-large-patch14_TA8_layer_wise_adamerging_weights.pt \
     method.devices=4 method.batch_size=4 \
-  modelpool=clip-vit-large-patch14_TA8 \
+  modelpool=CLIPVisionModelPool/clip-vit-large-patch14_TA8 \
   taskpool=dummy # dummy taskpool is used to skip the evaluation process
 
 # by specifying the learned merging weights, we skip the training process and directly evaluate the model
@@ -523,8 +494,8 @@ fusion_bench \
   method=adamerging \
     method.name=clip_layer_wise_adamerging \
     method.weights=outputs/clip-vit-large-patch14_TA8_layer_wise_adamerging_weights.pt \
-  modelpool=clip-vit-large-patch14_TA8 \
-  taskpool=clip-vit-classification_TA8 taskpool.clip_model=openai/clip-vit-large-patch14
+  modelpool=CLIPVisionModelPool/clip-vit-large-patch14_TA8 \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8_L14
 ```
 
 ### Weight-Ensembling MoE
@@ -537,8 +508,8 @@ fusion_bench \
     method.name=clip_weight_ensembling_moe \
     method.use_grad_accumulate=false \
     method.save_checkpoint=outputs/clip-vit-base-patch32_TA8_weight_ensembling_moe_checkpoint.ckpt \
-  modelpool=clip-vit-base-patch32_TA8 \
-  taskpool=clip-vit-classification_TA8
+  modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
 ```
 
 fuse CLIP-ViT-L/14 models using Weight-Ensembling Mixture of Experts and evaluate on the eight tasks
@@ -551,7 +522,7 @@ fusion_bench print_config=false \
     method.use_grad_accumulate=true \
     method.save_checkpoint=outputs/clip-vit-large-patch14_TA8_weight_ensembling_moe_checkpoint.ckpt \
     method.batch_size=4 method.devices=4 \
-  modelpool=clip-vit-large-patch14_TA8 \
+  modelpool=CLIPVisionModelPool/clip-vit-large-patch14_TA8 \
   taskpool=dummy &&
 
 # load the checkpoint and evaluate the model
@@ -559,9 +530,8 @@ fusion_bench \
   method=weight_ensembling_moe \
     method.name=clip_weight_ensembling_moe \
     method.checkpoint=outputs/clip-vit-large-patch14_TA8_weight_ensembling_moe_checkpoint.ckpt \
-  modelpool=clip-vit-large-patch14_TA8 \
-  taskpool=clip-vit-classification_TA8 \
-    taskpool.clip_model=openai/clip-vit-large-patch14
+  modelpool=CLIPVisionModelPool/clip-vit-large-patch14_TA8 \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8_L14
 ```
 
 
@@ -626,14 +596,14 @@ Compute the cosine similarities between the task vectors and save the results to
 fusion_bench \
   method=task_vector_cos_similarity \
     method.save_to_csv='outputs/clip-vit-base-patch32_cos.csv' \
-  modelpool=clip-vit-base-patch32_TA8 \
+  modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
   taskpool=dummy  # do not evaluate the model
 
 # CLIP-ViT-L/14 models
 fusion_bench \
   method=task_vector_cos_similarity \
     method.save_to_csv='outputs/clip-vit-large-patch14_cos.csv' \
-  modelpool=clip-vit-large-patch14_TA8 \
+  modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
   tsakpool=dummy
 ```
 
@@ -651,7 +621,7 @@ Instruction for running the generalization experiments:
 ```bash
 fusion_bench \
     method=... \
-    modelpool=modelpool=clip-vit-base-patch32_generalization_exp1 # or `clip-vit-base-patch32_generalization_exp2`
+    modelpool=CLIPVisionModelPool/clip-vit-base-patch32_generalization_exp1 # or `clip-vit-base-patch32_generalization_exp2`
 ```
 
 
@@ -741,7 +711,5 @@ Table: Results of the robustness experiments ($\lambda=0.3$).
 
 
 ## References
-
-::: fusion_bench.modelpool.HuggingFaceClipVisionPool
 
 [^1]: Dan Hendrycks and Thomas Dietterich. Benchmarking neural network robustness to common corruptions and perturbations. Proceedings of the International Conference on Learning Representations, 2019.

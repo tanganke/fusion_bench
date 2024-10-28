@@ -1,9 +1,11 @@
-from typing import Callable, Iterable, List
+from typing import Callable, Iterable, List  # noqa: F401
 
 import torch
 from torch import Tensor, nn
-from torch.types import _device
-from transformers import CLIPModel, CLIPProcessor, CLIPTextModel, CLIPVisionModel
+from transformers import CLIPModel, CLIPProcessor
+from transformers.models.clip.modeling_clip import BaseModelOutputWithPooling
+
+from fusion_bench.utils.devices import get_device
 
 default_templates = [
     lambda c: f"a photo of a {c}",
@@ -91,7 +93,9 @@ class HFCLIPClassifier(nn.Module):
             for classname in classnames:
                 text = [template(classname) for template in templates]
                 inputs = processor(text=text, return_tensors="pt", padding=True)
-
+                inputs = {
+                    k: v.to(get_device(self.text_model)) for k, v in inputs.items()
+                }
                 embeddings = self.text_model(**inputs)[1]
                 embeddings = self.clip_model.text_projection(embeddings)
 
@@ -107,7 +111,7 @@ class HFCLIPClassifier(nn.Module):
 
         self.zeroshot_weights = zeroshot_weights
 
-    def forward(self, images):
+    def forward(self, images, return_image_embeds=False, return_dict=False):
         """
         Perform forward pass for zero-shot image classification.
 
@@ -128,7 +132,10 @@ class HFCLIPClassifier(nn.Module):
         text_embeds = self.zeroshot_weights
 
         image_embeds = self.vision_model(images)
-        image_embeds = image_embeds[1]
+        if isinstance(image_embeds, Tensor):
+            pass
+        elif isinstance(image_embeds, BaseModelOutputWithPooling):
+            image_embeds = image_embeds[1]
         image_embeds = self.clip_model.visual_projection(image_embeds)
 
         # normalize embeddings
@@ -139,4 +146,13 @@ class HFCLIPClassifier(nn.Module):
         logits_per_text = torch.matmul(text_embeds, image_embeds.t()) * logit_scale
         logits_per_image = logits_per_text.t()
 
-        return logits_per_image
+        if return_dict:
+            ret = {"logits": logits_per_image}
+            if return_image_embeds:
+                ret.update({"image_embeds": image_embeds})
+            return ret
+        else:
+            if return_image_embeds:
+                return logits_per_image, image_embeds
+            else:
+                return logits_per_image

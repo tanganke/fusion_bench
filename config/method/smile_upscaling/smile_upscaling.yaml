@@ -1,0 +1,14 @@
+_target_: fusion_bench.method.SmileUpscalingAlgorithm
+# merge device on cuda can accelerate the SVD computation
+device: cpu
+# device to compute svd
+upscaling_accelerator: cuda
+full_matrices: true # set to false if you are sure k < rank
+gate_k: 1
+k: 128
+top_k: 1
+routing_use_diff: true
+# average the remaining part, if this is set the False, the remaining part will kept as base model (the pretrained model)
+average_experts: false
+# path to save/load the model
+model_path: null

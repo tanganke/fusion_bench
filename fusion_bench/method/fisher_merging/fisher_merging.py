@@ -11,21 +11,24 @@ import torch
 from torch import Tensor, nn
 from tqdm.autonotebook import tqdm
 
-from fusion_bench.modelpool import ModelPool, to_modelpool
-
-from ..base_algorithm import ModelFusionAlgorithm
+from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.modelpool import BaseModelPool
 
 log = logging.getLogger(__name__)
 
 
 def get_param_names_to_merge(
     input_param_names: List[str], exclude_param_names_regex: list
-):
+) -> List[str]:
     """
-    get the names of parameters that need to be merged
-    :param input_param_names: list, names of input parameters
-    :param exclude_param_names_regex: list, regular expression of names of parameters that need to be excluded
-    :return:
+    Get the names of parameters that need to be merged.
+
+    Args:
+        input_param_names (List[str]): List of input parameter names.
+        exclude_param_names_regex (list): List of regular expressions for parameter names to be excluded.
+
+    Returns:
+        List[str]: List of parameter names to be merged.
     """
     param_names_to_merge = []
     for param_name in input_param_names:
@@ -40,12 +43,16 @@ def get_param_names_to_merge(
     return param_names_to_merge
 
 
-def get_param_squared_gradients(model: nn.Module, param_names_to_merge: List[str]):
+def get_param_squared_gradients(model: nn.Module, param_names_to_merge: List[str]) -> Dict[str, Tensor]:
     """
-    get the squared gradients of parameters
-    :param model: nn.Module, model
-    :param param_names_to_merge: list, list of parameter names that need to be merged
-    :return:
+    Get the squared gradients of parameters.
+
+    Args:
+        model (nn.Module): The model.
+        param_names_to_merge (List[str]): List of parameter names to be merged.
+
+    Returns:
+        Dict[str, Tensor]: Dictionary of parameter names and their squared gradients.
     """
     param_squared_gradients = {
         param_name: param_value.grad.detach() ** 2
@@ -57,14 +64,18 @@ def get_param_squared_gradients(model: nn.Module, param_names_to_merge: List[str
 
 def get_models_fisher_norm(
     models_to_merge_param_dict: dict, models_to_merge_fisher_weights_list: list
-):
+) -> Tensor:
     """
-    get normalization of fisher weights of all the models that need to be merged
-    :param models_to_merge_param_dict: dict, dictionary of list, where key is the parameter name,
-    value is a list of the corresponding parameters of all the models that need to be merged
-    :param models_to_merge_fisher_weights_list: list, list of dictionaries with length len(models_to_merge),
-    each dictionary records the fisher weights (matrix or vector) of parameters for each model that needs to be merged
-    :return:
+    Get normalization of Fisher weights of all the models that need to be merged.
+
+    Args:
+        models_to_merge_param_dict (dict): Dictionary of list, where key is the parameter name,
+                                           value is a list of the corresponding parameters of all the models that need to be merged.
+        models_to_merge_fisher_weights_list (list): List of dictionaries with length len(models_to_merge),
+                                                    each dictionary records the Fisher weights (matrix or vector) of parameters for each model that needs to be merged.
+
+    Returns:
+        Tensor: L2 norm over all the parameters of models that need to be merged.
     """
     # dict, key is parameter name, value is a Tensor with shape (num_models_to_merge, )
     models_fisher_norm_dict = {}
@@ -99,17 +110,21 @@ def merging_with_fisher_weights(
     fisher_scaling_coefficients: torch.Tensor,
     normalize_fisher_weight: bool = True,
     minimal_fisher_weight: float = 1e-6,
-):
+) -> Dict[str, Tensor]:
     """
-    merge parameters of different models with computed fisher weights
-    :param models_to_merge_param_dict: dict, dictionary of list, where key is the parameter name,
-    value is a list of the corresponding parameters of all the models that need to be merged
-    :param models_to_merge_fisher_weights_list: list, list of dictionaries with length len(models_to_merge),
-    each dictionary records the fisher weights (matrix or vector) of parameters for each model that needs to be merged
-    :param fisher_scaling_coefficients: torch.Tensor, scaling coefficients to merge fisher weights
-    :param normalize_fisher_weight: boolean, whether to normalize fisher weights (L2 norm) or not
-    :param minimal_fisher_weight: float, the minimal value in fisher weights, used for tackling the potential numerical issues
-    :return:
+    Merge parameters of different models with computed Fisher weights.
+
+    Args:
+        models_to_merge_param_dict (Dict[str, List[Tensor]]): Dictionary of list, where key is the parameter name,
+                                                              value is a list of the corresponding parameters of all the models that need to be merged.
+        models_to_merge_fisher_weights_list (list): List of dictionaries with length len(models_to_merge),
+                                                    each dictionary records the Fisher weights (matrix or vector) of parameters for each model that needs to be merged.
+        fisher_scaling_coefficients (torch.Tensor): Scaling coefficients to merge Fisher weights.
+        normalize_fisher_weight (bool): Whether to normalize Fisher weights (L2 norm) or not.
+        minimal_fisher_weight (float): The minimal value in Fisher weights, used for tackling the potential numerical issues.
+
+    Returns:
+        Dict[str, Tensor]: Dictionary of merged parameters.
     """
     # dict, dictionary of model parameters
     merged_params = {}
@@ -179,17 +194,21 @@ def fisher_merging(
     fisher_scaling_coefficients: list = None,
     normalize_fisher_weight: bool = True,
     minimal_fisher_weight: float = 1e-6,
-):
+) -> Dict[str, Tensor]:
     """
-    fisher merging method
-    :param models_to_merge: list, individual models that need to be merged
-    :param trainers: list, trainers of individual models
-    :param exclude_param_names_regex: list, regular expression of names of parameters that need to be excluded
-    :param nums_fisher_examples: list, numbers of examples to compute fisher weights
-    :param fisher_scaling_coefficients: list, scaling coefficients to merge fisher weights
-    :param normalize_fisher_weight: boolean, whether to normalize fisher weights (L2 norm) or not
-    :param minimal_fisher_weight: float, the minimal value in fisher weights, used for tackling the potential numerical issues
-    :return:
+    Fisher merging method.
+
+    Args:
+        models_to_merge (List[nn.Module]): List of individual models that need to be merged.
+        trainers (list): List of trainers of individual models.
+        exclude_param_names_regex (list): List of regular expressions for parameter names to be excluded.
+        nums_fisher_examples (List[int]): List of numbers of examples to compute Fisher weights.
+        fisher_scaling_coefficients (list, optional): Scaling coefficients to merge Fisher weights. Defaults to None.
+        normalize_fisher_weight (bool): Whether to normalize Fisher weights (L2 norm) or not. Defaults to True.
+        minimal_fisher_weight (float): The minimal value in Fisher weights, used for tackling the potential numerical issues. Defaults to 1e-6.
+
+    Returns:
+        Dict[str, Tensor]: Dictionary of merged parameters.
     """
     # dictionary of list, where key is the parameter name,
     # value is a list of the corresponding parameters of all the models that need to be merged
@@ -314,13 +333,16 @@ def fisher_merging(
 def filter_state_dict(
     state_dict: Dict[str, Tensor],
     param_names: List[str],
-):
+) -> Dict[str, Tensor]:
     """
-    filter the state dict with the param names
+    Filter the state dict with the param names.
 
     Args:
-        state_dict (dict): state dict of a model
-        param_names (list): list of parameter names to be filtered
+        state_dict (Dict[str, Tensor]): State dict of a model.
+        param_names (List[str]): List of parameter names to be filtered.
+
+    Returns:
+        Dict[str, Tensor]: Filtered state dict.
     """
     filtered_state_dict = {}
     for key in param_names:
@@ -328,13 +350,58 @@ def filter_state_dict(
     return filtered_state_dict
 
 
-class FisherMergingAlgorithm(ModelFusionAlgorithm):
-    def run(self, modelpool: ModelPool):
+class FisherMergingAlgorithm(BaseModelFusionAlgorithm):
+    """
+    Implements the Fisher Merging Algorithm.
+
+    This class extends the BaseModelFusionAlgorithm to handle merging of models using Fisher weights.
+    It supports excluding certain parameters, normalizing Fisher weights, and setting a minimal value for Fisher weights.
+
+    Methods:
+        run(modelpool: BaseModelPool) -> nn.Module:
+            Executes the Fisher merging process on the model pool and returns the merged model.
+    """
+
+    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+        "exclude_param_names_regex": "exclude_param_names_regex",
+        "normalize_fisher_weight": "normalize_fisher_weight",
+        "minimal_fisher_weight": "minimal_fisher_weight",
+        "num_fisher_examples": "num_fisher_examples",
+    }
+
+    def __init__(
+        self,
+        *,
+        exclude_param_names_regex: list,
+        normalize_fisher_weight: bool,
+        minimal_fisher_weight: float,
+        num_fisher_examples: int,
+    ):
+        super().__init__()
+        self.exclude_param_names_regex = exclude_param_names_regex
+        self.normalize_fisher_weight = normalize_fisher_weight
+        self.minimal_fisher_weight = minimal_fisher_weight
+        self.num_fisher_examples = num_fisher_examples
+
+    def run(self, modelpool: BaseModelPool) -> nn.Module:
+        """
+        Run the Fisher Merging Algorithm.
+
+        This method constructs the wrapped model and performs test-time adaptation if necessary.
+
+        Args:
+            modelpool (BaseModelPool): The model pool containing the pretrained and fine-tuned models.
+
+        Returns:
+            nn.Module: The merged model after test-time adaptation.
+        """
         log.info("Running Fisher Merging Algorithm")
-        modelpool = to_modelpool(modelpool)
-        assert modelpool._model_names, "model pool is empty"
+        if isinstance(modelpool, (dict, list, tuple)):
+            modelpool = BaseModelPool(modelpool)
+
+        assert len(modelpool) > 0, "model pool is empty"
         assert (
-            "_pretrained_" in modelpool._model_names
+            modelpool.has_pretrained
         ), "no pretrained model (base model) in the model pool"
 
         self.modelpool = modelpool
@@ -366,7 +433,7 @@ class FisherMergingAlgorithm(ModelFusionAlgorithm):
             model_to_merge_fisher_weights = self.get_fisher_weights(
                 model_name=name,
                 model=model,
-                train_dataset=modelpool.get_train_dataset(name),
+                train_dataset=modelpool.load_train_dataset(name),
                 param_names_to_merge=param_names_to_merge,
             )
 
@@ -391,10 +458,25 @@ class FisherMergingAlgorithm(ModelFusionAlgorithm):
         train_dataset,
         param_names_to_merge: List[str],
     ) -> Dict[str, Tensor]:
+        """
+        Compute the Fisher weights for the given model and training dataset.
+
+        Args:
+            model_name (str): The name of the model.
+            model (nn.Module): The model module.
+            train_dataset: The training dataset.
+            param_names_to_merge (List[str]): List of parameter names to merge.
+
+        Returns:
+            Dict[str, Tensor]: The computed Fisher weights for each parameter.
+        """
         # this function is used to compute fisher weights for a model
         # it should be implemented in the subclass
         raise NotImplementedError
 
     def on_fisher_merging_start(self):
+        """
+        Setup the zero-shot classification head before starting the Fisher merging process.
+        """
         # this function is used to initialize some variables before running fisher merging
         pass

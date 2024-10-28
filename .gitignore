@@ -1,6 +1,9 @@
+!*.template
+/temp/
 /datasets/
+/datasets
+/lm-evaluation-harness/
 outputs/
-/.vscode/
 lightning_logs/
 
 # Byte-compiled / optimized / DLL files

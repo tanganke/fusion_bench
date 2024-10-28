@@ -2,21 +2,31 @@ import logging
 import os
 import re
 from copy import deepcopy
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple  # noqa: F401
 
 import torch
 from torch import Tensor, nn
 from tqdm.auto import tqdm
 
-from fusion_bench.method import ModelFusionAlgorithm
+from fusion_bench.compat.method import ModelFusionAlgorithm
+from fusion_bench.compat.modelpool import ModelPool, to_modelpool
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
-from fusion_bench.modelpool import ModelPool, to_modelpool
 from fusion_bench.models.utils import get_attr, set_attr
 
 log = logging.getLogger(__name__)
 
 
 def svd(w: Tensor, full_matrices: bool) -> Tuple[Tensor, Tensor, Tensor]:
+    """
+    Perform Singular Value Decomposition (SVD) on the given tensor.
+
+    Args:
+        w (Tensor): The input tensor to decompose.
+        full_matrices (bool): Whether to compute the full-sized U and V matrices.
+
+    Returns:
+        Tuple[Tensor, Tensor, Tensor]: The U, S, and V matrices from the SVD.
+    """
     u, s, vh = torch.linalg.svd(
         w, full_matrices=full_matrices, driver="gesvd" if w.is_cuda else None
     )
@@ -24,7 +34,17 @@ def svd(w: Tensor, full_matrices: bool) -> Tuple[Tensor, Tensor, Tensor]:
     return u, s, v
 
 
-def _is_name_matched(name: str, extract_names: List[str]):
+def _is_name_matched(name: str, extract_names: List[str]) -> bool:
+    """
+    Check if the given name matches any of the provided regular expressions.
+
+    Args:
+        name (str): The name to check.
+        extract_names (List[str]): A list of regular expressions to match against.
+
+    Returns:
+        bool: True if the name matches any of the regular expressions, False otherwise.
+    """
     for extract_name in extract_names:
         # extract_name is a regular expression
         if re.match(extract_name, name):
@@ -32,7 +52,19 @@ def _is_name_matched(name: str, extract_names: List[str]):
     return False
 
 
-def _total_parameters(state):
+def _total_parameters(state) -> int:
+    """
+    Calculate the total number of parameters in the given state.
+
+    Args:
+        state: The state to calculate the parameters for. Can be a Tensor or a dictionary of Tensors.
+
+    Returns:
+        int: The total number of parameters.
+
+    Raises:
+        ValueError: If the state is not a Tensor or a dictionary of Tensors.
+    """
     if isinstance(state, Tensor):
         return state.numel()
     elif isinstance(state, dict):
@@ -42,11 +74,22 @@ def _total_parameters(state):
 
 
 class SingularProjectionMergingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
+    """
+    A model fusion algorithm that projects parameter differences into the SVD subspace of a pretrained model.
+
+    This algorithm is experimental and aims to investigate the location of task-specific knowledge.
+    """
+
     @torch.no_grad()
-    def run(self, modelpool: ModelPool):
+    def run(self, modelpool: ModelPool) -> nn.Module:
         """
-        Project the parameter differences into pre-trained SVD subspace.
-        This is an experimental method to investigate the location of task-specific knowledge.
+        Run the singular projection merging algorithm on the given model pool.
+
+        Args:
+            modelpool (ModelPool): The pool of models to merge.
+
+        Returns:
+            nn.Module: The merged model.
         """
         modelpool = to_modelpool(modelpool)
 
@@ -80,7 +123,7 @@ class SingularProjectionMergingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMix
         pretrained_model: nn.Module,
         finetuned_model: nn.Module,
         in_place: bool = True,
-    ):
+    ) -> nn.Module:
         """
         Merges the pretrained model with the fine-tuned model by projecting parameter differences
         into the SVD subspace of the pretrained model.
@@ -117,7 +160,7 @@ class SingularProjectionMergingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMix
 
     def projection_merge_linear(
         self, pretrained_model: nn.Linear, finetuned_model: nn.Linear, k: int
-    ):
+    ) -> nn.Linear:
         """
         Projects the parameter differences of linear layers into the SVD subspace of the pretrained model.
 

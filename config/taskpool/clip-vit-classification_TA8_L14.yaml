@@ -1,7 +1,0 @@
-defaults:
-  - clip-vit-classification_TA8
-
-clip_model: openai/clip-vit-large-patch14
-batch_size: 64
-num_workers: 16
-fast_dev_run: ${fast_dev_run}

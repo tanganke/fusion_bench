@@ -1,4 +1,4 @@
-# CLIPTemplateFactory Documentation
+# CLIP Template Factory Documentation
 
 ## Overview
 

@@ -1,18 +1,18 @@
 import logging
 from abc import abstractmethod
-from typing import cast
+from typing import cast  # noqa: F401
 
 import lightning as L
 import lightning.fabric.wrappers
 import torch
 from lightning.pytorch.profilers import SimpleProfiler
 from omegaconf import DictConfig
-from torch import Tensor, nn
+from torch import Tensor
 from torch.utils.data import DataLoader
 from tqdm.autonotebook import tqdm
 
-from fusion_bench.method.base_algorithm import ModelFusionAlgorithm
-from fusion_bench.modelpool import ModelPool
+from fusion_bench.compat.method.base_algorithm import ModelFusionAlgorithm
+from fusion_bench.compat.modelpool import ModelPool
 from fusion_bench.models.we_moe import WeightEnsemblingMoE
 from fusion_bench.utils import timeit_context
 from fusion_bench.utils.parameters import print_parameters
@@ -35,10 +35,27 @@ def entropy_loss(logits: Tensor) -> Tensor:
 
 
 class WeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
+    """
+    Algorithm for fusing models using Weight Ensembling Mixture of Experts (MoE).
+
+    This class provides methods for constructing the MoE model, performing test-time adaptation,
+    and running the fusion process.
+
+    Attributes:
+        _fabric (L.Fabric): The fabric for distributed training.
+        modelpool (ModelPool): The pool of models to be fused.
+        profiler (SimpleProfiler): The profiler for measuring performance.
+    """
     _fabric: L.Fabric = None
     modelpool: ModelPool = None
 
     def __init__(self, algorithm_config: DictConfig):
+        """
+        Initialize the WeightEnsemblingMoEAlgorithm with the given configuration.
+
+        Args:
+            algorithm_config (DictConfig): The configuration for the algorithm.
+        """
         super().__init__(algorithm_config)
 
         if self._fabric is None and torch.cuda.is_available():
@@ -56,6 +73,10 @@ class WeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
     def load_checkpoint(self, model, checkpoint):
         """
         Load the checkpoint file.
+
+        Args:
+            model: The model to load the checkpoint into.
+            checkpoint: The checkpoint file to load.
         """
         pass
 
@@ -63,6 +84,10 @@ class WeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
     def save_checkpoint(self, model, checkpoint):
         """
         Save the checkpoint file.
+
+        Args:
+            model: The model to save the checkpoint from.
+            checkpoint: The checkpoint file to save.
         """
         pass
 
@@ -70,21 +95,56 @@ class WeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
     def construct_moe_model(self) -> WeightEnsemblingMoE:
         """
         Construct the Mixture of Experts model using the models in the model pool.
+
+        Returns:
+            WeightEnsemblingMoE: The constructed MoE model.
         """
         pass
 
     def on_test_time_adaptation_start(self):
+        """
+        Hook method called at the start of test-time adaptation.
+        """
         pass
 
     @abstractmethod
     def get_shuffled_test_loader_iter(self, task: str) -> DataLoader:
+        """
+        Get an iterator for the shuffled test data loader for a specific task.
+
+        Args:
+            task (str): The task for which to get the test data loader.
+
+        Returns:
+            DataLoader: The shuffled test data loader iterator.
+        """
         pass
 
     @abstractmethod
     def compute_logits(self, module, batch, task) -> Tensor:
+        """
+        Compute the logits for a given batch and task.
+
+        Args:
+            module: The model module to use for computing logits.
+            batch: The batch of data.
+            task: The task for which to compute logits.
+
+        Returns:
+            Tensor: The computed logits.
+        """
         pass
 
     def test_time_adaptation(self, module: WeightEnsemblingMoE):
+        """
+        Perform test-time adaptation for the given module.
+
+        Args:
+            module (WeightEnsemblingMoE): The MoE module to adapt.
+
+        Returns:
+            WeightEnsemblingMoE: The adapted MoE module.
+        """
         self.on_test_time_adaptation_start()
 
         # configure optimizer
@@ -149,6 +209,15 @@ class WeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
         return module
 
     def run(self, modelpool: ModelPool):
+        """
+        Run the WeightEnsemblingMoEAlgorithm to fuse models using Weight Ensembling Mixture of Experts.
+
+        Args:
+            modelpool (ModelPool): The pool of models to be fused.
+
+        Returns:
+            WeightEnsemblingMoE: The fused MoE model.
+        """
         log.info("Fusing models using WeightEnsembling Mixture of Experts modules.")
         self.modelpool = modelpool
 

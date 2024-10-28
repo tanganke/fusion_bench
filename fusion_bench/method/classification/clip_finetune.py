@@ -32,21 +32,22 @@ from omegaconf import OmegaConf
 from peft import LoraConfig, PeftModel, get_peft_model
 from peft.tuners.lora import LoraLayer
 from safetensors.torch import save_file
-from torch import Tensor, nn
+from torch import nn
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 from transformers.models.clip.modeling_clip import CLIPVisionTransformer
 
 from fusion_bench import print_parameters
-from fusion_bench.method import ModelFusionAlgorithm
+from fusion_bench.compat.method import ModelFusionAlgorithm
+from fusion_bench.compat.modelpool import to_modelpool
+from fusion_bench.compat.modelpool.huggingface_clip_vision import (
+    HuggingFaceClipVisionPool,
+)
+from fusion_bench.mixins import CLIPClassificationMixin
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
-from fusion_bench.modelpool import to_modelpool
-from fusion_bench.modelpool.huggingface_clip_vision import HuggingFaceClipVisionPool
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.models.linearized.linearized_model_utils import LinearizedModelWraper
-from fusion_bench.tasks.clip_classification import get_classnames_and_templates
-from fusion_bench.tasks.clip_classification.clip_mixin import CLIPClassificationMixin
 from fusion_bench.utils.data import InfiniteDataLoader
 
 
@@ -196,6 +197,13 @@ class ImageClassificationFineTuningForCLIP(
         model: HFCLIPClassifier | CLIPModel | CLIPVisionModel | CLIPVisionTransformer,
         save_path: str,
     ):
+        """
+        Save the vision model to the specified path.
+
+        Args:
+            model (Union[HFCLIPClassifier, CLIPModel, CLIPVisionModel, CLIPVisionTransformer]): The model to save.
+            save_path (str): The path to save the model.
+        """
         if isinstance(model, HFCLIPClassifier):
             vision_model = model.clip_model.vision_model
         elif isinstance(model, CLIPModel):
@@ -215,6 +223,11 @@ class ImageClassificationFineTuningForCLIP(
     def setup_model(self):
         """
         Sets up the model, optimizer, and learning rate scheduler.
+
+        This method initializes the CLIP model, applies LoRA if specified, and configures the optimizer and learning rate scheduler.
+
+        Returns:
+            Tuple: A tuple containing the processor, classifier, optimizer, and learning rate scheduler.
         """
         config = self.config
         modelpool = self.modelpool
@@ -269,6 +282,14 @@ def load_full_finetuned_vision_model(
 ):
     """
     Load a fully fine-tuned model from the state_dict_path and pretrained_path.
+
+    Args:
+        pretrained_path (str): The path to the pretrained model.
+        state_dict_path (str): The path to the state dictionary.
+        strict (bool, optional): Whether to strictly enforce that the keys in state_dict match the keys returned by this module's state_dict() function. Defaults to True.
+
+    Returns:
+        CLIPVisionModel: The loaded vision model.
     """
     model: CLIPVisionModel = CLIPVisionModel.from_pretrained(pretrained_path)
     model.vision_model.load_state_dict(
@@ -284,6 +305,14 @@ def load_lora_vision_model(
 ) -> PeftModel:
     """
     Load LoRA model from the state_dict_path and pretrained_path.
+
+    Args:
+        pretrained_path (str): The path to the pretrained model.
+        lora_config (LoraConfig): The configuration for LoRA.
+        state_dict_path (str): The path to the state dictionary.
+
+    Returns:
+        PeftModel: The loaded LoRA model.
     """
     model: CLIPVisionModel = CLIPVisionModel.from_pretrained(pretrained_path)
     model = get_peft_model(model.vision_model, lora_config)
@@ -312,6 +341,15 @@ def load_l_lora_vision_model(
 
     >>> from fusion_bench.models.linearized.vision_model import load_l_lora_vision_model_hf
     >>> model = load_l_lora_vision_model_hf("base_model_name", "peft_name")
+
+    Args:
+        pretrained_path (str): The path to the pretrained model.
+        lora_config (LoraConfig): The configuration for LoRA.
+        state_dict_path (str): The path to the state dictionary.
+        unload_linearized_modules (bool, optional): Whether to unload the linearized modules. Defaults to False.
+
+    Returns:
+        PeftModel: The loaded L-LoRA model.
     """
     model: CLIPVisionModel = CLIPVisionModel.from_pretrained(pretrained_path)
     model = get_peft_model(model.vision_model, lora_config)
@@ -331,6 +369,16 @@ def convert_lora_state_dict_to_hf(
     output_path: str,
     base_model_name: Optional[str] = None,
 ):
+    """
+    Convert a LoRA model's checkpoint to Huggingface's format.
+
+    Args:
+        pretrained_path (str): The path to the pretrained model.
+        ckpt_path (str): The path to the checkpoint.
+        lora_config (LoraConfig): The configuration for LoRA.
+        output_path (str): The path to save the converted model.
+        base_model_name (Optional[str], optional): The name of the base model. Defaults to None.
+    """
     model = load_lora_vision_model(
         pretrained_path=pretrained_path,
         state_dict_path=ckpt_path,
@@ -351,6 +399,13 @@ def convert_l_lora_state_dict_to_hf(
 ):
     """
     Convert a linearized Lora model's checkpoint to Hugggingface's format.
+
+    Args:
+        pretrained_path (str): The path to the pretrained model.
+        ckpt_path (str): The path to the checkpoint.
+        lora_config (LoraConfig): The configuration for LoRA.
+        output_path (str): The path to save the converted model.
+        base_model_name (Optional[str], optional): The name of the base model. Defaults to None.
     """
 
     if base_model_name is None:

@@ -1,9 +1,8 @@
 import logging
-from typing import List, Optional, Union, cast
+from typing import List, Optional, Union, cast  # noqa: F401
 
 import torch
 from omegaconf import open_dict
-from torch import nn
 from transformers import (
     LlamaForCausalLM,
     LlamaModel,
@@ -16,7 +15,7 @@ from transformers.models.llama.modeling_llama import LlamaDecoderLayer
 from transformers.models.mistral.modeling_mistral import MistralDecoderLayer
 from transformers.models.mixtral.modeling_mixtral import MixtralDecoderLayer
 
-from fusion_bench.modelpool import ModelPool
+from fusion_bench.modelpool import BaseModelPool
 
 from .mixtral_upcycling import (
     MixtralForCausalLMUpscalingAlgorithm,
@@ -32,6 +31,14 @@ def _substitute_experts(
     expert_model: Union[LlamaModel, MistralModel],
     mixtral_model: MixtralModel,
 ):
+    """
+    Substitute the experts of the `MixtralModel` with the models from the modelpool.
+
+    Args:
+        expert_idx (int): The index of the expert to substitute.
+        expert_model (Union[LlamaModel, MistralModel]): The expert model to substitute.
+        mixtral_model (MixtralModel): The MixtralModel to substitute the experts in.
+    """
     for input_layer, output_layer in zip(expert_model.layers, mixtral_model.layers):
         output_layer = cast(MixtralDecoderLayer, output_layer)
         input_layer = cast(Union[LlamaDecoderLayer, MistralDecoderLayer], input_layer)
@@ -44,7 +51,7 @@ class MixtralMoEMergingAlgorithm(MixtralUpscalingAlgorithm):
     """
 
     @torch.no_grad()
-    def run(self, modelpool: ModelPool) -> MixtralModel:
+    def run(self, modelpool: BaseModelPool) -> MixtralModel:
         """
         Runs the merging process.
 
@@ -71,8 +78,12 @@ class MixtralMoEMergingAlgorithm(MixtralUpscalingAlgorithm):
 
 
 class MixtralForCausalLMMergingAlgorithm(MixtralForCausalLMUpscalingAlgorithm):
+    """
+    This class is responsible for merging models into a `MixtralForCausalLM`.
+    """
+
     @torch.no_grad()
-    def run(self, modelpool: ModelPool) -> MixtralForCausalLM:
+    def run(self, modelpool: BaseModelPool) -> MixtralForCausalLM:
         """
         Runs the merging process. It first upscales the models to MixtralForCausalLM,
         then substitutes the experts of the MixtralForCausalLM with the models from the modelpool.

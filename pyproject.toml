@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "fusion_bench"
 description = "A Comprehensive Benchmark of Deep Model Fusion"
 readme = "README.md"
-version = "0.1.6"
+version = "0.2.2"
 authors = [{ name = "Anke Tang", email = "tang.anke@foxmail.com" }]
 license = { file = 'LICENSE' }
 requires-python = ">= 3.10"
@@ -22,6 +22,9 @@ dependencies = [
     "tensorboard",
     "tqdm",
     "rich",
+    "scipy",
+    "h5py",
+    "pytest"
 ]
 keywords = ["deep learning", "model fusion", "benchmark"]
 

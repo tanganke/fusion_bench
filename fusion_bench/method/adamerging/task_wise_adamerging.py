@@ -1,25 +1,21 @@
 import logging
 from abc import abstractmethod
-from copy import deepcopy
-from typing import List, Mapping, Union
+from typing import List, Mapping, Union  # noqa: F401
 
 import lightning as L
 import numpy as np
 import torch
 from omegaconf import DictConfig
-from torch import Tensor, nn
+from torch import Tensor
 from torch.utils.data import DataLoader
 from tqdm.autonotebook import tqdm
 
+from fusion_bench.compat.method import ModelFusionAlgorithm
+from fusion_bench.compat.modelpool import ModelPool
 from fusion_bench.models.wrappers.task_wise_fusion import (
     TaskWiseMergedModel,
     get_task_wise_weights,
 )
-from fusion_bench.utils.state_dict_arithmetic import state_dict_sub
-
-from ...modelpool import ModelPool
-from ...utils.type import StateDictType
-from ..base_algorithm import ModelFusionAlgorithm
 
 log = logging.getLogger(__name__)
 

@@ -19,7 +19,7 @@ function full_finetune(){
         taskpool.clip_model=${MODEL} \
         fabric_logger.root_dir=outputs/${MODEL_SHORT_NAME}/full_finetune \
         fabric_logger.name=${TASK} \
-        save_report=outputs/${MODEL_SHORT_NAME}/full_finetune_${TASK}.json
+        report_save_path=outputs/${MODEL_SHORT_NAME}/full_finetune_${TASK}.json
     done
 }
 
@@ -37,7 +37,7 @@ function lora_finetune(){
         taskpool.clip_model=${MODEL} \
         fabric_logger.root_dir=outputs/${MODEL_SHORT_NAME}/lora_finetune \
         fabric_logger.name=${TASK} \
-        save_report=outputs/${MODEL_SHORT_NAME}/lora_finetune_${TASK}.json
+        report_save_path=outputs/${MODEL_SHORT_NAME}/lora_finetune_${TASK}.json
     done
 }
 
@@ -56,7 +56,7 @@ function l_lora_finetune(){
         taskpool.clip_model=${MODEL} \
         fabric_logger.root_dir=outputs/${MODEL_SHORT_NAME}/l_lora_finetune \
         fabric_logger.name=${TASK} \
-        save_report=outputs/${MODEL_SHORT_NAME}/l_lora_finetune_${TASK}.json
+        report_save_path=outputs/${MODEL_SHORT_NAME}/l_lora_finetune_${TASK}.json
     done
 }
 

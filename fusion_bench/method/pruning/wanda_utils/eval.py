@@ -11,7 +11,18 @@ from .data import get_loaders
 
 
 # Function to evaluate perplexity (ppl) on a specified model and tokenizer
-def eval_ppl(args, model, tokenizer, device=torch.device("cuda:0")):
+def eval_ppl(model, tokenizer, device=torch.device("cuda:0")):
+    """
+    Evaluate wikitext-2 perplexity (ppl) on a specified model and tokenizer.
+
+    Args:
+        model: The model to evaluate.
+        tokenizer: The tokenizer to use.
+        device: The device to run the evaluation on.
+
+    Returns:
+        ppl_test: The perplexity of the model on the test dataset.
+    """
     # Set dataset
     dataset = "wikitext2"
 
@@ -31,11 +42,19 @@ def eval_ppl(args, model, tokenizer, device=torch.device("cuda:0")):
 
 # Function to evaluate perplexity (ppl) specifically on the wikitext dataset
 def eval_ppl_wikitext_train(model, trainloader, bs=1, device=None):
-    # Get input IDs
-    # testenc = testenc.input_ids
+    """
+    Evaluate perplexity (ppl) specifically on the wikitext dataset during training.
 
+    Args:
+        model: The model to evaluate.
+        trainloader: The training data loader.
+        bs: Batch size.
+        device: The device to run the evaluation on.
+
+    Returns:
+        ppl: The perplexity of the model on the training dataset.
+    """
     # Calculate number of samples
-    # nsamples = testenc.numel() // model.seqlen
     nsamples = len(trainloader)
 
     # List to store negative log likelihoods
@@ -51,7 +70,6 @@ def eval_ppl_wikitext_train(model, trainloader, bs=1, device=None):
         j = min(i + bs, nsamples)
 
         # Prepare inputs and move to device
-        # inputs = testenc[:,(i * model.seqlen):(j * model.seqlen)].to(device)
         inputs = trainloader[i][0].to(device)
         inputs = inputs.reshape(j - i, model.seqlen)
 
@@ -84,7 +102,19 @@ def eval_ppl_wikitext_train(model, trainloader, bs=1, device=None):
 
 
 # Function to evaluate perplexity (ppl) specifically on the wikitext dataset
-def eval_ppl_wikitext(model, testenc, bs=1, device=None):
+def eval_ppl_wikitext(model, testenc, bs : int =1, device=None):
+    """
+    Evaluate perplexity (ppl) specifically on the wikitext dataset.
+
+    Args:
+        model: The model to evaluate.
+        testenc: The test data encoder.
+        bs: Batch size.
+        device: The device to run the evaluation on.
+
+    Returns:
+        ppl: The perplexity of the model on the test dataset.
+    """
     # Get input IDs
     testenc = testenc.input_ids
 
@@ -152,9 +182,34 @@ def eval_zero_shot(
     use_accelerate=False,
     add_special_tokens=False,
 ):
+    """
+    Evaluate the model on a list of tasks in a zero-shot setting.
+
+    Args:
+        model_name: The name of the model.
+        model: The model to evaluate.
+        tokenizer: The tokenizer to use.
+        task_list: List of tasks to evaluate on.
+        num_fewshot: Number of few-shot examples.
+        use_accelerate: Whether to use the accelerate library.
+        add_special_tokens: Whether to add special tokens.
+
+    Returns:
+        results: The evaluation results.
+    """
     from lm_eval import evaluator, tasks
 
     def pattern_match(patterns, source_list):
+        """
+        Match patterns in the source list.
+
+        Args:
+            patterns: List of patterns to match.
+            source_list: List of source items.
+
+        Returns:
+            task_names: List of matched task names.
+        """
         task_names = set()
         for pattern in patterns:
             for matching in fnmatch.filter(source_list, pattern):

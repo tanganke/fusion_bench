@@ -1,9 +1,11 @@
 ---
 title: FusionBench
-description: A Comprehensive Benchmark of Deep Model Fusion
+description: A Comprehensive Benchmark/Toolkit of Deep Model Fusion
 ---
 
-# FusionBench: A Comprehensive Benchmark of Deep Model Fusion
+# FusionBench: A Comprehensive Benchmark/Toolkit of Deep Model Fusion
+
+**FusionBench: 一个全面的深度模型融合的基准/工具包**
 
 [![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](http://arxiv.org/abs/2406.03280)
 [![GitHub License](https://img.shields.io/github/license/tanganke/fusion_bench)](https://github.com/tanganke/fusion_bench/blob/main/LICENSE)
@@ -11,17 +13,27 @@ description: A Comprehensive Benchmark of Deep Model Fusion
 [![Downloads](https://static.pepy.tech/badge/fusion-bench/month)](https://pepy.tech/project/fusion-bench)
 [![Static Badge](https://img.shields.io/badge/doc-mkdocs-blue)](https://tanganke.github.io/fusion_bench/)
 [![Static Badge](https://img.shields.io/badge/code%20style-black-black)](https://github.com/psf/black)
+[![Static Badge](https://img.shields.io/badge/code%20style-yamlfmt-black)](https://github.com/google/yamlfmt)
 
-!!! warning "Testing Phase"
-    
-    The documented experiments should be reproducible. 
-    However, this project is still in testing phase as the API may be subject to change. 
-    Please report any issues you encounter.
+??? bug "Breaking Changes in v0.2 (重大变更)"
+
+    Recent upgrade to v0.2.0 may cause some breaking changes. Make some documented instructions may be outdated.
+    You can install a specific version by `pip install fusion-bench==0.1.6` or checkout to a specific version by `git checkout v0.1.6`.
+    If you encounter any issues, please feel free to raise an issue.
+    We are working on the documentation and will update it as soon as possible. Use version >=0.2.0 is recommended.
+
+    > 最近升级到 v0.2.0 可能会导致一些重大变更，使得文档中的一些指令可能已过时，需要更新。
+    > 您可以通过 `pip install fusion-bench==0.1.6` 安装特定版本，或者通过 `git checkout v0.1.6` 切换到特定版本。
+    > 如果遇到任何问题，请随时提出问题。
+    > 我们正在努力更新文档，并会尽快更新。建议使用 >=0.2.0 版本。
 
 !!! note
     
     - Any questions or comments can be directed to the [GitHub Issues](https://github.com/tanganke/fusion_bench/issues) page for this project.
     - Any contributions or pull requests are welcome. If you find any mistakes or have suggestions for improvements, please feel free to raise an issue or submit a pull request.
+
+    > - 任何问题或评论可以直接在该项目的GitHub Issues页面上提出。
+    > - 欢迎任何贡献或拉取请求。如果您发现任何错误或有改进建议，请随时提出问题或提交拉取请求。
 
 !!! tip "Introduction to Deep Model Fusion (The Learn From Model Paradigm)"
 
@@ -30,25 +42,48 @@ description: A Comprehensive Benchmark of Deep Model Fusion
     For a more detailed introduction to deep model fusion, you can refer to [W. Li, 2023, 'Deep Model Fusion: A Survey'](https://arxiv.org/abs/2309.15698). 
     In this benchmark, we evaluate the performance of different fusion methods on a variety of datasets and tasks. ...
 
+    > **深度模型融合简介（从模型中学习的范式）**
+    >
+    > 深度模型融合是一种将多个深度神经网络合并、集成或融合以获得统一模型的技术。
+    > 它可以用来提高模型的性能和鲁棒性，或者结合不同模型的优势，例如将多个特定任务的模型融合成一个多任务模型。
+    > 有关深度模型融合的更详细介绍，可以参考 [W. Li, 2023, 'Deep Model Fusion: A Survey'](https://arxiv.org/abs/2309.15698)。
+    > 在这个基准测试中，我们评估了不同融合方法在各种数据集和任务上的性能。...
+
     [:octicons-arrow-right-24: Read More](introduction_to_model_fusion.md)
 
 ## Getting Started
 
 ### Installation
 
-install from [PyPI](https://pypi.org/project/fusion-bench/):
+Install from [PyPI](https://pypi.org/project/fusion-bench/):
 
 ```bash
 pip install fusion-bench
+
+# you can also install a specific version
+# pip install fusion-bench==0.1.6
 ```
 
-or install the latest version in development from github repository
+Or install the latest version in development from github repository
 
 ```bash
 git clone https://github.com/tanganke/fusion_bench.git
 cd fusion_bench
 
+# checkout to use a specific version. for example, v0.1.6
+# git checkout v0.1.6
+
 pip install -e . # install the package in editable mode
+```
+
+View documentation locally:
+
+```bash
+# install mkdocs and the required packages
+pip install -r mkdocs-requirements.txt
+
+# serve the documentation, by default it will be available at http://localhost:8000
+mkdocs serve
 ```
 
 ### Command Line Interface
@@ -79,6 +114,14 @@ report = taskpool.evaluate(merged_model)
 ```
 
 For detailed information on the options available, you can refer to this [page](cli/fusion_bench.md).
+
+### Implmentation of Fusion Algorithms
+
+Working in progress.
+
+<!-- ```markdown -->
+<!-- --8<-- "docs/supported_algorithms.md" -->
+<!-- ``` -->
 
 ## General Structure of FusionBench
 

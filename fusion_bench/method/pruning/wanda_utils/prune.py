@@ -1,11 +1,10 @@
-import heapq
-import time
-from typing import List, Tuple, cast
 import logging
+from typing import List, Tuple, cast
 
 import torch
 import torch.nn as nn
 from torch import Tensor
+from tqdm.auto import tqdm
 from transformers import LlamaForCausalLM, PreTrainedModel
 
 from fusion_bench import timeit_context
@@ -43,6 +42,15 @@ def find_layers(module, layers=[nn.Linear], name=""):
 
 
 def check_sparsity(model):
+    """
+    Check the sparsity of the model by counting the number of zero weights.
+
+    Args:
+        model (PreTrainedModel): The model to check sparsity for.
+
+    Returns:
+        float: The sparsity ratio of the model.
+    """
     use_cache = model.config.use_cache
     model.config.use_cache = False
 
@@ -74,6 +82,17 @@ def prepare_calibration_input(
     dataloader: List[Tuple[Tensor, Tensor]],
     device: torch.device,
 ):
+    """
+    Prepare the calibration input for the model by collecting input to the first layer.
+
+    Args:
+        model (PreTrainedModel): The model to prepare calibration input for.
+        dataloader (List[Tuple[Tensor, Tensor]]): The dataloader to use for calibration.
+        device (torch.device): The device to use for calibration.
+
+    Returns:
+        Tuple[Tensor, Tensor, Tensor, Tensor]: The prepared input, output, attention mask, and position IDs.
+    """
     use_cache = model.config.use_cache
     model.config.use_cache = False
     layers = model.model.layers
@@ -122,6 +141,19 @@ def prepare_calibration_input(
 
 
 def return_given_alpha(alpha, sort_res, W_metric, tmp_metric, sum_before):
+    """
+    Return the mask and current sparsity given an alpha value.
+
+    Args:
+        alpha (float): The alpha value.
+        sort_res (Tensor): The sorted results.
+        W_metric (Tensor): The weight metric.
+        tmp_metric (Tensor): The temporary metric.
+        sum_before (Tensor): The sum before the alpha value.
+
+    Returns:
+        Tuple[Tensor, float]: The mask and current sparsity.
+    """
     thres_cumsum = sum_before * alpha
     sort_mask = tmp_metric <= thres_cumsum.reshape((-1, 1))
     thres = torch.gather(
@@ -140,6 +172,17 @@ def llama_prune_wanda_(
     prune_n=0,
     prune_m=0,
 ):
+    """
+    Perform Wanda pruning on a Llama model.
+
+    Args:
+        args: The arguments for pruning.
+        model (LlamaForCausalLM): The model to prune.
+        tokenizer: The tokenizer to use for calibration.
+        device (torch.device, optional): The device to use for pruning. Defaults to torch.device("cuda:0").
+        prune_n (int, optional): The number of elements to prune in each block. Defaults to 0.
+        prune_m (int, optional): The size of each block. Defaults to 0.
+    """
     use_cache = model.config.use_cache
     model.config.use_cache = False
 
@@ -171,8 +214,8 @@ def llama_prune_wanda_(
             inps, outs, attention_mask, position_ids = (
                 inps.to(dev),
                 outs.to(dev),
-                attention_mask.to(dev),
-                position_ids.to(dev),
+                attention_mask.to(dev) if attention_mask is not None else None,
+                position_ids.to(dev) if position_ids is not None else None,
             )
 
         wrapped_layers = {}
@@ -269,7 +312,18 @@ def llama_prune_wanda_(
 
 @torch.no_grad()
 def prune_sparsegpt(args, model, tokenizer, dev, prune_n=0, prune_m=0):
-    ## SparseGPT code available at: https://github.com/IST-DASLab/sparsegpt/tree/f5c25005a61f96a0933ca2f95705a963585aafaa
+    """
+    Perform SparseGPT pruning on a model.
+
+    Args:
+        args: The arguments for pruning.
+        model (PreTrainedModel): The model to prune.
+        tokenizer: The tokenizer to use for calibration.
+        dev (torch.device): The device to use for pruning.
+        prune_n (int, optional): The number of elements to prune in each block. Defaults to 0.
+        prune_m (int, optional): The size of each block. Defaults to 0.
+    """
+    # SparseGPT code available at: https://github.com/IST-DASLab/sparsegpt/tree/f5c25005a61f96a0933ca2f95705a963585aafaa
     print("Starting ...")
     dataloader, _ = get_loaders(
         "c4",
@@ -387,6 +441,17 @@ def prune_sparsegpt(args, model, tokenizer, dev, prune_n=0, prune_m=0):
 
 @torch.no_grad()
 def prune_ablate(args, model, tokenizer, dev, prune_n=0, prune_m=0):
+    """
+    Perform ablation pruning on a model.
+
+    Args:
+        args: The arguments for pruning.
+        model (PreTrainedModel): The model to prune.
+        tokenizer: The tokenizer to use for calibration.
+        dev (torch.device): The device to use for pruning.
+        prune_n (int, optional): The number of elements to prune in each block. Defaults to 0.
+        prune_m (int, optional): The size of each block. Defaults to 0.
+    """
     ## SparseGPT code available at: https://github.com/IST-DASLab/sparsegpt/tree/f5c25005a61f96a0933ca2f95705a963585aafaa
     print("Starting ...")
     dataloader, _ = get_loaders(

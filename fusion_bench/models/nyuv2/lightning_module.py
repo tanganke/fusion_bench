@@ -2,17 +2,11 @@ import itertools
 from typing import Dict, List, Literal, Optional, cast
 
 import lightning as L
-import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
 from torchmetrics import Metric
 
-from fusion_bench.metrics.nyuv2 import (
-    DepthMetric,
-    NormalMetric,
-    SegmentationMertic,
-    metric_classes,
-)
+from fusion_bench.metrics.nyuv2 import metric_classes
 from fusion_bench.metrics.nyuv2.loss import loss_fn
 
 

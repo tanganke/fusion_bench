@@ -15,6 +15,7 @@ from transformers import GPT2ForSequenceClassification, GPT2Model
 from transformers.data import default_data_collator
 from transformers.models.gpt2.modeling_gpt2 import Conv1D
 
+from fusion_bench.mixins import LightningFabricMixin
 from fusion_bench.utils import timeit_context
 
 from .regmean import RegMeanAlgorithm
@@ -22,18 +23,23 @@ from .regmean import RegMeanAlgorithm
 log = logging.getLogger(__name__)
 
 
-class RegMeanAlgorithmForGPT2(RegMeanAlgorithm):
-    _fabric: L.Fabric = None
+class RegMeanAlgorithmForGPT2(
+    RegMeanAlgorithm,
+    LightningFabricMixin,
+):
     _include_module_type = [Conv1D]
     classifiers = {}
+    _config_mapping = RegMeanAlgorithm._config_mapping | {
+        "cache_dir": "cache_dir",
+        "batch_size": "batch_size",
+        "num_workers": "num_workers",
+    }
 
-    def __init__(self, algorithm_config: DictConfig):
-        super().__init__(algorithm_config)
-
-        # setup fabric
-        if self._fabric is None and torch.cuda.is_available():
-            self._fabric = L.Fabric(devices=self.config.get("devices", 1))
-            self._fabric.launch()
+    def __init__(self, cache_dir: str, batch_size: int, num_workers: int, **kwargs):
+        self.cache_dir = cache_dir
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+        super().__init__(**kwargs)
 
     def on_regmean_start(self):
         for model_name in self.modelpool.model_names:
@@ -42,8 +48,7 @@ class RegMeanAlgorithmForGPT2(RegMeanAlgorithm):
                 self.modelpool.load_classifier(model_name),
             ).requires_grad_(False)
             classifier.transformer = None
-            if self._fabric is not None:
-                classifier = classifier.to(self._fabric.device)
+            classifier = classifier.to(self.fabric.device)
             self.classifiers[model_name] = classifier
 
     def compute_logits(self, module: GPT2Model, batch, task: str) -> Tensor:
@@ -72,9 +77,8 @@ class RegMeanAlgorithmForGPT2(RegMeanAlgorithm):
             collate_fn=default_data_collator,
             pin_memory=True,
         )
-        if self._fabric is not None:
-            train_dataloader = self._fabric.setup_dataloaders(train_dataloader)
-            model = self._fabric.setup(model)
+        train_dataloader = self.fabric.setup_dataloaders(train_dataloader)
+        model = self.fabric.setup(model)
 
         def compute_regmean_weights(module_name: str):
             """

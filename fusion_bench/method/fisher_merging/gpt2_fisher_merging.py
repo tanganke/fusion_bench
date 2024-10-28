@@ -15,37 +15,84 @@ from transformers import GPT2ForSequenceClassification, GPT2Model
 from transformers.data import default_data_collator
 from transformers.models.gpt2.modeling_gpt2 import Conv1D
 
-from fusion_bench.dataset import CLIPDataset, load_dataset_from_config
-from fusion_bench.tasks.clip_classification import get_classnames_and_templates
+from fusion_bench.mixins import LightningFabricMixin
+from fusion_bench.modelpool import HuggingFaceGPT2ClassificationPool
 from fusion_bench.utils import timeit_context
 
 from .fisher_merging import FisherMergingAlgorithm, get_param_squared_gradients
 
 
-class FisherMergingAlgorithmForGPT2(FisherMergingAlgorithm):
-    _fabric: L.Fabric = None
+class FisherMergingAlgorithmForGPT2(
+    FisherMergingAlgorithm,
+    LightningFabricMixin,
+):
+    """
+    Implements the Fisher Merging Algorithm for GPT-2 models on text classification tasks.
+
+    This class extends the FisherMergingAlgorithm to handle GPT-2 models specifically.
+    It supports caching, batch processing, and multi-worker data loading.
+
+    Attributes:
+        classifiers (dict): A dictionary to store classifiers for each model.
+        modelpool (HuggingFaceGPT2ClassificationPool): The model pool containing the GPT-2 models.
+        cache_dir (str): Directory to cache data.
+        batch_size (int): Batch size for data loading.
+        num_workers (int): Number of workers for data loading.
+    """
     classifiers = {}
+    modelpool: HuggingFaceGPT2ClassificationPool = None
+    _config_mapping = FisherMergingAlgorithm._config_mapping | {
+        "cache_dir": "cache_dir",
+        "batch_size": "batch_size",
+        "num_workers": "num_workers",
+    }
 
-    def __init__(self, algorithm_config: DictConfig):
-        super().__init__(algorithm_config)
+    def __init__(
+        self,
+        cache_dir: str,
+        batch_size: int,
+        num_workers: int,
+        **kwargs,
+    ):
+        """
+        Initialize the FisherMergingAlgorithmForGPT2 with the given configuration.
 
-        # setup fabric
-        if self._fabric is None and torch.cuda.is_available():
-            self._fabric = L.Fabric(devices=self.config.get("devices", 1))
-            self._fabric.launch()
+        Args:
+            cache_dir (str): Directory to cache data.
+            batch_size (int): Batch size for data loading.
+            num_workers (int): Number of workers for data loading.
+            **kwargs: Additional keyword arguments.
+        """
+        self.cache_dir = cache_dir
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+        super().__init__(**kwargs)
 
     def on_fisher_merging_start(self):
+        """
+        Setup the classifiers for each model in the model pool before starting the Fisher merging process.
+        """
         for model_name in self.modelpool.model_names:
             classifier = cast(
                 GPT2ForSequenceClassification,
                 self.modelpool.load_classifier(model_name),
             ).requires_grad_(False)
             classifier.transformer = None
-            if self._fabric is not None:
-                classifier = classifier.to(self._fabric.device)
+            classifier = classifier.to(self.fabric.device)
             self.classifiers[model_name] = classifier
 
     def compute_logits(self, module: GPT2Model, batch, task: str) -> Tensor:
+        """
+        Compute the logits for the given batch and task.
+
+        Args:
+            module (GPT2Model): The GPT-2 model module.
+            batch (dict): The input batch.
+            task (str): The name of the task.
+
+        Returns:
+            Tensor: The computed logits.
+        """
         self.classifiers[task].transformer = module
         input_ids = batch["input_ids"]
         attention_mask = batch["attention_mask"]
@@ -62,6 +109,18 @@ class FisherMergingAlgorithmForGPT2(FisherMergingAlgorithm):
         train_dataset,
         param_names_to_merge: List[str],
     ) -> Dict[str, Tensor]:
+        """
+        Compute the Fisher weights for the given model and training dataset.
+
+        Args:
+            model_name (str): The name of the model.
+            model (Module): The model module.
+            train_dataset: The training dataset.
+            param_names_to_merge (List[str]): List of parameter names to merge.
+
+        Returns:
+            Dict[str, Tensor]: The computed Fisher weights for each parameter.
+        """
         # setup dataloader
         train_dataloader = DataLoader(
             train_dataset,
@@ -71,9 +130,8 @@ class FisherMergingAlgorithmForGPT2(FisherMergingAlgorithm):
             num_workers=self.config.num_workers,
             pin_memory=True,
         )
-        if self._fabric is not None:
-            train_dataloader = self._fabric.setup_dataloaders(train_dataloader)
-            model = self._fabric.setup(model)
+        train_dataloader = self.fabric.setup_dataloaders(train_dataloader)
+        model = self.fabric.setup(model)
         num_fisher_examples = self.config.num_fisher_examples
         if num_fisher_examples % train_dataloader.batch_size != 0:
             print(

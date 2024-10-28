@@ -1,21 +1,13 @@
-name: pwe_moe_ls_for_clip # or pwe_moe_epo_for_clip
-
+_target_: fusion_bench.method.PWEMoELinearScalarizationForCLIP # or PWEMoExactParetoOptimalForCLIP
 upscale_mlp: true
 upscale_attn: true
-
 # scaling factor for the remaining parameters
 init_lambda: 0.3
 router_hidden_layers: 2
-
-# per-device batch size
-batch_size: 16
-num_workers: 4
-
 lr: 1e-5
 num_steps: 8000
 save_interval: 2000
 alpha: 1 # alpha for dirichlet, if alpha=1, then it is uniform
-
 # load model from this checkpoint
 checkpoint_path: null
 
@@ -23,3 +15,8 @@ checkpoint_path: null
 eval_grid: true
 eval_grid_n: 8
 eval_grid_m: 2
+
+dataloader_kwargs:
+  # per-device batch size
+  batch_size: 16
+  num_workers: 4

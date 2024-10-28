@@ -1,79 +1,36 @@
 import logging
-import os
-from copy import deepcopy
-from functools import cache
-from typing import Dict, List, cast
+from typing import Dict, List, cast  # noqa: F401
 
-import lightning as L
 import torch
+import torch.utils.data
 from omegaconf import DictConfig
 from torch import Tensor, nn
 from torch.nn.modules import Module
 from torch.utils.data import DataLoader
 from tqdm.autonotebook import tqdm
-from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 
-from fusion_bench.modelpool.huggingface_clip_vision import HuggingFaceClipVisionPool
-from fusion_bench.models.hf_clip import HFCLIPClassifier
-from fusion_bench.tasks.clip_classification import get_classnames_and_templates
-from fusion_bench.utils import timeit_context
+from fusion_bench.dataset.clip_dataset import CLIPDataset
+from fusion_bench.mixins import CLIPClassificationMixin
 
 from .regmean import RegMeanAlgorithm
 
 log = logging.getLogger(__name__)
 
 
-class RegMeanAlgorithmForCLIP(RegMeanAlgorithm):
-    _fabric: L.Fabric = None
-    _clip_processor: CLIPProcessor = None
-    zeroshot_weights = {}
+class RegMeanAlgorithmForCLIP(
+    RegMeanAlgorithm,
+    CLIPClassificationMixin,
+):
+    _config_mapping = {
+        "_dataloader_kwargs": "dataloader_kwargs",
+    }
 
-    def __init__(self, algorithm_config: DictConfig):
-        super().__init__(algorithm_config)
-
-        # setup fabric
-        if self._fabric is None and torch.cuda.is_available():
-            self._fabric = L.Fabric(devices=self.config.get("devices", 1))
-            self._fabric.launch()
+    def __init__(self, *, dataloader_kwargs: DictConfig, **kwargs):
+        super().__init__(**kwargs)
+        self._dataloader_kwargs = dataloader_kwargs
 
     def on_regmean_start(self):
-        clip_model_config = self.modelpool.get_model_config("_pretrained_")
-
-        with timeit_context("Loading CLIP processor and pretrained CLIP model."):
-            self._clip_processor = CLIPProcessor.from_pretrained(clip_model_config.path)
-            clip_model = CLIPModel.from_pretrained(clip_model_config.path)
-
-            clip_classifier = HFCLIPClassifier(clip_model, self._clip_processor)
-            self.visual_projection = clip_model.visual_projection.requires_grad_(False)
-            self.logit_scale = clip_model.logit_scale.exp()
-            if self._fabric is not None:
-                self.visual_projection = self._fabric.to_device(self.visual_projection)
-                self.logit_scale = self._fabric.to_device(self.logit_scale)
-
-        for task in self.modelpool.model_names:
-            cache_file = os.path.join(
-                self.config.cache_dir,
-                f"{os.path.basename(clip_model_config.path)}_{task}_zeroshot_weights.pt",
-            )
-            if os.path.exists(cache_file):
-                log.info(f"Loading cached zeroshot weights for task: {task}")
-                zeroshot_weights = torch.load(cache_file, map_location="cpu")
-            else:
-                log.info(f"Construct zero shot classification head for task: {task}")
-                classnames, templates = get_classnames_and_templates(
-                    cast(HuggingFaceClipVisionPool, self.modelpool)
-                    .get_train_dataset_config(task)["dataset"]
-                    .name
-                )
-                clip_classifier.set_classification_task(classnames, templates)
-                zeroshot_weights = clip_classifier.zeroshot_weights
-                log.info(f"save zeroshot weights to {cache_file}")
-                torch.save(zeroshot_weights, cache_file)
-            self.zeroshot_weights[task] = zeroshot_weights
-            if self._fabric is not None:
-                self.zeroshot_weights[task] = self._fabric.to_device(
-                    self.zeroshot_weights[task]
-                )
+        self.setup_zero_shot_classification_head()
 
     def compute_logits(self, module, batch, task: str) -> Tensor:
         images, _ = batch
@@ -86,7 +43,9 @@ class RegMeanAlgorithmForCLIP(RegMeanAlgorithm):
         image_embeds = image_embeds / image_embeds.norm(p=2, dim=-1, keepdim=True)
 
         # cosine similarity
-        logits_per_text = torch.matmul(text_embeds, image_embeds.t()) * self.logit_scale
+        logits_per_text = (
+            torch.matmul(text_embeds, image_embeds.t()) * self.logit_scale_exp
+        )
         logits_per_image = logits_per_text.t()
 
         return logits_per_image
@@ -95,20 +54,16 @@ class RegMeanAlgorithmForCLIP(RegMeanAlgorithm):
         self,
         model_name: str,
         model: Module,
-        train_dataset,
+        train_dataset: torch.utils.data.Dataset,
         linear_modules_to_merge: Dict[str, Module],
     ):
         # setup dataloader
+        train_dataset = CLIPDataset(train_dataset, self.clip_processor)
         train_dataloader = DataLoader(
-            train_dataset,
-            batch_size=self.config.batch_size,
-            shuffle=True,
-            num_workers=self.config.num_workers,
-            pin_memory=True,
+            train_dataset, shuffle=True, **self._dataloader_kwargs
         )
-        if self._fabric is not None:
-            train_dataloader = self._fabric.setup_dataloaders(train_dataloader)
-            model = self._fabric.setup(model)
+        train_dataloader = self.fabric.setup_dataloaders(train_dataloader)
+        model = self.fabric.setup(model)
 
         def compute_regmean_weights(module_name: str):
             """
@@ -161,11 +116,10 @@ class RegMeanAlgorithmForCLIP(RegMeanAlgorithm):
         ):
             if (
                 len(num_actual_examples) > 0
-                and list(num_actual_examples.values())[0]
-                >= self.config.num_regmean_examples
+                and list(num_actual_examples.values())[0] >= self.num_regmean_examples
             ):
                 break
-            logits = self.compute_logits(model, batch, model_name)
+            logits = self.compute_logits(model, batch, model_name)  # noqa: F841
 
         # remove the added hook
         for handle in handles:

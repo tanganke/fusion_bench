@@ -17,7 +17,7 @@ Fine-tune CLIP-ViT-B/32:
 ```bash
 fusion_bench \
     method=clip_finetune \
-    modelpool=clip-vit-base-patch32_mtl \
+    modelpool=CLIPVisionModelPool/clip-vit-base-patch32_mtl \
     taskpool=dummy
 ```
 
@@ -28,8 +28,8 @@ fusion_bench \
     fabric.devices=8 \
     method=clip_finetune \
         method.batch_size=2 \
-    modelpool=clip-vit-base-patch32_mtl \
-        modelpool.models.0.path=openai/clip-vit-large-patch14 \
+    modelpool=CLIPVisionModelPool/clip-vit-base-patch32_mtl \
+        modelpool.models._pretrained_.pretrained_model_name_or_path=openai/clip-vit-large-patch14 \
     taskpool=dummy
 ```
 
@@ -54,30 +54,8 @@ Subsequently, we can use `fusion_bench/scripts/clip/convert_checkpoint.py` to co
 
 === "model pool configuration"
 
-    ```yaml title="config/modelpool/clip-vit-base-patch32_mtl.yaml"
-    type: huggingface_clip_vision
-    models:
-      - name: _pretrained_
-        path: openai/clip-vit-base-patch32
-    
-    dataset_type: huggingface_image_classification
-    train_datasets:
-      - name: svhn
-        dataset:
-          type: instantiate
-          name: svhn
-          object:
-            _target_: datasets.load_dataset
-            _args_:
-              - svhn
-              - cropped_digits
-            split: train
-      - name: stanford_cars
-        dataset:
-          name: tanganke/stanford_cars
-          split: train
-      # other datasets
-      # ...
+    ```yaml title="config/modelpool/CLIPVisionModelPool/clip-vit-base-patch32_mtl.yaml"
+    --8<-- "config/modelpool/CLIPVisionModelPool/clip-vit-base-patch32_mtl.yaml"
     ```
 
 ```bash
@@ -93,15 +71,14 @@ For example, you can use the following command to evaluate the model on the eigh
 ```bash
 path_to_clip_model=/path/to/converted/output
 fusion_bench method=dummy \
-  modelpool=clip-vit-base-patch32_individual \
-    modelpool.models.0.path="'${path_to_clip_model}'" \
+  modelpool=CLIPVisionModelPool/clip-vit-base-patch32_individual \
+    modelpool.models._pretrained_.pretrained_model_name_or_path="'${path_to_clip_model}'" \
   taskpool=clip-vit-classification_TA8
 ```
 
 ### Single-Task Learning
 
 Simply remove some of the datasets from the `train_datasets` field in the model pool configuration.
-
 
 ## References
 

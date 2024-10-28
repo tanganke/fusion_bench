@@ -1,10 +1,9 @@
 from collections import OrderedDict
-from copy import deepcopy
 from numbers import Number
 from typing import Dict, List, Union, cast
 
 import torch
-from torch import Tensor, nn
+from torch import Tensor
 
 from .parameters import check_parameters_all_equal
 from .type import StateDictType
@@ -98,7 +97,9 @@ def state_dict_avg(state_dicts: List[StateDictType]):
     return avg_state_dict
 
 
-def state_dict_sub(a: StateDictType, b: StateDictType, strict: bool = True, device=None):
+def state_dict_sub(
+    a: StateDictType, b: StateDictType, strict: bool = True, device=None
+):
     """
     Returns the difference between two state dicts `a-b`.
 
@@ -122,7 +123,9 @@ def state_dict_sub(a: StateDictType, b: StateDictType, strict: bool = True, devi
     return diff
 
 
-def state_dict_add(a: StateDictType, b: StateDictType, strict: bool = True, device=None):
+def state_dict_add(
+    a: StateDictType, b: StateDictType, strict: bool = True, device=None
+):
     """
     Returns the sum of two state dicts.
 
@@ -134,7 +137,7 @@ def state_dict_add(a: StateDictType, b: StateDictType, strict: bool = True, devi
     Returns:
         Dict: The sum of the two state dicts.
     """
-    ans = OrderedDict()
+    ans = {}
     if strict:
         check_parameters_all_equal([a, b])
         for key in a:
@@ -235,9 +238,9 @@ def state_dict_sum(state_dicts: List[StateDictType]):
 
     sum_state_dict = OrderedDict()
     for key in state_dicts[0]:
-        sum_state_dict[key] = torch.zeros_like(state_dicts[0][key])
+        sum_state_dict[key] = 0
         for state_dict in state_dicts:
-            sum_state_dict[key] += state_dict[key]
+            sum_state_dict[key] = sum_state_dict[key] + state_dict[key]
     return sum_state_dict
 
 
@@ -262,15 +265,16 @@ def state_dict_weighted_sum(
         [len(state_dicts[0]) == len(state_dict) for state_dict in state_dicts]
     ), "All state_dicts must have the same number of keys"
 
-    weighted_sum_state_dict = {}
+    weighted_sum_state_dict: Dict[str, Tensor] = {}
     for key in state_dicts[0]:
-        weighted_sum_state_dict[key] = torch.zeros_like(state_dicts[0][key])
+        # states dicts can be sparse matrices
+        weighted_sum_state_dict[key] = torch.zeros_like(state_dicts[0][key]).to_dense()
         for state_dict, weight in zip(state_dicts, weights):
-            if device is None:
-                weighted_sum_state_dict[key] += weight * state_dict[key]
-            else:
-                # NOTE: if weight is a tensor, state_dict and weight must be on the same device
-                weighted_sum_state_dict[key] += (weight * state_dict[key]).to(
-                    device, non_blocking=True
-                )
+            weighted_sum_state_dict[key] = torch.add(
+                weighted_sum_state_dict[key], weight * state_dict[key]
+            )
+        if device is not None:
+            weighted_sum_state_dict[key] = weighted_sum_state_dict[key].to(
+                device, non_blocking=True
+            )
     return weighted_sum_state_dict

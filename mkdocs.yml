@@ -66,7 +66,7 @@ plugins:
   - search
   - autorefs
   - mkdocstrings:
-      enabled: !ENV [ENABLE_MKDOCSTRINGS, true]
+      enabled: true
       default_handler: python
       handlers:
         python:

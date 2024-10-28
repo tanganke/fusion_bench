@@ -1,0 +1,10 @@
+resisc45:
+  _target_: fusion_bench.utils.data.train_validation_split
+  dataset:
+    _target_: datasets.load_dataset
+    path: tanganke/resisc45
+    split: train
+  validation_fraction: 0.1
+  validation_size: null
+  random_seed: 0
+  return_split: val

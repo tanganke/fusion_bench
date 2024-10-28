@@ -1,12 +1,9 @@
-from abc import ABC, abstractmethod
-
 from omegaconf import DictConfig
 
 from fusion_bench.utils import import_object
 
 
-class BaseFactoryClass(ABC):
-
+class BaseFactoryClass:
     _registry = {}
 
     @classmethod
@@ -32,7 +29,3 @@ class BaseFactoryClass(ABC):
     @classmethod
     def available_items(cls):
         return list(cls._registry.keys())
-
-    @abstractmethod
-    def create(self, config: DictConfig):
-        pass

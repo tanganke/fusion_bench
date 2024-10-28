@@ -1,4 +1,4 @@
-# FusionBench: A Comprehensive Benchmark of Deep Model Fusion
+# FusionBench: A Comprehensive Benchmark/ToolKit of Deep Model Fusion
 
 [![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](http://arxiv.org/abs/2406.03280)
 [![GitHub License](https://img.shields.io/github/license/tanganke/fusion_bench)](https://github.com/tanganke/fusion_bench/blob/main/LICENSE)
@@ -6,10 +6,8 @@
 [![Downloads](https://static.pepy.tech/badge/fusion-bench/month)](https://pepy.tech/project/fusion-bench)
 [![Static Badge](https://img.shields.io/badge/doc-mkdocs-blue)](https://tanganke.github.io/fusion_bench/)
 [![Static Badge](https://img.shields.io/badge/code%20style-black-black)](https://github.com/psf/black)
+[![Static Badge](https://img.shields.io/badge/code%20style-yamlfmt-black)](https://github.com/google/yamlfmt)
 
-
-> [!WARNING]  
-> This project is still in testing phase as the API may be subject to change. Please report any issues you encounter.
 
 > [!TIP]  
 > Documentation is available at [tanganke.github.io/fusion_bench/](https://tanganke.github.io/fusion_bench/).
@@ -18,6 +16,22 @@
 ## Overview
 
 FusionBench is a benchmark suite designed to evaluate the performance of various deep model fusion techniques. It aims to provide a comprehensive comparison of different methods on a variety of datasets and tasks.
+
+Projects based on FusionBench:
+
+<details>
+  <summary>Jinluan Yang et al. Mitigating the Backdoor Effect for Multi-Task Model Merging via Safety-Aware Subspace. Oct, 2024. http://arxiv.org/abs/2410.13910</summary>
+
+  <img width="1018" alt="image" src="https://github.com/user-attachments/assets/679aaa7e-0506-4e09-a12a-345c12cf529f">
+
+</details>
+<details>
+  <summary>Anke Tang et al. SMILE: Zero-Shot Sparse Mixture of Low-Rank Experts Construction From Pre-Trained Foundation Models. Aug, 2024. http://arxiv.org/abs/2408.10174</summary>
+
+  Example notebooks can be found at [examples/smile_upscaling](examples/smile_upscaling).  
+  ![](examples/smile_upscaling/SMILE.png)
+
+</details>
 
 ## Installation
 
@@ -61,7 +75,58 @@ The CLI's design allows for easy extension to new fusion methods, model types, a
 
 Read the [CLI documentation](https://tanganke.github.io/fusion_bench/cli/fusion_bench/) for more information.
 
-### FusionBench Command Generator WebUI
+## Implement your own model fusion algorithm
+
+```python
+from fusion_bench import BaseModelFusionAlgorithm, BaseModelPool
+
+class DerivedModelFusionAlgorithm(BaseModelFusionAlgorithm):
+    """
+    An example of a derived model fusion algorithm.
+    """
+
+    # _config_mapping maps the attribution to the corresponding key in the configuration file.
+    # this is optional and can be used to serialize the object to a configuration file.
+    # `self.config.hyperparam_1` will be mapped to the attribute `hyperparam_attr_1`.
+    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+        "hyperparam_attr_1": "hyperparam_1",
+        "hyperparam_attr_2": "hyperparam_2",
+    }
+
+    def __init__(self, hyperparam_1, hyperparam_2, **kwargs):
+        self.hyperparam_attr_1 = hyperparam_1
+        self.hyperparam_attr_2 = hyperparam_2
+        super().__init__(**kwargs)
+
+    def run(self, modelpool: BaseModelPool):
+        # modelpool is an object that responsible for managing the models and dataset to be loaded.
+        # implement the fusion algorithm here.
+        raise NotImplementedError(
+            "DerivedModelFusionAlgorithm.run() is not implemented."
+        )
+```
+
+A corresponding configuration file should be created to specify the class and hyperparameters of the algorithm. 
+Here we assume the configuration file is placed at `config/method/your_algorithm_config.yaml`.
+
+```yaml
+_target_: path_to_the_module.DerivedModelFusionAlgorithm
+
+hyperparam_1: some_value
+hyperparam_2: another_value
+```
+
+Use the algorithm in the FusionBench:
+
+```bash
+fusion_bench \
+  method=your_algorithm_config \
+  method.hyperparam_1=you_can_override_this \
+  method.hyperparam_2=and_this \
+  ... # other configurations
+```
+
+### FusionBench Command Generator WebUI (for v0.1.x)
 
 FusionBench Command Generator is a user-friendly web interface for generating FusionBench commands based on configuration files. 
 It provides an interactive way to select and customize FusionBench configurations, making it easier to run experiments with different settings.

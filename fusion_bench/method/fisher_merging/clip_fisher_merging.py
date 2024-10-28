@@ -1,82 +1,94 @@
 import logging
-import os
-from copy import deepcopy
-from functools import cache
-from typing import Dict, List, cast
+from typing import Dict, List, cast  # noqa: F401
 
-import lightning as L
 import torch
 from omegaconf import DictConfig
-from torch import Tensor, nn
+from torch import Tensor
 from torch.nn.modules import Module
 from torch.utils.data import DataLoader
 from tqdm.autonotebook import tqdm
-from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
+from transformers import CLIPProcessor
 
-from fusion_bench.dataset import CLIPDataset, load_dataset_from_config
-from fusion_bench.modelpool.huggingface_clip_vision import HuggingFaceClipVisionPool
-from fusion_bench.models.hf_clip import HFCLIPClassifier
-from fusion_bench.tasks.clip_classification import get_classnames_and_templates
-from fusion_bench.utils import timeit_context
+from fusion_bench.dataset import CLIPDataset
+from fusion_bench.mixins import CLIPClassificationMixin
 
 from .fisher_merging import FisherMergingAlgorithm, get_param_squared_gradients
 
 log = logging.getLogger(__name__)
 
 
-class FisherMergingAlgorithmForCLIP(FisherMergingAlgorithm):
-    _fabric: L.Fabric = None
+class FisherMergingForCLIPVisionModel(
+    CLIPClassificationMixin,
+    FisherMergingAlgorithm,
+):
+    """
+    Implements Fisher Merging for CLIP Vision Models.
+
+    This class extends the FisherMergingAlgorithm and CLIPClassificationMixin to handle
+    the specifics of merging CLIP Vision models using Fisher weights.
+    """
+
     _clip_processor: CLIPProcessor = None
     zeroshot_weights = {}
 
-    def __init__(self, algorithm_config: DictConfig):
-        super().__init__(algorithm_config)
+    _config_mapping = FisherMergingAlgorithm._config_mapping | {
+        "zeroshot_weights_cache_dir": "zeroshot_weights_cache_dir",
+        "_dataloader_kwargs": "dataloader_kwargs",
+    }
 
-        # setup fabric
-        if self._fabric is None and torch.cuda.is_available():
-            self._fabric = L.Fabric(devices=self.config.get("devices", 1))
-            self._fabric.launch()
+    def __init__(
+        self,
+        *,
+        exclude_param_names_regex,
+        normalize_fisher_weight,
+        minimal_fisher_weight,
+        num_fisher_examples,
+        dataloader_kwargs: DictConfig,
+        zeroshot_weights_cache_dir=None,
+        **kwargs,
+    ):
+        """
+        Initialize the FisherMergingForCLIPVisionModel with the given configuration.
+
+        Args:
+            exclude_param_names_regex (list): List of regex patterns to exclude certain parameter names.
+            normalize_fisher_weight (bool): Whether to normalize Fisher weights.
+            minimal_fisher_weight (float): Minimal value for Fisher weights to avoid numerical issues.
+            num_fisher_examples (int): Number of examples to compute Fisher weights.
+            dataloader_kwargs (DictConfig): Configuration for the dataloader.
+            zeroshot_weights_cache_dir (str, optional): Directory to cache zero-shot weights. Defaults to None.
+            **kwargs: Additional keyword arguments.
+        """
+        super().__init__(
+            exclude_param_names_regex=exclude_param_names_regex,
+            normalize_fisher_weight=normalize_fisher_weight,
+            minimal_fisher_weight=minimal_fisher_weight,
+            num_fisher_examples=num_fisher_examples,
+        )
+        self._dataloader_kwargs = dataloader_kwargs
+        self.zeroshot_weights_cache_dir = zeroshot_weights_cache_dir
+        for key, value in kwargs.items():
+            log.warning(f"Unused argument: {key}={value}")
+            setattr(self, key, value)
 
     def on_fisher_merging_start(self):
-        clip_model_config = self.modelpool.get_model_config("_pretrained_")
-
-        with timeit_context("Loading CLIP processor and pretrained CLIP model."):
-            self._clip_processor = CLIPProcessor.from_pretrained(clip_model_config.path)
-            clip_model = CLIPModel.from_pretrained(clip_model_config.path)
-
-            clip_classifier = HFCLIPClassifier(clip_model, self._clip_processor)
-            self.visual_projection = clip_model.visual_projection.requires_grad_(False)
-            self.logit_scale = clip_model.logit_scale.exp()
-            if self._fabric is not None:
-                self.visual_projection = self._fabric.to_device(self.visual_projection)
-                self.logit_scale = self._fabric.to_device(self.logit_scale)
-
-        for task in self.modelpool.model_names:
-            cache_file = os.path.join(
-                self.config.cache_dir,
-                f"{os.path.basename(clip_model_config.path)}_{task}_zeroshot_weights.pt",
-            )
-            if os.path.exists(cache_file):
-                log.info(f"Loading cached zeroshot weights for task: {task}")
-                zeroshot_weights = torch.load(cache_file, map_location="cpu")
-            else:
-                log.info(f"Construct zero shot classification head for task: {task}")
-                classnames, templates = get_classnames_and_templates(
-                    cast(HuggingFaceClipVisionPool, self.modelpool)
-                    .get_train_dataset_config(task)["dataset"]
-                    .name
-                )
-                clip_classifier.set_classification_task(classnames, templates)
-                zeroshot_weights = clip_classifier.zeroshot_weights
-                log.info(f"save zeroshot weights to {cache_file}")
-                torch.save(zeroshot_weights, cache_file)
-            self.zeroshot_weights[task] = zeroshot_weights
-            if self._fabric is not None:
-                self.zeroshot_weights[task] = self._fabric.to_device(
-                    self.zeroshot_weights[task]
-                )
+        """
+        Setup the zero-shot classification head before starting the Fisher merging process.
+        """
+        self.setup_zero_shot_classification_head()
 
     def compute_logits(self, module, batch, task: str) -> Tensor:
+        """
+        Compute the logits for the given images and task.
+
+        Args:
+            module (Module): The model module.
+            batch (tuple): A batch of data containing images and labels.
+            task (str): The name of the task.
+
+        Returns:
+            Tensor: The computed logits.
+        """
         images, _ = batch
         text_embeds = self.zeroshot_weights[task]
 
@@ -87,7 +99,9 @@ class FisherMergingAlgorithmForCLIP(FisherMergingAlgorithm):
         image_embeds = image_embeds / image_embeds.norm(p=2, dim=-1, keepdim=True)
 
         # cosine similarity
-        logits_per_text = torch.matmul(text_embeds, image_embeds.t()) * self.logit_scale
+        logits_per_text = (
+            torch.matmul(text_embeds, image_embeds.t()) * self.logit_scale_exp
+        )
         logits_per_image = logits_per_text.t()
 
         return logits_per_image
@@ -99,28 +113,35 @@ class FisherMergingAlgorithmForCLIP(FisherMergingAlgorithm):
         train_dataset,
         param_names_to_merge: List[str],
     ) -> Dict[str, Tensor]:
+        """
+        Compute the Fisher weights for the given model and training dataset.
+
+        Args:
+            model_name (str): The name of the model.
+            model (Module): The model module.
+            train_dataset: The training dataset.
+            param_names_to_merge (List[str]): List of parameter names to merge.
+
+        Returns:
+            Dict[str, Tensor]: The computed Fisher weights for each parameter.
+        """
         # setup dataloader
-        train_dataloader = DataLoader(
-            train_dataset,
-            batch_size=self.config.batch_size,
-            shuffle=True,
-            num_workers=self.config.num_workers,
-            pin_memory=True,
-        )
-        if self._fabric is not None:
-            train_dataloader = self._fabric.setup_dataloaders(train_dataloader)
-            model = self._fabric.setup(model)
+        train_dataset = CLIPDataset(train_dataset, self.clip_processor)
+        train_dataloader = DataLoader(train_dataset, **self._dataloader_kwargs)
+        if self.fabric is not None:
+            train_dataloader = self.fabric.setup_dataloaders(train_dataloader)
+            model = self.fabric.setup(model)
         num_fisher_examples = self.config.num_fisher_examples
         if num_fisher_examples % train_dataloader.batch_size != 0:
             print(
-                f"warning: the number of examples for computing fisher cannot be fully divided by the batch size for model, "
+                "warning: the number of examples for computing fisher cannot be fully divided by the batch size for model, "
                 "which may lead to a slightly different number of the actually used examples."
             )
         num_computed_examples = 0
         batches_fisher_weights_list = []
         for step, batch in tqdm(
             enumerate(train_dataloader),
-            desc=f"computing fisher weights",
+            desc="computing fisher weights",
             total=num_fisher_examples // train_dataloader.batch_size,
         ):
             if num_computed_examples >= num_fisher_examples:
@@ -128,7 +149,7 @@ class FisherMergingAlgorithmForCLIP(FisherMergingAlgorithm):
             logits = self.compute_logits(model, batch, model_name)
             # Tensor, shape (batch_size, num_label_classes)
 
-            # compute fisher weights for classifxication task
+            # compute fisher weights for classification task
             # use detach() to detach from the computation graph
             # Tensor, shape (batch_size, num_label_classes)
             labels_probabilities = torch.softmax(logits, dim=-1).detach()

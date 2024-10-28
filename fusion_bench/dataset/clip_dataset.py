@@ -1,9 +1,11 @@
 """
-This module provodes a class to convert dataset whose object is a list of dictionaries with keys "image" and "label" to dataset whose object is a tuple of tensors (inputs, label) for CLIP models.
+This module provides a class to convert a dataset whose object is a list of dictionaries with keys "image" and "label" to a dataset whose object is a tuple of tensors (inputs, label) for CLIP models.
 """
 
+from typing import Optional
+
 import torch
-from transformers import CLIPProcessor
+from transformers import CLIPProcessor, ProcessorMixin
 
 
 class CLIPDataset(torch.utils.data.Dataset):
@@ -17,14 +19,14 @@ class CLIPDataset(torch.utils.data.Dataset):
 
     Args:
         dataset: The original dataset to wrap.
-        processor (CLIPProcessor): The CLIP processor for preparing inputs.
+        processor (CLIPProcessor): The CLIP processor for preparing inputs. If None, no preprocessing is applied and raw images are returned.
 
     Attributes:
         dataset: The wrapped dataset.
         processor (CLIPProcessor): The CLIP processor used for image preprocessing.
     """
 
-    def __init__(self, dataset, processor: CLIPProcessor):
+    def __init__(self, dataset, processor: Optional[CLIPProcessor] = None):
         self.dataset = dataset
         self.processor = processor
 
@@ -54,5 +56,13 @@ class CLIPDataset(torch.utils.data.Dataset):
         else:
             raise ValueError("Each item should be a dictionary or a tuple of length 2")
         image = item["image"]
-        inputs = self.processor(images=[image], return_tensors="pt")["pixel_values"][0]
+        if self.processor is not None:
+            if isinstance(self.processor, ProcessorMixin):
+                # Apply the processor to the image to get the input tensor
+                inputs = self.processor(images=[image], return_tensors="pt")[
+                    "pixel_values"
+                ][0]
+        else:
+            # if processor is None, return the raw image directly
+            inputs = image
         return inputs, item["label"]

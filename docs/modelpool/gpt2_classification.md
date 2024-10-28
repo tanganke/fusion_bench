@@ -76,7 +76,7 @@ merge GPT-2 models using [Fisher Merging](../algorithms/fisher_merging.md) and e
 
 ```bash
 fusion_bench \
-  method=gpt2_fisher_merging \
+  method=fisher_merging/gpt2_fisher_merging \
     method.batch_size=8 method.num_fisher_examples=512 \
   modelpool=gpt-2_glue \
   taskpool=gpt-2_glue
@@ -88,7 +88,7 @@ merge GPT-2 models using [RegMean](../algorithms/regmean.md) and evaluate the me
 
 ```bash
 fusion_bench \
-  method=gpt2_regmean \
+  method=regmean/gpt2_regmean \
   modelpool=gpt-2_glue \
   taskpool=gpt-2_glue
 ```
@@ -110,7 +110,7 @@ fusion_bench \
 # or "for scaling_factor in $(seq 0 0.1 1.0)", I use the following for loop for better readability for readers who are not familiar with bash
 for scaling_factor in 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 
 do
-fusion_bench save_report=outputs/gpt2_glue_task_arithmetic_scaling_factor_${scaling_factor}.json \
+fusion_bench report_save_path=outputs/gpt2_glue_task_arithmetic_scaling_factor_${scaling_factor}.json \
   method=task_arithmetic \
     method.scaling_factor=${scaling_factor} \
   modelpool=gpt-2_glue \
@@ -150,7 +150,7 @@ fusion_bench \
 # or run the following script to evaluate the model with different scaling factors,
 # and save the results to different files
 for scaling_factor in 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
-do fusion_bench save_report=outputs/gpt2_glue_ties_merging_scaling_factor_${scaling_factor}.json \
+do fusion_bench report_save_path=outputs/gpt2_glue_ties_merging_scaling_factor_${scaling_factor}.json \
   method=ties_merging \
     method.scaling_factor=${scaling_factor} \
   modelpool=gpt-2_glue \

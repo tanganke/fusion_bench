@@ -1,2 +1,2 @@
-name: task_arithmetic
+_target_: fusion_bench.method.TaskArithmeticAlgorithm
 scaling_factor: 0.5

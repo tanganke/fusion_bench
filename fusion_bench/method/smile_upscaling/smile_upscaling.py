@@ -1,18 +1,18 @@
 import logging
 import os
-import re
 from copy import deepcopy
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple  # noqa: F401
 
 import torch
 import torch.nn.functional as F
+from omegaconf import OmegaConf
 from torch import Tensor, nn
 from tqdm.auto import tqdm
 
-from fusion_bench.method import ModelFusionAlgorithm
+from fusion_bench.method import BaseModelFusionAlgorithm
 from fusion_bench.method.simple_average import simple_average
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
-from fusion_bench.modelpool import ModelPool, to_modelpool
+from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.models.utils import get_attr, set_attr
 from fusion_bench.utils.parameters import print_parameters
 
@@ -24,6 +24,15 @@ class ExpertNotTrainedError(Exception):
 
 
 def _is_all_zeros(tensor: Tensor | List[Tensor]) -> bool:
+    """
+    Check if a tensor or a list of tensors are all zeros.
+
+    Args:
+        tensor (Tensor | List[Tensor]): A tensor or a list of tensors.
+
+    Returns:
+        bool: True if all elements are zeros, False otherwise.
+    """
     if isinstance(tensor, Tensor):
         return torch.allclose(tensor, torch.zeros_like(tensor))
     else:
@@ -31,6 +40,16 @@ def _is_all_zeros(tensor: Tensor | List[Tensor]) -> bool:
 
 
 def _svd(w: Tensor, full_matrices=True) -> Tuple[Tensor, Tensor, Tensor]:
+    """
+    Perform Singular Value Decomposition (SVD) on a tensor.
+
+    Args:
+        w (Tensor): The input tensor.
+        full_matrices (bool): Whether to compute the full-sized U and V matrices.
+
+    Returns:
+        Tuple[Tensor, Tensor, Tensor]: The U, S, and V matrices from SVD.
+    """
     u, s, vh = torch.linalg.svd(
         w, full_matrices=full_matrices, driver="gesvd" if w.is_cuda else None
     )
@@ -41,6 +60,17 @@ def _svd(w: Tensor, full_matrices=True) -> Tuple[Tensor, Tensor, Tensor]:
 def svd(
     w: Tensor, full_matrices=True, accelerator=None
 ) -> Tuple[Tensor, Tensor, Tensor]:
+    """
+    Perform SVD on a tensor, optionally using a specified accelerator.
+
+    Args:
+        w (Tensor): The input tensor.
+        full_matrices (bool): Whether to compute the full-sized U and V matrices.
+        accelerator (str): The device to perform the computation on.
+
+    Returns:
+        Tuple[Tensor, Tensor, Tensor]: The U, S, and V matrices from SVD.
+    """
     if accelerator is None:
         return _svd(w, full_matrices=full_matrices)
     original_device = w.device
@@ -58,6 +88,16 @@ class SmileGate(nn.Module):
         svd_list=None,  # cached `svd_list`, pass it to avoid recomputing
         upscaling_accelerator=None,
     ):
+        """
+        Initialize the SmileGate module.
+
+        Args:
+            input_features (int): The number of input features.
+            w_diff_list (List[Tensor]): A list of weight difference tensors.
+            k (int): The number of singular values to keep.
+            svd_list (List[Tuple[Tensor, Tensor, Tensor]]): Cached SVD results.
+            upscaling_accelerator (str): The device to perform the computation on.
+        """
         super().__init__()
         self.input_features = input_features
         self.num_experts = len(w_diff_list)
@@ -85,6 +125,15 @@ class SmileGate(nn.Module):
         )  # weights should be a tensor of shape (num_experts * k, n)
 
     def forward(self, x: Tensor):
+        """
+        Forward pass of the SmileGate module.
+
+        Args:
+            x (Tensor): The input tensor.
+
+        Returns:
+            Tensor: The routing weights.
+        """
         batch_size = x.size(0)
         if self.num_experts == 1:
             return torch.ones(batch_size, 1, device=x.device, dtype=x.dtype)
@@ -98,6 +147,14 @@ class SmileGate(nn.Module):
 
 class SmileCompressedLinear(nn.Module):
     def __init__(self, model: nn.Linear, k: int, svd_cache=None):
+        """
+        Initialize the SmileCompressedLinear module.
+
+        Args:
+            model (nn.Linear): The linear model to compress.
+            k (int): The number of singular values to keep.
+            svd_cache (Tuple[Tensor, Tensor, Tensor]): Cached SVD results.
+        """
         super().__init__()
         if svd_cache is None:
             u, s, v = svd(model.weight)
@@ -117,6 +174,15 @@ class SmileCompressedLinear(nn.Module):
             self.register_parameter("bias", None)
 
     def forward(self, x):
+        """
+        Forward pass of the SmileCompressedLinear module.
+
+        Args:
+            x (Tensor): The input tensor.
+
+        Returns:
+            Tensor: The output tensor.
+        """
         x = F.linear(x, self.svh)
         x = F.linear(x, self.u, self.bias)
         return x
@@ -135,6 +201,19 @@ class SmileMoELinear(nn.Module):
         upscaling_accelerator=None,
         routing_use_diff=True,
     ):
+        """
+        Initialize the SmileMoELinear module.
+
+        Args:
+            pretrained_model (nn.Linear): The pretrained linear model.
+            finetuned_models (List[nn.Linear]): A list of fine-tuned linear models.
+            gate_k (int): The number of singular values to keep for the gate.
+            k (int): The number of singular values to keep for the experts.
+            top_k (int): The number of top experts to select.
+            full_matrices (bool): Whether to compute the full-sized U and V matrices.
+            upscaling_accelerator (str): The device to perform the computation on.
+            routing_use_diff (bool): Whether to use weight differences for routing.
+        """
         super().__init__()
         self.num_experts = len(finetuned_models)
         self.top_k = top_k
@@ -192,6 +271,15 @@ class SmileMoELinear(nn.Module):
         self.pretrained_model = pretrained_model
 
     def forward(self, hidden_states: Tensor):
+        """
+        Forward pass of the SmileMoELinear module.
+
+        Args:
+            hidden_states (Tensor): The input tensor.
+
+        Returns:
+            Tensor: The output tensor.
+        """
         pretrained_out = self.pretrained_model(hidden_states)
 
         input_shape = hidden_states.size()
@@ -267,11 +355,73 @@ class SmileMoELinear(nn.Module):
         )
 
 
-class SmileUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
+class SmileUpscalingAlgorithm(
+    SimpleProfilerMixin,
+    BaseModelFusionAlgorithm,
+):
     _linear_layer_cls = (nn.Linear,)
+    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+        "device": "device",
+        "upscaling_accelerator": "upscaling_accelerator",
+        "full_matrices": "full_matrices",
+        "gate_k": "gate_k",
+        "k": "k",
+        "top_k": "top_k",
+        "routing_use_diff": "routing_use_diff",
+        "average_experts": "average_experts",
+        "model_path": "model_path",
+    }
+
+    def __init__(
+        self,
+        *,
+        device: str = "cuda",
+        upscaling_accelerator: str = None,
+        full_matrices: bool = True,
+        gate_k: int = 256,
+        k: int = 256,
+        top_k: int = 1,
+        routing_use_diff: bool = True,
+        average_experts: bool = False,
+        model_path: str = None,
+        **kwargs,
+    ):
+        """
+        Initialize the SmileUpscalingAlgorithm.
+
+        Args:
+            device (str): The device to perform the computation on.
+            upscaling_accelerator (str): The device to perform the SVD computation on.
+            full_matrices (bool): Whether to compute the full-sized U and V matrices.
+            gate_k (int): The number of singular values to keep for the gate.
+            k (int): The number of singular values to keep for the experts.
+            top_k (int): The number of top experts to select.
+            routing_use_diff (bool): Whether to use weight differences for routing.
+            average_experts (bool): Whether to average the experts.
+            model_path (str): The path to save/load the model.
+            **kwargs: Additional arguments.
+        """
+        super().__init__()
+        self.device = device
+        self.upscaling_accelerator = upscaling_accelerator
+        self.full_matrices = full_matrices
+        self.gate_k = gate_k
+        self.k = k
+        self.top_k = top_k
+        self.routing_use_diff = routing_use_diff
+        self.average_experts = average_experts
+        self.model_path = model_path
+        for key, value in kwargs.items():
+            log.warning(f"Unrecognized argument: {key}")
+            setattr(self, key, value)
+
+        # print `self.config` as yaml
+        print(f"=== Config for `{type(self).__name__}` ===")
+        print(OmegaConf.to_yaml(self.config))
+        print(f"=== Config for `{type(self).__name__}` ===")
 
     @torch.no_grad()
-    def run(self, modelpool: ModelPool):
+    def run(self, modelpool: BaseModelPool):
         """
         Executes the upscaling process.
 
@@ -281,7 +431,8 @@ class SmileUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
         Returns:
             nn.Module: The upscaled model.
         """
-        modelpool = to_modelpool(modelpool)
+        if not isinstance(modelpool, BaseModelPool):
+            modelpool = BaseModelPool(modelpool)
 
         if self.config.model_path is not None and os.path.exists(
             self.config.model_path
@@ -344,6 +495,14 @@ class SmileUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
         finetuned_models,
         name: str,
     ):
+        """
+        Upscale a linear layer by merging it with the corresponding layers from the fine-tuned models.
+
+        Args:
+            pretrained_model (nn.Module): The pretrained model.
+            finetuned_models (List[nn.Module]): A list of fine-tuned models.
+            name (str): The name of the linear layer to upscale.
+        """
         config = self.config
 
         name_list = name.split(".")
@@ -356,11 +515,11 @@ class SmileUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
                 gate_k=config.gate_k,
                 k=config.k,
                 top_k=config.top_k,
-                routing_use_diff=self.config.routing_use_diff,
-                full_matrices=self.config.full_matrices,
-                upscaling_accelerator=self.config.upscaling_accelerator,
+                routing_use_diff=self.routing_use_diff,
+                full_matrices=self.full_matrices,
+                upscaling_accelerator=self.upscaling_accelerator,
             )
-        except ExpertNotTrainedError as e:
+        except ExpertNotTrainedError:
             print(f"skip {name} because the experts are not trained.")
             return
         set_attr(pretrained_model, name_list, moe_linear)
@@ -369,6 +528,14 @@ class SmileUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
             set_attr(m, name_list, None)
 
     def _average_experts(self, pretarined_model, finetuned_models, name: str):
+        """
+        Average the experts for a given layer.
+
+        Args:
+            pretarined_model (nn.Module): The pretrained model.
+            finetuned_models (List[nn.Module]): A list of fine-tuned models.
+            name (str): The name of the layer to average.
+        """
         name_list = name.split(".")
         experts = [get_attr(m, name_list) for m in finetuned_models]
         averaged_module = simple_average(experts)
@@ -376,8 +543,8 @@ class SmileUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
 
     def _upscale_submodules(
         self,
-        pretrained_model,
-        finetuned_model,
+        pretrained_model: nn.Module,
+        finetuned_models: List[nn.Module],
         tqdm_desc: str = "Upscaling Linear Modules",
     ):
         """
@@ -398,9 +565,9 @@ class SmileUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
             if isinstance(module, self._linear_layer_cls):
                 self._upscale_linear_layer(
                     pretrained_model=pretrained_model,
-                    finetuned_models=finetuned_model,
+                    finetuned_models=finetuned_models,
                     name=name,
                 )
             elif config.average_experts and len(tuple(module.named_modules())) == 1:
                 # if the module is a leaf module, we perform a parameter average
-                self._average_experts(pretrained_model, finetuned_model, name)
+                self._average_experts(pretrained_model, finetuned_models, name)

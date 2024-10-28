@@ -16,17 +16,12 @@ outputs = merged_model(inputs)
 
 import functools
 import logging
-import types
-import warnings
-from collections import defaultdict
-from copy import deepcopy
-from typing import Any, Callable, Dict, Iterator, List, Optional
+from typing import Any, Callable, Dict, Iterator, List, Optional  # noqa: F401
 
 import torch
 from torch import Tensor, nn
 from torch.func import functional_call
 
-from fusion_bench.utils.timer import timeit_context
 from fusion_bench.utils.type import StateDictType
 
 log = logging.getLogger(__name__)
@@ -136,7 +131,9 @@ def _fuse_weights(task_wise_weight: Tensor, tensors: List[Tensor]):
     return sum(task_wise_weight[i] * w.to(device) for i, w in enumerate(tensors))
 
 
-def fuse_weights(task_wise_weight: Tensor, state_dicts: List[StateDictType]) -> StateDictType:
+def fuse_weights(
+    task_wise_weight: Tensor, state_dicts: List[StateDictType]
+) -> StateDictType:
     """
     This function fuses the weights of the models and returns a state dictionary.
 
