@@ -539,10 +539,11 @@ fusion_bench \
 
 We provide the experimental results of the CLIP-ViT models for open vocabulary image classification on the eight tasks in the following table.
 
-!!! note "hyperparameters"
+!!! info "Hyperparameters not fully optimized"
 
-    The hyperparameters of the merging methods are not optimized, and the results are only for reference.
-    If you discover more effective parameters, we'd appreciate it if you could inform us so we can update our findings.
+    The hyperparameters used in these merging methods are not fully optimized and should be considered as preliminary results only. We welcome any discoveries of more effective parameters and would be grateful for your contributions to help us improve our results.
+
+    Please note that some model merging paper results were obtained using [OpenCLIP models](https://github.com/mlfoundations/task_vectors), which may show discrepancies with the results presented here. In such cases, the results reported in the original papers should be considered authoritative.
 
 
 === "Table: Mutli-task model merging methods using CLIP-ViT-B/32 models."
@@ -648,6 +649,14 @@ An example of corruption data visualization, in which the corruption image gener
 </figure>
 
 ### Experimental Results
+
+
+!!! info "Hyperparameters not fully optimized"
+
+    The hyperparameters used in these merging methods are not fully optimized and should be considered as preliminary results only. We welcome any discoveries of more effective parameters and would be grateful for your contributions to help us improve our results.
+    
+    Please note that some model merging paper results were obtained using [OpenCLIP models](https://github.com/mlfoundations/task_vectors), which may show discrepancies with the results presented here. In such cases, the results reported in the original papers should be considered authoritative.
+
 
 === "Table: Results of the generalization experiments (Exp1)."
 
