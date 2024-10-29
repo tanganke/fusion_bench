@@ -10,16 +10,19 @@ from fusion_bench.models.wrappers.layer_wise_fusion import (
     LayerWiseMergedModel,
     get_layer_wise_weights,
 )
+from fusion_bench.utils import instantiate
 from fusion_bench.utils.data import load_tensor_from_file
 
 log = logging.getLogger(__name__)
 
 
-class LayerWiseAdaMergingForLlama(
+class LayerWiseAdaMergingForLlamaSFT(
     BaseModelFusionAlgorithm,
     LightningFabricMixin,
     SimpleProfilerMixin,
 ):
+
+    modelpool: CausalLMPool
 
     def __init__(
         self,
@@ -46,10 +49,19 @@ class LayerWiseAdaMergingForLlama(
         super().__init__(**kwargs)
 
     def run(self, modelpool: CausalLMPool):
+        self.modelpool = modelpool
         assert (
             modelpool.has_pretrained
         ), "Must be a pre-tarined model with name `_pretrained_` in the model pool."
         log.info(f"There are {len(modelpool)} expert models in the model pool.")
+
+        with self.profiler("construct_layer_wise_merged_model"):
+            module = self.construct_layer_wise_merged_model(modelpool)
+
+        if not self.skip_training:
+            module = self.train(module)
+
+        return module.merge_and_unload()
 
     @torch.no_grad()
     def construct_layer_wise_merged_model(self, modelpool: CausalLMPool):
@@ -95,9 +107,13 @@ class LayerWiseAdaMergingForLlama(
             layer_wise_weight=layer_wise_weight,
             pretrained_model=pretrained_model,
             finetuned_models=finetuned_models,
-            clamp_weights=self.config.clamp_weights,
-            tie_weights=self.config.tie_weights,
-            strict=self.config.strict,
+            clamp_weights=self.clamp_weights,
+            tie_weights=self.tie_weights,
+            strict=self.strict,
         )
         print(f"{layer_wise_weight.size()=}, {layer_wise_weight.numel()=}")
         return module
+
+    def train(self, module: LayerWiseMergedModel):
+        tokenizer = self.modelpool.load_tokenizer()
+        

@@ -1,7 +1,15 @@
 import gc
+import os
 from typing import List, Optional, Union
 
 import torch
+from transformers.utils import (
+    is_torch_bf16_gpu_available,
+    is_torch_cuda_available,
+    is_torch_mps_available,
+    is_torch_npu_available,
+    is_torch_xpu_available,
+)
 
 __all__ = [
     "cuda_empty_cache",
@@ -105,3 +113,44 @@ def get_device(obj) -> torch.device:
         return obj
     else:
         raise ValueError(f"Unsupported object type: {type(obj)}")
+
+
+def get_current_device() -> torch.device:
+    R"""
+    Gets the current available device for PyTorch operations.
+
+    This function checks the availability of various types of devices in the following order:
+    1. XPU (Intel's AI accelerator)
+    2. NPU (Neural Processing Unit)
+    3. MPS (Metal Performance Shaders, for Apple devices)
+    4. CUDA (NVIDIA's GPU)
+    5. CPU (Central Processing Unit, used as a fallback)
+
+    The function returns the first available device found in the above order. If none of the specialized devices
+    are available, it defaults to the CPU.
+
+    Returns:
+        torch.device: The current available device for PyTorch operations.
+
+    Environment Variables:
+        LOCAL_RANK: This environment variable is used to specify the device index for multi-device setups.
+                    If not set, it defaults to "0".
+
+    Example:
+        >>> device = get_current_device()
+        >>> print(device)
+        xpu:0  # or npu:0, mps:0, cuda:0, cpu depending on availability
+    """
+
+    if is_torch_xpu_available():
+        device = "xpu:{}".format(os.environ.get("LOCAL_RANK", "0"))
+    elif is_torch_npu_available():
+        device = "npu:{}".format(os.environ.get("LOCAL_RANK", "0"))
+    elif is_torch_mps_available():
+        device = "mps:{}".format(os.environ.get("LOCAL_RANK", "0"))
+    elif is_torch_cuda_available():
+        device = "cuda:{}".format(os.environ.get("LOCAL_RANK", "0"))
+    else:
+        device = "cpu"
+
+    return torch.device(device)
