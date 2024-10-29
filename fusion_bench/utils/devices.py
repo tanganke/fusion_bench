@@ -16,6 +16,9 @@ __all__ = [
     "to_device",
     "num_devices",
     "get_device",
+    "get_current_device",
+    "get_device_memory_info",
+    "get_device_capabilities",
 ]
 
 
@@ -118,6 +121,7 @@ def get_device(obj) -> torch.device:
 def get_current_device() -> torch.device:
     R"""
     Gets the current available device for PyTorch operations.
+    This is used for distributed training.
 
     This function checks the availability of various types of devices in the following order:
     1. XPU (Intel's AI accelerator)
@@ -154,3 +158,53 @@ def get_current_device() -> torch.device:
         device = "cpu"
 
     return torch.device(device)
+
+
+def get_device_memory_info(device: torch.device) -> dict:
+    """
+    Get memory information for a given device.
+
+    Args:
+        device (torch.device): The device for which to get memory information.
+
+    Returns:
+        dict: A dictionary containing memory information for the given device.
+    """
+    if device.type == "cuda":
+        total_memory = torch.cuda.get_device_properties(device).total_memory
+        reserved_memory = torch.cuda.memory_reserved(device)
+        allocated_memory = torch.cuda.memory_allocated(device)
+        return {
+            "total_memory": total_memory,
+            "reserved_memory": reserved_memory,
+            "allocated_memory": allocated_memory,
+        }
+    else:
+        raise ValueError(
+            f"Memory information not available for device type: {device.type}"
+        )
+
+
+def get_device_capabilities(device: torch.device) -> dict:
+    """
+    Get capabilities information for a given device.
+
+    Args:
+        device (torch.device): The device for which to get capabilities information.
+
+    Returns:
+        dict: A dictionary containing capabilities information for the given device.
+    """
+    if device.type == "cuda":
+        return {
+            "name": torch.cuda.get_device_name(device),
+            "capability": torch.cuda.get_device_capability(device),
+            "total_memory": torch.cuda.get_device_properties(device).total_memory,
+            "multi_processor_count": torch.cuda.get_device_properties(
+                device
+            ).multi_processor_count,
+        }
+    else:
+        raise ValueError(
+            f"Capabilities information not available for device type: {device.type}"
+        )
