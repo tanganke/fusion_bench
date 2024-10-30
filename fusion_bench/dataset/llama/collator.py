@@ -21,7 +21,6 @@ from typing import TYPE_CHECKING, Any, Dict, Literal, Optional, Sequence
 import torch
 from transformers import DataCollatorForSeq2Seq
 
-
 if TYPE_CHECKING:
     from transformers import ProcessorMixin
 
