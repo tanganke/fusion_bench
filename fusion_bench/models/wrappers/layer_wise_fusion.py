@@ -143,11 +143,19 @@ class LayerWiseMergedModel(nn.Module):
         clamp_weights: bool = True,
         tie_weights: bool = False,
         strict: bool = True,
+        sparsity_ratio: Optional[float] = None,
     ):
+        """
+
+        Args:
+            sparsity_ratio (float, optional): If `sparsity_ratio` is provided, the task vector will be pruned before merging. A high spasity level can save the memory usage during merging.
+
+        """
         super().__init__()
         self.clamp_weights = clamp_weights
         self.tie_weights = tie_weights
         self.strict = strict
+        self.sparsity_ratio = sparsity_ratio
 
         self.merge_weight = nn.Parameter(layer_wise_weight, requires_grad=True)
 
@@ -160,10 +168,31 @@ class LayerWiseMergedModel(nn.Module):
                     get_attr(m, name.split(".")).data = (
                         get_attr(m, name.split(".")) - param
                     )
+
         self.pretrained_model = pretrained_model.requires_grad_(False)
         for m in finetuned_models:
             m.requires_grad_(False)
+
         self.task_vectors = nn.ModuleList(finetuned_models)
+
+        # if `sparisty_ratio` is given, pruning the task vectors.
+        if sparsity_ratio is not None:
+            from fusion_bench.method.pruning.prune_utils import (
+                unstructured_magnitude_prune_,
+            )
+
+            for name, param in self.task_vectors.named_parameters():
+                if param.dim() != 2:
+                    continue
+                print(f"pruning {name}")
+                pruned_param = unstructured_magnitude_prune_(
+                    param.data.clone(), torch.abs, sparsity_ratio=sparsity_ratio
+                )
+                set_attr(
+                    self.task_vectors,
+                    name.split("."),
+                    nn.Parameter(pruned_param.to_sparse(), requires_grad=False),
+                )
 
     @property
     def forward_model(self):
@@ -224,3 +253,32 @@ class LayerWiseMergedModel(nn.Module):
     #         super().__setattr__(name, value)
     #     except AttributeError:
     #         setattr(self.model, name, value)
+
+
+def merge_weights(module: nn.Module):
+    if isinstance(module, LayerWiseMergedModel):
+        module.merge_weights()
+        return
+    else:
+        for submodule in module.children():
+            merge_weights(submodule)
+
+
+def merge_and_unload(module: nn.Module):
+    if isinstance(module, LayerWiseMergedModel):
+        return module.merge_and_unload()
+    else:
+        for name, submodule in module.named_children():
+            need_merge = isinstance(submodule, LayerWiseMergedModel)
+            submodule = merge_and_unload(submodule)
+            if need_merge:
+                setattr(module, name, submodule)
+        return module
+
+
+def fix_other_parts(module: nn.Module):
+    module.requires_grad_(False)
+    for submodule in module.modules():
+        if isinstance(submodule, LayerWiseMergedModel):
+            submodule.merge_weight.requires_grad_(True)
+    return module
