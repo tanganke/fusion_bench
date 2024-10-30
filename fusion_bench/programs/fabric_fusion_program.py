@@ -207,7 +207,8 @@ class FabricModelFusionProgram(
         if self.seed is not None:
             L.seed_everything(self.seed)
 
-        self._link_hydra_output()
+        if self.fabric.global_rank == 0:
+            self._link_hydra_output()
 
         log.info("Running the model fusion program.")
         # setup the modelpool, method, and taskpool

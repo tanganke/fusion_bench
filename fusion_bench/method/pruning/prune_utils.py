@@ -1,14 +1,21 @@
-from enum import StrEnum
 from typing import Callable, Dict, Union  # noqa: F401
 
 import torch
 from torch import nn
+
+try:
+    # strEnum only available for python >= 3.11
+    # for older version, load from fusion_bench.utils.strenum
+    from enum import StrEnum
+except ImportError:
+    from fusion_bench.utils.strenum import StrEnum
 
 
 class PruningType(StrEnum):
     """
     Enum class for different types of pruning.
     """
+
     UNSTRUCTURED = "unstructured"
     SEMISTRUCTURED = "semistructured"  # N:M structured
     STRUCTURED = "structured"
@@ -48,7 +55,7 @@ def unstructured_magnitude_prune_(
 
     Args:
         weight (torch.Tensor): The weight tensor to prune.
-        metric_function_or_scores (Union[Callable[[torch.Tensor], torch.Tensor], torch.Tensor]): 
+        metric_function_or_scores (Union[Callable[[torch.Tensor], torch.Tensor], torch.Tensor]):
             A function to compute the metric for pruning or a precomputed metric tensor.
         sparsity_ratio (float): The ratio of weights to prune.
         dtype (torch.dtype, optional): The data type to use for computations. Defaults to None.
@@ -102,7 +109,7 @@ def semistructured_magnitude_prune_(
 
     Args:
         weight (torch.Tensor): The weight tensor to prune.
-        metric_function_or_scores (Union[Callable[[torch.Tensor], torch.Tensor], torch.Tensor]): 
+        metric_function_or_scores (Union[Callable[[torch.Tensor], torch.Tensor], torch.Tensor]):
             A function to compute the metric for pruning or a precomputed metric tensor.
         n (int): The number of weights to keep in each group.
         m (int): The size of each group.

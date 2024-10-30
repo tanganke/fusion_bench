@@ -14,6 +14,7 @@ def load_tokenized_wiki_dataset(
     tokenizer: Optional[PreTrainedTokenizer],
     path: str = "wikitext",
     name: str = "wikitext-2-raw-v1",
+    split: Optional[str] = None,
     datasets: Optional[Any] = None,
     block_size: int = 128,
     cache_path: Optional[str] = None,
@@ -25,8 +26,14 @@ def load_tokenized_wiki_dataset(
         block_size (int):
         dataset: If dataset is provided, `path` and `name` will be ignored.
     """
-    if fusion_bench.utils.path.path_is_dir_and_not_empty(cache_path):
-        return load_from_disk(cache_path)
+    if cache_path is not None and fusion_bench.utils.path.path_is_dir_and_not_empty(
+        cache_path
+    ):
+        datasets = load_from_disk(cache_path)
+        if split is None:
+            return datasets
+        else:
+            return datasets[split]
     else:
         assert (
             tokenizer is not None
@@ -76,4 +83,7 @@ def load_tokenized_wiki_dataset(
         os.makedirs(cache_path, exist_ok=True)
         lm_datasets.save_to_disk(cache_path)
 
-    return lm_datasets
+    if split is None:
+        return lm_datasets
+    else:
+        return lm_datasets[split]

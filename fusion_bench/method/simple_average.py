@@ -18,7 +18,10 @@ from fusion_bench.utils.type import StateDictType
 log = logging.getLogger(__name__)
 
 
-def simple_average(modules: List[Union[nn.Module, StateDictType]]):
+def simple_average(
+    modules: List[Union[nn.Module, StateDictType]],
+    base_module: Optional[nn.Module] = None,
+):
     """
     Averages the parameters of a list of PyTorch modules or state dictionaries.
 
@@ -41,7 +44,10 @@ def simple_average(modules: List[Union[nn.Module, StateDictType]]):
         >>> averaged_state_dict = simple_averageing([state_dict1, state_dict2])
     """
     if isinstance(modules[0], nn.Module):
-        new_module = deepcopy(modules[0])
+        if base_module is None:
+            new_module = deepcopy(modules[0])
+        else:
+            new_module = base_module
         state_dict = state_dict_avg([module.state_dict() for module in modules])
         new_module.load_state_dict(state_dict)
         return new_module
