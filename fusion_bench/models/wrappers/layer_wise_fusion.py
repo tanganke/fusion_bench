@@ -60,7 +60,12 @@ def get_attr(obj, names: List[str]):
         return get_attr(getattr(obj, names[0]), names[1:])
 
 
-def get_layer_wise_weights(num_models: int, num_layers: int, init_values: float = None):
+def get_layer_wise_weights(
+    num_models: int,
+    num_layers: int,
+    init_values: float = None,
+    dtype: torch.dtype = torch.float32,
+):
     """
     Return a tensor of layer-wise weights for the given number of models and layers.
 
@@ -68,6 +73,7 @@ def get_layer_wise_weights(num_models: int, num_layers: int, init_values: float 
         num_models (int): The number of models to fuse.
         num_layers (int): The number of layers in each model.
         init_values (float, optional): The initial value for each weight. Defaults to 1.0 / num_models.
+        dtype (torch.dtype): dtype of weights. This should be the same with model dtype.
 
     Returns:
         Tensor: A tensor of shape (num_models, num_layers) containing the layer-wise weights.
@@ -76,7 +82,7 @@ def get_layer_wise_weights(num_models: int, num_layers: int, init_values: float 
     assert num_layers >= 1, f"num_layers must be >= 1, got {num_layers}"
     if init_values is None:
         init_values = 1.0 / num_models
-    return torch.full((num_models, num_layers), init_values, dtype=torch.float32)
+    return torch.full((num_models, num_layers), init_values, dtype=dtype)
 
 
 def _fuse_weights(layer_wise_weight: Tensor, tensors: List[Tensor]):
