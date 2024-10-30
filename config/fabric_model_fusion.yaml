@@ -6,6 +6,8 @@ defaults:
   - modelpool: CLIPVisionModelPool/clip-vit-base-patch32_TA8
   - method: dummy
   - taskpool: dummy
+  - _self_
+
 _target_: fusion_bench.programs.FabricModelFusionProgram
 _recursive_: false
 fast_dev_run: false # Run a single batch of data to test the model or method
