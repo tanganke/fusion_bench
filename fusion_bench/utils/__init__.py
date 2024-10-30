@@ -2,7 +2,7 @@
 import importlib
 from typing import Iterable
 
-from . import data
+from . import data, path
 from .cache_utils import *
 from .devices import *
 from .dtype import parse_dtype

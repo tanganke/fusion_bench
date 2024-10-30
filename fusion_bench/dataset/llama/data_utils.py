@@ -47,11 +47,6 @@ class Role(str, Enum):
     OBSERVATION = "observation"
 
 
-class DatasetModule(TypedDict):
-    train_dataset: Optional[Union["Dataset", "IterableDataset"]]
-    eval_dataset: Optional[Union["Dataset", "IterableDataset"]]
-
-
 def merge_dataset(
     all_datasets: List[Union["Dataset", "IterableDataset"]],
     seed: int,
