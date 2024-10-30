@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 
 import torch
+import os
 
 from fusion_bench import BaseModelFusionAlgorithm
 from fusion_bench.mixins import LightningFabricMixin, SimpleProfilerMixin
@@ -12,6 +13,8 @@ from fusion_bench.models.wrappers.layer_wise_fusion import (
 )
 from fusion_bench.utils import instantiate
 from fusion_bench.utils.data import load_tensor_from_file
+import lightning as L
+from fusion_bench.utils.parameters import print_parameters
 
 log = logging.getLogger(__name__)
 
@@ -26,6 +29,8 @@ class LayerWiseAdaMergingForLlamaSFT(
 
     def __init__(
         self,
+        seed: int,
+        output_dir: str,
         optimizer: str,
         lr: float,
         init_values: 0.3,
@@ -35,8 +40,15 @@ class LayerWiseAdaMergingForLlamaSFT(
         dataloader_kwargs: bool,
         tie_weights: bool,
         strict: bool,
+        skip_training: bool = False,
         **kwargs,
     ):
+        """
+        Args:
+            seed (int): random seed to set at the begining of running.
+        """
+        self.seed = seed
+        self.output_dir = output_dir
         self.optimizer = optimizer
         self.lr = lr
         self.init_values = init_values
@@ -46,22 +58,32 @@ class LayerWiseAdaMergingForLlamaSFT(
         self.tie_weights = tie_weights
         self.strict = strict
         self.dataloader_kwargs = dataloader_kwargs
+        self.skip_training = skip_training
         super().__init__(**kwargs)
 
     def run(self, modelpool: CausalLMPool):
         self.modelpool = modelpool
+        fabric = self.fabric
+
         assert (
             modelpool.has_pretrained
         ), "Must be a pre-tarined model with name `_pretrained_` in the model pool."
         log.info(f"There are {len(modelpool)} expert models in the model pool.")
 
+        fabric.seed_everything(self.seed)
+
+        if fabric.global_rank == 0:
+            os.makedirs(self.output_dir, exist_ok=True)
+
         with self.profiler("construct_layer_wise_merged_model"):
             module = self.construct_layer_wise_merged_model(modelpool)
+            print_parameters(module)
 
         if not self.skip_training:
             module = self.train(module)
 
-        return module.merge_and_unload()
+        model = module.merge_and_unload()
+        return model
 
     @torch.no_grad()
     def construct_layer_wise_merged_model(self, modelpool: CausalLMPool):

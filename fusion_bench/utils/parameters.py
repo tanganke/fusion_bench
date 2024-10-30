@@ -155,6 +155,7 @@ def print_parameters(
     module: nn.Module,
     is_human_readable: bool = True,
     print_fn=print,
+    non_zero_only: bool = False,
 ):
     """
     Prints the number of trainable and total parameters in a PyTorch model.
@@ -162,11 +163,13 @@ def print_parameters(
     Args:
         module (nn.Module): The PyTorch model for which to print parameters.
         human_readable (bool, optional): If True, the parameter counts are converted to a human-readable format (e.g., '1.5M' instead of '1500000'). Defaults to True.
+        print_fn (Callable): Function used to print the message.
+        non_zero_only (bool, optional): If True, only non-zero elements are counted. If False, all elements are counted. Defaults to False.
 
     Prints:
         The number of trainable parameters, the total number of parameters, and the percentage of trainable parameters in the model.
     """
-    trainable_params, all_param = count_parameters(module)
+    trainable_params, all_param = count_parameters(module, non_zero_only=non_zero_only)
     trainable_ratio = 100 * trainable_params / all_param
     if is_human_readable:
         trainable_params = human_readable(trainable_params)
