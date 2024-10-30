@@ -115,9 +115,10 @@ class LayerWiseAdaMergingForLlamaSFT(
             merged_model_path = os.path.join(
                 self.output_dir, "checkpoints", "merged_model"
             )
-            modelpool.load_tokenizer().save_pretrained(merged_model_path)
-            model.save_pretrained(merged_model_path)
-            print_parameters(model)
+            if self.fabric.global_rank == 0:
+                modelpool.load_tokenizer().save_pretrained(merged_model_path)
+                model.save_pretrained(merged_model_path)
+                print_parameters(model)
         return model
 
     @torch.no_grad()
