@@ -13,20 +13,20 @@ average_attntion: true
 start_layer_idx: 0.3
 # learning rate
 optimizer: adam
-lr: 1e-4
+lr: 1e-3
 init_values: 0.5
 # if `clamp_weights` is true, the weights will be clamped to [0, 1]
 clamp_weights: false
 # arguments of `functional_call`
 tie_weights: true
 strict: false
-max_steps: 10
+max_steps: 1000
 fast_dev_run: ${fast_dev_run}
 # the path for saving the merging weights
 save_interval: 100
 save_merged_model: true
 
 dataloader_kwargs:
-  batch_size: 16
+  batch_size: 24
   num_workers: 0
   shuffle: true
