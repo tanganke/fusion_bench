@@ -1,8 +1,11 @@
 _target_: fusion_bench.method.adamerging.llama_adamerging.LayerWiseAdaMergingForLlamaSFT
 
+seed: 0
+output_dir: null
+# path to initialize the merging weights
 # this weights can be a list of float, or a string that points to a *.np, *.pt file containing the weights
 # if weights is specified, skip the test-time adaptation training
-weights: null
+init_weights_path: null
 # learning rate
 optimizer: adam
 lr: 1e-3
