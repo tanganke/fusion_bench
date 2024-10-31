@@ -144,18 +144,31 @@ class LayerWiseMergedModel(nn.Module):
         tie_weights: bool = False,
         strict: bool = True,
         sparsity_ratio: Optional[float] = None,
+        normalized_merging_weights: bool = False,
     ):
-        """
+        R"""
+        This class wraps a pretrained model and a list of finetuned models, and merges the weights of the finetuned models into the pretrained model using layer-wise fusion.
+
+        Reference:
+
+            (ICLR 2024) Yang E, Wang Z, Shen L, et al. Adamerging: Adaptive model merging for multi-task learning. https://arxiv.org/pdf/2310.02575
 
         Args:
+            layer_wise_weight (Tensor): A tensor of shape (num_models, num_layers) representing the weight of each layer for each model.
+            pretrained_model (nn.Module): The pretrained model to merge the weights into.
+            finetuned_models (List[nn.Module]): A list of finetuned models to merge the weights from. This should have the same architecture as the pretrained model. We use these models to compute the task vectors.
+            clamp_weights (bool, optional): If True, the layer-wise weights will be clamped to [0, 1]. Defaults to True.
+            tie_weights (bool, optional): This option passes the `tie_weights` argument to the `functional_call` function. Defaults to False.
+            strict (bool, optional): This option passes the `strict` argument to the `functional_call` function. Defaults to True.
             sparsity_ratio (float, optional): If `sparsity_ratio` is provided, the task vector will be pruned before merging. A high spasity level can save the memory usage during merging.
-
+            normalized_merging_weights (bool, optional): If True, the layer-wise weights will be normalized for each layer, so that the sum of weights across models for each layer is 1. Defaults to False.
         """
         super().__init__()
         self.clamp_weights = clamp_weights
         self.tie_weights = tie_weights
         self.strict = strict
         self.sparsity_ratio = sparsity_ratio
+        self.nromalized_merging_weights = normalized_merging_weights
 
         self.merge_weight = nn.Parameter(layer_wise_weight, requires_grad=True)
 
@@ -218,6 +231,9 @@ class LayerWiseMergedModel(nn.Module):
             layer_wise_weight = self.merge_weight.clamp(0, 1)
         else:
             layer_wise_weight = self.merge_weight
+        if self.nromalized_merging_weights:
+            # normalize the weights for each layer, so that the sum of weights across models for each layer is 1.
+            layer_wise_weight = layer_wise_weight.softmax(dim=0)
 
         state_dict = self.pretrained_model.state_dict(keep_vars=True)
         # shape of layer_wise_weight: (num_models, num_layers)
@@ -256,6 +272,12 @@ class LayerWiseMergedModel(nn.Module):
 
 
 def merge_weights(module: nn.Module):
+    """
+    Merges the weights for all `LayerWiseMergedModel` instances within the given module.
+
+    Args:
+        module (nn.Module): The module to process.
+    """
     if isinstance(module, LayerWiseMergedModel):
         module.merge_weights()
         return
@@ -265,6 +287,15 @@ def merge_weights(module: nn.Module):
 
 
 def merge_and_unload(module: nn.Module):
+    """
+    Merges and unloads all `LayerWiseMergedModel` instances within the given module.
+
+    Args:
+        module (nn.Module): The module to process.
+
+    Returns:
+        nn.Module: The updated module with merged weights.
+    """
     if isinstance(module, LayerWiseMergedModel):
         return module.merge_and_unload()
     else:
@@ -277,6 +308,16 @@ def merge_and_unload(module: nn.Module):
 
 
 def fix_other_parts(module: nn.Module):
+    """
+    Sets all parameters in the module to not require gradients, except for the merge weights
+    in `LayerWiseMergedModel` instances.
+
+    Args:
+        module (nn.Module): The module to process.
+
+    Returns:
+        nn.Module: The module with updated parameter requirements.
+    """
     module.requires_grad_(False)
     for submodule in module.modules():
         if isinstance(submodule, LayerWiseMergedModel):

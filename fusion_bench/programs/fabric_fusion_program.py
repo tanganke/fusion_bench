@@ -9,7 +9,7 @@ from torch import nn
 from tqdm.auto import tqdm
 
 import fusion_bench.utils.instantiate
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.mixins import LightningFabricMixin
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.programs import BaseHydraProgram
@@ -27,7 +27,7 @@ class FabricModelFusionProgram(
     LightningFabricMixin,
     BaseHydraProgram,
 ):
-    method: BaseModelFusionAlgorithm
+    method: BaseAlgorithm
     modelpool: BaseModelPool
     taskpool: Optional[BaseTaskPool] = None
 

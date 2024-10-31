@@ -17,6 +17,7 @@ lr: 1e-3
 init_values: 0.5
 # if `clamp_weights` is true, the weights will be clamped to [0, 1]
 clamp_weights: false
+normalized_merging_weights: true
 # arguments of `functional_call`
 tie_weights: true
 strict: false

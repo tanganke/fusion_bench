@@ -13,7 +13,7 @@ from transformers.data.data_collator import (
     default_data_collator,
 )
 
-from fusion_bench import BaseModelFusionAlgorithm
+from fusion_bench import BaseAlgorithm
 from fusion_bench.method.simple_average import simple_average
 from fusion_bench.mixins import LightningFabricMixin, SimpleProfilerMixin
 from fusion_bench.modelpool import CausalLMPool
@@ -33,7 +33,7 @@ log = logging.getLogger(__name__)
 
 
 class LayerWiseAdaMergingForLlamaSFT(
-    BaseModelFusionAlgorithm,
+    BaseAlgorithm,
     LightningFabricMixin,
     SimpleProfilerMixin,
 ):
@@ -46,24 +46,45 @@ class LayerWiseAdaMergingForLlamaSFT(
         output_dir: str,
         optimizer: str,
         lr: float,
-        sparsity_ratio: float,
+        sparsity_ratio: Optional[float],
         average_attntion: bool,
         start_layer_idx: Optional[Union[float, int]],
         init_values: float,
         init_weights_path: str,
         clamp_weights: bool,
+        normalized_merging_weights: bool,
         max_steps: int,
-        dataloader_kwargs: bool,
         tie_weights: bool,
         strict: bool,
+        dataloader_kwargs: bool,
         skip_training: bool = False,
         save_interval: int = None,
         save_merged_model: bool = True,
         **kwargs,
     ):
-        """
+        R"""
+        Layer-wise AdaMerging algorithm for Llama models.
+        Unlike the original AdaMerging algorithm that uses test-time adaptation training to optimize the entropy loss. This algorithm optimize the cross entropy loss.
+
         Args:
             seed (int): random seed to set at the begining of running.
+            output_dir (str): directory to save the merged model. If `None`, the log directory will be used.
+            optimizer (str): optimizer to use for training.
+            lr (float): learning rate for training.
+            sparsity_ratio (Optional[float]): ratio of zero weights in the task vectors. If `None`, no sparsity is enforced.
+            average_attntion (bool): whether to average attention weights.
+            start_layer_idx (Optional[Union[float, int]]): index of the layer to start merging.
+            init_values (float): initial value for the merging weights.
+            init_weights_path (str): path to the initial merging weights.
+            clamp_weights (bool): whether to clamp the merging weights.
+            normalized_merging_weights (bool): whether to normalize the merging weights.
+            max_steps (int): maximum number of training steps.
+            tie_weights (bool): whether to tie the weights of the same layer.
+            strict (bool): whether to enforce strict merging.
+            dataloader_kwargs (bool): keyword arguments for dataloaders.
+            skip_training (bool): whether to skip training.
+            save_interval (int): interval to save the merging weights. If `None`, no intermediate weights are saved. The weights are saved to `{output_dir}/checkpoints/merging-weights_{step_idx}.ckpt`.
+            save_merged_model (bool): whether to save the merged model. This will save the model to `{output_dir}/checkpoints/merged_model`.
         """
         self.seed = seed
         self.output_dir = output_dir
@@ -78,6 +99,7 @@ class LayerWiseAdaMergingForLlamaSFT(
         self.max_steps = max_steps
         self.tie_weights = tie_weights
         self.strict = strict
+        self.normalized_merging_weights = normalized_merging_weights
         self.dataloader_kwargs = dataloader_kwargs
         self.skip_training = skip_training
         self.save_interval = save_interval
@@ -85,6 +107,15 @@ class LayerWiseAdaMergingForLlamaSFT(
         super().__init__(**kwargs)
 
     def run(self, modelpool: CausalLMPool):
+        """
+        Run the algorithm.
+
+        Args:
+            modelpool (CausalLMPool): The pool of models to be merged.
+
+        Returns:
+            The merged model.
+        """
         self.modelpool = modelpool
         fabric = self.fabric
 
@@ -186,6 +217,7 @@ class LayerWiseAdaMergingForLlamaSFT(
                 tie_weights=self.tie_weights,
                 strict=self.strict,
                 sparsity_ratio=self.sparsity_ratio,
+                normalized_merging_weights=self.normalized_merging_weights,
             )
 
             pretrained_causal_lm.model.layers[layer_idx] = module
@@ -271,6 +303,10 @@ class LayerWiseAdaMergingForLlamaSFT(
     def save_state(self, step_idx: Union[int, str], causal_lm):
         """
         Save merging weights of each layers.
+
+        Args:
+            step_idx (Union[int, str]): step index of the training.
+            causal_lm (nn.Module): the model to save.
         """
         state = {}
         for layer_idx, layer in enumerate(causal_lm.model.layers):

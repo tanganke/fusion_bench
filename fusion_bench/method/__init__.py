@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from fusion_bench.utils.lazy_imports import LazyImporter
 
 _import_structure = {
-    "base_algorithm": ["BaseModelFusionAlgorithm"],
+    "base_algorithm": ["BaseModelFusionAlgorithm", "BaseAlgorithm"],
     "dummy": ["DummyAlgorithm"],
     # single task learning (fine-tuning)
     "classification": ["ImageClassificationFineTuningForCLIP"],
@@ -86,7 +86,7 @@ _import_structure = {
 if TYPE_CHECKING:
     from .ada_svd import AdaSVDMergingForCLIPVisionModel
     from .analysis import TaskVectorCosSimilarity
-    from .base_algorithm import BaseModelFusionAlgorithm
+    from .base_algorithm import BaseAlgorithm, BaseModelAlgorithm
     from .classification import ImageClassificationFineTuningForCLIP
     from .concrete_subspace import (
         ConcreteLayerWiseAdaMergingForCLIP,

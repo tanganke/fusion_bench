@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from torch import nn
 
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.models.wrappers.ensemble import (
     EnsembleModule,
@@ -16,7 +16,7 @@ from fusion_bench.models.wrappers.ensemble import (
 log = logging.getLogger(__name__)
 
 
-class SimpleEnsembleAlgorithm(BaseModelFusionAlgorithm):
+class SimpleEnsembleAlgorithm(BaseAlgorithm):
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool | List[nn.Module]):
         log.info(f"Running ensemble algorithm with {len(modelpool)} models")
@@ -26,9 +26,9 @@ class SimpleEnsembleAlgorithm(BaseModelFusionAlgorithm):
         return ensemble
 
 
-class WeightedEnsembleAlgorithm(BaseModelFusionAlgorithm):
+class WeightedEnsembleAlgorithm(BaseAlgorithm):
 
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+    _config_mapping = BaseAlgorithm._config_mapping | {
         "normalize": "normalize",
         "weights": "weights",
     }
@@ -58,7 +58,7 @@ class WeightedEnsembleAlgorithm(BaseModelFusionAlgorithm):
         return ensemble
 
 
-class MaxModelPredictorAlgorithm(BaseModelFusionAlgorithm):
+class MaxModelPredictorAlgorithm(BaseAlgorithm):
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool | List[nn.Module]):
         if not isinstance(modelpool, BaseModelPool):

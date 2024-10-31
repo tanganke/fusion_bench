@@ -5,7 +5,7 @@ from torch import Dict, nn
 from tqdm.auto import tqdm
 from transformers import LlamaForCausalLM, LlamaModel
 
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import CausalLMPool
 
@@ -73,7 +73,7 @@ def semistructured_magnitude_prune_(
     return model
 
 
-class RandomPruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
+class RandomPruningForLlama(BaseAlgorithm, SimpleProfilerMixin):
     """
     A class to perform random pruning for Llama models.
 
@@ -83,7 +83,7 @@ class RandomPruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
         n (int): The number of weights to be pruned in each group (for semistructured pruning).
         m (int): The total number of weights in each group (for semistructured pruning).
     """
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+    _config_mapping = BaseAlgorithm._config_mapping | {
         "prune_type": "prune_type",
         "sparsity_ratio": "sparsity_ratio",
         "n": "n",

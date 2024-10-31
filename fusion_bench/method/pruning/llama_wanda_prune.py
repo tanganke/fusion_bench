@@ -8,7 +8,7 @@ from torch import Tensor, nn
 from tqdm.auto import tqdm
 from transformers import LlamaForCausalLM
 
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.method.pruning.wanda_utils.data import get_loaders
 from fusion_bench.method.pruning.wanda_utils.prune import prepare_calibration_input
 from fusion_bench.mixins import SimpleProfilerMixin
@@ -89,12 +89,12 @@ class WandaHookFn(BaseLoSparseHookFn):
         self.scalar_row += torch.norm(inp, p=2, dim=1) ** 2 / self.nsamples
 
 
-class WandaPruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
+class WandaPruningForLlama(BaseAlgorithm, SimpleProfilerMixin):
     """
     Class for Wanda pruning for Llama models.
     """
 
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+    _config_mapping = BaseAlgorithm._config_mapping | {
         "nsamples": "nsamples",
         "seed": "seed",
         "use_variant": "use_variant",
