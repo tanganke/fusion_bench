@@ -19,6 +19,12 @@ __all__ = [
 # Model conversion utils
 
 
+def trainable_state_dict(module: nn.Module):
+    return {
+        name: param for name, param in module.named_parameters() if param.requires_grad
+    }
+
+
 def state_dict_to_vector(state_dict, remove_keys=[]):
     """
     Convert a state dictionary to a vector.

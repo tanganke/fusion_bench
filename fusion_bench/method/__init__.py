@@ -10,7 +10,7 @@ _import_structure = {
     # single task learning (fine-tuning)
     "classification": ["ImageClassificationFineTuningForCLIP"],
     # analysis
-    "analysis": ["TaskVectorCosSimilarity"],
+    "analysis": ["TaskVectorCosSimilarity", "TaskVectorViolinPlot"],
     # model ensemble methods
     "ensemble": [
         "SimpleEnsembleAlgorithm",
@@ -85,7 +85,7 @@ _import_structure = {
 
 if TYPE_CHECKING:
     from .ada_svd import AdaSVDMergingForCLIPVisionModel
-    from .analysis import TaskVectorCosSimilarity
+    from .analysis import TaskVectorCosSimilarity, TaskVectorViolinPlot
     from .base_algorithm import BaseAlgorithm, BaseModelFusionAlgorithm
     from .classification import ImageClassificationFineTuningForCLIP
     from .concrete_subspace import (
