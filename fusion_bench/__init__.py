@@ -13,7 +13,7 @@ from . import (
     tasks,
     utils,
 )
-from .method import BaseAlgorithm
+from .method import BaseAlgorithm, BaseModelFusionAlgorithm
 from .modelpool import BaseModelPool
 from .models import separate_io
 from .taskpool import BaseTaskPool

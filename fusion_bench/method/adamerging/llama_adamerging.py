@@ -19,10 +19,10 @@ from fusion_bench.mixins import LightningFabricMixin, SimpleProfilerMixin
 from fusion_bench.modelpool import CausalLMPool
 from fusion_bench.models.wrappers.layer_wise_fusion import (
     LayerWiseMergedModel,
+    fix_other_parts,
     get_layer_wise_weights,
     merge_and_unload,
     merge_weights,
-    fix_other_parts,
 )
 from fusion_bench.utils import instantiate
 from fusion_bench.utils.data import InfiniteDataLoader, load_tensor_from_file
@@ -136,7 +136,8 @@ class LayerWiseAdaMergingForLlamaSFT(
 
         with self.profile("construct_layer_wise_merged_model"):
             module = self.construct_layer_wise_merged_model(modelpool)
-            print_parameters(module)
+            if fabric.is_global_zero:
+                print_parameters(module)
 
         if not self.skip_training:
             module = self.train(module)
@@ -271,6 +272,8 @@ class LayerWiseAdaMergingForLlamaSFT(
 
         assert len(train_datasets) > 0, "No training datasets are provided."
         for step_idx in tqdm(range(self.max_steps)):
+            log_metrics = {}
+
             losses = []
             for dataset_name, dataloader in train_loader_iters.items():
                 # compute loss
@@ -284,6 +287,8 @@ class LayerWiseAdaMergingForLlamaSFT(
             else:
                 total_loss = losses[0]
 
+            log_metrics["train/loss"] = total_loss.item()
+
             fabric.backward(total_loss)
             optimizer.step()
             optimizer.zero_grad()
@@ -296,13 +301,15 @@ class LayerWiseAdaMergingForLlamaSFT(
 
             merge_weights(causal_lm)
 
+            self.fabric.log_dict(log_metrics, step=step_idx)
+
         self.save_state("latest", causal_lm)
 
         return causal_lm
 
     def save_state(self, step_idx: Union[int, str], causal_lm):
         """
-        Save merging weights of each layers.
+        Save merging weights of each layers. This method must be called at all processes.
 
         Args:
             step_idx (Union[int, str]): step index of the training.
@@ -313,9 +320,11 @@ class LayerWiseAdaMergingForLlamaSFT(
             if isinstance(layer, LayerWiseMergedModel):
                 state[f"layer_{layer_idx}"] = layer.merge_weight
 
-        os.makedirs(os.path.join(self.output_dir, "checkpoints"), exist_ok=True)
+        if self.fabric.is_global_zero:
+            os.makedirs(os.path.join(self.output_dir, "checkpoints"), exist_ok=True)
         save_path = os.path.join(
             self.output_dir, "checkpoints", f"merging-weights_{step_idx}.ckpt"
         )
-        log.info(f"Saving merging weights to {save_path}")
+        if self.fabric.is_global_zero:
+            log.info(f"Saving merging weights to {save_path}")
         self.fabric.save(save_path, state)

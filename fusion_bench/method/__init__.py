@@ -86,7 +86,7 @@ _import_structure = {
 if TYPE_CHECKING:
     from .ada_svd import AdaSVDMergingForCLIPVisionModel
     from .analysis import TaskVectorCosSimilarity
-    from .base_algorithm import BaseAlgorithm, BaseModelAlgorithm
+    from .base_algorithm import BaseAlgorithm, BaseModelFusionAlgorithm
     from .classification import ImageClassificationFineTuningForCLIP
     from .concrete_subspace import (
         ConcreteLayerWiseAdaMergingForCLIP,
