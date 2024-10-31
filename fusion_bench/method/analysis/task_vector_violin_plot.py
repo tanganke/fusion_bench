@@ -30,6 +30,7 @@ class TaskVectorViolinPlot(BaseAlgorithm, LightningFabricMixin, SimpleProfilerMi
     # config_mapping is a mapping from the attributes to the key in the configuration files
     _config_mapping = BaseAlgorithm._config_mapping | {
         "trainable_only": "trainable_only",
+        "max_points_per_model": "max_points_per_model",
         "fig_kwargs": "fig_kwargs",
         "_output_path": "output_path",
     }
@@ -37,6 +38,7 @@ class TaskVectorViolinPlot(BaseAlgorithm, LightningFabricMixin, SimpleProfilerMi
     def __init__(
         self,
         trainable_only: bool,
+        max_points_per_model: Optional[int] = 1000,
         fig_kwawrgs=None,
         output_path: Optional[str] = None,
         **kwargs,
@@ -72,6 +74,7 @@ class TaskVectorViolinPlot(BaseAlgorithm, LightningFabricMixin, SimpleProfilerMi
         """
         self.trainable_only = trainable_only
         self.fig_kwargs = fig_kwawrgs
+        self.max_points_per_model = max_points_per_model
         self._output_path = output_path
         super().__init__(**kwargs)
 
@@ -174,7 +177,20 @@ class TaskVectorViolinPlot(BaseAlgorithm, LightningFabricMixin, SimpleProfilerMi
             self.get_state_dict(pretrained_model),
         )
         task_vector = state_dict_to_vector(task_vector)
-        return task_vector.cpu().float().numpy()
+
+        task_vector = task_vector.cpu().float().numpy()
+        # downsample if necessary
+        if (
+            self.max_points_per_model is not None
+            and self.max_points_per_model > 0
+            and task_vector.shape[0] > self.max_points_per_model
+        ):
+            indices = np.random.choice(
+                task_vector.shape[0], self.max_points_per_model, replace=False
+            )
+            task_vector = task_vector[indices].copy()
+
+        return task_vector
 
     def get_state_dict(self, model: nn.Module):
         if self.trainable_only:
