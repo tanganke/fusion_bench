@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 from typing_extensions import override
 
-from fusion_bench import BaseModelFusionAlgorithm, BaseModelPool
+from fusion_bench import BaseAlgorithm, BaseModelPool
 from fusion_bench.dataset.clip_dataset import CLIPDataset
 from fusion_bench.mixins import CLIPClassificationMixin, SimpleProfilerMixin
 from fusion_bench.utils import first
@@ -34,7 +34,7 @@ def trainable_state_dict(module: nn.Module):
 
 
 class TaskArithmeticWithTrustRegionForCLIP(
-    BaseModelFusionAlgorithm,
+    BaseAlgorithm,
     SimpleProfilerMixin,
     CLIPClassificationMixin,
 ):

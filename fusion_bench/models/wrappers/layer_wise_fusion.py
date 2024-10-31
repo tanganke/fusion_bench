@@ -60,7 +60,12 @@ def get_attr(obj, names: List[str]):
         return get_attr(getattr(obj, names[0]), names[1:])
 
 
-def get_layer_wise_weights(num_models: int, num_layers: int, init_values: float = None):
+def get_layer_wise_weights(
+    num_models: int,
+    num_layers: int,
+    init_values: float = None,
+    dtype: torch.dtype = torch.float32,
+):
     """
     Return a tensor of layer-wise weights for the given number of models and layers.
 
@@ -68,6 +73,7 @@ def get_layer_wise_weights(num_models: int, num_layers: int, init_values: float 
         num_models (int): The number of models to fuse.
         num_layers (int): The number of layers in each model.
         init_values (float, optional): The initial value for each weight. Defaults to 1.0 / num_models.
+        dtype (torch.dtype): dtype of weights. This should be the same with model dtype.
 
     Returns:
         Tensor: A tensor of shape (num_models, num_layers) containing the layer-wise weights.
@@ -76,7 +82,7 @@ def get_layer_wise_weights(num_models: int, num_layers: int, init_values: float 
     assert num_layers >= 1, f"num_layers must be >= 1, got {num_layers}"
     if init_values is None:
         init_values = 1.0 / num_models
-    return torch.full((num_models, num_layers), init_values, dtype=torch.float32)
+    return torch.full((num_models, num_layers), init_values, dtype=dtype)
 
 
 def _fuse_weights(layer_wise_weight: Tensor, tensors: List[Tensor]):
@@ -137,11 +143,32 @@ class LayerWiseMergedModel(nn.Module):
         clamp_weights: bool = True,
         tie_weights: bool = False,
         strict: bool = True,
+        sparsity_ratio: Optional[float] = None,
+        normalized_merging_weights: bool = False,
     ):
+        R"""
+        This class wraps a pretrained model and a list of finetuned models, and merges the weights of the finetuned models into the pretrained model using layer-wise fusion.
+
+        Reference:
+
+            (ICLR 2024) Yang E, Wang Z, Shen L, et al. Adamerging: Adaptive model merging for multi-task learning. https://arxiv.org/pdf/2310.02575
+
+        Args:
+            layer_wise_weight (Tensor): A tensor of shape (num_models, num_layers) representing the weight of each layer for each model.
+            pretrained_model (nn.Module): The pretrained model to merge the weights into.
+            finetuned_models (List[nn.Module]): A list of finetuned models to merge the weights from. This should have the same architecture as the pretrained model. We use these models to compute the task vectors.
+            clamp_weights (bool, optional): If True, the layer-wise weights will be clamped to [0, 1]. Defaults to True.
+            tie_weights (bool, optional): This option passes the `tie_weights` argument to the `functional_call` function. Defaults to False.
+            strict (bool, optional): This option passes the `strict` argument to the `functional_call` function. Defaults to True.
+            sparsity_ratio (float, optional): If `sparsity_ratio` is provided, the task vector will be pruned before merging. A high spasity level can save the memory usage during merging.
+            normalized_merging_weights (bool, optional): If True, the layer-wise weights will be normalized for each layer, so that the sum of weights across models for each layer is 1. Defaults to False.
+        """
         super().__init__()
         self.clamp_weights = clamp_weights
         self.tie_weights = tie_weights
         self.strict = strict
+        self.sparsity_ratio = sparsity_ratio
+        self.nromalized_merging_weights = normalized_merging_weights
 
         self.merge_weight = nn.Parameter(layer_wise_weight, requires_grad=True)
 
@@ -154,10 +181,31 @@ class LayerWiseMergedModel(nn.Module):
                     get_attr(m, name.split(".")).data = (
                         get_attr(m, name.split(".")) - param
                     )
+
         self.pretrained_model = pretrained_model.requires_grad_(False)
         for m in finetuned_models:
             m.requires_grad_(False)
+
         self.task_vectors = nn.ModuleList(finetuned_models)
+
+        # if `sparisty_ratio` is given, pruning the task vectors.
+        if sparsity_ratio is not None:
+            from fusion_bench.method.pruning.prune_utils import (
+                unstructured_magnitude_prune_,
+            )
+
+            for name, param in self.task_vectors.named_parameters():
+                if param.dim() != 2:
+                    continue
+                print(f"pruning {name}")
+                pruned_param = unstructured_magnitude_prune_(
+                    param.data.clone(), torch.abs, sparsity_ratio=sparsity_ratio
+                )
+                set_attr(
+                    self.task_vectors,
+                    name.split("."),
+                    nn.Parameter(pruned_param.to_sparse(), requires_grad=False),
+                )
 
     @property
     def forward_model(self):
@@ -183,6 +231,9 @@ class LayerWiseMergedModel(nn.Module):
             layer_wise_weight = self.merge_weight.clamp(0, 1)
         else:
             layer_wise_weight = self.merge_weight
+        if self.nromalized_merging_weights:
+            # normalize the weights for each layer, so that the sum of weights across models for each layer is 1.
+            layer_wise_weight = layer_wise_weight.softmax(dim=0)
 
         state_dict = self.pretrained_model.state_dict(keep_vars=True)
         # shape of layer_wise_weight: (num_models, num_layers)
@@ -218,3 +269,57 @@ class LayerWiseMergedModel(nn.Module):
     #         super().__setattr__(name, value)
     #     except AttributeError:
     #         setattr(self.model, name, value)
+
+
+def merge_weights(module: nn.Module):
+    """
+    Merges the weights for all `LayerWiseMergedModel` instances within the given module.
+
+    Args:
+        module (nn.Module): The module to process.
+    """
+    if isinstance(module, LayerWiseMergedModel):
+        module.merge_weights()
+        return
+    else:
+        for submodule in module.children():
+            merge_weights(submodule)
+
+
+def merge_and_unload(module: nn.Module):
+    """
+    Merges and unloads all `LayerWiseMergedModel` instances within the given module.
+
+    Args:
+        module (nn.Module): The module to process.
+
+    Returns:
+        nn.Module: The updated module with merged weights.
+    """
+    if isinstance(module, LayerWiseMergedModel):
+        return module.merge_and_unload()
+    else:
+        for name, submodule in module.named_children():
+            need_merge = isinstance(submodule, LayerWiseMergedModel)
+            submodule = merge_and_unload(submodule)
+            if need_merge:
+                setattr(module, name, submodule)
+        return module
+
+
+def fix_other_parts(module: nn.Module):
+    """
+    Sets all parameters in the module to not require gradients, except for the merge weights
+    in `LayerWiseMergedModel` instances.
+
+    Args:
+        module (nn.Module): The module to process.
+
+    Returns:
+        nn.Module: The module with updated parameter requirements.
+    """
+    module.requires_grad_(False)
+    for submodule in module.modules():
+        if isinstance(submodule, LayerWiseMergedModel):
+            submodule.merge_weight.requires_grad_(True)
+    return module

@@ -1,6 +1,6 @@
 import logging
 
-from fusion_bench import BaseModelFusionAlgorithm, BaseModelPool
+from fusion_bench import BaseAlgorithm, BaseModelPool
 from fusion_bench.utils.state_dict_arithmetic import state_dict_add, state_dict_mul
 
 from .utils import module_random_drop_, trainable_state_dict
@@ -8,7 +8,7 @@ from .utils import module_random_drop_, trainable_state_dict
 log = logging.getLogger(__name__)
 
 
-class DareSimpleAverage(BaseModelFusionAlgorithm):
+class DareSimpleAverage(BaseAlgorithm):
 
     def __init__(
         self,

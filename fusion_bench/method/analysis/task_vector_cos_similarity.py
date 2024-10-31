@@ -2,17 +2,17 @@ import pandas as pd
 import torch
 import torch.utils
 
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.modelpool import BaseModelPool
 
 
-class TaskVectorCosSimilarity(BaseModelFusionAlgorithm):
+class TaskVectorCosSimilarity(BaseAlgorithm):
     """
     This class is similar to the Dummy algorithm,
     but it also print (or save) the cosine similarity matrix between the task vectors of the models in the model pool.
     """
 
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+    _config_mapping = BaseAlgorithm._config_mapping | {
         "csv_save_path": "csv_save_path",
         "plot_heatmap": "plot_heatmap",
     }

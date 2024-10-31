@@ -12,7 +12,6 @@ license = { file = 'LICENSE' }
 requires-python = ">= 3.10"
 dependencies = [
     "hydra-core",
-    "torch>=2.0.0",
     "lightning",
     "transformers",
     "datasets",

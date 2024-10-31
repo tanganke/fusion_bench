@@ -9,7 +9,7 @@ from torch import nn
 from tqdm.auto import tqdm
 
 import fusion_bench.utils.instantiate
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.mixins import LightningFabricMixin
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.programs import BaseHydraProgram
@@ -18,6 +18,7 @@ from fusion_bench.utils import import_object, instantiate, timeit_context
 from fusion_bench.utils.hydra_utils import get_hydra_output_dir
 from fusion_bench.utils.json import print_json
 from fusion_bench.utils.rich_utils import print_bordered, print_config_tree
+from lightning.fabric.utilities.rank_zero import rank_zero_only
 
 log = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ class FabricModelFusionProgram(
     LightningFabricMixin,
     BaseHydraProgram,
 ):
-    method: BaseModelFusionAlgorithm
+    method: BaseAlgorithm
     modelpool: BaseModelPool
     taskpool: Optional[BaseTaskPool] = None
 
@@ -204,10 +205,11 @@ class FabricModelFusionProgram(
         """
         Executes the model fusion program.
         """
+        fabric = self.fabric
         if self.seed is not None:
             L.seed_everything(self.seed)
-
-        self._link_hydra_output()
+        if fabric.global_rank == 0:
+            self._link_hydra_output()
 
         log.info("Running the model fusion program.")
         # setup the modelpool, method, and taskpool
@@ -241,6 +243,7 @@ class FabricModelFusionProgram(
         else:
             print("No task pool specified. Skipping evaluation.")
 
+    @rank_zero_only
     def _link_hydra_output(self):
         """
         Creates a symbolic link to the Hydra output directory within the specified log directory.

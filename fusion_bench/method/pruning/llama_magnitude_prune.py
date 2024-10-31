@@ -5,7 +5,7 @@ from torch import Dict, nn
 from tqdm.auto import tqdm
 from transformers import LlamaForCausalLM, LlamaModel
 
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import CausalLMPool
 from fusion_bench.utils.dtype import parse_dtype
@@ -126,7 +126,7 @@ def semistructured_magnitude_prune_(
     return model
 
 
-class MagnitudePruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
+class MagnitudePruningForLlama(BaseAlgorithm, SimpleProfilerMixin):
     """
     Implements magnitude-based pruning for LLama models.
 
@@ -138,7 +138,7 @@ class MagnitudePruningForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
             Executes the pruning process on the model pool and returns the pruned model.
     """
 
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+    _config_mapping = BaseAlgorithm._config_mapping | {
         "prune_type": "prune_type",
         "device": "device",
         "dtype": "dtype",
