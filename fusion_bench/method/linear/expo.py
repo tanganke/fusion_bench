@@ -34,6 +34,15 @@ class ExPOAlgorithm(BaseModelFusionAlgorithm):
         super().__init__(**kwargs)
 
     def run(self, modelpool: BaseModelPool):
+        """
+        Run the ExPO merge algorithm.
+
+        Args:
+            modelpool (BaseModelPool): The pool of models to merge.
+
+        Returns:
+            nn.Module: The merged model.
+        """
         if not isinstance(modelpool, BaseModelPool):
             modelpool = BaseModelPool(modelpool)
 
