@@ -1,6 +1,7 @@
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
+import numpy as np
 from datasets import Dataset
 from transformers import PreTrainedTokenizer
 
@@ -11,6 +12,7 @@ def tokenize_sharegpt_dataset(
     dataset: Dataset,
     tokenizer: PreTrainedTokenizer,
     max_length: int = 2048,
+    padding: bool = True,
     system_template: str = "### System: {system}\n\n",
     tools_template: str = "### Tools: {tools}\n\n",
     human_template: str = "### Human: {message}\n",
@@ -22,15 +24,16 @@ def tokenize_sharegpt_dataset(
     Tokenize ShareGPT format dataset with support for system prompts, tools, and tool calls.
 
     Args:
-        dataset: Input dataset in ShareGPT format
-        tokenizer: The tokenizer to use
-        max_length: Maximum sequence length
-        system_template: Template for system messages
-        tools_template: Template for tool descriptions
-        human_template: Template for human messages
-        assistant_template: Template for assistant responses
-        function_template: Template for function calls
-        observation_template: Template for function observations
+        dataset: Input dataset in ShareGPT format.
+        tokenizer: The tokenizer to use.
+        max_length: Maximum sequence length.
+        padding: Whether to pad the tokenized inputs to `max_length`.
+        system_template: Template for system messages.
+        tools_template: Template for tool descriptions.
+        human_template: Template for human messages.
+        assistant_template: Template for assistant responses.
+        function_template: Template for function calls.
+        observation_template: Template for function observations.
 
     Returns:
         Tokenized dataset
@@ -114,11 +117,12 @@ def tokenize_sharegpt_dataset(
             labels = labels[:max_length]
 
         # Pad if necessary
-        padding_length = max_length - len(input_ids)
-        if padding_length > 0:
-            input_ids.extend([tokenizer.pad_token_id] * padding_length)
-            attention_mask.extend([0] * padding_length)
-            labels.extend([-100] * padding_length)
+        if padding:
+            padding_length = max_length - len(input_ids)
+            if padding_length > 0:
+                input_ids.extend([tokenizer.pad_token_id] * padding_length)
+                attention_mask.extend([0] * padding_length)
+                labels.extend([-100] * padding_length)
 
         return {
             "input_ids": input_ids,
