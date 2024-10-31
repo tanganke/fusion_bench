@@ -112,7 +112,18 @@ class TaskWiseAdaMergingAlgorithm(ModelFusionAlgorithm):
         pass
 
     @abstractmethod
-    def compute_logits(self, module, batch, task) -> Tensor:
+    def compute_logits(self, module: nn.Module, batch, task: str) -> Tensor:
+        """
+        Compute the logits for the given batch and task.
+
+        Args:
+            module (nn.Module): The model module.
+            batch (tuple): A batch of input data.
+            task (str): The name of the task.
+
+        Returns:
+            Tensor: The classification logits for the batch.
+        """
         pass
 
     def test_time_adaptation(self, module: TaskWiseMergedModel):

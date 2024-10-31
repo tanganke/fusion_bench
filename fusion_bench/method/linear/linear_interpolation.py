@@ -39,7 +39,7 @@ class LinearInterpolationAlgorithm(BaseModelFusionAlgorithm):
         and returns a model with the interpolated state dict.
 
         Args:
-            modelpool (BaseModelPool): The pool of models to interpolate.
+            modelpool (BaseModelPool): The pool of models to interpolate. Must contain exactly two models.
 
         Returns:
             nn.Module: The model with the interpolated state dict.

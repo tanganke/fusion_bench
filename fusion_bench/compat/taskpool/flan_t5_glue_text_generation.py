@@ -149,6 +149,15 @@ class FlanT5GLUETextGenerationTaskPool(LightningFabricMixin, TaskPool):
             raise ValueError(f"Unknown task {task_config.name}")
 
     def evaluate(self, model: T5ForConditionalGeneration):
+        """
+        Evaluate the model on the FlanT5 GLUE text generation tasks.
+
+        Args:
+            model (T5ForConditionalGeneration): The model to evaluate.
+
+        Returns:
+            dict: A dictionary containing the evaluation results for each task.
+        """
         if not isinstance(model, T5ForConditionalGeneration):
             log.warning(
                 f"Model is not an instance of T5ForConditionalGeneration, but {type(model)}"

@@ -19,6 +19,15 @@ log = logging.getLogger(__name__)
 class SimpleEnsembleAlgorithm(BaseModelFusionAlgorithm):
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool | List[nn.Module]):
+        """
+        Run the simple ensemble algorithm on the given model pool.
+
+        Args:
+            modelpool (BaseModelPool | List[nn.Module]): The pool of models to ensemble.
+
+        Returns:
+            EnsembleModule: The ensembled model.
+        """
         log.info(f"Running ensemble algorithm with {len(modelpool)} models")
 
         models = [modelpool.load_model(m) for m in modelpool.model_names]
@@ -40,6 +49,15 @@ class WeightedEnsembleAlgorithm(BaseModelFusionAlgorithm):
 
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool | List[nn.Module]):
+        """
+        Run the weighted ensemble algorithm on the given model pool.
+
+        Args:
+            modelpool (BaseModelPool | List[nn.Module]): The pool of models to ensemble.
+
+        Returns:
+            WeightedEnsembleModule: The weighted ensembled model.
+        """
         if not isinstance(modelpool, BaseModelPool):
             modelpool = BaseModelPool(models=modelpool)
 
@@ -61,6 +79,15 @@ class WeightedEnsembleAlgorithm(BaseModelFusionAlgorithm):
 class MaxModelPredictorAlgorithm(BaseModelFusionAlgorithm):
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool | List[nn.Module]):
+        """
+        Run the max model predictor algorithm on the given model pool.
+
+        Args:
+            modelpool (BaseModelPool | List[nn.Module]): The pool of models to ensemble.
+
+        Returns:
+            MaxModelPredictor: The max model predictor ensembled model.
+        """
         if not isinstance(modelpool, BaseModelPool):
             modelpool = BaseModelPool(models=modelpool)
 
