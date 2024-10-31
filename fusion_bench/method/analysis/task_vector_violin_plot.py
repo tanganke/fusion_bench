@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Dict, List, Optional, cast
 
@@ -19,6 +20,8 @@ from fusion_bench.utils.parameters import (
     trainable_state_dict,
 )
 from fusion_bench.utils.state_dict_arithmetic import state_dict_sub
+
+log = logging.getLogger(__name__)
 
 
 class TaskVectorViolinPlot(BaseAlgorithm, LightningFabricMixin, SimpleProfilerMixin):
@@ -185,6 +188,9 @@ class TaskVectorViolinPlot(BaseAlgorithm, LightningFabricMixin, SimpleProfilerMi
             and self.max_points_per_model > 0
             and task_vector.shape[0] > self.max_points_per_model
         ):
+            log.info(
+                f"Downsampling task vectors to {self.max_points_per_model} points."
+            )
             indices = np.random.choice(
                 task_vector.shape[0], self.max_points_per_model, replace=False
             )
