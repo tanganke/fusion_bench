@@ -5,7 +5,7 @@ import torch
 from torch import Tensor, nn
 
 from fusion_bench.compat.modelpool import to_modelpool
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.utils.type import StateDictType
 
@@ -14,7 +14,7 @@ from .ties_merging_utils import state_dict_to_vector, ties_merging, vector_to_st
 log = logging.getLogger(__name__)
 
 
-class TiesMergingAlgorithm(BaseModelFusionAlgorithm):
+class TiesMergingAlgorithm(BaseAlgorithm):
     """
     TiesMergingAlgorithm is a class for fusing multiple models using the TIES merging technique.
 
@@ -25,7 +25,7 @@ class TiesMergingAlgorithm(BaseModelFusionAlgorithm):
         merge_func (Literal["sum", "mean", "max"]): The merge function to use for disjoint merging.
     """
 
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+    _config_mapping = BaseAlgorithm._config_mapping | {
         "scaling_factor": "scaling_factor",
         "threshold": "threshold",
         "remove_keys": "remove_keys",

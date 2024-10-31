@@ -13,7 +13,7 @@ from transformers.data.data_collator import (
     default_data_collator,
 )
 
-from fusion_bench import BaseModelFusionAlgorithm
+from fusion_bench import BaseAlgorithm
 from fusion_bench.method.simple_average import simple_average
 from fusion_bench.mixins import LightningFabricMixin, SimpleProfilerMixin
 from fusion_bench.modelpool import CausalLMPool
@@ -33,7 +33,7 @@ log = logging.getLogger(__name__)
 
 
 class LayerWiseAdaMergingForLlamaSFT(
-    BaseModelFusionAlgorithm,
+    BaseAlgorithm,
     LightningFabricMixin,
     SimpleProfilerMixin,
 ):

@@ -7,7 +7,7 @@ import torch
 from torch import Tensor, nn
 from tqdm.auto import tqdm
 
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
 
@@ -50,7 +50,7 @@ def _is_name_matched(name: str, extract_names: List[str]):
 
 
 class MagnitudeDiffPruningAlgorithm(
-    BaseModelFusionAlgorithm,
+    BaseAlgorithm,
     SimpleProfilerMixin,
 ):
     """
@@ -67,7 +67,7 @@ class MagnitudeDiffPruningAlgorithm(
             Prunes the difference between the pretrained and fine-tuned model parameters.
     """
 
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+    _config_mapping = BaseAlgorithm._config_mapping | {
         "prune_ratio": "prune_ratio",
         "extract_names": "extract_names",
     }

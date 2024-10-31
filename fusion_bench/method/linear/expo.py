@@ -5,7 +5,7 @@ Reference:
 - Zheng et al. Weak-to-Strong Extrapolation Expedites Alignment.
 """
 
-from fusion_bench import BaseModelFusionAlgorithm, BaseModelPool
+from fusion_bench import BaseAlgorithm, BaseModelPool
 from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_add,
     state_dict_mul,
@@ -13,7 +13,7 @@ from fusion_bench.utils.state_dict_arithmetic import (
 )
 
 
-class ExPOAlgorithm(BaseModelFusionAlgorithm):
+class ExPOAlgorithm(BaseAlgorithm):
     R"""
     ExPO merge algorithm.
 
@@ -25,7 +25,7 @@ class ExPOAlgorithm(BaseModelFusionAlgorithm):
     $\theta_{pre}$ is the pretrained model (base model), and $\alpha$ is the extrapolation factor.
     """
 
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+    _config_mapping = BaseAlgorithm._config_mapping | {
         "extrapolation_factor": "extrapolation_factor"
     }
 

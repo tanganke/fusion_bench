@@ -6,13 +6,13 @@ import logging
 
 from torch import nn
 
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.modelpool import BaseModelPool
 
 log = logging.getLogger(__name__)
 
 
-class DummyAlgorithm(BaseModelFusionAlgorithm):
+class DummyAlgorithm(BaseAlgorithm):
     def run(self, modelpool: BaseModelPool):
         """
         This method returns the pretrained model from the model pool.

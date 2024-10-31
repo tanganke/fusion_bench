@@ -1,7 +1,7 @@
 import torch
 from torch import Tensor, nn
 
-from fusion_bench import BaseModelFusionAlgorithm, BaseModelPool
+from fusion_bench import BaseAlgorithm, BaseModelPool
 from fusion_bench.utils.state_dict_arithmetic import state_dict_sum
 
 from .utils import (
@@ -11,7 +11,7 @@ from .utils import (
 )
 
 
-class DareTaskArithmetic(BaseModelFusionAlgorithm):
+class DareTaskArithmetic(BaseAlgorithm):
     """
     Implementation of Task Arithmetic w/ DARE.
 

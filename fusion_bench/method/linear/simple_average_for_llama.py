@@ -3,12 +3,12 @@ from typing import Optional
 from typing_extensions import override
 
 from fusion_bench import timeit_context
-from fusion_bench.method.base_algorithm import BaseModelFusionAlgorithm
+from fusion_bench.method.base_algorithm import BaseAlgorithm
 from fusion_bench.method.simple_average import SimpleAverageAlgorithm
 from fusion_bench.modelpool import CausalLMBackbonePool, CausalLMPool
 
 
-class SimpleAverageForLlama(BaseModelFusionAlgorithm):
+class SimpleAverageForLlama(BaseAlgorithm):
     R"""
     A simple averaging algorithm for LLama models. If `merge_backbone` is set to `True`, the backbone of the model will be averaged and the rest of the model will be loaded from the pre-trained model.
 
@@ -24,7 +24,7 @@ class SimpleAverageForLlama(BaseModelFusionAlgorithm):
         ```
     """
 
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+    _config_mapping = BaseAlgorithm._config_mapping | {
         "merge_backbone": "merge_backbone",
     }
 

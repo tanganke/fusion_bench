@@ -1,7 +1,7 @@
-from fusion_bench import BaseModelFusionAlgorithm
+from fusion_bench import BaseAlgorithm
 from fusion_bench.modelpool import CausalLMPool
 
 
-class CausalLMPretrain(BaseModelFusionAlgorithm):
+class CausalLMPretrain(BaseAlgorithm):
     def run(self, modelpool: CausalLMPool):
         tokenizer = modelpool.load_tokenizer()

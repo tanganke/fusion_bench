@@ -5,7 +5,7 @@ from typing import Dict, List, Mapping, Optional, Union
 import torch
 from torch import nn
 
-from fusion_bench.method.base_algorithm import BaseModelFusionAlgorithm
+from fusion_bench.method.base_algorithm import BaseAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.utils.state_dict_arithmetic import (
@@ -22,13 +22,14 @@ def simple_average(
     modules: List[Union[nn.Module, StateDictType]],
     base_module: Optional[nn.Module] = None,
 ):
-    """
+    R"""
     Averages the parameters of a list of PyTorch modules or state dictionaries.
 
     This function takes a list of PyTorch modules or state dictionaries and returns a new module with the averaged parameters, or a new state dictionary with the averaged parameters.
 
     Args:
         modules (List[Union[nn.Module, StateDictType]]): A list of PyTorch modules or state dictionaries.
+        base_module (Optional[nn.Module]): A base module to use for the new module. If provided, the averaged parameters will be loaded into this module. If not provided, a new module will be created by copying the first module in the list.
 
     Returns:
         module_or_state_dict (Union[nn.Module, StateDictType]): A new PyTorch module with the averaged parameters, or a new state dictionary with the averaged parameters.
@@ -56,7 +57,7 @@ def simple_average(
 
 
 class SimpleAverageAlgorithm(
-    BaseModelFusionAlgorithm,
+    BaseAlgorithm,
     SimpleProfilerMixin,
 ):
     @torch.no_grad()

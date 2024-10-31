@@ -17,7 +17,7 @@ from transformers import (
 )
 
 from fusion_bench.dataset.clip_dataset import CLIPDataset
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.method.adamerging.entropy_loss import entropy_loss
 from fusion_bench.mixins import CLIPClassificationMixin
 from fusion_bench.modelpool import CLIPVisionModelPool
@@ -70,7 +70,7 @@ def raw_image_collate_fn(batch):
 
 
 class DataAdaptiveWeightEnsemblingForCLIP(
-    BaseModelFusionAlgorithm,
+    BaseAlgorithm,
     CLIPClassificationMixin,
 ):
     modelpool: CLIPVisionModelPool
