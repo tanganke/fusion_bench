@@ -1,3 +1,5 @@
+<div align='center'>
+
 # FusionBench: A Comprehensive Benchmark/ToolKit of Deep Model Fusion
 
 [![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](http://arxiv.org/abs/2406.03280)
@@ -8,10 +10,10 @@
 [![Static Badge](https://img.shields.io/badge/code%20style-black-black)](https://github.com/psf/black)
 [![Static Badge](https://img.shields.io/badge/code%20style-yamlfmt-black)](https://github.com/google/yamlfmt)
 
+</div>
 
 > [!TIP]  
 > Documentation is available at [tanganke.github.io/fusion_bench/](https://tanganke.github.io/fusion_bench/).
-
 
 ## Overview
 
@@ -149,6 +151,16 @@ fusion_bench \
   method.hyperparam_2=and_this \
   ... # other configurations
 ```
+
+### :rocket: Quick Start for Experienced Users
+
+We provide a project template for quickly starting a new fusion algorithm implementation here: [FusionBench Project Template]().
+
+<div align='center'>
+
+Click on [<kbd>Use this template</kbd>](https://github.com/fusion-bench/fusion-bench-project-template/generate) to initialize new repository.
+
+</div>
 
 ### FusionBench Command Generator WebUI (for v0.1.x)
 
