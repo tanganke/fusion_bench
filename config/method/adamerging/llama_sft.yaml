@@ -13,7 +13,7 @@ average_attntion: true
 start_layer_idx: 0.3
 # learning rate
 optimizer: adam
-lr: 1e-3
+lr: 1e-4
 init_values: 0.5
 # if `clamp_weights` is true, the weights will be clamped to [0, 1]
 clamp_weights: false
