@@ -8,11 +8,13 @@ from fusion_bench import BaseTaskPool
 from fusion_bench.taskpool.dummy import get_model_summary
 from fusion_bench.utils.devices import get_device
 from fusion_bench.utils.rich_utils import print_bordered
+import logging
 
 if TYPE_CHECKING:
     from transformers import LlamaForCausalLM, PreTrainedTokenizer
 
     from fusion_bench.modelpool import CausalLMPool
+log = logging.getLogger(__name__)
 
 
 def generate_text(
@@ -99,15 +101,25 @@ class LlamaTestGenerationTaskPool(BaseTaskPool):
         self.iterative_mode = iterative_mode
         super().__init__(**kwargs)
 
-    def evaluate(self, model: Union["LlamaForCausalLM", Any]):
-        modelpool: "CausalLMPool" = self._program.modelpool
-        tokenizer = modelpool.load_tokenizer()
+    def evaluate(
+        self,
+        model: Union["LlamaForCausalLM", Any],
+        tokenizer: Optional["PreTrainedTokenizer"] = None,
+    ):
+        if tokenizer is None:
+            if self._program is None:
+                log.error(
+                    "`_program` is not set. This is probably happening when you are not runing the program via `fusion_bench` CLI."
+                    "Please pass `tokenizer` to this function."
+                )
+            modelpool: "CausalLMPool" = self._program.modelpool
+            tokenizer = modelpool.load_tokenizer()
 
         report = get_model_summary(model)
         if self.test_prompts is not None:
             for prompt_idx, prompt in enumerate(self.test_prompts):
-                print(f"=== Generating text {prompt_idx}/{len(self.test_prompts)}")
-                report[f"prompt_{prompt_idx}"] = self._generate_text(
+                print(f"=== Generating text {prompt_idx+1}/{len(self.test_prompts)}")
+                report[f"conversation_{prompt_idx+1}"] = self._generate_text(
                     model, tokenizer, prompt
                 )
 
@@ -117,11 +129,11 @@ class LlamaTestGenerationTaskPool(BaseTaskPool):
                 # print usage instructions
                 print("Enter a prompt to generate text. Type 'exit' to exit the loop.")
                 prompt = input(
-                    f"Enter a prompt, or type 'exit' to quit ({prompt_idx}): "
+                    f"Enter a prompt, or type 'exit' to quit ({prompt_idx+1}): "
                 )
                 if prompt == "exit":
                     break
-                report[f"iterative_{prompt_idx}"] = self._generate_text(
+                report[f"iterative_conversation_{prompt_idx+1}"] = self._generate_text(
                     model, tokenizer, prompt
                 )
 
