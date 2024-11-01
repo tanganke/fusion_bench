@@ -294,11 +294,11 @@ class CLIPVisionModelTaskPool(
         ]
         if len(accuracies) > 0:
             average_accuracy = sum(accuracies) / len(accuracies)
-            report["accuracy"] = average_accuracy
+            report["average"]["accuracy"] = average_accuracy
         losses = [value["loss"] for key, value in report.items() if "loss" in value]
         if len(losses) > 0:
             average_loss = sum(losses) / len(losses)
-            report["loss"] = average_loss
+            report["average"]["loss"] = average_loss
 
         log.info(f"Evaluation Result: {report}")
         if self.fabric.is_global_zero and len(self.fabric._loggers) > 0:
