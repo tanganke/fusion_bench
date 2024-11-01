@@ -154,7 +154,7 @@ fusion_bench \
 
 ### :rocket: Quick Start for Experienced Users
 
-We provide a project template for quickly starting a new fusion algorithm implementation here: [FusionBench Project Template]().
+We provide a project template for quickly starting a new fusion algorithm implementation here: [FusionBench Project Template](https://github.com/fusion-bench/fusion-bench-project-template).
 
 <div align='center'>
 
