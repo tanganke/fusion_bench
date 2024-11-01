@@ -1,18 +1,27 @@
-from typing import Any, Dict, List, Union, cast
+import time
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, cast
 
 import torch
-from transformers import LlamaForCausalLM, PreTrainedTokenizer
 
 from fusion_bench import BaseTaskPool
+from fusion_bench.mixins import LightningFabricMixin
+from fusion_bench.taskpool.dummy import get_model_summary
 from fusion_bench.utils.devices import get_device
+from fusion_bench.utils.rich_utils import print_bordered
+
+if TYPE_CHECKING:
+    from transformers import LlamaForCausalLM, PreTrainedTokenizer
+
+    from fusion_bench.modelpool import CausalLMPool
+    from fusion_bench.programs import FabricModelFusionProgram
 
 
 def generate_text(
-    model: LlamaForCausalLM,
-    tokenizer: PreTrainedTokenizer,
-    prompt,
-    max_length=1024,
-    temperature=0.01,
+    model: "LlamaForCausalLM",
+    tokenizer: "PreTrainedTokenizer",
+    prompt: str,
+    max_length: int = 1024,
+    temperature: float = 0.01,
     top_p=0.9,
     device: torch.device = None,
 ):
@@ -53,15 +62,109 @@ def generate_text(
 
     # Decode and return the generated text
     generated_text = tokenizer.decode(outputs[0], skip_special_tokens=False)
-    return generated_text
+    return {
+        "generated_text": generated_text,
+        "response": generate_text[len(prompt) :],
+        "num_tokens": len(outputs[0]) - len(inputs["input_ids"]),
+    }
 
 
-class LlamaTestGenerationTaskPool(BaseTaskPool):
+class LlamaTestGenerationTaskPool(
+    BaseTaskPool,
+    LightningFabricMixin,
+):
+    """
+    This task pool is used to evaluate a language model on a set of prompts.
+    For the purpose of debugging, it can also be used in an interactive mode.
+    """
 
-    def __init__(self, test_prompts: List[str], **kwargs):
+    _program: "FabricModelFusionProgram"
+
+    def __init__(
+        self,
+        test_prompts: List[str],
+        max_length: int = 1024,
+        temperature: float = 0.01,
+        top_p: float = 0.9,
+        iterative_mode: bool = False,
+        output_path: Optional[str] = None,
+        **kwargs,
+    ):
+        """
+        Args:
+            test_prompts (List[str]): A list of prompts to be used for testing the model.
+            max_length (int, optional): The maximum length of the generated text. Defaults to 1024.
+            temperature (float, optional): The sampling temperature for text generation. Defaults to 0.01.
+            top_p (float, optional): The cumulative probability for nucleus sampling. Defaults to 0.9.
+            iterative_mode (bool, optional): If True, enables interactive mode for debugging. Defaults to False.
+            output_path (Optional[str], optional): The path to save the generated outputs. Defaults to None.
+        """
         self.test_prompts = test_prompts
+        self.max_length = max_length
+        self.temperature = temperature
+        self.top_p = top_p
+        self.iterative_mode = iterative_mode
+        self._output_path = output_path
         super().__init__(**kwargs)
 
-    def evaluate(self, model: Union[LlamaForCausalLM, Any]):
-        report = {}
-        
+    @property
+    def output_path(self):
+        if self._output_path is not None:
+            return self._output_path
+        else:
+            return self.fabric.logger.log_dir
+
+    def evaluate(self, model: Union["LlamaForCausalLM", Any]):
+        modelpool: "CausalLMPool" = self._program.modelpool
+        tokenizer = modelpool.load_tokenizer()
+
+        report = get_model_summary(model)
+        if self.test_prompts is not None:
+            for prompt_idx, prompt in self.test_prompts:
+                print(f"=== Generating text {prompt_idx}/{len(self.test_prompts)}")
+                print(prompt)
+                start_time = time.time()
+                outputs = generate_text(
+                    model,
+                    tokenizer=tokenizer,
+                    prompt=prompt,
+                    max_length=self.max_length,
+                    temperature=self.temperature,
+                    top_p=self.top_p,
+                )
+                print_bordered(outputs["response"])
+                print("\n")
+
+                report[f"prompt_{prompt_idx}"] = {
+                    "prompt": prompt,
+                    "response": outputs["response"],
+                    "wall_time": time.time() - start_time,
+                    "num_chars": len(outputs["response"]),
+                    "num_tokens": outputs["num_tokens"],
+                }
+
+        if self.iterative_mode:
+            while True:
+                # Prompt for input
+                # print usage instructions
+                print("Enter a prompt to generate text. Type 'exit' to exit the loop.")
+                prompt = input("Enter a prompt, or type 'exit' to quit: ")
+                if prompt == "exit":
+                    break
+                start_time = time.time()
+                generated_text = generate_text(
+                    model, tokenizer=tokenizer, prompt=prompt
+                )
+                outputs = generated_text[len(prompt) :]
+                print_bordered(outputs["response"])
+                print("\n")
+
+                report[f"iterative_{len(report)}"] = {
+                    "prompt": prompt,
+                    "response": outputs["response"],
+                    "wall_time": time.time() - start_time,
+                    "num_chars": len(outputs["response"]),
+                    "num_tokens": outputs["num_tokens"],
+                }
+
+        return report
