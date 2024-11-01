@@ -1,3 +1,4 @@
+import itertools
 import time
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, cast
 
@@ -106,53 +107,45 @@ class LlamaTestGenerationTaskPool(BaseTaskPool):
         if self.test_prompts is not None:
             for prompt_idx, prompt in enumerate(self.test_prompts):
                 print(f"=== Generating text {prompt_idx}/{len(self.test_prompts)}")
-                print(prompt)
-                start_time = time.time()
-                outputs = generate_text(
-                    model,
-                    tokenizer=tokenizer,
-                    prompt=prompt,
-                    max_length=self.max_length,
-                    temperature=self.temperature,
-                    top_p=self.top_p,
+                report[f"prompt_{prompt_idx}"] = self._generate_text(
+                    model, tokenizer, prompt
                 )
-                print_bordered(outputs["response"])
-                print("\n")
-
-                report[f"prompt_{prompt_idx}"] = {
-                    "prompt": prompt,
-                    "response": outputs["response"],
-                    "wall_time": time.time() - start_time,
-                    "num_chars": len(outputs["response"]),
-                    "num_tokens": outputs["num_tokens"],
-                }
 
         if self.iterative_mode:
-            while True:
+            for prompt_idx in itertools.count():
                 # Prompt for input
                 # print usage instructions
                 print("Enter a prompt to generate text. Type 'exit' to exit the loop.")
-                prompt = input("Enter a prompt, or type 'exit' to quit: ")
+                prompt = input(
+                    f"Enter a prompt, or type 'exit' to quit ({prompt_idx}): "
+                )
                 if prompt == "exit":
                     break
-                start_time = time.time()
-                outputs = generate_text(
-                    model,
-                    tokenizer=tokenizer,
-                    prompt=prompt,
-                    max_length=self.max_length,
-                    temperature=self.temperature,
-                    top_p=self.top_p,
+                report[f"iterative_{prompt_idx}"] = self._generate_text(
+                    model, tokenizer, prompt
                 )
-                print_bordered(outputs["response"])
-                print("\n")
-
-                report[f"iterative_{len(report)}"] = {
-                    "prompt": prompt,
-                    "response": outputs["response"],
-                    "wall_time": time.time() - start_time,
-                    "num_chars": len(outputs["response"]),
-                    "num_tokens": outputs["num_tokens"],
-                }
 
         return report
+
+    def _generate_text(self, model, tokenizer, prompt: str) -> dict:
+        print(prompt)
+        start_time = time.time()
+        outputs = generate_text(
+            model,
+            tokenizer=tokenizer,
+            prompt=prompt,
+            max_length=self.max_length,
+            temperature=self.temperature,
+            top_p=self.top_p,
+        )
+        print_bordered(
+            outputs["response"], title="Generated Text", code_style="markdown"
+        )
+        print("\n")
+        return {
+            "prompt": prompt,
+            "response": outputs["response"],
+            "wall_time": time.time() - start_time,
+            "num_chars": len(outputs["response"]),
+            "num_tokens": outputs["num_tokens"],
+        }
