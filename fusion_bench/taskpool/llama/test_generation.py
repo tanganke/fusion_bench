@@ -127,7 +127,29 @@ class LlamaTestGenerationTaskPool(BaseTaskPool):
 
         return report
 
-    def _generate_text(self, model, tokenizer, prompt: str) -> dict:
+    def _generate_text(
+        self, model: "LlamaForCausalLM", tokenizer: "PreTrainedTokenizer", prompt: str
+    ) -> dict:
+        """
+        Generate text using the provided model and tokenizer for a given prompt.
+
+        This method generates text based on the given prompt using the specified model and tokenizer.
+        It prints the prompt and the generated response, and returns a dictionary containing the prompt,
+        response, wall time, number of characters, and number of tokens.
+
+        Args:
+            model: The language model to be used for text generation.
+            tokenizer: The tokenizer to be used for encoding and decoding text.
+            prompt (str): The input prompt for text generation.
+
+        Returns:
+            dict: A dictionary containing the following keys:
+                - "prompt" (str): The input prompt.
+                - "response" (str): The generated response.
+                - "wall_time" (float): The time taken to generate the response.
+                - "num_chars" (int): The number of characters in the generated response.
+                - "num_tokens" (int): The number of tokens in the generated response.
+        """
         print(prompt)
         start_time = time.time()
         outputs = generate_text(
