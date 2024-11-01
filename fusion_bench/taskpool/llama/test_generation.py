@@ -69,10 +69,7 @@ def generate_text(
     }
 
 
-class LlamaTestGenerationTaskPool(
-    BaseTaskPool,
-    LightningFabricMixin,
-):
+class LlamaTestGenerationTaskPool(BaseTaskPool):
     """
     This task pool is used to evaluate a language model on a set of prompts.
     For the purpose of debugging, it can also be used in an interactive mode.
@@ -87,7 +84,6 @@ class LlamaTestGenerationTaskPool(
         temperature: float = 0.01,
         top_p: float = 0.9,
         iterative_mode: bool = False,
-        output_path: Optional[str] = None,
         **kwargs,
     ):
         """
@@ -104,15 +100,7 @@ class LlamaTestGenerationTaskPool(
         self.temperature = temperature
         self.top_p = top_p
         self.iterative_mode = iterative_mode
-        self._output_path = output_path
         super().__init__(**kwargs)
-
-    @property
-    def output_path(self):
-        if self._output_path is not None:
-            return self._output_path
-        else:
-            return self.fabric.logger.log_dir
 
     def evaluate(self, model: Union["LlamaForCausalLM", Any]):
         modelpool: "CausalLMPool" = self._program.modelpool
