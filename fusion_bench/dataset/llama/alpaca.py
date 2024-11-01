@@ -1,7 +1,11 @@
-from typing import List, Dict
-from datasets import Dataset
-from transformers import PreTrainedTokenizer
 import logging
+import os
+from typing import Any, Dict, List, Optional
+
+from datasets import Dataset, load_dataset, load_from_disk
+from transformers import PreTrainedTokenizer
+
+import fusion_bench
 
 log = logging.getLogger(__name__)
 
@@ -109,3 +113,30 @@ def tokenize_alpaca_dataset(
     )
 
     return tokenized_dataset
+
+
+def load_tokenized_alpaca_dataset_from_json(
+    data_files: str,
+    tokenizer: PreTrainedTokenizer,
+    max_length: int,
+    split: Optional[str] = "train",
+    cache_path: Optional[str] = None,
+):
+    if cache_path is not None and fusion_bench.utils.path.path_is_dir_and_not_empty(
+        cache_path
+    ):
+        datasets = load_from_disk(cache_path)
+        if split is None:
+            return datasets
+        else:
+            return datasets[split]
+    else:
+        assert (
+            tokenizer is not None
+        ), "Cached dataset not found. Need tokenizer to process the raw data."
+
+    dataset = load_dataset("json", data_files=data_files)
+    if split is not None:
+        dataset = dataset[split]
+    dataset = tokenize_alpaca_dataset(dataset, tokenizer, max_length=max_length)
+    return dataset

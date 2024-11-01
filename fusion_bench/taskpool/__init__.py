@@ -11,6 +11,7 @@ _import_structure = {
     "dummy": ["DummyTaskPool"],
     "gpt2_text_classification": ["GPT2TextClassificationTaskPool"],
     "nyuv2_taskpool": ["NYUv2TaskPool"],
+    "llama": ["LlamaTestGenerationTaskPool"],
 }
 
 
@@ -20,6 +21,7 @@ if TYPE_CHECKING:
     from .dummy import DummyTaskPool
     from .gpt2_text_classification import GPT2TextClassificationTaskPool
     from .nyuv2_taskpool import NYUv2TaskPool
+    from .llama import LlamaTestGenerationTaskPool
 
 else:
     sys.modules[__name__] = LazyImporter(
