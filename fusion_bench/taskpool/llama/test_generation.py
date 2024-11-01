@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, cast
 import torch
 
 from fusion_bench import BaseTaskPool
-from fusion_bench.mixins import LightningFabricMixin
 from fusion_bench.taskpool.dummy import get_model_summary
 from fusion_bench.utils.devices import get_device
 from fusion_bench.utils.rich_utils import print_bordered
@@ -13,7 +12,6 @@ if TYPE_CHECKING:
     from transformers import LlamaForCausalLM, PreTrainedTokenizer
 
     from fusion_bench.modelpool import CausalLMPool
-    from fusion_bench.programs import FabricModelFusionProgram
 
 
 def generate_text(
@@ -62,10 +60,11 @@ def generate_text(
 
     # Decode and return the generated text
     generated_text = tokenizer.decode(outputs[0], skip_special_tokens=False)
+    response = generated_text[len(prompt) :]
     return {
         "generated_text": generated_text,
-        "response": generate_text[len(prompt) :],
-        "num_tokens": len(outputs[0]) - len(inputs["input_ids"]),
+        "response": response,
+        "num_tokens": len(outputs[0]) - len(inputs["input_ids"][0]),
     }
 
 
@@ -74,8 +73,6 @@ class LlamaTestGenerationTaskPool(BaseTaskPool):
     This task pool is used to evaluate a language model on a set of prompts.
     For the purpose of debugging, it can also be used in an interactive mode.
     """
-
-    _program: "FabricModelFusionProgram"
 
     def __init__(
         self,
@@ -93,7 +90,6 @@ class LlamaTestGenerationTaskPool(BaseTaskPool):
             temperature (float, optional): The sampling temperature for text generation. Defaults to 0.01.
             top_p (float, optional): The cumulative probability for nucleus sampling. Defaults to 0.9.
             iterative_mode (bool, optional): If True, enables interactive mode for debugging. Defaults to False.
-            output_path (Optional[str], optional): The path to save the generated outputs. Defaults to None.
         """
         self.test_prompts = test_prompts
         self.max_length = max_length
@@ -108,7 +104,7 @@ class LlamaTestGenerationTaskPool(BaseTaskPool):
 
         report = get_model_summary(model)
         if self.test_prompts is not None:
-            for prompt_idx, prompt in self.test_prompts:
+            for prompt_idx, prompt in enumerate(self.test_prompts):
                 print(f"=== Generating text {prompt_idx}/{len(self.test_prompts)}")
                 print(prompt)
                 start_time = time.time()
@@ -140,10 +136,14 @@ class LlamaTestGenerationTaskPool(BaseTaskPool):
                 if prompt == "exit":
                     break
                 start_time = time.time()
-                generated_text = generate_text(
-                    model, tokenizer=tokenizer, prompt=prompt
+                outputs = generate_text(
+                    model,
+                    tokenizer=tokenizer,
+                    prompt=prompt,
+                    max_length=self.max_length,
+                    temperature=self.temperature,
+                    top_p=self.top_p,
                 )
-                outputs = generated_text[len(prompt) :]
                 print_bordered(outputs["response"])
                 print("\n")
 
