@@ -5,6 +5,7 @@ from typing import List, Mapping, Union  # noqa: F401
 import lightning as L
 import numpy as np
 import torch
+import torch.nn as nn
 from omegaconf import DictConfig
 from torch import Tensor
 from torch.utils.data import DataLoader
