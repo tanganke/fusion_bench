@@ -23,7 +23,7 @@ from transformers.models.mixtral.modeling_mixtral import (
 )
 from transformers.utils import ContextManagers
 
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.modelpool import BaseModelPool
 
 log = logging.getLogger(__name__)
@@ -157,13 +157,13 @@ def upscale_to_mixtral_for_causal_lm(
     upscale_to_mixtral_model(input_model.model, output_model.model)
 
 
-class MixtralUpscalingAlgorithm(BaseModelFusionAlgorithm):
+class MixtralUpscalingAlgorithm(BaseAlgorithm):
     """
     This class is responsible for upscaling a model to a MixtralModel.
     It inherits from the ModelFusionAlgorithm class.
     """
 
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+    _config_mapping = BaseAlgorithm._config_mapping | {
         "num_experts": "num_experts",
         "experts_per_token": "experts_per_token",
         "save_checkpoint": "save_checkpoint",
@@ -242,13 +242,13 @@ class MixtralUpscalingAlgorithm(BaseModelFusionAlgorithm):
         return mixtral_model
 
 
-class MixtralForCausalLMUpscalingAlgorithm(BaseModelFusionAlgorithm):
+class MixtralForCausalLMUpscalingAlgorithm(BaseAlgorithm):
     """
     This class is responsible for upscaling a model to a MixtralForCausalLM.
     It inherits from the ModelFusionAlgorithm class.
     """
 
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+    _config_mapping = BaseAlgorithm._config_mapping | {
         "num_experts": "num_experts",
         "experts_per_token": "experts_per_token",
         "save_checkpoint": "save_checkpoint",

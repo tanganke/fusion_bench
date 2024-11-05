@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from torch import nn
 
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.models.wrappers.ensemble import (
     EnsembleModule,
@@ -16,9 +16,18 @@ from fusion_bench.models.wrappers.ensemble import (
 log = logging.getLogger(__name__)
 
 
-class SimpleEnsembleAlgorithm(BaseModelFusionAlgorithm):
+class SimpleEnsembleAlgorithm(BaseAlgorithm):
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool | List[nn.Module]):
+        """
+        Run the simple ensemble algorithm on the given model pool.
+
+        Args:
+            modelpool (BaseModelPool | List[nn.Module]): The pool of models to ensemble.
+
+        Returns:
+            EnsembleModule: The ensembled model.
+        """
         log.info(f"Running ensemble algorithm with {len(modelpool)} models")
 
         models = [modelpool.load_model(m) for m in modelpool.model_names]
@@ -26,9 +35,9 @@ class SimpleEnsembleAlgorithm(BaseModelFusionAlgorithm):
         return ensemble
 
 
-class WeightedEnsembleAlgorithm(BaseModelFusionAlgorithm):
+class WeightedEnsembleAlgorithm(BaseAlgorithm):
 
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+    _config_mapping = BaseAlgorithm._config_mapping | {
         "normalize": "normalize",
         "weights": "weights",
     }
@@ -40,6 +49,15 @@ class WeightedEnsembleAlgorithm(BaseModelFusionAlgorithm):
 
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool | List[nn.Module]):
+        """
+        Run the weighted ensemble algorithm on the given model pool.
+
+        Args:
+            modelpool (BaseModelPool | List[nn.Module]): The pool of models to ensemble.
+
+        Returns:
+            WeightedEnsembleModule: The weighted ensembled model.
+        """
         if not isinstance(modelpool, BaseModelPool):
             modelpool = BaseModelPool(models=modelpool)
 
@@ -58,9 +76,18 @@ class WeightedEnsembleAlgorithm(BaseModelFusionAlgorithm):
         return ensemble
 
 
-class MaxModelPredictorAlgorithm(BaseModelFusionAlgorithm):
+class MaxModelPredictorAlgorithm(BaseAlgorithm):
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool | List[nn.Module]):
+        """
+        Run the max model predictor algorithm on the given model pool.
+
+        Args:
+            modelpool (BaseModelPool | List[nn.Module]): The pool of models to ensemble.
+
+        Returns:
+            MaxModelPredictor: The max model predictor ensembled model.
+        """
         if not isinstance(modelpool, BaseModelPool):
             modelpool = BaseModelPool(models=modelpool)
 

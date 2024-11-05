@@ -5,12 +5,12 @@ from typing import TYPE_CHECKING
 from fusion_bench.utils.lazy_imports import LazyImporter
 
 _import_structure = {
-    "base_algorithm": ["BaseModelFusionAlgorithm"],
+    "base_algorithm": ["BaseModelFusionAlgorithm", "BaseAlgorithm"],
     "dummy": ["DummyAlgorithm"],
     # single task learning (fine-tuning)
     "classification": ["ImageClassificationFineTuningForCLIP"],
     # analysis
-    "analysis": ["TaskVectorCosSimilarity"],
+    "analysis": ["TaskVectorCosSimilarity", "TaskVectorViolinPlot"],
     # model ensemble methods
     "ensemble": [
         "SimpleEnsembleAlgorithm",
@@ -28,7 +28,7 @@ _import_structure = {
     "weighted_average": ["WeightedAverageAlgorithm", "WeightedAverageForLLama"],
     "task_arithmetic": ["TaskArithmeticAlgorithm"],
     "ties_merging": ["TiesMergingAlgorithm"],
-    "dare": ["DareTaskArithmetic"],
+    "dare": ["DareSimpleAverage", "DareTaskArithmetic"],
     "fisher_merging": [
         "FisherMergingForCLIPVisionModel",
         "FisherMergingAlgorithmForGPT2",
@@ -85,15 +85,15 @@ _import_structure = {
 
 if TYPE_CHECKING:
     from .ada_svd import AdaSVDMergingForCLIPVisionModel
-    from .analysis import TaskVectorCosSimilarity
-    from .base_algorithm import BaseModelFusionAlgorithm
+    from .analysis import TaskVectorCosSimilarity, TaskVectorViolinPlot
+    from .base_algorithm import BaseAlgorithm, BaseModelFusionAlgorithm
     from .classification import ImageClassificationFineTuningForCLIP
     from .concrete_subspace import (
         ConcreteLayerWiseAdaMergingForCLIP,
         ConcreteTaskArithmeticAlgorithmForCLIP,
         ConcreteTaskWiseAdaMergingForCLIP,
     )
-    from .dare import DareTaskArithmetic
+    from .dare import DareSimpleAverage, DareTaskArithmetic
     from .dawe import DataAdaptiveWeightEnsemblingForCLIP
     from .depth_upscaling import DepthUpscalingAlgorithm, DepthUpscalingForLlama
     from .dummy import DummyAlgorithm

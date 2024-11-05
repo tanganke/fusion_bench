@@ -27,6 +27,8 @@ PRINT_FUNCTION_CALL_FUNC = print
 Function to be used for printing function calls.
 """
 
+CATCH_EXCEPTION = True
+
 
 def _resolve_callable_name(f: Callable[..., Any]) -> str:
     # Get the module name
@@ -127,16 +129,20 @@ def _call_target(
                     border_style="cyan",
                 )
             )
-        try:
+
+        if CATCH_EXCEPTION:
+            try:
+                return functools.partial(_target_, *args, **kwargs)
+            except Exception as e:
+                msg = (
+                    f"Error in creating partial({_convert_target_to_string(_target_)}, ...) object:"
+                    + f"\n{repr(e)}"
+                )
+                if full_key:
+                    msg += f"\nfull_key: {full_key}"
+                raise InstantiationException(msg) from e
+        else:
             return functools.partial(_target_, *args, **kwargs)
-        except Exception as e:
-            msg = (
-                f"Error in creating partial({_convert_target_to_string(_target_)}, ...) object:"
-                + f"\n{repr(e)}"
-            )
-            if full_key:
-                msg += f"\nfull_key: {full_key}"
-            raise InstantiationException(msg) from e
     else:
         if PRINT_FUNCTION_CALL and getattr(rank_zero_only, "rank", 0) == 0:
             call_str = f"{_resolve_callable_name(_target_)}({_format_args_kwargs(args, kwargs)})"
@@ -147,13 +153,16 @@ def _call_target(
                     border_style="green",
                 )
             )
-        try:
+        if CATCH_EXCEPTION:
+            try:
+                return _target_(*args, **kwargs)
+            except Exception as e:
+                msg = f"Error in call to target '{_convert_target_to_string(_target_)}':\n{repr(e)}"
+                if full_key:
+                    msg += f"\nfull_key: {full_key}"
+                raise InstantiationException(msg) from e
+        else:
             return _target_(*args, **kwargs)
-        except Exception as e:
-            msg = f"Error in call to target '{_convert_target_to_string(_target_)}':\n{repr(e)}"
-            if full_key:
-                msg += f"\nfull_key: {full_key}"
-            raise InstantiationException(msg) from e
 
 
 def _convert_target_to_string(t: Any) -> Any:

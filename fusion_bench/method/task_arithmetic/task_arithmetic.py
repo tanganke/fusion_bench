@@ -11,7 +11,7 @@ from typing import Dict, List, Mapping, TypeVar, Union  # noqa: F401
 import torch
 from torch import nn
 
-from fusion_bench.method.base_algorithm import BaseModelFusionAlgorithm
+from fusion_bench.method.base_algorithm import BaseAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.utils.state_dict_arithmetic import (
@@ -73,7 +73,7 @@ def task_arithmetic_merge(
 
 
 class TaskArithmeticAlgorithm(
-    BaseModelFusionAlgorithm,
+    BaseAlgorithm,
     SimpleProfilerMixin,
 ):
     """
@@ -87,7 +87,7 @@ class TaskArithmeticAlgorithm(
         scaling_factor (int): The factor by which the task vectors will be scaled before merging.
     """
 
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+    _config_mapping = BaseAlgorithm._config_mapping | {
         "scaling_factor": "scaling_factor"
     }
 

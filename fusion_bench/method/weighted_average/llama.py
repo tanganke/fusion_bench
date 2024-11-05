@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from typing_extensions import override
 
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.modelpool import CausalLMPool
 from fusion_bench.utils import timeit_context
 from fusion_bench.utils.state_dict_arithmetic import state_dict_add, state_dict_mul
@@ -14,12 +14,12 @@ from fusion_bench.utils.type import StateDictType
 log = logging.getLogger(__name__)
 
 
-class WeightedAverageForLLama(BaseModelFusionAlgorithm):
+class WeightedAverageForLLama(BaseAlgorithm):
     """
     A class to perform weighted averaging of LlaMa/Mistral models.
     """
 
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+    _config_mapping = BaseAlgorithm._config_mapping | {
         "normalize": "normalize",
         "weights": "weights",
         "backbone_only": "backbone_only",

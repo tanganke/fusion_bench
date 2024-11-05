@@ -25,7 +25,7 @@ from transformers.models.clip.modeling_clip import (
 )
 from typing_extensions import override
 
-from fusion_bench import BaseModelFusionAlgorithm, BaseModelPool
+from fusion_bench import BaseAlgorithm, BaseModelPool
 from fusion_bench.dataset import CLIPDataset
 from fusion_bench.method import WeightedAverageAlgorithm
 from fusion_bench.method.simple_average import simple_average
@@ -77,7 +77,7 @@ class AvgRoutingWeightsMetric:
 
 
 class AdaSVDMergingForCLIPVisionModel(
-    BaseModelFusionAlgorithm,
+    BaseAlgorithm,
     SimpleProfilerMixin,
 ):
     _linear_layer_cls = (nn.Linear,)

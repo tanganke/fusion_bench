@@ -17,7 +17,7 @@ from transformers import (
 )
 
 from fusion_bench.dataset.clip_dataset import CLIPDataset
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.method.adamerging.entropy_loss import entropy_loss
 from fusion_bench.mixins import CLIPClassificationMixin
 from fusion_bench.modelpool import CLIPVisionModelPool
@@ -38,6 +38,15 @@ def convert_to_rgb(image: Image | list[Image]) -> Image | list[Image]:
 
 
 def load_resnet_processor(pretrained_model_name_or_path: str):
+    """
+    Load a ResNet processor for image preprocessing.
+
+    Args:
+        pretrained_model_name_or_path (str): The path or name of the pretrained ResNet model.
+
+    Returns:
+        function: A function that processes images using the ResNet processor.
+    """
     processor = AutoFeatureExtractor.from_pretrained(pretrained_model_name_or_path)
     return lambda img: processor(
         images=convert_to_rgb(img), return_tensors="pt", do_rescale=False
@@ -70,7 +79,7 @@ def raw_image_collate_fn(batch):
 
 
 class DataAdaptiveWeightEnsemblingForCLIP(
-    BaseModelFusionAlgorithm,
+    BaseAlgorithm,
     CLIPClassificationMixin,
 ):
     modelpool: CLIPVisionModelPool

@@ -14,7 +14,7 @@ from tqdm.auto import tqdm
 from transformers import LlamaForCausalLM
 from typing_extensions import override
 
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.method.pruning.llama_wanda_prune import WandaHookFn
 from fusion_bench.method.pruning.prune_utils import (
     PruningType,
@@ -94,13 +94,13 @@ def PCP_search_with_mask(w, mask, T_max=1000, lr=1e-2):
     return s
 
 
-class SparseLoForLlama(BaseModelFusionAlgorithm, SimpleProfilerMixin):
+class SparseLoForLlama(BaseAlgorithm, SimpleProfilerMixin):
     "Zero-Shot SVD Algorithm"
 
     _variants_requires_calibration_data = ["wanda"]
     _variants_hook_mapping = {"wanda": WandaHookFn}
 
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+    _config_mapping = BaseAlgorithm._config_mapping | {
         "nsamples": "nsamples",
         "seed": "seed",
         "rank": "rank",

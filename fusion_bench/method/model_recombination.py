@@ -5,7 +5,7 @@ from typing import List, Mapping, Union  # noqa: F401
 import torch
 from torch import nn
 
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.modelpool import BaseModelPool
 
 log = logging.getLogger(__name__)
@@ -52,12 +52,12 @@ def recombine_state_dict(models: List[nn.Module]):
     return models
 
 
-class ModelRecombinationAlgorithm(BaseModelFusionAlgorithm):
+class ModelRecombinationAlgorithm(BaseAlgorithm):
     """
     Model recombination recombinates the layers of the given models, to create a new set of models.
     """
 
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+    _config_mapping = BaseAlgorithm._config_mapping | {
         "return_modelpool": "return_modelpool",
     }
 

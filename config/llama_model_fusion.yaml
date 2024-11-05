@@ -14,4 +14,4 @@ modelpool:
   model_kwargs:
     torch_dtype: float16
     low_cpu_mem_usage: true
-    device_map: "auto"
+    # device_map: "auto"

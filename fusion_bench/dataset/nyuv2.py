@@ -69,6 +69,15 @@ class NYUv2(Dataset):
         self.noise = torch.rand(self.data_len, 1, 288, 384)
 
     def __getitem__(self, index):
+        """
+        Retrieve an item from the dataset.
+
+        Args:
+            index (int): The index of the item to retrieve.
+
+        Returns:
+            tuple: A tuple containing the image and a dictionary of task-specific outputs.
+        """
         # load data from the pre-processed npy files
         image = torch.from_numpy(
             np.moveaxis(

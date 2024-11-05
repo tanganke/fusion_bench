@@ -1,5 +1,8 @@
 # Weight-Ensembling Mixture of Experts (Data-Adaptive Model Merging)
 
+[![arxiv](https://img.shields.io/badge/arXiv-2402.00433-b31b1b.svg)](http://arxiv.org/abs/2402.00433)
+[![github](https://img.shields.io/badge/GitHub-Code-181717.svg)](https://github.com/tanganke/weight-ensembling_MoE)
+
 <figure markdown="span">
     ![alt text](images/wemoe.png){ width="90%" }
     <figcaption style="max-width:90%">
@@ -28,6 +31,34 @@ These task vectors are then added to the pre-trained MLP weights to create input
 | Ties-Merging    | No                                       | Yes (select sacling factor)         | No                   |
 | AdaMerging      | No                                       | No                                  | Yes                  |
 | Ours            | No                                       | No                                  | Yes                  |
+
+## WEMoE V2: E-WEMoE
+
+*L. Shen, A. Tang, E. Yang et al. Efficient and Effective Weight-Ensembling Mixture of Experts for Multi-Task Model Merging. Oct, 2024.*[^3]
+
+[![arXiv](https://img.shields.io/badge/arXiv-2410.21804-b31b1b.svg)](http://arxiv.org/abs/2410.21804)
+[![github](https://img.shields.io/badge/GitHub-Code-181717.svg)](https://github.com/EnnengYang/Efficient-WEMoE)
+
+<figure markdown="span">
+  ![alt text](images/ewemoe.png){ width="90%" }
+  <figurecaption>
+  (a) **Overview of the Efficient Weight-Ensembling Mixture of Experts (E-WEMoE)** Framework. It merges all non-MLP modules through task arithmetic and upgrades the MLP modules into an efficient E-WEMoE module. (b) **E-WEMoE** Module. The module includes a router shared across all Transformer blocks, the pre-trained MLP module, and a set of sparse task-specific vectors w.r.t. MLP modules.
+  </figurecaption>
+</figure>
+
+<figure markdown="span">
+  ![alt text](images/ewemoe_1.png){ width="700px" }
+  <figurecaption>
+    Comparison of (a) trainable parameters and (b) total parameters between WEMoE and E-WEMoE-90%.
+  </figurecaption>
+</figure>
+
+<figure markdown="span">
+  ![alt text](images/ewemoe_2.png){ width="1000px" }
+  <figurecaption>
+    Comparison of the relationship between parameter count and performance across various model merging methods.
+  </figurecaption>
+</figure>
 
 ## Parameters Comparison
 
@@ -232,5 +263,6 @@ fusion_bench \
 ::: fusion_bench.method.we_moe.clip_we_moe
 
 
-[^1]: Anke Tang et.al. ICML 2024. Merging Multi-Task Models via Weight-Ensembling Mixture of Experts. http://arxiv.org/abs/2402.00433
-[^2]: Z. Lu, C. Fan, W. Wei, X. Qu, D. Chen, and Y. Cheng, “Twin-Merging: Dynamic Integration of Modular Expertise in Model Merging,” doi: 10.48550/arXiv.2406.15479.
+[^1]: Anke Tang et.al. ICML 2024. Merging Multi-Task Models via Weight-Ensembling Mixture of Experts. http://arxiv.org/abs/2402.00433 ICML 2024.
+[^2]: Z. Lu, C. Fan, W. Wei, X. Qu, D. Chen, and Y. Cheng, “Twin-Merging: Dynamic Integration of Modular Expertise in Model Merging,” doi: 10.48550/arXiv.2406.15479. NeurIPS 2024.
+[^3]: L. Shen, A. Tang, E. Yang et al. Efficient and Effective Weight-Ensembling Mixture of Experts for Multi-Task Model Merging. Oct, 2024.

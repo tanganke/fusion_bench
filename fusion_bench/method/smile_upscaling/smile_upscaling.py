@@ -9,7 +9,7 @@ from omegaconf import OmegaConf
 from torch import Tensor, nn
 from tqdm.auto import tqdm
 
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.method.simple_average import simple_average
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
@@ -357,10 +357,10 @@ class SmileMoELinear(nn.Module):
 
 class SmileUpscalingAlgorithm(
     SimpleProfilerMixin,
-    BaseModelFusionAlgorithm,
+    BaseAlgorithm,
 ):
     _linear_layer_cls = (nn.Linear,)
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+    _config_mapping = BaseAlgorithm._config_mapping | {
         "device": "device",
         "upscaling_accelerator": "upscaling_accelerator",
         "full_matrices": "full_matrices",

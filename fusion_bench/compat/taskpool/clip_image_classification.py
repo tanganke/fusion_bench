@@ -83,6 +83,12 @@ class CLIPImageClassificationTask(ClassificationTask):
     def evaluate(self, clip_model: CLIPModel):
         """
         Evaluate the model on the image classification task.
+
+        Args:
+            clip_model (CLIPModel): The CLIP model to evaluate.
+
+        Returns:
+            dict: A dictionary containing the evaluation results.
         """
         classifier = HFCLIPClassifier(
             clip_model=clip_model, processor=self._clip_processor
@@ -151,6 +157,12 @@ class CLIPImageClassificationTaskPool(TaskPool):
     def evaluate(self, model: CLIPVisionModel):
         """
         Evaluate the model on the image classification task.
+
+        Args:
+            model (CLIPVisionModel): The vision model to evaluate.
+
+        Returns:
+            dict: A dictionary containing the evaluation results for each task.
         """
         # if the fabric is not set, and we have a GPU, create a fabric instance
         if self._fabric is None and torch.cuda.is_available():

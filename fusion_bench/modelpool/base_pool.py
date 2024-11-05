@@ -164,7 +164,7 @@ class BaseModelPool(BaseYAMLSerializableModel):
         Returns:
             nn.Module: The instantiated model.
         """
-        log.debug(f"Loading model: {model_name_or_config}")
+        log.debug(f"Loading model: {model_name_or_config}", stacklevel=2)
         if isinstance(self._models, DictConfig):
             model_config = (
                 self._models[model_name_or_config]

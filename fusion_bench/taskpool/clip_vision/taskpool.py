@@ -286,6 +286,21 @@ class CLIPVisionModelTaskPool(
             )
             report[task_name] = result
             self.on_task_evaluation_end()
+
+        # calculate the average accuracy and loss
+        if "average" not in report:
+            report["average"] = {}
+            accuracies = [
+                value["accuracy"] for key, value in report.items() if "accuracy" in value
+            ]
+            if len(accuracies) > 0:
+                average_accuracy = sum(accuracies) / len(accuracies)
+                report["average"]["accuracy"] = average_accuracy
+            losses = [value["loss"] for key, value in report.items() if "loss" in value]
+            if len(losses) > 0:
+                average_loss = sum(losses) / len(losses)
+                report["average"]["loss"] = average_loss
+
         log.info(f"Evaluation Result: {report}")
         if self.fabric.is_global_zero and len(self.fabric._loggers) > 0:
             with open(os.path.join(self.log_dir, "report.json"), "w") as fp:

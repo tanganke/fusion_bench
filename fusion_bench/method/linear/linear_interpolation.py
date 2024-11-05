@@ -2,20 +2,20 @@ import logging
 
 import torch
 
-from fusion_bench import BaseModelFusionAlgorithm, BaseModelPool
+from fusion_bench import BaseAlgorithm, BaseModelPool
 from fusion_bench.utils.state_dict_arithmetic import state_dict_weighted_sum
 
 log = logging.getLogger(__name__)
 
 
-class LinearInterpolationAlgorithm(BaseModelFusionAlgorithm):
+class LinearInterpolationAlgorithm(BaseAlgorithm):
     R"""
     LinearInterpolationAlgorithm performs linear interpolation between two models.
     Returns a model with the state dict that is a linear interpolation of the state dicts of the two models.
     $\theta = (1-t) \theta_1 + t \theta_2$
     """
 
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+    _config_mapping = BaseAlgorithm._config_mapping | {
         "t": "t",
     }
 
@@ -39,7 +39,7 @@ class LinearInterpolationAlgorithm(BaseModelFusionAlgorithm):
         and returns a model with the interpolated state dict.
 
         Args:
-            modelpool (BaseModelPool): The pool of models to interpolate.
+            modelpool (BaseModelPool): The pool of models to interpolate. Must contain exactly two models.
 
         Returns:
             nn.Module: The model with the interpolated state dict.
