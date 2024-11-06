@@ -5,12 +5,12 @@ from typing import Optional  # noqa: F401
 from fusion_bench.mixins import BaseYAMLSerializableModel
 from fusion_bench.modelpool import BaseModelPool
 
-__all__ = ["BaseModelFusionAlgorithm"]
+__all__ = ["BaseAlgorithm", "BaseModelFusionAlgorithm"]
 
 log = logging.getLogger(__name__)
 
 
-class BaseModelFusionAlgorithm(BaseYAMLSerializableModel):
+class BaseAlgorithm(BaseYAMLSerializableModel):
     """
     Base class for model fusion algorithms.
 
@@ -36,3 +36,6 @@ class BaseModelFusionAlgorithm(BaseYAMLSerializableModel):
             modelpool (BaseModelPool): The pool of models to fuse.
         """
         pass
+
+
+BaseModelFusionAlgorithm = BaseAlgorithm

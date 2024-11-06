@@ -1,7 +1,8 @@
 import functools
+import inspect
 from typing import Callable, Union
 
-from fusion_bench.utils import import_object
+from .packages import import_object
 
 
 @functools.cache
@@ -24,3 +25,13 @@ def cached_func_call(func: Union[str, Callable], *args, **kwargs):
     if isinstance(func, str):
         func = import_object(func)
     return func(*args, **kwargs)
+
+
+def number_of_arguments(func):
+    """
+    Return the number of arguments of the passed function, even if it's a partial function.
+    """
+    if isinstance(func, functools.partial):
+        total_args = len(inspect.signature(func.func).parameters)
+        return total_args - len(func.args) - len(func.keywords)
+    return len(inspect.signature(func).parameters)

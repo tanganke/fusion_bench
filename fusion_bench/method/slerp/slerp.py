@@ -3,7 +3,7 @@ import logging
 import torch
 from typing_extensions import override
 
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.modelpool import BaseModelPool
 
 from .slerp_utils import slerp
@@ -46,12 +46,12 @@ def slerp_on_state_dicts(
     return state_dict
 
 
-class SlerpMergeAlgorithm(BaseModelFusionAlgorithm):
+class SlerpMergeAlgorithm(BaseAlgorithm):
     """
     General purpose implementation of Slerp (Spherical Linear Interpolation) for PyTorch models.
     """
 
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping + {
+    _config_mapping = BaseAlgorithm._config_mapping + {
         "t": "t",
         "DOT_THRESHOLD": "DOT_THRESHOLD",
         "epsilon": "epsilon",

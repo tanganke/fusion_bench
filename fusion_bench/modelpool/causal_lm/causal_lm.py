@@ -80,11 +80,13 @@ class CausalLMPool(BaseModelPool):
     ) -> LlamaForCausalLM | MistralForCausalLM | nn.Module:
         model_kwargs = deepcopy(self._model_kwargs)
         model_kwargs.update(kwargs)
+        if isinstance(model_name_or_config, str):
+            log.info(f"Loading model: {model_name_or_config}", stacklevel=2)
         return super().load_model(model_name_or_config, *args, **model_kwargs)
 
     def load_tokenizer(self, *args, **kwargs) -> PreTrainedTokenizer:
         assert self._tokenizer is not None, "Tokenizer is not defined in the config"
-        log.info("Loading tokenizer.")
+        log.info("Loading tokenizer.", stacklevel=2)
         tokenizer = instantiate(self._tokenizer, *args, **kwargs)
         return tokenizer
 

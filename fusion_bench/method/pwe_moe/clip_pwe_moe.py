@@ -16,7 +16,7 @@ from transformers import CLIPVisionModel
 from transformers.models.clip.modeling_clip import CLIPEncoderLayer
 from typing_extensions import override
 
-from fusion_bench.method.base_algorithm import BaseModelFusionAlgorithm
+from fusion_bench.method.base_algorithm import BaseAlgorithm
 from fusion_bench.method.task_arithmetic import task_arithmetic_merge
 from fusion_bench.mixins.clip_classification import CLIPClassificationMixin
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
@@ -32,12 +32,12 @@ log = logging.getLogger(__name__)
 
 
 class PWEMoEAlgorithmForCLIP(
-    BaseModelFusionAlgorithm,
+    BaseAlgorithm,
     SimpleProfilerMixin,
     CLIPClassificationMixin,
 ):
     modelpool: CLIPVisionModelPool = None
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+    _config_mapping = BaseAlgorithm._config_mapping | {
         "upscale_mlp": "upscale_mlp",
         "upscale_attn": "upscale_attn",
         "init_lambda": "init_lambda",

@@ -6,13 +6,13 @@ import torch
 from torch import nn
 from tqdm.autonotebook import tqdm
 
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.modelpool import BaseModelPool
 
 log = logging.getLogger(__name__)
 
 
-class DepthUpscalingAlgorithm(BaseModelFusionAlgorithm):
+class DepthUpscalingAlgorithm(BaseAlgorithm):
     R"""
     Implements the Depth Upscaling Algorithm.
 
@@ -26,7 +26,7 @@ class DepthUpscalingAlgorithm(BaseModelFusionAlgorithm):
         **kwargs: Additional keyword arguments.
     """
 
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+    _config_mapping = BaseAlgorithm._config_mapping | {
         "layer_indices": "layer_indices",
     }
 

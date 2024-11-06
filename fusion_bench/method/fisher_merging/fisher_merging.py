@@ -11,7 +11,7 @@ import torch
 from torch import Tensor, nn
 from tqdm.autonotebook import tqdm
 
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.modelpool import BaseModelPool
 
 log = logging.getLogger(__name__)
@@ -350,7 +350,7 @@ def filter_state_dict(
     return filtered_state_dict
 
 
-class FisherMergingAlgorithm(BaseModelFusionAlgorithm):
+class FisherMergingAlgorithm(BaseAlgorithm):
     """
     Implements the Fisher Merging Algorithm.
 
@@ -362,7 +362,7 @@ class FisherMergingAlgorithm(BaseModelFusionAlgorithm):
             Executes the Fisher merging process on the model pool and returns the merged model.
     """
 
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+    _config_mapping = BaseAlgorithm._config_mapping | {
         "exclude_param_names_regex": "exclude_param_names_regex",
         "normalize_fisher_weight": "normalize_fisher_weight",
         "minimal_fisher_weight": "minimal_fisher_weight",

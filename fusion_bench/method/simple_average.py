@@ -5,7 +5,7 @@ from typing import Dict, List, Mapping, Optional, Union
 import torch
 from torch import nn
 
-from fusion_bench.method.base_algorithm import BaseModelFusionAlgorithm
+from fusion_bench.method.base_algorithm import BaseAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.utils.state_dict_arithmetic import (
@@ -18,14 +18,18 @@ from fusion_bench.utils.type import StateDictType
 log = logging.getLogger(__name__)
 
 
-def simple_average(modules: List[Union[nn.Module, StateDictType]]):
-    """
+def simple_average(
+    modules: List[Union[nn.Module, StateDictType]],
+    base_module: Optional[nn.Module] = None,
+):
+    R"""
     Averages the parameters of a list of PyTorch modules or state dictionaries.
 
     This function takes a list of PyTorch modules or state dictionaries and returns a new module with the averaged parameters, or a new state dictionary with the averaged parameters.
 
     Args:
         modules (List[Union[nn.Module, StateDictType]]): A list of PyTorch modules or state dictionaries.
+        base_module (Optional[nn.Module]): A base module to use for the new module. If provided, the averaged parameters will be loaded into this module. If not provided, a new module will be created by copying the first module in the list.
 
     Returns:
         module_or_state_dict (Union[nn.Module, StateDictType]): A new PyTorch module with the averaged parameters, or a new state dictionary with the averaged parameters.
@@ -41,7 +45,10 @@ def simple_average(modules: List[Union[nn.Module, StateDictType]]):
         >>> averaged_state_dict = simple_averageing([state_dict1, state_dict2])
     """
     if isinstance(modules[0], nn.Module):
-        new_module = deepcopy(modules[0])
+        if base_module is None:
+            new_module = deepcopy(modules[0])
+        else:
+            new_module = base_module
         state_dict = state_dict_avg([module.state_dict() for module in modules])
         new_module.load_state_dict(state_dict)
         return new_module
@@ -50,7 +57,7 @@ def simple_average(modules: List[Union[nn.Module, StateDictType]]):
 
 
 class SimpleAverageAlgorithm(
-    BaseModelFusionAlgorithm,
+    BaseAlgorithm,
     SimpleProfilerMixin,
 ):
     @torch.no_grad()

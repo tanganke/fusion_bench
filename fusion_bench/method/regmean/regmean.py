@@ -12,7 +12,7 @@ import torch
 from torch import Tensor, nn
 from tqdm.autonotebook import tqdm
 
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.modelpool import BaseModelPool
 
 log = logging.getLogger(__name__)
@@ -279,7 +279,7 @@ def regmean_merging(
     return merged_params
 
 
-class RegMeanAlgorithm(BaseModelFusionAlgorithm):
+class RegMeanAlgorithm(BaseAlgorithm):
     _include_module_type = [nn.Linear]
     _config_mapping = {
         "num_regmean_examples": "num_regmean_examples",
