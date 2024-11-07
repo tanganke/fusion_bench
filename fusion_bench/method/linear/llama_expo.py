@@ -70,9 +70,19 @@ class ExPOAlgorithmForLlama(BaseAlgorithm):
                     module.weight = rlhf_model.get_submodule(name).weight
 
         if self.only_on_backbone:
-            rlhf_model.model = expo_(
-                sft_model.model, rlhf_model.model, self.extrapolation_factor
-            )
+            for name, module in rlhf_model.model.named_modules():
+                if isinstance(module, nn.Linear):
+                    expo_(
+                        sft_model.model.get_submodule(name),
+                        module,
+                        self.extrapolation_factor,
+                    )
         else:
-            rlhf_model = expo_(sft_model, rlhf_model, self.extrapolation_factor)
+            for name, module in rlhf_model.named_modules():
+                if isinstance(module, nn.Linear):
+                    expo_(
+                        sft_model.get_submodule(name),
+                        module,
+                        self.extrapolation_factor,
+                    )
         return rlhf_model
