@@ -20,6 +20,7 @@ _import_structure = {
     # model merging methods
     "linear": [
         "ExPOAlgorithm",
+        "ExPOAlgorithmForLlama",
         "SimpleAverageForLlama",
         "TaskArithmeticForLlama",
         "LinearInterpolationAlgorithm",
@@ -107,6 +108,7 @@ if TYPE_CHECKING:
         ExPOAlgorithm,
         LinearInterpolationAlgorithm,
         SimpleAverageForLlama,
+        ExPOAlgorithmForLlama,
         TaskArithmeticForLlama,
     )
     from .mixture_of_experts import (

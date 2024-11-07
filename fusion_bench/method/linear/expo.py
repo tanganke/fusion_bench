@@ -65,5 +65,5 @@ class ExPOAlgorithm(BaseAlgorithm):
             state_dict_mul(delta_parameters, scalar=self.extrapolation_factor),
         )
 
-        sft_model.load_state_dict(merged_sd)
-        return sft_model
+        rlhf_model.load_state_dict(merged_sd)
+        return rlhf_model
