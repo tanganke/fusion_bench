@@ -2,7 +2,7 @@ import logging
 from typing import cast
 
 from torch import nn
-from transformers import LlamaForCausalLM
+from transformers import LlamaForCausalLM, LlamaModel
 
 from fusion_bench import BaseAlgorithm, BaseModelPool
 from fusion_bench.method import SimpleAverageAlgorithm
@@ -26,20 +26,33 @@ def expo_(sft_model: nn.Module, rlhf_model: nn.Module, extrapolation_factor: flo
     return rlhf_model
 
 
+def expo_linear_modules_(
+    sft_model: nn.Module, rlhf_model: nn.Module, extrapolation_factor: float
+):
+    for name, module in sft_model.named_modules():
+        if isinstance(module, nn.Linear):
+            expo_(module, rlhf_model.get_submodule(name), extrapolation_factor)
+    return rlhf_model
+
+
 class ExPOAlgorithmForLlama(BaseAlgorithm):
 
     def __init__(
         self,
         extrapolation_factor: float,
+        attention_scaling_factor: float = 0.5,
         only_on_backbone: bool = True,
         on_linear_weights: bool = True,
         on_linear_bias: bool = False,
+        on_embedding: bool = False,
         **kwargs,
     ):
         self.extrapolation_factor = extrapolation_factor
+        self.attention_scaling_factor = attention_scaling_factor
         self.only_on_backbone = only_on_backbone
         self.on_linear_weights = on_linear_weights
         self.on_linear_bias = on_linear_bias
+        self.on_embedding = on_embedding
         super().__init__(**kwargs)
 
     def run(self, modelpool: BaseModelPool):
@@ -69,20 +82,28 @@ class ExPOAlgorithmForLlama(BaseAlgorithm):
                 if isinstance(module, nn.Linear):
                     module.weight = rlhf_model.get_submodule(name).weight
 
-        if self.only_on_backbone:
-            for name, module in rlhf_model.model.named_modules():
-                if isinstance(module, nn.Linear):
-                    expo_(
-                        sft_model.model.get_submodule(name),
-                        module,
-                        self.extrapolation_factor,
-                    )
-        else:
-            for name, module in rlhf_model.named_modules():
-                if isinstance(module, nn.Linear):
-                    expo_(
-                        sft_model.get_submodule(name),
-                        module,
-                        self.extrapolation_factor,
-                    )
+        if not self.only_on_backbone:
+            expo_(sft_model.lm_head, rlhf_model.lm_head, self.extrapolation_factor)
+
+        # expo on the backbone
+        self._expo_lm_model_(
+            sft_model.model, rlhf_model.model, self.extrapolation_factor
+        )
         return rlhf_model
+
+    def _expo_lm_model_(
+        self, sft_model: LlamaModel, rlhf_model: LlamaModel, extrapolation_factor
+    ):
+        if self.on_embedding:
+            expo_(sft_model.embed_tokens, rlhf_model.embed_tokens, extrapolation_factor)
+        for layer_idx, layer in enumerate(sft_model.layers):
+            expo_linear_modules_(
+                layer.self_attn,
+                rlhf_model.layers[layer_idx].self_attn,
+                extrapolation_factor * self.attention_scaling_factor,
+            )
+            expo_linear_modules_(
+                layer.mlp,
+                rlhf_model.layers[layer_idx].mlp,
+                extrapolation_factor,
+            )
