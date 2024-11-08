@@ -1,3 +1,10 @@
+"""
+This module contains the implementation of ExPO merge for LLAMA models.
+
+Reference:
+- Zheng et al. Weak-to-Strong Extrapolation Expedites Alignment.
+"""
+
 import logging
 from typing import cast
 
@@ -16,6 +23,18 @@ log = logging.getLogger(__name__)
 
 
 def expo_(sft_model: nn.Module, rlhf_model: nn.Module, extrapolation_factor: float):
+    """
+    Applies extrapolation to the parameters of the RLHF model based on the SFT model.
+    The RLHF model is updated in place.
+
+    Args:
+        sft_model (nn.Module): The supervised fine-tuned model.
+        rlhf_model (nn.Module): The reinforcement learning from human feedback model.
+        extrapolation_factor (float): The factor by which to extrapolate the parameters.
+
+    Returns:
+        nn.Module: The RLHF model with updated parameters.
+    """
     delta_parameters = state_dict_sub(rlhf_model.state_dict(), sft_model.state_dict())
     merged_sd = state_dict_add(
         rlhf_model.state_dict(),
@@ -29,6 +48,18 @@ def expo_(sft_model: nn.Module, rlhf_model: nn.Module, extrapolation_factor: flo
 def expo_linear_modules_(
     sft_model: nn.Module, rlhf_model: nn.Module, extrapolation_factor: float
 ):
+    """
+    Applies extrapolation to the linear modules of the RLHF model based on the SFT model.
+    The RLHF model is updated in place.
+
+    Args:
+        sft_model (nn.Module): The supervised fine-tuned model.
+        rlhf_model (nn.Module): The reinforcement learning from human feedback model.
+        extrapolation_factor (float): The factor by which to extrapolate the parameters.
+
+    Returns:
+        nn.Module: The RLHF model with updated linear modules.
+    """
     for name, module in sft_model.named_modules():
         if isinstance(module, nn.Linear):
             expo_(module, rlhf_model.get_submodule(name), extrapolation_factor)

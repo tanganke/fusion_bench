@@ -1,5 +1,5 @@
 """
-This module contains the implementation of ExPO merge.
+This module contains the implementation of ExPO merge for general nn.Modules.
 
 Reference:
 - Zheng et al. Weak-to-Strong Extrapolation Expedites Alignment.
