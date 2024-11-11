@@ -51,9 +51,46 @@ class CLIPClassificationMixin(LightningFabricMixin):
         return self._clip_processor
 
     @functools.cache
-    def get_shuffled_test_loader_iter(self, task: str):
+    def get_shuffled_test_loader_iter(
+        self,
+        task: str,
+        batch_size: Optional[int] = None,
+        num_workers: Optional[int] = None,
+        **loader_kwargs,
+    ):
+        """
+        Get an iterator for a shuffled test DataLoader.
+
+        This method creates a DataLoader for the test dataset of the specified task,
+        with shuffling enabled. It allows for optional customization of batch size,
+        number of workers, and other DataLoader keyword arguments.
+
+        Args:
+            task (str): The task identifier for which the test dataset is to be loaded.
+            batch_size (Optional[int]): The batch size to use for the DataLoader. If None, the default batch size is used.
+            num_workers (Optional[int]): The number of worker processes to use for data loading. If None, the default number of workers is used.
+            **loader_kwargs: Additional keyword arguments to pass to the DataLoader.
+
+        Returns:
+            Iterator: An iterator over the shuffled test DataLoader.
+        """
+        # get dataloader kwargs
+        dataloader_kwargs = self._dataloader_kwargs.copy()
+        dataloader_kwargs["shuffle"] = True
+        if batch_size is not None:
+            dataloader_kwargs["batch_size"] = batch_size
+        if num_workers is not None:
+            dataloader_kwargs["num_workers"] = num_workers
+        dataloader_kwargs.update(loader_kwargs)
+
+        # get the test dataset
+        clip_dataset = CLIPDataset(
+            self.modelpool.load_test_dataset(task), self.clip_processor
+        )
+        # create the dataloader
         loader = DataLoader(
-            CLIPDataset(self.modelpool.load_test_dataset(task), self.clip_processor),
+            clip_dataset,
+            shuffle=True,
             **self._dataloader_kwargs,
         )
         loader = self.fabric.setup_dataloaders(loader)
