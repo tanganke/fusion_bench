@@ -1,3 +1,4 @@
 resisc45:
   _target_: transformers.CLIPVisionModel.from_pretrained
-  pretrained_model_name_or_path: tanganke/clip-vit-base-patch32_resisc45
+#  pretrained_model_name_or_path: tanganke/clip-vit-base-patch32_resisc45
+  pretrained_model_name_or_path: /home/htl/.cache/huggingface/hub/models--tanganke--clip-vit-base-patch32_resisc45/snapshots/24dc3a3a4f1eda0090829d399edcda9963f462a2

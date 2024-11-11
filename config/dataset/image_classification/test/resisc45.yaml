@@ -1,4 +1,5 @@
 resisc45:
   _target_: datasets.load_dataset
-  path: tanganke/resisc45
+#  path: tanganke/resisc45
+  path: /home/htl/.cache/huggingface/datasets/tanganke___resisc45/default/0.0.0/5c484982a196dcb501b8e79c6cf4680dc6f2ccdf
   split: test

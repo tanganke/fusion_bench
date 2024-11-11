@@ -9,6 +9,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
+from omegaconf import DictConfig
 
 from fusion_bench.dataset.clip_dataset import CLIPDataset
 from fusion_bench.mixins import LightningFabricMixin
@@ -43,6 +44,10 @@ class CLIPClassificationMixin(LightningFabricMixin):
     zeroshot_weights_cache_dir: str = "outputs/cache/clip_zeroshot_weights"
     zeroshot_weights: Dict[str, torch.Tensor] = {}
 
+    def __init__(self, algorithm_config: DictConfig) -> None:
+        super().__init__(algorithm_config)
+        self.whether_setup_zero_shot_classification_head = False # We want to only do this once
+
     @property
     def clip_processor(self):
         if self._clip_processor is None:
@@ -66,6 +71,7 @@ class CLIPClassificationMixin(LightningFabricMixin):
         clip_model: Optional[CLIPModel] = None,
         task_names: Optional[List[str]] = None,
     ):
+        self.whether_setup_zero_shot_classification_head = True
         if clip_model is None:
             if self.modelpool.has_pretrained:
                 clip_model = self.modelpool.load_clip_model("_pretrained_")

@@ -1,3 +1,4 @@
 svhn:
   _target_: transformers.CLIPVisionModel.from_pretrained
-  pretrained_model_name_or_path: tanganke/clip-vit-base-patch32_svhn
+#  pretrained_model_name_or_path: tanganke/clip-vit-base-patch32_svhn
+  pretrained_model_name_or_path: /home/htl/.cache/huggingface/hub/models--tanganke--clip-vit-base-patch32_svhn/snapshots/7da249d42c97bb5117832d37d6e54acc50dec7e0

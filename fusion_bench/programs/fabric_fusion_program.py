@@ -189,7 +189,8 @@ class FabricModelFusionProgram(
             return report
         elif isinstance(merged_model, Dict):
             model = merged_model.pop("model")
-            report: dict = taskpool.evaluate(model)
+            name = merged_model.pop("name", None)
+            report: dict = taskpool.evaluate(model, name)
             report.update(merged_model)
             print(report)
             return report
@@ -216,7 +217,7 @@ class FabricModelFusionProgram(
         log.info("loading model pool")
         self.modelpool = self._instantiate_and_setup(
             self._modelpool,
-            compat_load_fn="fusion_bench.compat.modelpool.load_modelpool_from_config",
+            compat_load_fn="fusion_bench.compat. odelpool.load_modelpool_from_config",
         )
         log.info("loading method")
         self.method = self._instantiate_and_setup(
@@ -230,11 +231,15 @@ class FabricModelFusionProgram(
                 compat_load_fn="fusion_bench.compat.taskpool.load_taskpool_from_config",
             )
 
-        merged_model = self.method.run(self.modelpool)
+        merged_model = self.method.run(self.modelpool, self.evaluate_merged_model, self.taskpool)
         self.save_merged_model(merged_model)
         if self.taskpool is not None:
             report = self.evaluate_merged_model(self.taskpool, merged_model)
-            print_json(report, print_type=False)
+            # if isinstance(report, list):
+            #     for r in report:
+            #         print_json(r, print_type=False)
+            # elif isinstance(report, dict):
+            #     print_json(report, print_type=False)
             if self.report_save_path is not None:
                 # save report (Dict) to a file
                 # if the directory of `save_report` does not exists, create it

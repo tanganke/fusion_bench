@@ -1,3 +1,4 @@
 sun397:
   _target_: transformers.CLIPVisionModel.from_pretrained
-  pretrained_model_name_or_path: tanganke/clip-vit-base-patch32_sun397
+#   pretrained_model_name_or_path: tanganke/clip-vit-base-patch32_sun397
+  pretrained_model_name_or_path: /home/htl/.cache/huggingface/hub/models--tanganke--clip-vit-base-patch32_sun397/snapshots/4628de77c6c97ba178c65a0bdf5ce8f5c3045d63

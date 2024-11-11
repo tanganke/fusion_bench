@@ -246,7 +246,7 @@ class CLIPVisionModelTaskPool(
         results = {"accuracy": acc, "loss": loss}
         return results
 
-    def evaluate(self, model: Union[CLIPVisionModel, CLIPVisionTransformer]):
+    def evaluate(self, model: Union[CLIPVisionModel, CLIPVisionTransformer], name=None):
         """
         Evaluate the model on the image classification task.
 
@@ -271,6 +271,8 @@ class CLIPVisionModelTaskPool(
             "all_params": all_params,
             "trainable_percentage": training_params / all_params,
         }
+        if name is not None:
+            report["model_info"]["name"] = name
         for task_name, test_dataloader in tqdm(
             self.test_dataloaders.items(),
             desc="Evaluating tasks",

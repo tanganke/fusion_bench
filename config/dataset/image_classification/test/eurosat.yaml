@@ -1,4 +1,5 @@
 eurosat:
   _target_: datasets.load_dataset
-  path: tanganke/eurosat
+#  path: tanganke/eurosat
+  path: /home/htl/.cache/huggingface/datasets/tanganke___eurosat/default/0.0.0/43750fc422c7fbd4289e2df3f7473617a5937acc
   split: test
