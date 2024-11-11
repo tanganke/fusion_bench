@@ -6,23 +6,25 @@ Reference:
 """
 
 import logging
-from typing import cast
+from typing import cast, Optional
 
+import torch
 from torch import nn
 from transformers import LlamaForCausalLM, LlamaModel
 
 from fusion_bench import BaseAlgorithm, BaseModelPool
 from fusion_bench.method import SimpleAverageAlgorithm
-from fusion_bench.utils.state_dict_arithmetic import (
-    state_dict_add,
-    state_dict_mul,
-    state_dict_sub,
-)
+from fusion_bench.utils.state_dict_arithmetic import StateDictType
 
 log = logging.getLogger(__name__)
 
 
-def expo_(sft_model: nn.Module, rlhf_model: nn.Module, extrapolation_factor: float):
+def expo_(
+    sft_model: nn.Module,
+    rlhf_model: nn.Module,
+    extrapolation_factor: float,
+    merge_dtype: Optional[torch.dtype] = None,
+):
     """
     Applies extrapolation to the parameters of the RLHF model based on the SFT model.
     The RLHF model is updated in place.
@@ -35,18 +37,35 @@ def expo_(sft_model: nn.Module, rlhf_model: nn.Module, extrapolation_factor: flo
     Returns:
         nn.Module: The RLHF model with updated parameters.
     """
-    delta_parameters = state_dict_sub(rlhf_model.state_dict(), sft_model.state_dict())
-    merged_sd = state_dict_add(
-        rlhf_model.state_dict(),
-        state_dict_mul(delta_parameters, scalar=extrapolation_factor),
-    )
+    rlhf_state_dict: StateDictType = rlhf_model.state_dict()
+    sft_state_dict: StateDictType = sft_model.state_dict()
 
-    rlhf_model.load_state_dict(merged_sd)
+    merged_state_dict = {}
+
+    for n in rlhf_state_dict:
+        rlhf_p = rlhf_state_dict[n]
+        sft_p = sft_state_dict[n]
+        if merge_dtype is not None:
+            orignal_dtype = rlhf_state_dict[n].dtype
+            rlhf_p = rlhf_state_dict[n].to(dtype=merge_dtype)
+            sft_p = sft_state_dict[n].to(dtype=merge_dtype)
+
+        rlhf_state_dict[n] = rlhf_p + extrapolation_factor * (rlhf_p - sft_p)
+
+        if merge_dtype is not None:
+            merged_state_dict[n] = rlhf_p.to(dtype=orignal_dtype)
+        else:
+            merged_state_dict[n] = rlhf_p
+
+    rlhf_model.load_state_dict(merged_state_dict)
     return rlhf_model
 
 
 def expo_linear_modules_(
-    sft_model: nn.Module, rlhf_model: nn.Module, extrapolation_factor: float
+    sft_model: nn.Module,
+    rlhf_model: nn.Module,
+    extrapolation_factor: float,
+    merge_dtype: Optional[torch.dtype] = None,
 ):
     """
     Applies extrapolation to the linear modules of the RLHF model based on the SFT model.
@@ -62,7 +81,12 @@ def expo_linear_modules_(
     """
     for name, module in sft_model.named_modules():
         if isinstance(module, nn.Linear):
-            expo_(module, rlhf_model.get_submodule(name), extrapolation_factor)
+            expo_(
+                module,
+                rlhf_model.get_submodule(name),
+                extrapolation_factor=extrapolation_factor,
+                merge_dtype=merge_dtype,
+            )
     return rlhf_model
 
 
@@ -76,6 +100,8 @@ class ExPOAlgorithmForLlama(BaseAlgorithm):
         on_linear_weights: bool = True,
         on_linear_bias: bool = False,
         on_embedding: bool = False,
+        fix_last_n_layers: int = 0,
+        fix_first_n_layers: int = 0,
         **kwargs,
     ):
         self.extrapolation_factor = extrapolation_factor
@@ -84,6 +110,8 @@ class ExPOAlgorithmForLlama(BaseAlgorithm):
         self.on_linear_weights = on_linear_weights
         self.on_linear_bias = on_linear_bias
         self.on_embedding = on_embedding
+        self.fix_last_n_layers = fix_last_n_layers
+        self.fix_first_n_layers = fix_first_n_layers
         super().__init__(**kwargs)
 
     def run(self, modelpool: BaseModelPool):
@@ -123,18 +151,33 @@ class ExPOAlgorithmForLlama(BaseAlgorithm):
         return rlhf_model
 
     def _expo_lm_model_(
-        self, sft_model: LlamaModel, rlhf_model: LlamaModel, extrapolation_factor
+        self,
+        sft_model: LlamaModel,
+        rlhf_model: LlamaModel,
+        extrapolation_factor: float,
     ):
         if self.on_embedding:
             expo_(sft_model.embed_tokens, rlhf_model.embed_tokens, extrapolation_factor)
-        for layer_idx, layer in enumerate(sft_model.layers):
+
+        if self.fix_first_n_layers == "half":
+            self.fix_first_n_layers = len(sft_model.layers) // 2
+        if self.fix_last_n_layers == "half":
+            self.fix_last_n_layers = len(sft_model.layers) // 2
+
+        for layer_idx in range(
+            self.fix_first_n_layers, len(sft_model.layers) - self.fix_last_n_layers
+        ):
+            sft_layer = sft_model.layers[layer_idx]
             expo_linear_modules_(
-                layer.self_attn,
+                sft_layer.self_attn,
                 rlhf_model.layers[layer_idx].self_attn,
-                extrapolation_factor * self.attention_scaling_factor,
+                extrapolation_factor=extrapolation_factor
+                * self.attention_scaling_factor,
+                merge_dtype=torch.float32,
             )
             expo_linear_modules_(
-                layer.mlp,
+                sft_layer.mlp,
                 rlhf_model.layers[layer_idx].mlp,
-                extrapolation_factor,
+                extrapolation_factor=extrapolation_factor,
+                merge_dtype=torch.float32,
             )

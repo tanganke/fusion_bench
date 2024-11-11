@@ -4,11 +4,7 @@ from torch import Tensor, nn
 from fusion_bench import BaseAlgorithm, BaseModelPool
 from fusion_bench.utils.state_dict_arithmetic import state_dict_sum
 
-from .utils import (
-    module_sub_,
-    module_random_drop_,
-    param_random_drop_,
-)
+from .utils import module_random_drop_, module_sub_, param_random_drop_
 
 
 class DareTaskArithmetic(BaseAlgorithm):
@@ -23,11 +19,13 @@ class DareTaskArithmetic(BaseAlgorithm):
         scaling_factor: float,
         sparsity_ratio: float,
         only_on_linear_weights: bool,
+        rescale: bool = True,
         **kwargs,
     ):
         self.scaling_factor = scaling_factor
         self.sparsity_ratio = sparsity_ratio
         self.only_on_linear_weights = only_on_linear_weights
+        self.rescale = rescale
         super().__init__(**kwargs)
 
     @torch.no_grad()
@@ -52,10 +50,10 @@ class DareTaskArithmetic(BaseAlgorithm):
                 for module in tv.modules():
                     if isinstance(module, nn.Linear):
                         param_random_drop_(
-                            module.weight, self.sparsity_ratio, rescale=True
+                            module.weight, self.sparsity_ratio, rescale=self.rescale
                         )
             else:
-                module_random_drop_(tv, self.sparsity_ratio, rescale=True)
+                module_random_drop_(tv, self.sparsity_ratio, rescale=self.rescale)
 
         # merge task vectors
         task_vector_sum = state_dict_sum(task_vectors.values())
