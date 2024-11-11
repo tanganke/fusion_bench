@@ -90,7 +90,7 @@ class CLIPClassificationMixin(LightningFabricMixin):
         # create the dataloader
         loader = DataLoader(
             clip_dataset,
-            **self._dataloader_kwargs,
+            **dataloader_kwargs,
         )
         loader = self.fabric.setup_dataloaders(loader)
         return iter(InfiniteDataLoader(loader))
