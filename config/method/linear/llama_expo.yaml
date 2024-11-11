@@ -15,3 +15,5 @@ on_embedding: false
 
 fix_last_n_layers: 0
 fix_first_n_layers: 0
+
+magnitude_sparsity_ratio: null

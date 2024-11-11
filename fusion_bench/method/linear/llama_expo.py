@@ -6,14 +6,16 @@ Reference:
 """
 
 import logging
-from typing import cast, Optional
+from typing import Optional, cast
 
 import torch
 from torch import nn
 from transformers import LlamaForCausalLM, LlamaModel
+from typing_extensions import override
 
 from fusion_bench import BaseAlgorithm, BaseModelPool
-from fusion_bench.method import SimpleAverageAlgorithm
+from fusion_bench.method import DareSimpleAverage, SimpleAverageAlgorithm
+from fusion_bench.method.pruning.prune_utils import unstructured_magnitude_prune_
 from fusion_bench.utils.state_dict_arithmetic import StateDictType
 
 log = logging.getLogger(__name__)
@@ -24,6 +26,7 @@ def expo_(
     rlhf_model: nn.Module,
     extrapolation_factor: float,
     merge_dtype: Optional[torch.dtype] = None,
+    magnitude_sparsity_ratio: Optional[float] = None,
 ):
     """
     Applies extrapolation to the parameters of the RLHF model based on the SFT model.
@@ -50,7 +53,12 @@ def expo_(
             rlhf_p = rlhf_state_dict[n].to(dtype=merge_dtype)
             sft_p = sft_state_dict[n].to(dtype=merge_dtype)
 
-        rlhf_state_dict[n] = rlhf_p + extrapolation_factor * (rlhf_p - sft_p)
+        delta_p = rlhf_p - sft_p
+        if magnitude_sparsity_ratio is not None:
+            delta_p = unstructured_magnitude_prune_(
+                delta_p, torch.abs, magnitude_sparsity_ratio, return_pruned_weight=False
+            )
+        rlhf_state_dict[n] = rlhf_p + extrapolation_factor * delta_p
 
         if merge_dtype is not None:
             merged_state_dict[n] = rlhf_p.to(dtype=orignal_dtype)
@@ -66,6 +74,7 @@ def expo_linear_modules_(
     rlhf_model: nn.Module,
     extrapolation_factor: float,
     merge_dtype: Optional[torch.dtype] = None,
+    magnitude_sparsity_ratio: Optional[float] = None,
 ):
     """
     Applies extrapolation to the linear modules of the RLHF model based on the SFT model.
@@ -86,6 +95,7 @@ def expo_linear_modules_(
                 rlhf_model.get_submodule(name),
                 extrapolation_factor=extrapolation_factor,
                 merge_dtype=merge_dtype,
+                magnitude_sparsity_ratio=magnitude_sparsity_ratio,
             )
     return rlhf_model
 
@@ -102,6 +112,7 @@ class ExPOAlgorithmForLlama(BaseAlgorithm):
         on_embedding: bool = False,
         fix_last_n_layers: int = 0,
         fix_first_n_layers: int = 0,
+        magnitude_sparsity_ratio: Optional[float] = None,
         **kwargs,
     ):
         self.extrapolation_factor = extrapolation_factor
@@ -112,15 +123,10 @@ class ExPOAlgorithmForLlama(BaseAlgorithm):
         self.on_embedding = on_embedding
         self.fix_last_n_layers = fix_last_n_layers
         self.fix_first_n_layers = fix_first_n_layers
+        self.magnitude_sparsity_ratio = magnitude_sparsity_ratio
         super().__init__(**kwargs)
 
-    def run(self, modelpool: BaseModelPool):
-        if not isinstance(modelpool, BaseModelPool):
-            modelpool = BaseModelPool(modelpool)
-
-        assert len(modelpool.model_names) >= 1, "ExPO requires at least one model."
-        assert modelpool.has_pretrained, "ExPO requires pretrained models (base model)."
-
+    def load_models(self, modelpool: BaseModelPool):
         sft_model: LlamaForCausalLM = modelpool.load_pretrained_model()
         if len(modelpool) == 1:
             rlhf_model = modelpool.load_model(modelpool.model_names[0])
@@ -131,6 +137,16 @@ class ExPOAlgorithmForLlama(BaseAlgorithm):
             )
             rlhf_model = SimpleAverageAlgorithm().run(modelpool)
         rlhf_model = cast(LlamaForCausalLM, rlhf_model)
+        return sft_model, rlhf_model
+
+    def run(self, modelpool: BaseModelPool):
+        if not isinstance(modelpool, BaseModelPool):
+            modelpool = BaseModelPool(modelpool)
+
+        assert len(modelpool.model_names) >= 1, "ExPO requires at least one model."
+        assert modelpool.has_pretrained, "ExPO requires pretrained models (base model)."
+
+        sft_model, rlhf_model = self.load_models(modelpool)
 
         if not self.on_linear_bias:
             for name, module in sft_model.named_modules():
@@ -174,10 +190,40 @@ class ExPOAlgorithmForLlama(BaseAlgorithm):
                 extrapolation_factor=extrapolation_factor
                 * self.attention_scaling_factor,
                 merge_dtype=torch.float32,
+                magnitude_sparsity_ratio=self.magnitude_sparsity_ratio,
             )
             expo_linear_modules_(
                 sft_layer.mlp,
                 rlhf_model.layers[layer_idx].mlp,
                 extrapolation_factor=extrapolation_factor,
                 merge_dtype=torch.float32,
+                magnitude_sparsity_ratio=self.magnitude_sparsity_ratio,
             )
+
+
+class ExPOWithDareForLLama(ExPOAlgorithmForLlama):
+    def __init__(
+        self,
+        dare_sparsity_ratio: float,
+        dare_only_on_linear_weights: bool,
+        dare_rescale: bool = True,
+        **kwargs,
+    ):
+        self.dare_sparsity_ratio = dare_sparsity_ratio
+        self.dare_only_on_linear_weights = dare_only_on_linear_weights
+        self.dare_rescale = dare_rescale
+        super().__init__(**kwargs)
+
+    @override
+    def load_models(self, modelpool: BaseModelPool):
+        log.info(
+            f"There are {len(modelpool)} models in the model pool, averaging them first..."
+        )
+        rlhf_model = DareSimpleAverage(
+            sparsity_ratio=self.dare_sparsity_ratio,
+            only_on_linear_weights=self.dare_only_on_linear_weights,
+            rescale=self.dare_rescale,
+        ).run(modelpool)
+        rlhf_model = cast(LlamaForCausalLM, rlhf_model)
+        sft_model: LlamaForCausalLM = modelpool.load_pretrained_model()
+        return sft_model, rlhf_model
