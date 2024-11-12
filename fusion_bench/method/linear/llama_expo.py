@@ -1,5 +1,5 @@
 """
-This module contains the implementation of ExPO merge for LLAMA models.
+This module contains an extention implementation of ExPO merge for LLAMA models by @tanganke.
 
 Reference:
 - Zheng et al. Weak-to-Strong Extrapolation Expedites Alignment.
