@@ -3,9 +3,11 @@ defaults:
   - fabric: auto
   - fabric_logger: tensorboard_logger
   # --- Model, Method, Task ---
-  - modelpool: CLIPVisionModelPool/clip-vit-base-patch32_generalization_exp1
+  # - modelpool: CLIPVisionModelPool/clip-vit-base-patch32_generalization_exp1
+  - modelpool: test/clip-adamerging-3model
   - method: adamerging
-  - taskpool: CLIPVisionModelTaskPool/clip-vit-classification_TA8
+  #- taskpool: CLIPVisionModelTaskPool/clip-vit-classification_TA8
+  - taskpool: test/clip-adamerging-3model
   - _self_
 
 _target_: fusion_bench.programs.FabricModelFusionProgram
@@ -17,7 +19,7 @@ dry_run: false
 print_config: true # Print the configuration to the console
 merged_model_save_path: null # path to save the merged model, use "{log_dir}" to refer to the logger directory, for example `merged_model_save_path=\{log_dir\}/merged_model`
 merged_model_save_kwargs: null
-report_save_path: outputs/clip-vit-base-patch32_generalization_exp1_clip_layer_wise_adamerging.json # path to save the result report
+# report_save_path: outputs/clip-vit-base-patch32_generalization_exp1_clip_layer_wise_adamerging.json # path to save the result report
 print_function_call: true # set to false if you don't want to print the details of instantiate calls
 
-method.save_merging_weights: outputs/clip-vit-base-patch32_generalization_exp1_layer_wise_adamerging_weights.pt
+# method.save_merging_weights: outputs/clip-vit-base-patch32_generalization_exp1_layer_wise_adamerging_weights.pt

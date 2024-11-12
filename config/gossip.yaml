@@ -3,9 +3,11 @@ defaults:
   - fabric: auto
   - fabric_logger: tensorboard_logger
   # --- Model, Method, Task ---
-  - modelpool: CLIPVisionModelPool/clip-vit-base-patch32_generalization_exp1
+  # - modelpool: CLIPVisionModelPool/clip-vit-base-patch32_generalization_exp1
+  - modelpool: test/clip-3model
   - method: gossip
-  - taskpool: CLIPVisionModelTaskPool/clip-vit-classification_TA8
+  # - taskpool: CLIPVisionModelTaskPool/clip-vit-classification_TA8
+  - taskpool: test/clip-3model
   - _self_
 
 _target_: fusion_bench.programs.FabricModelFusionProgram

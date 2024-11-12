@@ -43,6 +43,10 @@ _import_structure = {
         "PWEMoExactParetoOptimalForCLIP",
     ],
     "ada_svd": ["AdaSVDMergingForCLIPVisionModel"],
+    "gossip": [
+        "CLIPLayerWiseGossipAlgorithm",
+        "CLIPTaskWiseGossipAlgorithm",
+    ],
     # plug-and-play model merging methods
     "concrete_subspace": [
         "ConcreteTaskArithmeticAlgorithmForCLIP",
@@ -145,6 +149,7 @@ if TYPE_CHECKING:
     from .ties_merging import TiesMergingAlgorithm
     from .we_moe import CLIPWeightEnsemblingMoEAlgorithm
     from .weighted_average import WeightedAverageAlgorithm, WeightedAverageForLLama
+    from .gossip import CLIPLayerWiseGossipAlgorithm, CLIPTaskWiseGossipAlgorithm
 
 else:
     sys.modules[__name__] = LazyImporter(

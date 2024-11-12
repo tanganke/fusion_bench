@@ -109,18 +109,24 @@ class ModelScheduler:
     def get_final_models(self):
         # need a check
         final_models = [{'name': name, 'model': model} for name, model in zip(self.finetuned_models_name, self.finetuned_models)]
-        
+        num_finetuned_models = len(self.finetuned_models)
+    
         state_dict = self.pretrained_model.state_dict(keep_vars=True)
         for name, _ in self.finetuned_models[0].named_parameters():
             state_dict[name].data.zero_()
         for model in self.finetuned_models:
             for name, param in model.named_parameters():
-                state_dict[name] = state_dict[name] + 1/6 * param
+                state_dict[name] = state_dict[name] + 1/num_finetuned_models * param
             
         self.pretrained_model.load_state_dict(state_dict)
         final_models += [{'name': 'average model', 'model': self.pretrained_model}]
         
         return final_models
+    
+    def move_to(self, device):
+        self.pretrained_model.to(device=device)
+        for model in self.finetuned_models:
+            model.to(device=device)
 
 class LayerWiseGossipAlgorithm(
     ModelFusionAlgorithm,
@@ -225,6 +231,7 @@ class LayerWiseGossipAlgorithm(
 
                 model_scheduler.update_models()
                 evaluate_merged_model(taskpool,  model_scheduler.get_final_models())
+                model_scheduler.move_to('cpu')
         return model_scheduler.get_final_models()
 
     def on_test_time_adaptation_start(self):

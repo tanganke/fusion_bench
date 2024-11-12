@@ -14,7 +14,7 @@ fusion_bench \
 """
 
 import logging
-
+import functools
 from fusion_bench.mixins import CLIPClassificationMixin
 
 from .layer_wise_gossip import LayerWiseGossipAlgorithm
@@ -32,3 +32,11 @@ class CLIPLayerWiseGossipAlgorithm(
         """
         if self.whether_setup_zero_shot_classification_head == False:
             self.setup_zero_shot_classification_head()
+
+    @functools.cache
+    def get_shuffled_test_loader_iter(self, task: str):
+        return super().get_shuffled_test_loader_iter(
+            task,
+            batch_size=self.config.batch_size,
+            num_workers=self.config.num_workers,
+        )

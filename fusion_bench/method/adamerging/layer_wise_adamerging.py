@@ -117,7 +117,7 @@ class LayerWiseAdaMergingAlgorithm(
                 os.makedirs(os.path.dirname(save_path), exist_ok=True)
             torch.save(merging_weights.detach().cpu(), save_path)
 
-    def run(self, modelpool: ModelPool):
+    def run(self, modelpool: ModelPool, **kwargs):
         """
         Run the Layer-Wise AdaMerging Algorithm.
 

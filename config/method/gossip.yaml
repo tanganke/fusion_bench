@@ -1,6 +1,6 @@
 # this option can be "clip_task_wise_gossip"
 name: clip_layer_wise_gossip
-_target_: fusion_bench.method.CLIPLayerWiseGossipAlgorithm
+# _target_: fusion_bench.method.CLIPLayerWiseGossipAlgorithm
 # this weights can be a list of float, or a string that points to a *.np, *.pt file containing the weights
 # if weights is specified, skip the test-time adaptation training
 weights: null
@@ -17,7 +17,7 @@ strict: false
 devices: 1
 batch_size: 16
 num_workers: 8
-max_steps: 100 # 1000
+max_steps: 300 # 1000
 fast_dev_run: ${fast_dev_run}
 # the path for saving the merging weights
 save_merging_weights: 'merging_weights.pt'

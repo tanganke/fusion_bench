@@ -331,3 +331,5 @@ cython_debug/
 #.idea/
 
 test.py
+convert_log_to_table.py
+log_data.txt

@@ -231,7 +231,7 @@ class FabricModelFusionProgram(
                 compat_load_fn="fusion_bench.compat.taskpool.load_taskpool_from_config",
             )
 
-        merged_model = self.method.run(self.modelpool, self.evaluate_merged_model, self.taskpool)
+        merged_model = self.method.run(self.modelpool, evaluate_merged_model=self.evaluate_merged_model, taskpool=self.taskpool)
         self.save_merged_model(merged_model)
         if self.taskpool is not None:
             report = self.evaluate_merged_model(self.taskpool, merged_model)

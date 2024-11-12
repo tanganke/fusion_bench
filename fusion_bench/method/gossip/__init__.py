@@ -1,0 +1,2 @@
+from .clip_layer_wise_gossip import CLIPLayerWiseGossipAlgorithm
+from .clip_task_wise_gossip import CLIPTaskWiseGossipAlgorithm
