@@ -18,6 +18,9 @@ class DummyAlgorithm(BaseAlgorithm):
         This method returns the pretrained model from the model pool.
         If the pretrained model is not available, it returns the first model from the model pool.
 
+        Args:
+            modelpool (BaseModelPool): The pool of models to fuse.
+
         Raises:
             AssertionError: If the model is not found in the model pool.
         """

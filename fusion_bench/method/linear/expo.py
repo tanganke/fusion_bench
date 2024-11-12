@@ -5,14 +5,15 @@ Reference:
 - Zheng et al. Weak-to-Strong Extrapolation Expedites Alignment.
 """
 
-from fusion_bench.method import SimpleAverageAlgorithm
+import logging
+
 from fusion_bench import BaseAlgorithm, BaseModelPool
+from fusion_bench.method import SimpleAverageAlgorithm
 from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_add,
     state_dict_mul,
     state_dict_sub,
 )
-import logging
 
 log = logging.getLogger(__name__)
 
@@ -40,6 +41,15 @@ class ExPOAlgorithm(BaseAlgorithm):
         super().__init__(**kwargs)
 
     def run(self, modelpool: BaseModelPool):
+        """
+        Run the ExPO merge algorithm.
+
+        Args:
+            modelpool (BaseModelPool): The pool of models to merge.
+
+        Returns:
+            nn.Module: The merged model.
+        """
         if not isinstance(modelpool, BaseModelPool):
             modelpool = BaseModelPool(modelpool)
 

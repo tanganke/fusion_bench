@@ -1,13 +1,14 @@
 import logging
 import os
-from typing import Optional
+from typing import Dict, List, Optional, cast
 
 import numpy as np
 import pandas as pd
 import torch
 import torch.utils
+from numpy.typing import NDArray
 from torch import nn
-from typing import Dict, List, Optional, cast
+from tqdm.auto import tqdm
 
 from fusion_bench.method import BaseAlgorithm
 from fusion_bench.mixins import LightningFabricMixin
@@ -18,9 +19,6 @@ from fusion_bench.utils.parameters import (
     trainable_state_dict,
 )
 from fusion_bench.utils.state_dict_arithmetic import state_dict_sub
-from numpy.typing import NDArray
-from torch import nn
-from tqdm.auto import tqdm
 
 log = logging.getLogger(__name__)
 
