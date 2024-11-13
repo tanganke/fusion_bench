@@ -58,7 +58,7 @@ def expo_(
             delta_p = unstructured_magnitude_prune_(
                 delta_p, torch.abs, magnitude_sparsity_ratio, return_pruned_weight=False
             )
-        rlhf_state_dict[n] = rlhf_p + extrapolation_factor * delta_p
+        sft_p = rlhf_p + extrapolation_factor * delta_p
 
         if merge_dtype is not None:
             merged_state_dict[n] = rlhf_p.to(dtype=orignal_dtype)
