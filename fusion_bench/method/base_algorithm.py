@@ -39,3 +39,6 @@ class BaseAlgorithm(BaseYAMLSerializableModel):
 
 
 BaseModelFusionAlgorithm = BaseAlgorithm
+"""
+Alias for `BaseAlgorithm`.
+"""
