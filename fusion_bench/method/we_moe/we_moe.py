@@ -46,6 +46,7 @@ class WeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
         modelpool (ModelPool): The pool of models to be fused.
         profiler (SimpleProfiler): The profiler for measuring performance.
     """
+
     _fabric: L.Fabric = None
     modelpool: ModelPool = None
 

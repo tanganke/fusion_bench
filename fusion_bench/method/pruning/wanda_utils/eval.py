@@ -102,7 +102,7 @@ def eval_ppl_wikitext_train(model, trainloader, bs=1, device=None):
 
 
 # Function to evaluate perplexity (ppl) specifically on the wikitext dataset
-def eval_ppl_wikitext(model, testenc, bs : int =1, device=None):
+def eval_ppl_wikitext(model, testenc, bs: int = 1, device=None):
     """
     Evaluate perplexity (ppl) specifically on the wikitext dataset.
 

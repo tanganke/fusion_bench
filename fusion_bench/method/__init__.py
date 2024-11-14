@@ -106,9 +106,9 @@ if TYPE_CHECKING:
     from .fisher_merging import FisherMergingForCLIPVisionModel
     from .linear import (
         ExPOAlgorithm,
+        ExPOAlgorithmForLlama,
         LinearInterpolationAlgorithm,
         SimpleAverageForLlama,
-        ExPOAlgorithmForLlama,
         TaskArithmeticForLlama,
     )
     from .mixture_of_experts import (

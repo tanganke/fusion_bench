@@ -8,5 +8,6 @@ of different feature extractors and processors.
 Classes:
     DataAdaptiveWeightEnsemblingModel: A class for data-adaptive weight ensembling.
 """
+
 # flake8: noqa F401
 from .dawe_model import DataAdaptiveWeightEnsemblingModel

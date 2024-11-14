@@ -16,9 +16,8 @@ from functools import partial
 from pathlib import Path
 from typing import Literal
 
-from transformers import PreTrainedTokenizer
-
 from datasets import load_dataset, load_from_disk
+from transformers import PreTrainedTokenizer
 
 
 def cache_dataset(
