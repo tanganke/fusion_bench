@@ -161,7 +161,7 @@ base_model = CLIPVisionModel.from_pretrained('openai/clip-vit-base-patch16').vis
 model = PeftModel.from_pretrained(base_model, peft_model_id)
 ```
 
-Load L-LoRA models refer to [load_l_lora_vision_model_hf][fusion_bench.models.linearized.vision_model.load_l_lora_vision_model_hf].
+Load L-LoRA models, refer to [load_l_lora_vision_model_hf][fusion_bench.models.linearized.vision_model.load_l_lora_vision_model_hf].
 
 === "Performance of the fine-tuned CLIP-ViT-B/16 models (LoRA-16)"
 
