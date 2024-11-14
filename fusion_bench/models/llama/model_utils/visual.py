@@ -15,14 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 from typing import TYPE_CHECKING, List, Sequence, Set, Tuple, Union
 
 import torch
 import transformers.models
 from transformers.activations import ACT2FN
 from transformers.utils import logging
-
-import logging
 
 if TYPE_CHECKING:
     from transformers import LlavaConfig, PretrainedConfig, PreTrainedModel

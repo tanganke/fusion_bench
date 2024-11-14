@@ -1,7 +1,7 @@
 import math
-import torch
-
 from abc import abstractmethod
+
+import torch
 
 
 def warmup_cosine_schedule(warmup_steps: int, total_steps: int, min_lr: float = 0):

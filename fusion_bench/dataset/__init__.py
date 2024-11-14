@@ -1,7 +1,7 @@
 # flake8: noqa F401
+from datasets import load_dataset
 from omegaconf import DictConfig, open_dict
 
-from datasets import load_dataset
 from fusion_bench.utils import instantiate
 
 from .clip_dataset import CLIPDataset

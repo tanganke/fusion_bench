@@ -2,20 +2,20 @@ import functools
 import logging
 from copy import deepcopy
 from typing import List, Optional
-import numpy as np
 
+import numpy as np
 import torch
 import torch.func
 from torch import Tensor, nn
 from torch.func import functional_call
 from torch.nn import functional as F
+from tqdm.auto import tqdm
 
 from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_sub,
     state_dict_weighted_sum,
 )
 from fusion_bench.utils.type import StateDictType
-from tqdm.auto import tqdm
 
 log = logging.getLogger(__name__)
 
@@ -114,6 +114,7 @@ class Depth_2_Gate(nn.Module):
         hidden_states = F.relu(self.fc1(hidden_states))
         return self.fc2(hidden_states)
 
+
 def construct_weight_ensembling_gate(
     hidden_size: int,
     num_experts: int,
@@ -133,6 +134,7 @@ def construct_weight_ensembling_gate(
     gate.init_weight(init_lambda)
     return gate
 
+
 def positional_encoding(layer_idx, dim=8):
     """
     layer index encoding
@@ -142,6 +144,7 @@ def positional_encoding(layer_idx, dim=8):
     angle_rates = 1 / np.power(10000, (2 * i) / dim)
     encoding = np.concatenate([np.sin(pos * angle_rates), np.cos(pos * angle_rates)])
     return encoding
+
 
 def _magnitude_prune(weight: Tensor, prune_ratio: float) -> Tensor:
     """
@@ -159,15 +162,21 @@ def _magnitude_prune(weight: Tensor, prune_ratio: float) -> Tensor:
     weight = weight * mask
     return weight
 
-def _module_magnitude_prune(model: Tensor, prune_ratio: float, layer_idx: int) -> Tensor:
+
+def _module_magnitude_prune(
+    model: Tensor, prune_ratio: float, layer_idx: int
+) -> Tensor:
     """
     Prune a module.
     """
-    for name, param in tqdm(model.named_parameters(),
-            "Magnitude Pruning On {} Linear Layer".format(layer_idx),
-            total=len(tuple(model.named_parameters())),):
+    for name, param in tqdm(
+        model.named_parameters(),
+        "Magnitude Pruning On {} Linear Layer".format(layer_idx),
+        total=len(tuple(model.named_parameters())),
+    ):
         param.data = _magnitude_prune(param, prune_ratio)
     return model
+
 
 class SparseWeightEnsemblingMoE(nn.Module):
     # variable to store the merged state dict temporarily
@@ -222,11 +231,15 @@ class SparseWeightEnsemblingMoE(nn.Module):
                     del_attr(m, name.split("."))
             else:
                 for m in expert_models:
-                    get_attr(m, name.split(".")).data = (get_attr(m, name.split(".")) - param)
+                    get_attr(m, name.split(".")).data = (
+                        get_attr(m, name.split(".")) - param
+                    )
 
         # sparse task vectors
-        expert_models = [_module_magnitude_prune(m, prune_ratio=tv_prune_ratio, layer_idx=layer_idx)
-                         for m in expert_models]
+        expert_models = [
+            _module_magnitude_prune(m, prune_ratio=tv_prune_ratio, layer_idx=layer_idx)
+            for m in expert_models
+        ]
 
         # fix base model and expert models
         self.base_model = base_model.requires_grad_(False)
@@ -291,6 +304,7 @@ class SparseWeightEnsemblingMoE(nn.Module):
         self._merged_state_dict = None
         return output_hidden_states
 
+
 class SparseWeightEnsemblingMoE_ShardGate(nn.Module):
     # variable to store the merged state dict temporarily
     _merged_state_dict: StateDictType = None
@@ -340,7 +354,9 @@ class SparseWeightEnsemblingMoE_ShardGate(nn.Module):
 
         self.gate = sharedgate
         if self.position_encoding:
-            self.layer_positional_encoding = torch.from_numpy(positional_encoding(layer_idx, position_encoding_dim)).float()
+            self.layer_positional_encoding = torch.from_numpy(
+                positional_encoding(layer_idx, position_encoding_dim)
+            ).float()
 
         # compute the task vectors
         for name, param in base_model.named_parameters():
@@ -349,12 +365,14 @@ class SparseWeightEnsemblingMoE_ShardGate(nn.Module):
                     del_attr(m, name.split("."))
             else:
                 for m in expert_models:
-                    get_attr(m, name.split(".")).data = (get_attr(m, name.split(".")) - param)
+                    get_attr(m, name.split(".")).data = (
+                        get_attr(m, name.split(".")) - param
+                    )
 
         # sparse task vectors
         expert_models = [
-                        _module_magnitude_prune(m, prune_ratio=tv_prune_ratio, layer_idx=layer_idx)
-                        for m in expert_models
+            _module_magnitude_prune(m, prune_ratio=tv_prune_ratio, layer_idx=layer_idx)
+            for m in expert_models
         ]
 
         # fix base model and expert models
@@ -386,9 +404,21 @@ class SparseWeightEnsemblingMoE_ShardGate(nn.Module):
             gate_weights = self.gate()
         else:
             if self.position_encoding:
-                layer_positional_encoding = self.layer_positional_encoding.unsqueeze(0).unsqueeze(0).expand(hidden_states.size()[0], hidden_states.size()[1], self.position_encoding_dim)
-                layer_positional_encoding = layer_positional_encoding.to(hidden_states.device)
-                gate_input = torch.cat((layer_positional_encoding, hidden_states), dim=-1)
+                layer_positional_encoding = (
+                    self.layer_positional_encoding.unsqueeze(0)
+                    .unsqueeze(0)
+                    .expand(
+                        hidden_states.size()[0],
+                        hidden_states.size()[1],
+                        self.position_encoding_dim,
+                    )
+                )
+                layer_positional_encoding = layer_positional_encoding.to(
+                    hidden_states.device
+                )
+                gate_input = torch.cat(
+                    (layer_positional_encoding, hidden_states), dim=-1
+                )
 
             gate_weights = self.gate(gate_input)
             if self.batch_first:

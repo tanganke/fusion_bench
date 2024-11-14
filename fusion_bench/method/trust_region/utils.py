@@ -3,8 +3,8 @@ from collections import OrderedDict
 
 from torch import nn
 
-
 # Model conversion utils
+
 
 def state_dict_to_vector(state_dict, remove_keys=[]):
     """
