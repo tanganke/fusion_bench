@@ -61,7 +61,7 @@ def load_lora_vision_model_hf(
     Parameters:
         base_model_name (str): The name of the base vision model to load from Hugging Face.
         peft_name (str): The name of the LoRA adaptation to apply to the base model.
-        merge_and_unload (bool, optional): If True, the LoRA adaptation is merged into the base model and unloaded. Defaults to False.
+        merge_and_unload (bool, optional): If True, the LoRA adaptation is merged into the base model and the LoRA layers are removed. Defaults to False.
 
     Returns:
         PeftModel: The adapted vision model, optionally merged and unloaded.
