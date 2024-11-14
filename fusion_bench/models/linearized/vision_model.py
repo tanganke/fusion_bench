@@ -48,9 +48,31 @@ def load_fft_vision_model_hf(model_name: str) -> CLIPVisionTransformer:
     return CLIPVisionModel.from_pretrained(model_name).vision_model
 
 
-def load_lora_vision_model_hf(base_model_name: str, peft_name: str):
+def load_lora_vision_model_hf(
+    base_model_name: str,
+    peft_name: str,
+    merge_and_unload: bool = False,
+):
+    """
+    Load a LoRA (Low-Rank Adaptation) vision model from Hugging Face.
+
+    This function loads a vision model and applies a LoRA adaptation to it. The model can be optionally merged and unloaded.
+
+    Parameters:
+        base_model_name (str): The name of the base vision model to load from Hugging Face.
+        peft_name (str): The name of the LoRA adaptation to apply to the base model.
+        merge_and_unload (bool, optional): If True, the LoRA adaptation is merged into the base model and unloaded. Defaults to False.
+
+    Returns:
+        PeftModel: The adapted vision model, optionally merged and unloaded.
+    """
+    # note that we apply lora on type `CLIPVisionTransformer` instead of `CLIPVisionModel`
     model = CLIPVisionModel.from_pretrained(base_model_name).vision_model
-    return PeftModel.from_pretrained(model, peft_name, is_trainable=True)
+    peft_model = PeftModel.from_pretrained(model, peft_name, is_trainable=True)
+    if merge_and_unload:
+        return peft_model.merge_and_unload()
+    else:
+        return peft_model
 
 
 def load_l_lora_vision_model_hf(base_model_name: str, peft_name: str):
