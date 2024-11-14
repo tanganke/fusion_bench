@@ -1,11 +1,11 @@
+import logging
+import os
 from typing import Any, Dict, List, Optional
 
 from datasets import load_dataset, load_from_disk
 from transformers import PreTrainedTokenizer
 
 import fusion_bench
-import os
-import logging
 
 log = logging.getLogger(__name__)
 

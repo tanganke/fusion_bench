@@ -14,6 +14,7 @@ class TaskPool:
         config (DictConfig): The configuration for the task pool.
         _all_task_names (List[str]): A list of all task names in the task pool.
     """
+
     _program = None
 
     def __init__(self, taskpool_config: DictConfig):
