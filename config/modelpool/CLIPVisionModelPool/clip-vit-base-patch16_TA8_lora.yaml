@@ -9,7 +9,7 @@ models:
     base_model_name: openai/clip-vit-base-patch16
     peft_name: tanganke/clip-vit-base-patch16_sun397_lora-16
     merge_and_unload: true
-  cars:
+  stanford-cars:
     _target_: fusion_bench.models.linearized.vision_model.load_lora_vision_model_hf
     base_model_name: openai/clip-vit-base-patch16
     peft_name: tanganke/clip-vit-base-patch16_stanford-cars_lora-16
