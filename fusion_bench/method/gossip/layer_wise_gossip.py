@@ -62,12 +62,19 @@ class ModelScheduler:
         """
         # TODO: use a mixing matrix to determine which models to use in step idx
 
+        # merge three models
         pretrained_model = copy.deepcopy(self.finetuned_models[model_id])
         finetuned_models = [
             copy.deepcopy(self.finetuned_models[(model_id+1)%self.num_finetuned_models]),
             copy.deepcopy(self.finetuned_models[(model_id-1)%self.num_finetuned_models])
         ]
-
+        # merge four models
+        # pretrained_model = copy.deepcopy(self.pretrained_model)
+        # finetuned_models = [
+        #     copy.deepcopy(self.finetuned_models[(model_id+1)%self.num_finetuned_models]),
+        #     copy.deepcopy(self.finetuned_models[model_id]),
+        #     copy.deepcopy(self.finetuned_models[(model_id-1)%self.num_finetuned_models])
+        # ]
         # initialize layer-wise weights using the provided configuration `init_values` or load from file if `weights` is provided
         if self.config.weights is None:
             layer_wise_weight = get_layer_wise_weights(
@@ -111,20 +118,21 @@ class ModelScheduler:
         final_models = [{'name': name, 'model': model} for name, model in zip(self.finetuned_models_name, self.finetuned_models)]
         num_finetuned_models = len(self.finetuned_models)
     
-        state_dict = self.pretrained_model.state_dict(keep_vars=True)
+        average_model = copy.deepcopy(self.pretrained_model)
+        state_dict = average_model.state_dict(keep_vars=True)
         for name, _ in self.finetuned_models[0].named_parameters():
             state_dict[name].data.zero_()
         for model in self.finetuned_models:
             for name, param in model.named_parameters():
                 state_dict[name] = state_dict[name] + 1/num_finetuned_models * param
             
-        self.pretrained_model.load_state_dict(state_dict)
-        final_models += [{'name': 'average model', 'model': self.pretrained_model}]
+        average_model.load_state_dict(state_dict)
+        final_models += [{'name': 'average model', 'model': average_model}]
         
         return final_models
     
     def move_to(self, device):
-        self.pretrained_model.to(device=device)
+        # self.pretrained_model.to(device=device)
         for model in self.finetuned_models:
             model.to(device=device)
 
@@ -181,6 +189,16 @@ class LayerWiseGossipAlgorithm(
         torch.cuda.empty_cache()
         log.info(get_memory_usage('after freeing memory, the memory usage of GPU is:'))
     
+    def update_datasets(self, datasets):
+        """
+        for evary epoch of local adamerging, we only use the data set corresponding to the model involved in the fusion
+        """
+        num_datasets = len(datasets)
+        datasets_copy = datasets.copy()
+        for i in range(num_datasets):
+            datasets[i] = datasets_copy[i].union(datasets_copy[(i+1)%num_datasets]).union(datasets_copy[(i-1)%num_datasets])
+        return datasets
+
     def run(self, modelpool: ModelPool, evaluate_merged_model: Callable, taskpool):
         """
         Run the Layer-Wise AdaMerging Algorithm.
@@ -197,6 +215,7 @@ class LayerWiseGossipAlgorithm(
         self.modelpool = modelpool
         self.log_hyperparams(self.config)
         self.num_finetuned_models = len(modelpool.model_names)
+        datasets = [{dataset} for dataset in modelpool.model_names]
 
         with self.profile("construct the wrapped model"):
             model_scheduler = ModelScheduler(self.modelpool, self.config)
@@ -210,6 +229,7 @@ class LayerWiseGossipAlgorithm(
                 "Gossip merging",
                 dynamic_ncols=True
             ):
+                datasets = self.update_datasets(datasets)
                 log.info(f'Gossip merging step:, {step_idx}')
                 for model_id in tqdm(
                     range(self.num_finetuned_models),
@@ -219,14 +239,15 @@ class LayerWiseGossipAlgorithm(
                     with self.profile("construct the local wrapped model"):
                         module = model_scheduler(model_id)
 
+                    log.info(f'the datasets used in this local merging is {datasets[model_id]}')
                     with self.profile("test-time adaptation"):
-                        module = self.test_time_adaptation(module)
+                        module = self.test_time_adaptation(module, datasets[model_id])
                     # if self.config.get("save_merging_weights", False):
                     #     self.save_merging_weights(
                     #         self.config.save_merging_weights, module.merge_weight
                     #     )
                     model_scheduler.store_model(module.merge_weights(), model_id)
-                    log.info(get_memory_usage(f'after local merging{modelpool.model_names[model_id]}, the memory usage of GPU is:'))
+                    log.info(get_memory_usage(f'after local merging ({modelpool.model_names[model_id]}), the memory usage of GPU is:'))
                     self.free_gpu_memory(module) # simulate distributed GPU memory usage as much as possible
 
                 model_scheduler.update_models()
@@ -268,7 +289,7 @@ class LayerWiseGossipAlgorithm(
         """
         pass
 
-    def test_time_adaptation(self, module: LayerWiseMergedModel):
+    def test_time_adaptation(self, module: LayerWiseMergedModel, datasets):
         """
         Perform test-time adaptation on the merged model.
 
@@ -303,6 +324,8 @@ class LayerWiseGossipAlgorithm(
         ):
             # default behavior for first-order optimizers
             for task in self.modelpool.model_names:
+                if task not in datasets:
+                    continue
                 with self.profile("data loading"):
                     batch = next(self.get_shuffled_test_loader_iter(task))
                 with self.profile("forward pass"):

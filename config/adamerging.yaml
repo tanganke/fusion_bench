@@ -3,11 +3,11 @@ defaults:
   - fabric: auto
   - fabric_logger: tensorboard_logger
   # --- Model, Method, Task ---
-  # - modelpool: CLIPVisionModelPool/clip-vit-base-patch32_generalization_exp1
-  - modelpool: test/clip-adamerging-3model
+  - modelpool: CLIPVisionModelPool/clip-vit-base-patch32_generalization_exp1
+  # - modelpool: test/clip-adamerging-3model
   - method: adamerging
-  #- taskpool: CLIPVisionModelTaskPool/clip-vit-classification_TA8
-  - taskpool: test/clip-adamerging-3model
+  - taskpool: CLIPVisionModelTaskPool/clip-vit-classification_TA8
+  # - taskpool: test/clip-adamerging-3model
   - _self_
 
 _target_: fusion_bench.programs.FabricModelFusionProgram
