@@ -20,6 +20,7 @@ _import_structure = {
     # model merging methods
     "linear": [
         "ExPOAlgorithm",
+        "ExPOAlgorithmForLlama",
         "SimpleAverageForLlama",
         "TaskArithmeticForLlama",
         "LinearInterpolationAlgorithm",
@@ -105,6 +106,7 @@ if TYPE_CHECKING:
     from .fisher_merging import FisherMergingForCLIPVisionModel
     from .linear import (
         ExPOAlgorithm,
+        ExPOAlgorithmForLlama,
         LinearInterpolationAlgorithm,
         SimpleAverageForLlama,
         TaskArithmeticForLlama,

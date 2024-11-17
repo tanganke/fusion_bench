@@ -1,6 +1,7 @@
 import enum
-from ._version import get_versions
+
 from ._name_mangler import _NameMangler
+from ._version import get_versions
 
 __version__ = get_versions()["version"]
 __version_info__ = tuple(int(n) for n in __version__.partition("+")[0].split("."))

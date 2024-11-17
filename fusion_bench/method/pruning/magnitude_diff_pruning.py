@@ -1,7 +1,7 @@
 import logging
 import re
 from copy import deepcopy
-from typing import Dict, List  # noqa: F401
+from typing import Dict, List, Optional, Union  # noqa: F401
 
 import torch
 from torch import Tensor, nn
@@ -75,6 +75,7 @@ class MagnitudeDiffPruningAlgorithm(
     def __init__(
         self,
         prune_ratio: float,
+        rescale: Optional[Union[bool, float]] = None,
         extract_names: List[str] = None,
         **kwargs,
     ):
@@ -87,6 +88,7 @@ class MagnitudeDiffPruningAlgorithm(
             **kwargs: Additional keyword arguments.
         """
         self.prune_ratio = prune_ratio
+        self.rescale = rescale
         self.extract_names = extract_names
         super().__init__(**kwargs)
 
@@ -121,6 +123,7 @@ class MagnitudeDiffPruningAlgorithm(
         self.print_profile_summary()
         return model
 
+    @torch.no_grad()
     def magnitude_prune(
         self,
         pretrained_model: nn.Module,
@@ -171,6 +174,8 @@ class MagnitudeDiffPruningAlgorithm(
             if _is_name_matched(name, extract_names):
                 w_diff = ft_state_dict[name] - param
                 w_diff = _magnitude_prune(w_diff, prune_ratio=self.prune_ratio)
+                if self.rescale is not None and self.rescale:
+                    w_diff = w_diff * self.rescale
                 param.data = param + w_diff
 
         return model

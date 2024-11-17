@@ -1,5 +1,5 @@
 """
-This module contains the implementation of ExPO merge.
+This module contains the implementation of ExPO merge for general nn.Modules.
 
 Reference:
 - Zheng et al. Weak-to-Strong Extrapolation Expedites Alignment.
@@ -75,5 +75,5 @@ class ExPOAlgorithm(BaseAlgorithm):
             state_dict_mul(delta_parameters, scalar=self.extrapolation_factor),
         )
 
-        sft_model.load_state_dict(merged_sd)
-        return sft_model
+        rlhf_model.load_state_dict(merged_sd)
+        return rlhf_model

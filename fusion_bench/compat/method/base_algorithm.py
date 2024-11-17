@@ -42,6 +42,9 @@ class ModelFusionAlgorithm(ABC):
         Args:
             modelpool: The pool of models to fuse.
 
+        Returns:
+            The fused model.
+
         Examples:
             >>> algorithm = SimpleAverageAlgorithm()
             >>> modelpool = ModelPool()
