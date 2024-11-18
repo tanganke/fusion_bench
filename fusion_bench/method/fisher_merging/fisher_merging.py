@@ -43,7 +43,9 @@ def get_param_names_to_merge(
     return param_names_to_merge
 
 
-def get_param_squared_gradients(model: nn.Module, param_names_to_merge: List[str]) -> Dict[str, Tensor]:
+def get_param_squared_gradients(
+    model: nn.Module, param_names_to_merge: List[str]
+) -> Dict[str, Tensor]:
     """
     Get the squared gradients of parameters.
 

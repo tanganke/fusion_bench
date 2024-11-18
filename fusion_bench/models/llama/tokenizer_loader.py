@@ -24,11 +24,7 @@ from transformers import AutoConfig, AutoProcessor, AutoTokenizer
 from .patcher import patch_processor_, patch_tokenizer_
 
 if TYPE_CHECKING:
-    from transformers import (
-        PretrainedConfig,
-        PreTrainedTokenizer,
-        ProcessorMixin,
-    )
+    from transformers import PretrainedConfig, PreTrainedTokenizer, ProcessorMixin
 
 
 logger = logging.getLogger(__name__)

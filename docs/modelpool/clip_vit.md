@@ -154,26 +154,14 @@ You can find the script for fine-tuning the models at `examples/clip_finetune/cl
 - [CLIP-ViT-B/16 on the eight image classification tasks (LoRA)](https://huggingface.co/collections/tanganke/clip-vit-b-16-on-the-eight-image-classification-tasks-lora-66cd554ee7829e9dbb236c29)
 - [CLIP-ViT-B/16 on eight image classification tasks (L-LoRA)](https://huggingface.co/collections/tanganke/clip-vit-b-16-on-eight-image-classification-tasks-l-lora-66cd5b0e332ce5c7468d1bc6)
 
-Load LoRA models:
+Load LoRA models (see [load_lora_vision_model_hf][fusion_bench.models.linearized.vision_model.load_lora_vision_model_hf]):
 
 ```python
-base_model = CLIPVisionModel.from_pretrained('openai/clip-vit-base-patch16')
+base_model = CLIPVisionModel.from_pretrained('openai/clip-vit-base-patch16').vision_model
 model = PeftModel.from_pretrained(base_model, peft_model_id)
 ```
 
-Load L-LoRA models:
-
-```python
-from transformers import CLIPVisionModel
-from peft import PeftModel
-from fusion_bench.method.classification.clip_finetune import linearize_lora_model_
-
-base_model = CLIPVisionModel.from_pretrained("openai/clip-vit-base-patch16")
-peft_model_id = "openai/clip-vit-base-patch16_eurosat_l-lora-16"
-model = PeftModel.from_pretrained(base_model, peft_model_id)
-
-model = linearize_lora_model_(model)
-```
+Load L-LoRA models, refer to [load_l_lora_vision_model_hf][fusion_bench.models.linearized.vision_model.load_l_lora_vision_model_hf].
 
 === "Performance of the fine-tuned CLIP-ViT-B/16 models (LoRA-16)"
 
@@ -720,5 +708,8 @@ Table: Results of the robustness experiments ($\lambda=0.3$).
 
 
 ## References
+
+::: fusion_bench.modelpool.clip_vision
+::: fusion_bench.models.linearized.vision_model
 
 [^1]: Dan Hendrycks and Thomas Dietterich. Benchmarking neural network robustness to common corruptions and perturbations. Proceedings of the International Conference on Learning Representations, 2019.

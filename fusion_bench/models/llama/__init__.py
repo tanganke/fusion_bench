@@ -12,5 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .tokenizer_loader import load_config, load_tokenizer
 from .model_utils.misc import find_all_linear_modules
+from .tokenizer_loader import load_config, load_tokenizer

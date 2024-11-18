@@ -39,6 +39,7 @@ class FisherMergingAlgorithmForGPT2(
         batch_size (int): Batch size for data loading.
         num_workers (int): Number of workers for data loading.
     """
+
     classifiers = {}
     modelpool: HuggingFaceGPT2ClassificationPool = None
     _config_mapping = FisherMergingAlgorithm._config_mapping | {

@@ -1,4 +1,5 @@
 import itertools
+import logging
 import time
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, cast
 
@@ -8,7 +9,6 @@ from fusion_bench import BaseTaskPool
 from fusion_bench.taskpool.dummy import get_model_summary
 from fusion_bench.utils.devices import get_device
 from fusion_bench.utils.rich_utils import print_bordered
-import logging
 
 if TYPE_CHECKING:
     from transformers import LlamaForCausalLM, PreTrainedTokenizer

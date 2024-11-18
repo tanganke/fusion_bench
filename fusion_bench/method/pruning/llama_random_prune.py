@@ -83,6 +83,7 @@ class RandomPruningForLlama(BaseAlgorithm, SimpleProfilerMixin):
         n (int): The number of weights to be pruned in each group (for semistructured pruning).
         m (int): The total number of weights in each group (for semistructured pruning).
     """
+
     _config_mapping = BaseAlgorithm._config_mapping | {
         "prune_type": "prune_type",
         "sparsity_ratio": "sparsity_ratio",

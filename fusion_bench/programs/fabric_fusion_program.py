@@ -4,6 +4,7 @@ import os
 from typing import Callable, Dict, Iterable, Optional, Union  # noqa: F401
 
 import lightning as L
+from lightning.fabric.utilities.rank_zero import rank_zero_only
 from omegaconf import DictConfig, OmegaConf
 from torch import nn
 from tqdm.auto import tqdm
@@ -18,7 +19,6 @@ from fusion_bench.utils import import_object, instantiate, timeit_context
 from fusion_bench.utils.hydra_utils import get_hydra_output_dir
 from fusion_bench.utils.json import print_json
 from fusion_bench.utils.rich_utils import print_bordered, print_config_tree
-from lightning.fabric.utilities.rank_zero import rank_zero_only
 
 log = logging.getLogger(__name__)
 
