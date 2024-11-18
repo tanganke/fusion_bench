@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict, Optional
 
 import torch
 from transformers.utils import (
@@ -8,6 +8,19 @@ from transformers.utils import (
     is_torch_npu_available,
     is_torch_xpu_available,
 )
+
+PRECISION_STR_TO_DTYPE: Dict[str, torch.dtype] = {
+    "fp16": torch.float16,
+    "float16": torch.float16,
+    "bf16": torch.bfloat16,
+    "bfloat16": torch.bfloat16,
+    "float": torch.float32,
+    "fp32": torch.float32,
+    "float32": torch.float32,
+    "double": torch.float64,
+    "fp64": torch.float64,
+    "float64": torch.float64,
+}
 
 
 def parse_dtype(dtype: Optional[str]):
@@ -35,17 +48,10 @@ def parse_dtype(dtype: Optional[str]):
         return None
 
     dtype = dtype.strip('"')
-    if dtype == "float32" or dtype == "float":
-        dtype = torch.float32
-    elif dtype == "float64" or dtype == "double":
-        dtype = torch.float64
-    elif dtype == "float16" or dtype == "half":
-        dtype = torch.float16
-    elif dtype == "bfloat16" or dtype == "bf16":
-        dtype = torch.bfloat16
-    else:
+    if dtype not in PRECISION_STR_TO_DTYPE:
         raise ValueError(f"Unsupported dtype: {type(dtype)}")
 
+    dtype = PRECISION_STR_TO_DTYPE[dtype]
     return dtype
 
 
