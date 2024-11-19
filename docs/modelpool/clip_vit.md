@@ -534,7 +534,7 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
     Please note that some model merging paper results were obtained using [OpenCLIP models](https://github.com/mlfoundations/task_vectors), which may show discrepancies with the results presented here. In such cases, the results reported in the original papers should be considered authoritative.
 
 
-=== "Table: Mutli-task model merging methods using CLIP-ViT-B/32 models."
+=== "Table: Multi-task model merging methods using CLIP-ViT-B/32 models."
 
     | Method                                         | SUN397 | Cars | RESISC45 | EuroSAT | SVHN | GTSRB | MNIST | DTD  | Average |
     | ---------------------------------------------- | ------ | ---- | -------- | ------- | ---- | ----- | ----- | ---- | ------- |
@@ -556,7 +556,25 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
     | Efficient Weight-Ensembling MoE ($90\%$)       | 74.3   | 76.3 | 92.7     | 97.9    | 96.1 | 98.6  | 99.5  | 77.8 | 89.1    |
     | Weight-Ensembling MoE                          | 73.7   | 76.8 | 93.4     | 98.2    | 96.8 | 98.2  | 99.6  | 76.6 | 89.2    |
 
-=== "Table: Mutli-task model merging methods using CLIP-ViT-L/14 models."
+=== "Table: Multi-task model merging methods using CLIP-ViT-B/16 models."
+
+    | Method                                | SUN397 | Cars | RESISC45 | EuroSAT | SVHN | GTSRB | MNIST | DTD  | Average |
+    | ------------------------------------- | ------ | ---- | -------- | ------- | ---- | ----- | ----- | ---- | ------- |
+    | Reference Results                     |        |      |          |         |      |       |       |      |         |
+    | Pre-trained                           | 65.5   | 64.6 | 66.3     | 54.1    | 51.9 | 43.4  | 51.7  | 44.9 | 55.3    |
+    | Fine-tuned (STL)                      | 78.9   | 85.9 | 96.6     | 99.0    | 97.6 | 99.0  | 99.7  | 82.3 | 92.3    |
+    | Model Merging                         |        |      |          |         |      |       |       |      |         |
+    | Simple Averaging                      | 68.7   | 69.0 | 75.0     | 83.2    | 74.9 | 62.5  | 93.7  | 51.1 | 72.3    |
+    | Fisher Merging                        | 70.8   | 71.8 | 76.2     | 93.4    | 77.4 | 61.2  | 90.7  | 52.3 | 74.2    |
+    | RegMean                               | 71.1   | 76.4 | 86.0     | 95.4    | 93.9 | 86.5  | 98.4  | 64.3 | 84.0    |
+    | Task Arithmetic ($\lambda=0.3$)       | 65.9   | 68.3 | 75.4     | 84.5    | 88.8 | 81.9  | 98.0  | 53.9 | 77.1    |
+    | Ties-Merging ($\lambda=0.3$)          | 70.6   | 71.2 | 79.8     | 87.5    | 83.2 | 76.2  | 96.4  | 55.4 | 77.5    |
+    | Layer-wise AdaMerging ($\lambda=0.3$) | 70.6   | 79.6 | 86.1     | 93.6    | 93.5 | 95.4  | 98.1  | 62.9 | 85.0    |
+    | Model Mixing                          |
+    | Efficient Weight-Ensembling MoE ($90\%$)       | 77.7   | 85.0 | 94.9     | 98.2    | 97.2 | 98.9  | 99.5  | 81.4 | 91.6    |
+    | Weight-Ensembling MoE                 | 77.2   | 85.0 | 94.8     | 98.3    | 97.3 | 98.9  | 99.6  | 80.8 | 91.5    |
+
+=== "Table: Multi-task model merging methods using CLIP-ViT-L/14 models."
 
     | Method                                | SUN397 | Cars | RESISC45 | EuroSAT | SVHN | GTSRB | MNIST | DTD  | Average |
     | ------------------------------------- | ------ | ---- | -------- | ------- | ---- | ----- | ----- | ---- | ------- |
@@ -576,23 +594,7 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
     | Efficient Weight-Ensembling MoE ($90\%$)       | 81.5   | 92.0 | 96.0     | 97.8    | 97.7 | 99.1  | 99.5  | 84.1 | 93.5    |
     | Weight-Ensembling MoE                 | 81.5   | 92.3 | 96.5     | 98.8    | 97.6 | 99.4  | 99.6  | 84.5 | 93.8    |
 
-=== "Table: Multi-task model merging methods using CLIP-ViT-B/16 models."
 
-    | Method                                | SUN397 | Cars | RESISC45 | EuroSAT | SVHN | GTSRB | MNIST | DTD  | Average |
-    | ------------------------------------- | ------ | ---- | -------- | ------- | ---- | ----- | ----- | ---- | ------- |
-    | Reference Results                     |        |      |          |         |      |       |       |      |         |
-    | Pre-trained                           | 65.5   | 64.6 | 66.3     | 54.1    | 51.9 | 43.4  | 51.7  | 44.9 | 55.3    |
-    | Fine-tuned (STL)                      | 78.9   | 85.9 | 96.6     | 99.0    | 97.6 | 99.0  | 99.7  | 82.3 | 92.3    |
-    | Model Merging                         |        |      |          |         |      |       |       |      |         |
-    | Simple Averaging                      | 68.7   | 69.0 | 75.0     | 83.2    | 74.9 | 62.5  | 93.7  | 51.1 | 72.3    |
-    | Fisher Merging                        | 70.8   | 71.8 | 76.2     | 93.4    | 77.4 | 61.2  | 90.7  | 52.3 | 74.2    |
-    | RegMean                               | 71.1   | 76.4 | 86.0     | 95.4    | 93.9 | 86.5  | 98.4  | 64.3 | 84.0    |
-    | Task Arithmetic ($\lambda=0.3$)       | 65.9   | 68.3 | 75.4     | 84.5    | 88.8 | 81.9  | 98.0  | 53.9 | 77.1    |
-    | Ties-Merging ($\lambda=0.3$)          | 70.6   | 71.2 | 79.8     | 87.5    | 83.2 | 76.2  | 96.4  | 55.4 | 77.5    |
-    | Layer-wise AdaMerging ($\lambda=0.3$) | 70.6   | 79.6 | 86.1     | 93.6    | 93.5 | 95.4  | 98.1  | 62.9 | 85.0    |
-    | Model Mixing                          |
-    | Efficient Weight-Ensembling MoE ($90\%$)       | 77.7   | 85.0 | 94.9     | 98.2    | 97.2 | 98.9  | 99.5  | 81.4 | 91.6    |
-    | Weight-Ensembling MoE                 | 77.2   | 85.0 | 94.8     | 98.3    | 97.3 | 98.9  | 99.6  | 80.8 | 91.5    |
 
 
 ## Scope
