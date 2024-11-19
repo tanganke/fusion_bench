@@ -1,7 +1,7 @@
 import logging
 import re
 from copy import deepcopy
-from typing import Dict, List, Optional, Union  # noqa: F401
+from typing import Dict, List, Literal, Optional, Union  # noqa: F401
 
 import torch
 from torch import Tensor, nn
@@ -10,25 +10,10 @@ from tqdm.auto import tqdm
 from fusion_bench.method import BaseAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
+import functools
+from .prune_utils import unstructured_magnitude_prune_
 
 log = logging.getLogger(__name__)
-
-
-def _magnitude_prune(weight: Tensor, prune_ratio: float) -> Tensor:
-    """
-    Prune the weights by setting values below a certain quantile to zero.
-
-    Args:
-        weight (Tensor): The weight tensor to be pruned.
-        prune_ratio (float): The ratio of weights to prune.
-
-    Returns:
-        Tensor: The pruned weight tensor.
-    """
-    weight_abs = weight.abs()
-    mask = weight_abs > weight_abs.quantile(prune_ratio)
-    weight = weight * mask
-    return weight
 
 
 def _is_name_matched(name: str, extract_names: List[str]):
@@ -77,6 +62,7 @@ class MagnitudeDiffPruningAlgorithm(
         prune_ratio: float,
         rescale: Optional[Union[bool, float]] = None,
         extract_names: List[str] = None,
+        prune_type: Literal["minor", "major"] = "minor",
         **kwargs,
     ):
         """
@@ -90,6 +76,7 @@ class MagnitudeDiffPruningAlgorithm(
         self.prune_ratio = prune_ratio
         self.rescale = rescale
         self.extract_names = extract_names
+        self.prune_type = prune_type
         super().__init__(**kwargs)
 
     @torch.no_grad()
@@ -173,9 +160,20 @@ class MagnitudeDiffPruningAlgorithm(
             # Prune the diff parameter if its name matches
             if _is_name_matched(name, extract_names):
                 w_diff = ft_state_dict[name] - param
-                w_diff = _magnitude_prune(w_diff, prune_ratio=self.prune_ratio)
-                if self.rescale is not None and self.rescale:
-                    w_diff = w_diff * self.rescale
+                w_diff = unstructured_magnitude_prune_(
+                    w_diff,
+                    (
+                        torch.abs
+                        if self.prune_type == "minor"
+                        else lambda x: -torch.abs(x)
+                    ),
+                    sparsity_ratio=self.prune_ratio,
+                )
+                if self.rescale is not None:
+                    rescale = (
+                        1 / self.prune_ratio if self.rescale == True else self.rescale
+                    )
+                    w_diff = w_diff * rescale
                 param.data = param + w_diff
 
         return model

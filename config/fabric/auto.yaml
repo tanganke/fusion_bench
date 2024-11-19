@@ -1,3 +1,9 @@
+defaults:
+  - loggers: tensorboard_logger
+  - _self_
+
+_target_: lightning.Fabric
+_recursive_: true
 # Number of devices to train on (``int``), which GPUs to train on (``list`` or ``str``), or ``"auto"``.
 # The value applies per node.
 devices: 1
