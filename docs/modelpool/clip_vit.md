@@ -460,8 +460,8 @@ fusion_bench \
         method.save_merging_weights=merging_weights.pt \
     modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
     taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
-    fabric_logger.root_dir=outputs/logs/ViT-B-32 \
-    fabric_logger.name=clip_layer_wise_adamerging_adam
+    fabric.loggers.root_dir=outputs/logs/ViT-B-32 \
+    fabric.loggers.name=clip_layer_wise_adamerging_adam
 ```
 
 merge CLIP-ViT-L/14 models using layer-wise AdaMerging and evaluate on the eight tasks
