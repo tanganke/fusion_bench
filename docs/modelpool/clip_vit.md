@@ -576,7 +576,7 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
     | Efficient Weight-Ensembling MoE ($90\%$)       | 81.5   | 92.0 | 96.0     | 97.8    | 97.7 | 99.1  | 99.5  | 84.1 | 93.5    |
     | Weight-Ensembling MoE                 | 81.5   | 92.3 | 96.5     | 98.8    | 97.6 | 99.4  | 99.6  | 84.5 | 93.8    |
 
-=== "Table: Mutli-task model merging methods using CLIP-ViT-B/16 models."
+=== "Table: Multi-task model merging methods using CLIP-ViT-B/16 models."
 
     | Method                                | SUN397 | Cars | RESISC45 | EuroSAT | SVHN | GTSRB | MNIST | DTD  | Average |
     | ------------------------------------- | ------ | ---- | -------- | ------- | ---- | ----- | ----- | ---- | ------- |
