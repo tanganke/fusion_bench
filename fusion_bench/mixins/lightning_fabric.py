@@ -8,6 +8,8 @@ from lightning.fabric.loggers import TensorBoardLogger
 from lightning.fabric.utilities.rank_zero import rank_zero_only
 from omegaconf import DictConfig, OmegaConf
 
+from fusion_bench.utils.instantiate import instantiate
+
 if TYPE_CHECKING:
     import lightning.fabric.loggers.tensorboard
 
@@ -46,19 +48,14 @@ class LightningFabricMixin:
 
         Expected configuration keys:
         - fabric: The configuration for the Lightning Fabric.
-        - fabric_logger: The configuration for the TensorBoardLogger.
+        - fabric.loggers: The configuration for the TensorBoardLogger.
         """
         if self._fabric_instance is None:
             if config.get("fabric", None) is None:
                 log.warning("No fabric configuration found. use default settings.")
                 self._fabric_instance = L.Fabric()
             else:
-                if config.get("fabric_logger", None) is not None:
-                    logger = TensorBoardLogger(**config.fabric_logger)
-                else:
-                    logger = None
-                log.info("Launching Lightning Fabric")
-                self._fabric_instance = L.Fabric(**config.fabric, loggers=logger)
+                self._fabric_instance = instantiate(config.fabric)
             self._fabric_instance.launch()
             # Set the log directory in config if it is not already set
             if (

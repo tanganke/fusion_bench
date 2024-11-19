@@ -17,8 +17,8 @@ function full_finetune(){
         modelpool.models.0.path=${MODEL} \
         taskpool=clip-vit-classification_TA8 \
         taskpool.clip_model=${MODEL} \
-        fabric_logger.root_dir=outputs/${MODEL_SHORT_NAME}/full_finetune \
-        fabric_logger.name=${TASK} \
+        fabric.loggers.root_dir=outputs/${MODEL_SHORT_NAME}/full_finetune \
+        fabric.loggers.name=${TASK} \
         report_save_path=outputs/${MODEL_SHORT_NAME}/full_finetune_${TASK}.json
     done
 }
@@ -35,8 +35,8 @@ function lora_finetune(){
         modelpool.models.0.path=${MODEL} \
         taskpool=clip-vit-classification_TA8 \
         taskpool.clip_model=${MODEL} \
-        fabric_logger.root_dir=outputs/${MODEL_SHORT_NAME}/lora_finetune \
-        fabric_logger.name=${TASK} \
+        fabric.loggers.root_dir=outputs/${MODEL_SHORT_NAME}/lora_finetune \
+        fabric.loggers.name=${TASK} \
         report_save_path=outputs/${MODEL_SHORT_NAME}/lora_finetune_${TASK}.json
     done
 }
@@ -54,8 +54,8 @@ function l_lora_finetune(){
         modelpool.models.0.path=${MODEL} \
         taskpool=clip-vit-classification_TA8 \
         taskpool.clip_model=${MODEL} \
-        fabric_logger.root_dir=outputs/${MODEL_SHORT_NAME}/l_lora_finetune \
-        fabric_logger.name=${TASK} \
+        fabric.loggers.root_dir=outputs/${MODEL_SHORT_NAME}/l_lora_finetune \
+        fabric.loggers.name=${TASK} \
         report_save_path=outputs/${MODEL_SHORT_NAME}/l_lora_finetune_${TASK}.json
     done
 }

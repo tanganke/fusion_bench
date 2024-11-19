@@ -5,7 +5,7 @@ Examples:
 
 ```bash
 fusion_bench \
-    fabric_logger.name=ViT-B-32/clip_concrete_task_wise_adamerging \
+    fabric.loggers.name=ViT-B-32/clip_concrete_task_wise_adamerging \
     method=clip_concrete_task_wise_adamerging \
     modelpool=clip-vit-base-patch32_TA8 \
     taskpool=clip-vit-classification_TA8
@@ -13,7 +13,7 @@ fusion_bench \
 
 ```bash
 fusion_bench \
-    fabric_logger.name=ViT-B-32/clip_concrete_layer_wise_adamerging \
+    fabric.loggers.name=ViT-B-32/clip_concrete_layer_wise_adamerging \
     method=clip_concrete_layer_wise_adamerging \
     modelpool=clip-vit-base-patch32_TA8 \
     taskpool=clip-vit-classification_TA8
