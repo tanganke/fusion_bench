@@ -160,7 +160,7 @@ def get_current_device() -> torch.device:
     return torch.device(device)
 
 
-def get_device_memory_info(device: torch.device) -> dict:
+def get_device_memory_info(device: torch.device, reset_stats: bool = True) -> dict:
     """
     Get memory information for a given device.
 
@@ -174,10 +174,22 @@ def get_device_memory_info(device: torch.device) -> dict:
         total_memory = torch.cuda.get_device_properties(device).total_memory
         reserved_memory = torch.cuda.memory_reserved(device)
         allocated_memory = torch.cuda.memory_allocated(device)
+        peak_memory_active = torch.cuda.memory_stats(device).get(
+            "active_bytes.all.peak", 0
+        )
+        peak_mem_alloc = torch.cuda.max_memory_allocated(device)
+        peak_mem_reserved = torch.cuda.max_memory_reserved(device)
+
+        if reset_stats:
+            torch.cuda.reset_peak_memory_stats(device)
+
         return {
             "total_memory": total_memory,
             "reserved_memory": reserved_memory,
             "allocated_memory": allocated_memory,
+            "peak_memory_active": peak_memory_active,
+            "peak_memory_allocated": peak_mem_alloc,
+            "peak_memory_reserved": peak_mem_reserved,
         }
     else:
         raise ValueError(
@@ -208,3 +220,12 @@ def get_device_capabilities(device: torch.device) -> dict:
         raise ValueError(
             f"Capabilities information not available for device type: {device.type}"
         )
+
+
+def cleanup_cuda():
+    """
+    Call gc collect, empty CUDA cache, and reset peak memory stats.
+    """
+    gc.collect()
+    torch.cuda.empty_cache()
+    torch.cuda.reset_peak_memory_stats()
