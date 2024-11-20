@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import TYPE_CHECKING, Any, Optional, TypeVar
+from typing import TYPE_CHECKING, Any, Optional, TypeVar, List
 
 import lightning as L
 import torch
@@ -9,6 +9,7 @@ from lightning.fabric.utilities.rank_zero import rank_zero_only
 from omegaconf import DictConfig, OmegaConf
 
 from fusion_bench.utils.instantiate import instantiate
+from fusion_bench.utils import import_object
 
 if TYPE_CHECKING:
     import lightning.fabric.loggers.tensorboard
@@ -16,6 +17,19 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 TensorOrModule = TypeVar("TensorOrModule", torch.Tensor, torch.nn.Module, Any)
+
+
+def get_policy(*args: str) -> set:
+    """
+    Get the policy from the provided list of policy names.
+
+    Args:
+        *args (str): A list of policy names.
+
+    Returns:
+        set: A set of policy objects.
+    """
+    return {import_object(arg) for arg in args}
 
 
 class LightningFabricMixin:
