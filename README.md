@@ -24,7 +24,7 @@ Projects based on FusionBench and news from the community (descending order of d
 <details>
   <summary>Hongling Zheng, Li Shen, Anke Tang, Yong Luo et al. Learn From Model Beyond Fine-Tuning: A Survey. has been accepted for publication in Nature Machine Intelligence. Nov, 2024. https://arxiv.org/abs/2310.08184</summary>
 
-  Foundation models (FM) have demonstrated remarkable performance across a wide range of tasks (especially in the fields
+  > Foundation models (FM) have demonstrated remarkable performance across a wide range of tasks (especially in the fields
   of natural language processing and computer vision), primarily attributed to their ability to comprehend instructions and access
   extensive, high-quality data. This not only showcases their current effectiveness but also sets a promising trajectory towards the
   development of artificial general intelligence. Unfortunately, due to multiple constraints, the raw data of the model used for large model
