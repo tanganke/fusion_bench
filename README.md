@@ -19,7 +19,26 @@
 
 FusionBench is a benchmark suite designed to evaluate the performance of various deep model fusion techniques. It aims to provide a comprehensive comparison of different methods on a variety of datasets and tasks.
 
-Projects based on FusionBench:
+Projects based on FusionBench and news from the community (descending order of date):
+
+<details>
+  <summary>Hongling Zheng, Li Shen, Anke Tang, Yong Luo et al. Learn From Model Beyond Fine-Tuning: A Survey. has been accepted for publication in Nature Machine Intelligence. Nov, 2024. https://arxiv.org/abs/2310.08184</summary>
+
+  > Foundation models (FM) have demonstrated remarkable performance across a wide range of tasks (especially in the fields
+  of natural language processing and computer vision), primarily attributed to their ability to comprehend instructions and access
+  extensive, high-quality data. This not only showcases their current effectiveness but also sets a promising trajectory towards the
+  development of artificial general intelligence. Unfortunately, due to multiple constraints, the raw data of the model used for large model
+  training are often inaccessible, so the use of end-to-end models for downstream tasks has become a new research trend, which we call
+  Learn From Model (LFM) in this article. LFM focuses on the research, modification, and design of FM based on the model interface,
+  so as to better understand the model structure and weights (in a black box environment), and to generalize the model to downstream
+  tasks. The study of LFM techniques can be broadly categorized into five major areas: model tuning, model distillation, model reuse,
+  meta learning and model editing. Each category encompasses a repertoire of methods and strategies that aim to enhance the
+  capabilities and performance of FM. This paper gives a comprehensive review of the current methods based on FM from the
+  perspective of LFM, in order to help readers better understand the current research status and ideas. To conclude, we summarize the
+  survey by highlighting several critical areas for future exploration and addressing open issues that require further attention from the
+  research community. The relevant papers we investigated in this article can be accessed at
+  https://github.com/ruthless-man/Awesome-Learn-from-Model.
+</details>
 
 <details>
   <summary>Li Shen, Anke Tang, Enneng Yang et al. Efficient and Effective Weight-Ensembling Mixture of Experts for Multi-Task Model Merging. Oct, 2024. https://github.com/EnnengYang/Efficient-WEMoE</summary>
