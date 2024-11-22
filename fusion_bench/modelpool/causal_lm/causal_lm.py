@@ -64,7 +64,7 @@ class CausalLMPool(BaseModelPool):
         self._tokenizer = tokenizer
         self._model_kwargs = model_kwargs
         if self._model_kwargs is None:
-            self._model_kwargs = {}
+            self._model_kwargs = DictConfig({})
         with flag_override(self._model_kwargs, "allow_objects", True):
             if hasattr(self._model_kwargs, "torch_dtype"):
                 self._model_kwargs.torch_dtype = parse_dtype(
