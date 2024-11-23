@@ -333,3 +333,5 @@ cython_debug/
 test.py
 convert_log_to_table.py
 log_data.txt
+convert_log.py
+results.txt

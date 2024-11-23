@@ -240,7 +240,7 @@ class FabricModelFusionProgram(
             #         print_json(r, print_type=False)
             # elif isinstance(report, dict):
             #     print_json(report, print_type=False)
-            if self.report_save_path is not None:
+            if self.report_save_path is not None and self.report_save_path != False:
                 # save report (Dict) to a file
                 # if the directory of `save_report` does not exists, create it
                 os.makedirs(os.path.dirname(self.report_save_path), exist_ok=True)

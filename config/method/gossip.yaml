@@ -23,4 +23,7 @@ fast_dev_run: ${fast_dev_run}
 save_merging_weights: 'merging_weights.pt'
 cache_dir: outputs
 # this is the parameter about gossip
-gossip_max_steps: 20
+gossip_max_steps: 10
+gossip_skip_adamerging: false
+accuracy_test_interval: 5  # if this value is equal to 1, we will evaluate all models each time after Gossip
+improve_dataset: true

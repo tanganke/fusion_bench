@@ -28,6 +28,7 @@ class AlgorithmFactory:
         "pwe_moe_epo_for_clip": ".pwe_moe.clip_pwe_moe.PWEMoExactParetoOptimalForCLIP",
         "clip_task_wise_gossip": ".gossip.clip_task_wise_gossip.CLIPTaskWiseGossipAlgorithm",
         "clip_layer_wise_gossip": ".gossip.clip_layer_wise_gossip.CLIPLayerWiseGossipAlgorithm",
+        "gpt2_layer_wise_gossip": ".gossip.gpt2_layer_wise_gossip.GPT2LayerWiseGossipAlgorithm",
         # plug-and-play model merging methods
         "clip_concrete_task_arithmetic": ".concrete_subspace.clip_concrete_task_arithmetic.ConcreteTaskArithmeticAlgorithmForCLIP",
         "clip_concrete_task_wise_adamerging": ".concrete_subspace.clip_concrete_adamerging.ConcreteTaskWiseAdaMergingForCLIP",

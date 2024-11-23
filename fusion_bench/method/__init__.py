@@ -46,6 +46,7 @@ _import_structure = {
     "gossip": [
         "CLIPLayerWiseGossipAlgorithm",
         "CLIPTaskWiseGossipAlgorithm",
+        "GPT2LayerWiseGossipAlgorithm"
     ],
     # plug-and-play model merging methods
     "concrete_subspace": [
@@ -149,7 +150,7 @@ if TYPE_CHECKING:
     from .ties_merging import TiesMergingAlgorithm
     from .we_moe import CLIPWeightEnsemblingMoEAlgorithm
     from .weighted_average import WeightedAverageAlgorithm, WeightedAverageForLLama
-    from .gossip import CLIPLayerWiseGossipAlgorithm, CLIPTaskWiseGossipAlgorithm
+    from .gossip import CLIPLayerWiseGossipAlgorithm, CLIPTaskWiseGossipAlgorithm, GPT2LayerWiseGossipAlgorithm
 
 else:
     sys.modules[__name__] = LazyImporter(

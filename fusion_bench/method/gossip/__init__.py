@@ -1,2 +1,3 @@
 from .clip_layer_wise_gossip import CLIPLayerWiseGossipAlgorithm
 from .clip_task_wise_gossip import CLIPTaskWiseGossipAlgorithm
+from .gpt2_layer_wise_gossip import GPT2LayerWiseGossipAlgorithm

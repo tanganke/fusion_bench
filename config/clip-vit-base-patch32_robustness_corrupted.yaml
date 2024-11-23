@@ -4,9 +4,12 @@ defaults:
   - fabric_logger: tensorboard_logger
   # --- Model, Method, Task ---
   - modelpool: CLIPVisionModelPool/clip-vit-base-patch32_robustness_corrupted
-  - method: dummy
+  - method: gossip
   - taskpool: CLIPVisionModelTaskPool/clip-vit-base-patch32_robustness_corrupted
   - _self_
+
+_target_: fusion_bench.programs.FabricModelFusionProgram
+_recursive_: false
 fast_dev_run: false # Run a single batch of data to test the model or method
 use_lightning: true # Use the fabric to run the experiment
 print_config: true # Print the configuration to the console

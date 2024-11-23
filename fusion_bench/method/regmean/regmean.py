@@ -303,7 +303,7 @@ class RegMeanAlgorithm(BaseAlgorithm):
         self.weight_transpose = weight_transpose
         super().__init__(**kwargs)
 
-    def run(self, modelpool: BaseModelPool):
+    def run(self, modelpool: BaseModelPool, **kwargs):
         if not isinstance(modelpool, BaseModelPool):
             modelpool = BaseModelPool(modelpool)
         self.modelpool = modelpool

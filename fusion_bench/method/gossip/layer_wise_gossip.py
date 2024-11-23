@@ -13,6 +13,7 @@ from tqdm.autonotebook import tqdm
 import gc
 from typing import Callable
 
+from fusion_bench.modelpool import HuggingFaceGPT2ClassificationPool, CLIPVisionModelPool
 from fusion_bench.compat.method import ModelFusionAlgorithm
 from fusion_bench.compat.modelpool import ModelPool
 from fusion_bench.mixins.lightning_fabric import LightningFabricMixin
@@ -62,19 +63,19 @@ class ModelScheduler:
         """
         # TODO: use a mixing matrix to determine which models to use in step idx
 
-        # merge three models
-        pretrained_model = copy.deepcopy(self.finetuned_models[model_id])
-        finetuned_models = [
-            copy.deepcopy(self.finetuned_models[(model_id+1)%self.num_finetuned_models]),
-            copy.deepcopy(self.finetuned_models[(model_id-1)%self.num_finetuned_models])
-        ]
-        # merge four models
-        # pretrained_model = copy.deepcopy(self.pretrained_model)
+        # # merge three models
+        # pretrained_model = copy.deepcopy(self.finetuned_models[model_id])
         # finetuned_models = [
         #     copy.deepcopy(self.finetuned_models[(model_id+1)%self.num_finetuned_models]),
-        #     copy.deepcopy(self.finetuned_models[model_id]),
         #     copy.deepcopy(self.finetuned_models[(model_id-1)%self.num_finetuned_models])
         # ]
+        # merge four models
+        pretrained_model = copy.deepcopy(self.pretrained_model)
+        finetuned_models = [
+            copy.deepcopy(self.finetuned_models[(model_id+1)%self.num_finetuned_models]),
+            copy.deepcopy(self.finetuned_models[model_id]),
+            copy.deepcopy(self.finetuned_models[(model_id-1)%self.num_finetuned_models])
+        ]
         # initialize layer-wise weights using the provided configuration `init_values` or load from file if `weights` is provided
         if self.config.weights is None:
             layer_wise_weight = get_layer_wise_weights(
@@ -132,7 +133,7 @@ class ModelScheduler:
         return final_models
     
     def move_to(self, device):
-        # self.pretrained_model.to(device=device)
+        self.pretrained_model.to(device=device)
         for model in self.finetuned_models:
             model.to(device=device)
 
@@ -236,23 +237,35 @@ class LayerWiseGossipAlgorithm(
                     "local admerging",
                     dynamic_ncols=True
                 ):
-                    with self.profile("construct the local wrapped model"):
-                        module = model_scheduler(model_id)
+                    if self.config.gossip_skip_adamerging == True:
+                        # skip adamerging, only merge
+                        with self.profile("construct the local wrapped model"):
+                            module = model_scheduler(model_id)
+                        log.info(f'skip adamerging, only merge ({modelpool.model_names[model_id]})')
+                        model_scheduler.store_model(module.merge_weights(), model_id)
+                        self.free_gpu_memory(module)
+                    else:
+                        with self.profile("construct the local wrapped model"):
+                            module = model_scheduler(model_id)
 
-                    log.info(f'the datasets used in this local merging is {datasets[model_id]}')
-                    with self.profile("test-time adaptation"):
-                        module = self.test_time_adaptation(module, datasets[model_id])
-                    # if self.config.get("save_merging_weights", False):
-                    #     self.save_merging_weights(
-                    #         self.config.save_merging_weights, module.merge_weight
-                    #     )
-                    model_scheduler.store_model(module.merge_weights(), model_id)
-                    log.info(get_memory_usage(f'after local merging ({modelpool.model_names[model_id]}), the memory usage of GPU is:'))
-                    self.free_gpu_memory(module) # simulate distributed GPU memory usage as much as possible
+                        if self.config.improve_dataset == True:
+                            log.info(f'improved datasets, the datasets used in this local merging is {datasets[model_id]}')
+                        else:
+                            log.info(f'unimproved datasets, the datasets used in this local merging is {modelpool.model_names}')
+                        with self.profile("test-time adaptation"):
+                            module = self.test_time_adaptation(module, datasets[model_id])
+                        # if self.config.get("save_merging_weights", False):
+                        #     self.save_merging_weights(
+                        #         self.config.save_merging_weights, module.merge_weight
+                        #     )
+                        model_scheduler.store_model(module.merge_weights(), model_id)
+                        log.info(get_memory_usage(f'after local merging ({modelpool.model_names[model_id]}), the memory usage of GPU is:'))
+                        self.free_gpu_memory(module) # simulate distributed GPU memory usage as much as possible
 
                 model_scheduler.update_models()
-                evaluate_merged_model(taskpool,  model_scheduler.get_final_models())
-                model_scheduler.move_to('cpu')
+                if ((step_idx+1) % self.config.accuracy_test_interval == 0):
+                    evaluate_merged_model(taskpool,  model_scheduler.get_final_models())
+                    model_scheduler.move_to('cpu')
         return model_scheduler.get_final_models()
 
     def on_test_time_adaptation_start(self):
@@ -324,12 +337,15 @@ class LayerWiseGossipAlgorithm(
         ):
             # default behavior for first-order optimizers
             for task in self.modelpool.model_names:
-                if task not in datasets:
+                if self.config.improve_dataset == True and task not in datasets:
                     continue
                 with self.profile("data loading"):
                     batch = next(self.get_shuffled_test_loader_iter(task))
                 with self.profile("forward pass"):
-                    logits = self.compute_logits(module, batch[0], task)
+                    if isinstance(self.modelpool, HuggingFaceGPT2ClassificationPool):
+                        logits = self.compute_logits(module, batch, task)
+                    elif isinstance(self.modelpool, CLIPVisionModelPool):
+                        logits = self.compute_logits(module, batch[0], task)
                     loss = entropy_loss(logits)
                 with self.profile("backward pass"):
                     self.fabric.backward(loss, retain_graph=True)

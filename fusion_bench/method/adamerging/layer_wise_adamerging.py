@@ -25,6 +25,13 @@ from .entropy_loss import entropy_loss
 log = logging.getLogger(__name__)
 
 
+# obtain the current GPU memory usage
+def get_memory_usage(desc):
+    allocated = torch.cuda.memory_allocated() / 1024**2  # 转换为 MB
+    cached = torch.cuda.memory_reserved() / 1024**2  # 转换为 MB
+    return f"{desc}\nAllocated Memory: {allocated:.2f} MB\nCached Memory: {cached:.2f} MB"
+
+
 class LayerWiseAdaMergingAlgorithm(
     ModelFusionAlgorithm,
     LightningFabricMixin,
@@ -239,5 +246,6 @@ class LayerWiseAdaMergingAlgorithm(
             self.fabric.log_dict(metrics, step=step_idx)
             pbar.set_postfix(metrics)
 
+        log.info(get_memory_usage(f'after adamerging, the memory usage of GPU is:'))
         self.print_profile_summary()
         return module

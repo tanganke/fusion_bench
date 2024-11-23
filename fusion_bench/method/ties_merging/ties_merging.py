@@ -57,7 +57,7 @@ class TiesMergingAlgorithm(BaseAlgorithm):
         super().__init__(**kwargs)
 
     @torch.no_grad()
-    def run(self, modelpool: BaseModelPool | Dict[str, nn.Module]):
+    def run(self, modelpool: BaseModelPool | Dict[str, nn.Module], evaluate_merged_model = None, taskpool = None):
         """
         Run the TIES merging algorithm to fuse models in the model pool.
 

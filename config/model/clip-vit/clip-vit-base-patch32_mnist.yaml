@@ -1,3 +1,4 @@
 mnist:
   _target_: transformers.CLIPVisionModel.from_pretrained
-  pretrained_model_name_or_path: tanganke/clip-vit-base-patch32_mnist
+  # pretrained_model_name_or_path: tanganke/clip-vit-base-patch32_mnist
+  pretrained_model_name_or_path: /home/htl/.cache/huggingface/hub/models--tanganke--clip-vit-base-patch32_mnist/snapshots/28dca299b68f294bb368533172496dbde3901f3e
