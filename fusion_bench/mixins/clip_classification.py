@@ -93,10 +93,7 @@ class CLIPClassificationMixin(LightningFabricMixin):
             self.modelpool.load_test_dataset(task), self.clip_processor
         )
         # create the dataloader
-        loader = DataLoader(
-            clip_dataset,
-            **dataloader_kwargs
-        )
+        loader = DataLoader(clip_dataset, **dataloader_kwargs)
         loader = self.fabric.setup_dataloaders(loader)
         return iter(InfiniteDataLoader(loader))
 

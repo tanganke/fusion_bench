@@ -27,7 +27,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _noisy_mean_initialization(embed_weight: "torch.Tensor", num_new_tokens: int) -> None:
+def _noisy_mean_initialization(
+    embed_weight: "torch.Tensor", num_new_tokens: int
+) -> None:
     embedding_dim = embed_weight.size(1)
     avg_weight = embed_weight[:-num_new_tokens].mean(dim=0, keepdim=True)
     noise_weight = torch.empty_like(embed_weight[-num_new_tokens:])
@@ -35,7 +37,9 @@ def _noisy_mean_initialization(embed_weight: "torch.Tensor", num_new_tokens: int
     embed_weight[-num_new_tokens:] = avg_weight + noise_weight
 
 
-def resize_embedding_layer(model: "PreTrainedModel", tokenizer: "PreTrainedTokenizer") -> None:
+def resize_embedding_layer(
+    model: "PreTrainedModel", tokenizer: "PreTrainedTokenizer"
+) -> None:
     r"""
     Resize token embeddings.
     """
@@ -43,7 +47,10 @@ def resize_embedding_layer(model: "PreTrainedModel", tokenizer: "PreTrainedToken
         import deepspeed  # type: ignore
 
         params = [model.get_input_embeddings().weight]
-        if model.get_output_embeddings() is not None and not model.config.tie_word_embeddings:
+        if (
+            model.get_output_embeddings() is not None
+            and not model.config.tie_word_embeddings
+        ):
             params.append(model.get_output_embeddings().weight)
 
         context_maybe_zero3 = deepspeed.zero.GatheredParameters(params, modifier_rank=0)
@@ -58,13 +65,23 @@ def resize_embedding_layer(model: "PreTrainedModel", tokenizer: "PreTrainedToken
             raise ValueError("Cannot resize embedding layers of a quantized model.")
 
         if not isinstance(model.get_output_embeddings(), torch.nn.Linear):
-            raise ValueError("Current model does not support resizing embedding layers.")
+            raise ValueError(
+                "Current model does not support resizing embedding layers."
+            )
 
         model.resize_token_embeddings(len(tokenizer), pad_to_multiple_of=64)
         with context_maybe_zero3:
             new_embedding_size = model.get_input_embeddings().weight.size(0)
             num_new_tokens = new_embedding_size - current_embedding_size
-            _noisy_mean_initialization(model.get_input_embeddings().weight.data, num_new_tokens)
-            _noisy_mean_initialization(model.get_output_embeddings().weight.data, num_new_tokens)
+            _noisy_mean_initialization(
+                model.get_input_embeddings().weight.data, num_new_tokens
+            )
+            _noisy_mean_initialization(
+                model.get_output_embeddings().weight.data, num_new_tokens
+            )
 
-        logger.info("Resized token embeddings from {} to {}.".format(current_embedding_size, new_embedding_size))
+        logger.info(
+            "Resized token embeddings from {} to {}.".format(
+                current_embedding_size, new_embedding_size
+            )
+        )

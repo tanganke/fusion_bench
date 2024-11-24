@@ -12,6 +12,7 @@ from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_add,
     state_dict_avg,
     state_dict_mul,
+    state_dict_div,
 )
 from fusion_bench.utils.type import StateDictType
 
@@ -100,7 +101,7 @@ class SimpleAverageAlgorithm(
                     sd = state_dict_add(sd, model.state_dict(keep_vars=True))
         with self.profile("merge weights"):
             # Divide the accumulated state dictionary by the number of models to get the average
-            sd = state_dict_mul(sd, 1 / len(modelpool.model_names))
+            sd = state_dict_div(sd, len(modelpool.model_names))
 
         forward_model.load_state_dict(sd)
         # print profile report and log the merged models

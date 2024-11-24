@@ -189,7 +189,9 @@ class CLIPImageClassificationTaskPool(TaskPool):
         if "average" not in report:
             report["average"] = {}
             accuracies = [
-                value["accuracy"] for key, value in report.items() if "accuracy" in value
+                value["accuracy"]
+                for key, value in report.items()
+                if "accuracy" in value
             ]
             if len(accuracies) > 0:
                 average_accuracy = sum(accuracies) / len(accuracies)

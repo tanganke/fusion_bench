@@ -4,6 +4,7 @@ import os
 from typing import Callable, Dict, Iterable, Optional, Union  # noqa: F401
 
 import lightning as L
+from lightning.fabric.utilities.rank_zero import rank_zero_only
 from omegaconf import DictConfig, OmegaConf
 from torch import nn
 from tqdm.auto import tqdm
@@ -18,7 +19,6 @@ from fusion_bench.utils import import_object, instantiate, timeit_context
 from fusion_bench.utils.hydra_utils import get_hydra_output_dir
 from fusion_bench.utils.json import print_json
 from fusion_bench.utils.rich_utils import print_bordered, print_config_tree
-from lightning.fabric.utilities.rank_zero import rank_zero_only
 
 log = logging.getLogger(__name__)
 
@@ -36,7 +36,6 @@ class FabricModelFusionProgram(
         "_modelpool": "modelpool",
         "_taskpool": "taskpool",
         "_fabric": "fabric",
-        "_fabric_logger": "fabric_logger",
         "fast_dev_run": "fast_dev_run",
         "seed": "seed",
     }
@@ -48,7 +47,6 @@ class FabricModelFusionProgram(
         taskpool: Optional[DictConfig] = None,
         *,
         fabric: Optional[DictConfig] = None,
-        fabric_logger: Optional[DictConfig] = None,
         print_config: bool = True,
         dry_run: bool = False,
         report_save_path: Optional[str] = None,
@@ -63,7 +61,6 @@ class FabricModelFusionProgram(
         self._modelpool = modelpool
         self._taskpool = taskpool
         self._fabric = fabric
-        self._fabric_logger = fabric_logger
         self.report_save_path = report_save_path
         self.merged_model_save_path = merged_model_save_path
         self.merged_model_save_kwargs = merged_model_save_kwargs

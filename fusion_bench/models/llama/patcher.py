@@ -23,9 +23,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional
 
 import torch
 from peft import PeftModel
-from transformers import (
-    PreTrainedTokenizerBase,
-)
+from transformers import PreTrainedTokenizerBase
 
 from .model_utils.visual import (
     get_image_seqlen,

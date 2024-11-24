@@ -1,4 +1,5 @@
-from typing import Optional
+import contextlib
+from typing import Dict, Generator, Iterable, Optional, Tuple
 
 import torch
 from transformers.utils import (
@@ -8,6 +9,19 @@ from transformers.utils import (
     is_torch_npu_available,
     is_torch_xpu_available,
 )
+
+PRECISION_STR_TO_DTYPE: Dict[str, torch.dtype] = {
+    "fp16": torch.float16,
+    "float16": torch.float16,
+    "bf16": torch.bfloat16,
+    "bfloat16": torch.bfloat16,
+    "float": torch.float32,
+    "fp32": torch.float32,
+    "float32": torch.float32,
+    "double": torch.float64,
+    "fp64": torch.float64,
+    "float64": torch.float64,
+}
 
 
 def parse_dtype(dtype: Optional[str]):
@@ -35,17 +49,10 @@ def parse_dtype(dtype: Optional[str]):
         return None
 
     dtype = dtype.strip('"')
-    if dtype == "float32" or dtype == "float":
-        dtype = torch.float32
-    elif dtype == "float64" or dtype == "double":
-        dtype = torch.float64
-    elif dtype == "float16" or dtype == "half":
-        dtype = torch.float16
-    elif dtype == "bfloat16" or dtype == "bf16":
-        dtype = torch.bfloat16
-    else:
+    if dtype not in PRECISION_STR_TO_DTYPE:
         raise ValueError(f"Unsupported dtype: {type(dtype)}")
 
+    dtype = PRECISION_STR_TO_DTYPE[dtype]
     return dtype
 
 
@@ -72,6 +79,33 @@ def get_dtype(obj) -> torch.dtype:
         raise ValueError(f"Unsupported object type: {type(obj)}")
 
 
+@contextlib.contextmanager
+def set_default_dtype(dtype: torch.dtype) -> Generator[None, None, None]:
+    """
+    Context manager to set torch's default dtype.
+
+    Args:
+        dtype (torch.dtype): The desired default dtype inside the context manager.
+
+    Returns:
+        ContextManager: context manager for setting default dtype.
+
+    Example:
+        >>> with set_default_dtype(torch.bfloat16):
+        >>>     x = torch.tensor([1, 2, 3])
+        >>>     x.dtype
+        torch.bfloat16
+
+
+    """
+    old_dtype = torch.get_default_dtype()
+    torch.set_default_dtype(dtype)
+    try:
+        yield
+    finally:
+        torch.set_default_dtype(old_dtype)
+
+
 def infer_optim_dtype(model_dtype: "torch.dtype") -> "torch.dtype":
     r"""
     Infers the optimal dtype according to the model_dtype and device compatibility.
@@ -90,3 +124,23 @@ def infer_optim_dtype(model_dtype: "torch.dtype") -> "torch.dtype":
         return torch.float16
     else:
         return torch.float32
+
+
+def validate_expected_param_dtype(
+    named_params: Iterable[Tuple[str, torch.nn.Parameter]], dtype: torch.dtype
+) -> None:
+    """
+    Validates that all input parameters have the expected dtype.
+
+    Args:
+        named_params (Iterable[Tuple[str, torch.nn.Parameter]]): Iterable of named parameters.
+        dtype (torch.dtype): Expected dtype.
+
+    Raises:
+        ValueError: If any parameter has a different dtype than `dtype`.
+    """
+    for name, param in named_params:
+        if param.dtype != dtype:
+            raise ValueError(
+                f"Parameter {name} has dtype {param.dtype}, but expected {dtype}"
+            )

@@ -227,7 +227,7 @@ done
 
 Flan-T5-Base models:
 
-=== "Table: Mutli-task model merging methods using Flan-T5-Base (full fine-tuned) models."
+=== "Table: Multi-task model merging methods using Flan-T5-Base (full fine-tuned) models."
 
     | Method                          | CoLA | MNLI | MRPC | QNLI | QQP  | RTE  | SST-2 | STSB | Average |
     | ------------------------------- | ---- | ---- | ---- | ---- | ---- | ---- | ----- | ---- | ------- |
@@ -240,7 +240,7 @@ Flan-T5-Base models:
     | Ties-Merging ($\lambda=0.3$)    | 70.3 | 65.0 | 78.9 | 90.2 | 83.5 | 81.6 | 91.7  | 78.3 | 79.9    |
 
 
-=== "Table: Mutli-task model merging methods using Flan-T5-Base (LoRA r=16) models."
+=== "Table: Multi-task model merging methods using Flan-T5-Base (LoRA r=16) models."
 
     | Method                          | CoLA | MNLI | MRPC | QNLI | QQP  | RTE  | SST-2 | STSB | Average |
     | ------------------------------- | ---- | ---- | ---- | ---- | ---- | ---- | ----- | ---- | ------- |
@@ -255,7 +255,7 @@ Flan-T5-Base models:
 
 Flan-T5-Large models:
 
-=== "Table: Mutli-task model merging methods using Flan-T5-Large (LoRA r=16) models"
+=== "Table: Multi-task model merging methods using Flan-T5-Large (LoRA r=16) models"
 
     | Method                          | CoLA | MNLI | MRPC | QNLI | QQP  | RTE  | SST-2 | STSB | Average |
     | ------------------------------- | ---- | ---- | ---- | ---- | ---- | ---- | ----- | ---- | ------- |
