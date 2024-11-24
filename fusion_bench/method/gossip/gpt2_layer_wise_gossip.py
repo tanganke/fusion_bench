@@ -59,7 +59,7 @@ class GPT2LayerWiseGossipAlgorithm(LayerWiseGossipAlgorithm):
     """
 
     modelpool: HuggingFaceGPT2ClassificationPool
-    classifiers = {}
+    scores = {}
 
     def __init__(self, algorithm_config: DictConfig):
         super().__init__(algorithm_config)
@@ -78,8 +78,7 @@ class GPT2LayerWiseGossipAlgorithm(LayerWiseGossipAlgorithm):
         """
 
         log.info(f"Loading test dataset: {task}")
-        dataset = self.modelpool.load_train_dataset(task)
-        # i think this should be `load_test_dataset`, not really sure the difference between them
+        dataset = self.modelpool.load_test_dataset(task)
         return dataset
 
     @functools.cache
@@ -110,22 +109,26 @@ class GPT2LayerWiseGossipAlgorithm(LayerWiseGossipAlgorithm):
         """
         Prepare for test-time adaptation.
         """
-        if isinstance(self.classifiers, dict) and self.classifiers:
+        if isinstance(self.scores, dict) and self.scores:
             return
         for model_name in self.modelpool.model_names:
-            classifier = cast(
+            score = cast(
                 GPT2ForSequenceClassification,
                 self.modelpool.load_classifier(model_name),
-            ).requires_grad_(False)
-            classifier.transformer = None
-            classifier = classifier.to(self.fabric.device)
-            self.classifiers[model_name] = classifier
+            ).score.requires_grad_(False)
+            score = score.to(self.fabric.device)
+            self.scores[model_name] = score
         
 
     def compute_logits(self, module: GPT2Model, batch, task: str) -> Tensor:
         """
         Compute the logits for the given batch and task.
         """
+        input_ids = batch["input_ids"]
+        attention_mask = batch["attention_mask"]
+        batch_size, _ = input_ids.shape[:2]
+        pad_token_id = 50256
+
         transformer_outputs = module(
             input_ids,
             past_key_values=None,
@@ -140,12 +143,15 @@ class GPT2LayerWiseGossipAlgorithm(LayerWiseGossipAlgorithm):
             return_dict=True,
         )
         hidden_states = transformer_outputs[0]
-        logits = self.score(hidden_states)
-        self.classifiers[task].transformer = module
-        input_ids = batch["input_ids"]
-        attention_mask = batch["attention_mask"]
+        logits = self.scores[task](hidden_states)
 
-        outputs = self.classifiers[task](input_ids, attention_mask=attention_mask)
-        logits = outputs.logits
-        assert logits.dim() == 2
-        return logits
+        sequence_lengths = torch.eq(input_ids, pad_token_id).int().argmax(-1) - 1
+        sequence_lengths = sequence_lengths % input_ids.shape[-1]
+        sequence_lengths = sequence_lengths.to(logits.device)
+
+        pooled_logits = logits[torch.arange(batch_size, device=logits.device), sequence_lengths]
+
+        assert pooled_logits.dim() == 2
+        return pooled_logits
+
+        

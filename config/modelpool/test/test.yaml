@@ -17,19 +17,19 @@ models:
 
 # train datasets for RegMean, Fisher Merging ...
 _dataset_loader: fusion_bench.modelpool.huggingface_gpt2_classification.load_gpt2_dataset
-train_datasets:
+test_datasets:
   mrpc:
     _target_: ${..._dataset_loader}
     name: mrpc
-    split: train
+    split: validation
   qnli:
     _target_: ${..._dataset_loader}
     name: qnli
-    split: train
+    split: validation
   qqp:
     _target_: ${..._dataset_loader}
     name: qqp
-    split: train
+    split: validation
 tokenizer:
   _target_: fusion_bench.modelpool.huggingface_gpt2_classification.load_gpt2_tokenizer
   pretrained_model_name_or_path: gpt2
