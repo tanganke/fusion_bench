@@ -85,6 +85,7 @@ _import_structure = {
 
 
 if TYPE_CHECKING:
+    from .adamerging import *
     from .ada_svd import AdaSVDMergingForCLIPVisionModel
     from .analysis import TaskVectorCosSimilarity, TaskVectorViolinPlot
     from .base_algorithm import BaseAlgorithm, BaseModelFusionAlgorithm
