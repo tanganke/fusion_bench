@@ -1,3 +1,8 @@
+"""
+This is an experimental implementation of the Layer-wise AdaMerging algorithm for Llama models.
+The efficiency of the algorithm is not guaranteed.
+"""
+
 import logging
 import os
 from pathlib import Path

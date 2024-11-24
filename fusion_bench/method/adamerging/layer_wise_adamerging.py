@@ -21,6 +21,7 @@ from fusion_bench.models.wrappers.layer_wise_fusion import (
 from fusion_bench.utils.data import load_tensor_from_file
 
 from .entropy_loss import entropy_loss
+from .utils import get_memory_usage
 
 log = logging.getLogger(__name__)
 
@@ -117,7 +118,7 @@ class LayerWiseAdaMergingAlgorithm(
                 os.makedirs(os.path.dirname(save_path), exist_ok=True)
             torch.save(merging_weights.detach().cpu(), save_path)
 
-    def run(self, modelpool: ModelPool):
+    def run(self, modelpool: ModelPool, **kwargs):
         """
         Run the Layer-Wise AdaMerging Algorithm.
 
@@ -239,5 +240,6 @@ class LayerWiseAdaMergingAlgorithm(
             self.fabric.log_dict(metrics, step=step_idx)
             pbar.set_postfix(metrics)
 
+        log.info(get_memory_usage(f"after adamerging, the memory usage of GPU is:"))
         self.print_profile_summary()
         return module
