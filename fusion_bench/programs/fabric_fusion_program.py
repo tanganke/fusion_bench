@@ -217,7 +217,7 @@ class FabricModelFusionProgram(
         log.info("loading model pool")
         self.modelpool = self._instantiate_and_setup(
             self._modelpool,
-            compat_load_fn="fusion_bench.compat. odelpool.load_modelpool_from_config",
+            compat_load_fn="fusion_bench.compat.modelpool.load_modelpool_from_config",
         )
         log.info("loading method")
         self.method = self._instantiate_and_setup(
