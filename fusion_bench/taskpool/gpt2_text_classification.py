@@ -141,7 +141,7 @@ class GPT2TextClassificationTaskPool(BaseTaskPool, LightningFabricMixin):
     @override
     def evaluate(self, model: GPT2Model, name=None):
         report = {}
-        report['name'] = name
+        report["name"] = name
         for task_name in (pbar := tqdm(self._test_datasets, desc="Evaluating tasks")):
             pbar.set_description(f"Evaluating task {task_name}")
             dataloader = self.get_test_dataloader(task_name)
@@ -152,7 +152,9 @@ class GPT2TextClassificationTaskPool(BaseTaskPool, LightningFabricMixin):
         if "average" not in report:
             report["average"] = {}
             accuracies = [
-                value["accuracy"] for key, value in report.items() if "accuracy" in value
+                value["accuracy"]
+                for key, value in report.items()
+                if isinstance(value, dict) and "accuracy" in value
             ]
             if len(accuracies) > 0:
                 average_accuracy = sum(accuracies) / len(accuracies)
@@ -162,5 +164,5 @@ class GPT2TextClassificationTaskPool(BaseTaskPool, LightningFabricMixin):
                 average_loss = sum(losses) / len(losses)
                 report["average"]["loss"] = average_loss
 
-        log.info(f"Evaluation Result: {report}")   
+        log.info(f"Evaluation Result: {report}")
         return report

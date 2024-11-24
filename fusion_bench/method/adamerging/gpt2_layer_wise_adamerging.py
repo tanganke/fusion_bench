@@ -1,3 +1,4 @@
+import functools
 import logging
 import os
 from abc import abstractmethod
@@ -14,6 +15,7 @@ from transformers import GPT2ForSequenceClassification, GPT2Model
 from transformers.data import default_data_collator
 
 from fusion_bench.method import BaseAlgorithm
+from fusion_bench.method.simple_average import simple_average
 from fusion_bench.mixins.lightning_fabric import LightningFabricMixin
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import GPT2ForSequenceClassificationPool
@@ -25,14 +27,16 @@ from fusion_bench.utils.data import InfiniteDataLoader, load_tensor_from_file
 from fusion_bench.utils.instantiate import instantiate
 
 from .entropy_loss import entropy_loss
+from .min_norm_solvers import MinNormSolver
 from .utils import get_memory_usage
-import functools
 
 log = logging.getLogger(__name__)
 
 
 class GPT2LayerWiseAdaMergingAlgorithm(
-    BaseAlgorithm, LightningFabricMixin, SimpleProfilerMixin
+    BaseAlgorithm,
+    LightningFabricMixin,
+    SimpleProfilerMixin,
 ):
     scores: Dict[str, nn.Linear] = None
 
@@ -48,6 +52,7 @@ class GPT2LayerWiseAdaMergingAlgorithm(
         tie_weights: bool = True,
         strict: bool = False,
         cache_dir: str = "outputs/cache",
+        variant: Optional[str] = None,
         **kwargs,
     ):
         self._optimizer = optimizer
@@ -60,6 +65,7 @@ class GPT2LayerWiseAdaMergingAlgorithm(
         self.strict = strict
         self.max_steps = max_steps
         self.cache_dir = cache_dir
+        self.variant = variant
         super().__init__(**kwargs)
 
     @torch.no_grad()
@@ -79,10 +85,22 @@ class GPT2LayerWiseAdaMergingAlgorithm(
         Returns:
             LayerWiseMergedModel: An instance of the merged model with layer-wise weights applied.
         """
-        pretrained_model = modelpool.load_model("_pretrained_")
-        finetuned_models = [
+        pretrained_model: GPT2Model = modelpool.load_model("_pretrained_")
+        finetuned_models: List[GPT2Model] = [
             modelpool.load_model(name) for name in modelpool.model_names
         ]
+
+        for name in (
+            ["wte", "wpe", "ln_f"]
+            + [f"h.{i}.ln_1" for i in range(len(pretrained_model.h))]
+            + [f"h.{i}.ln_2" for i in range(len(pretrained_model.h))]
+            + [f"h.{i}.attn" for i in range(len(pretrained_model.h))]
+        ):
+            simple_average(
+                [model.get_submodule(name) for model in finetuned_models],
+                base_module=pretrained_model.get_submodule(name),
+            )
+            pretrained_model.get_submodule(name).requires_grad_(False)
 
         # initialize layer-wise weights using the provided configuration `init_values` or load from file if `weights` is provided
         if self.merging_weights_load_path is None:
@@ -273,15 +291,20 @@ class GPT2LayerWiseAdaMergingAlgorithm(
                 dynamic_ncols=True,
             )
         ):
-            # default behavior for first-order optimizers
-            for task in self.modelpool.model_names:
-                with self.profile("data loading"):
-                    batch = next(self.get_shuffled_test_loader_iter(task))
-                with self.profile("forward pass"):
-                    logits = self.compute_logits(module, batch, task)
-                    loss = entropy_loss(logits)
-                with self.profile("backward pass"):
-                    self.fabric.backward(loss, retain_graph=True)
+            if self.variant == "mgda":
+                total_loss = self._compute_gradients_using_mgda(module)
+            else:
+                total_loss = 0
+                for task in self.modelpool.model_names:
+                    with self.profile("data loading"):
+                        batch = next(self.get_shuffled_test_loader_iter(task))
+                    with self.profile("forward pass"):
+                        logits = self.compute_logits(module, batch, task)
+                        logits = logits.mean(dim=0, keepdim=True)
+                        loss = entropy_loss(logits)
+                        total_loss += loss
+                    with self.profile("backward pass"):
+                        self.fabric.backward(loss, retain_graph=True)
 
             with self.profile("optimizer step"):
                 optimizer.step()
@@ -290,7 +313,7 @@ class GPT2LayerWiseAdaMergingAlgorithm(
                 module.merge_weights()
 
             metrics = {
-                "train/loss": loss.item(),
+                "train/loss": total_loss.item(),
                 "train/weight_max": module.merge_weight.max().item(),
                 "train/weight_min": module.merge_weight.min().item(),
                 "train/weight_mean": module.merge_weight.mean().item(),
@@ -301,3 +324,35 @@ class GPT2LayerWiseAdaMergingAlgorithm(
         log.info(get_memory_usage(f"after adamerging, the memory usage of GPU is:"))
         self.print_profile_summary()
         return module
+
+    def _compute_gradients_using_mgda(self, module: LayerWiseMergedModel):
+        all_grads = []
+        total_loss = 0
+        # default behavior for first-order optimizers
+        for task in self.modelpool.model_names:
+            with self.profile("data loading"):
+                batch = next(self.get_shuffled_test_loader_iter(task))
+            with self.profile("forward pass"):
+                logits = self.compute_logits(module, batch, task)
+                logits = logits.mean(dim=0, keepdim=True)
+                loss = entropy_loss(logits)
+                total_loss += loss
+            with self.profile("backward pass"):
+                # self.fabric.backward(loss, retain_graph=True)
+                _grads = torch.autograd.grad(
+                    loss,
+                    [module.merge_weight],
+                    create_graph=False,
+                    retain_graph=True,
+                )
+                all_grads.append(_grads[0].flatten().detach())
+        sol, min_norm = MinNormSolver.find_min_norm_element(all_grads)
+        if not isinstance(sol, torch.Tensor):
+            sol = torch.from_numpy(sol)
+        sol = sol.to(
+            device=module.merge_weight.device,
+            dtype=module.merge_weight.dtype,
+        )
+        grad = torch.stack(all_grads) * sol.view(-1, 1)
+        module.merge_weight.grad = grad.sum(dim=0).view_as(module.merge_weight)
+        return total_loss

@@ -15,6 +15,7 @@ max_steps: 1000
 merging_weights_load_path: null
 merging_weights_save_path: null
 
+variant: null
 clamp_weights: false
 tie_weights: true
 strict: false
