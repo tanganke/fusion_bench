@@ -2,13 +2,14 @@
 from omegaconf import DictConfig
 
 from fusion_bench.modelpool.huggingface_gpt2_classification import (
-    HuggingFaceGPT2ClassificationPool,
+    GPT2ForSequenceClassificationPool,
 )
 from fusion_bench.modelpool.PeftModelForSeq2SeqLM import PeftModelForSeq2SeqLMPool
 
 from .AutoModelForSeq2SeqLM import AutoModelForSeq2SeqLMPool
 from .base_pool import DictModelPool, ListModelPool, ModelPool, to_modelpool
 from .huggingface_clip_vision import HuggingFaceClipVisionPool
+import warnings
 
 
 class ModelPoolFactory:
@@ -22,7 +23,7 @@ class ModelPoolFactory:
     _modelpool = {
         "NYUv2ModelPool": ".nyuv2_modelpool.NYUv2ModelPool",
         "huggingface_clip_vision": HuggingFaceClipVisionPool,
-        "HF_GPT2ForSequenceClassification": HuggingFaceGPT2ClassificationPool,
+        "HF_GPT2ForSequenceClassification": GPT2ForSequenceClassificationPool,
         "AutoModelPool": ".huggingface_automodel.AutoModelPool",
         # CausualLM
         "AutoModelForCausalLMPool": ".huggingface_llm.AutoModelForCausalLMPool",
@@ -50,6 +51,12 @@ class ModelPoolFactory:
         Raises:
             ValueError: If 'type' attribute is not found in the configuration or does not match any known model pool types.
         """
+        warnings.warn(
+            "ModelPoolFactory.create_modelpool() is deprecated and will be removed in future versions. "
+            "Please implement new model pool using `fusion_bench.modelpool.BaseModelPool` instead.",
+            DeprecationWarning,
+        )
+
         from fusion_bench.utils import import_object
 
         modelpool_type = modelpool_config.get("type")
