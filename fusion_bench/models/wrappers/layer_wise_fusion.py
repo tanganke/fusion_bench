@@ -248,6 +248,8 @@ class LayerWiseMergedModel(nn.Module):
                 state_dict[name] = state_dict[name] + param * w
         self._merged_state_dict = state_dict
 
+        return state_dict
+
     def forward(self, *args, **kwargs):
         if self._merged_state_dict is None:
             self.merge_weights()
