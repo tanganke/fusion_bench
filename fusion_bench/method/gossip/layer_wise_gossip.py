@@ -13,7 +13,7 @@ from tqdm.autonotebook import tqdm
 import gc
 from typing import Callable
 
-from fusion_bench.modelpool import HuggingFaceGPT2ClassificationPool, CLIPVisionModelPool
+from fusion_bench.modelpool import GPT2ForSequenceClassificationPool, CLIPVisionModelPool
 from fusion_bench.compat.method import ModelFusionAlgorithm
 from fusion_bench.compat.modelpool import ModelPool
 from fusion_bench.mixins.lightning_fabric import LightningFabricMixin
@@ -342,7 +342,7 @@ class LayerWiseGossipAlgorithm(
                 with self.profile("data loading"):
                     batch = next(self.get_shuffled_test_loader_iter(task))
                 with self.profile("forward pass"):
-                    if isinstance(self.modelpool, HuggingFaceGPT2ClassificationPool):
+                    if isinstance(self.modelpool, GPT2ForSequenceClassificationPool):
                         logits = self.compute_logits(module, batch, task)
                     elif isinstance(self.modelpool, CLIPVisionModelPool):
                         logits = self.compute_logits(module, batch[0], task)

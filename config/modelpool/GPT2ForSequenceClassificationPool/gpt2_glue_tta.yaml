@@ -1,0 +1,35 @@
+_target_: fusion_bench.modelpool.GPT2ForSequenceClassificationPool
+
+_model_loader: transformers.GPT2Model.from_pretrained
+models:
+  _pretrained_:
+    _target_: ${..._model_loader}
+    pretrained_model_name_or_path: gpt2
+  mrpc:
+    _target_: ${..._model_loader}
+    pretrained_model_name_or_path: tanganke/gpt2_mrpc
+  qnli:
+    _target_: ${..._model_loader}
+    pretrained_model_name_or_path: tanganke/gpt2_qnli
+  qqp:
+    _target_: ${..._model_loader}
+    pretrained_model_name_or_path: tanganke/gpt2_qqp
+
+# train datasets for RegMean, Fisher Merging ...
+_dataset_loader: fusion_bench.modelpool.huggingface_gpt2_classification.load_gpt2_dataset
+test_datasets:
+  mrpc:
+    _target_: ${..._dataset_loader}
+    name: mrpc
+    split: validation
+  qnli:
+    _target_: ${..._dataset_loader}
+    name: qnli
+    split: validation
+  qqp:
+    _target_: ${..._dataset_loader}
+    name: qqp
+    split: validation
+tokenizer:
+  _target_: fusion_bench.modelpool.huggingface_gpt2_classification.load_gpt2_tokenizer
+  pretrained_model_name_or_path: gpt2

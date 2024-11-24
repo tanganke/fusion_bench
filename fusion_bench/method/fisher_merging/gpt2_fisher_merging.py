@@ -16,7 +16,7 @@ from transformers.data import default_data_collator
 from transformers.models.gpt2.modeling_gpt2 import Conv1D
 
 from fusion_bench.mixins import LightningFabricMixin
-from fusion_bench.modelpool import HuggingFaceGPT2ClassificationPool
+from fusion_bench.modelpool import GPT2ForSequenceClassificationPool
 from fusion_bench.utils import timeit_context
 
 from .fisher_merging import FisherMergingAlgorithm, get_param_squared_gradients
@@ -40,7 +40,7 @@ class FisherMergingAlgorithmForGPT2(
         num_workers (int): Number of workers for data loading.
     """
     classifiers = {}
-    modelpool: HuggingFaceGPT2ClassificationPool = None
+    modelpool: GPT2ForSequenceClassificationPool = None
     _config_mapping = FisherMergingAlgorithm._config_mapping | {
         "cache_dir": "cache_dir",
         "batch_size": "batch_size",

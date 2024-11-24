@@ -10,7 +10,7 @@ from transformers import GPT2ForSequenceClassification, GPT2Model
 from transformers.data import default_data_collator
 
 from fusion_bench.dataset import CLIPDataset
-from fusion_bench.modelpool import HuggingFaceGPT2ClassificationPool
+from fusion_bench.modelpool import GPT2ForSequenceClassificationPool
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.utils import timeit_context
@@ -58,7 +58,7 @@ class GPT2LayerWiseGossipAlgorithm(LayerWiseGossipAlgorithm):
     layers, and computing logits.
     """
 
-    modelpool: HuggingFaceGPT2ClassificationPool
+    modelpool: GPT2ForSequenceClassificationPool
     scores = {}
 
     def __init__(self, algorithm_config: DictConfig):

@@ -2,7 +2,7 @@
 from omegaconf import DictConfig
 
 from fusion_bench.modelpool.huggingface_gpt2_classification import (
-    HuggingFaceGPT2ClassificationPool,
+    GPT2ForSequenceClassificationPool,
 )
 from fusion_bench.modelpool.PeftModelForSeq2SeqLM import PeftModelForSeq2SeqLMPool
 
@@ -22,7 +22,7 @@ class ModelPoolFactory:
     _modelpool = {
         "NYUv2ModelPool": ".nyuv2_modelpool.NYUv2ModelPool",
         "huggingface_clip_vision": HuggingFaceClipVisionPool,
-        "HF_GPT2ForSequenceClassification": HuggingFaceGPT2ClassificationPool,
+        "HF_GPT2ForSequenceClassification": GPT2ForSequenceClassificationPool,
         "AutoModelPool": ".huggingface_automodel.AutoModelPool",
         # CausualLM
         "AutoModelForCausalLMPool": ".huggingface_llm.AutoModelForCausalLMPool",

@@ -1,54 +1,71 @@
 import logging
 import os
 from abc import abstractmethod
-from typing import Any, List, Mapping, Union, cast  # noqa: F401
+from pathlib import Path
+from typing import Any, Dict, List, Mapping, Optional, Union, cast  # noqa: F401
 
 import torch
 from lightning.fabric.utilities.rank_zero import rank_zero_only
 from omegaconf import DictConfig
-from torch import Tensor
+from torch import Tensor, nn
 from torch.utils.data import DataLoader
 from tqdm.autonotebook import tqdm
+from transformers import GPT2ForSequenceClassification, GPT2Model
+from transformers.data import default_data_collator
 
-from fusion_bench.compat.method import ModelFusionAlgorithm
-from fusion_bench.compat.modelpool import ModelPool
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.mixins.lightning_fabric import LightningFabricMixin
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
+from fusion_bench.modelpool import GPT2ForSequenceClassificationPool
 from fusion_bench.models.wrappers.layer_wise_fusion import (
     LayerWiseMergedModel,
     get_layer_wise_weights,
 )
-from fusion_bench.utils.data import load_tensor_from_file
+from fusion_bench.utils.data import InfiniteDataLoader, load_tensor_from_file
+from fusion_bench.utils.instantiate import instantiate
 
 from .entropy_loss import entropy_loss
 from .utils import get_memory_usage
+import functools
 
 log = logging.getLogger(__name__)
 
 
-class LayerWiseAdaMergingAlgorithm(
-    ModelFusionAlgorithm,
-    LightningFabricMixin,
-    SimpleProfilerMixin,
+class GPT2LayerWiseAdaMergingAlgorithm(
+    BaseAlgorithm, LightningFabricMixin, SimpleProfilerMixin
 ):
-    """
-    Implements the Layer-Wise AdaMerging Algorithm.
+    scores: Dict[str, nn.Linear] = None
 
-    This class merges the layers of a pretrained model with those of several fine-tuned models.
-    The merging is controlled by layer-wise weights, which can be initialized based on a provided configuration or loaded from a file.
-    """
-
-    def __init__(self, algorithm_config: DictConfig):
-        """
-        Initialize the LayerWiseAdaMergingAlgorithm with the given configuration.
-
-        Args:
-            algorithm_config (DictConfig): The configuration for the algorithm.
-        """
-        super().__init__(algorithm_config)
+    def __init__(
+        self,
+        optimizer: DictConfig,
+        dataloader_kwargs: DictConfig,
+        init_values: float,
+        max_steps: int,
+        merging_weights_load_path: Optional[Union[str, Path]] = None,
+        merging_weights_save_path: Optional[Union[str, Path]] = None,
+        clamp_weights: bool = False,
+        tie_weights: bool = True,
+        strict: bool = False,
+        cache_dir: str = "outputs/cache",
+        **kwargs,
+    ):
+        self._optimizer = optimizer
+        self.dataloader_kwargs = dataloader_kwargs
+        self.init_values = init_values
+        self.merging_weights_load_path = merging_weights_load_path
+        self.merging_weights_save_path = merging_weights_save_path
+        self.clamp_weights = clamp_weights
+        self.tie_weights = tie_weights
+        self.strict = strict
+        self.max_steps = max_steps
+        self.cache_dir = cache_dir
+        super().__init__(**kwargs)
 
     @torch.no_grad()
-    def construct_layer_wise_merged_model(self, modelpool: ModelPool):
+    def construct_layer_wise_merged_model(
+        self, modelpool: GPT2ForSequenceClassificationPool
+    ):
         """
         Constructs a wrapped layer-wise merged model from model pool.
 
@@ -68,7 +85,7 @@ class LayerWiseAdaMergingAlgorithm(
         ]
 
         # initialize layer-wise weights using the provided configuration `init_values` or load from file if `weights` is provided
-        if self.config.weights is None:
+        if self.merging_weights_load_path is None:
             layer_wise_weight = get_layer_wise_weights(
                 num_models=len(modelpool.model_names),
                 num_layers=len(
@@ -76,22 +93,26 @@ class LayerWiseAdaMergingAlgorithm(
                         filter(lambda p: p.requires_grad, pretrained_model.parameters())
                     )
                 ),
-                init_values=self.config.init_values,
+                init_values=self.init_values,
             )
         else:
-            if isinstance(self.config.weights, str):
-                # self.config.weights is a path to a saved tensor
-                layer_wise_weight = load_tensor_from_file(self.config.weights)
+            if isinstance(self.merging_weights_load_path, str):
+                # load the merging weights from a file
+                layer_wise_weight = load_tensor_from_file(
+                    self.merging_weights_load_path
+                )
             else:
-                raise ValueError(f"Unsupported weights format: {self.config.weights}")
+                raise ValueError(
+                    f"Unsupported weights format: {self.merging_weights_load_path}"
+                )
 
         module = LayerWiseMergedModel(
             layer_wise_weight=layer_wise_weight,
             pretrained_model=pretrained_model,
             finetuned_models=finetuned_models,
-            clamp_weights=self.config.clamp_weights,
-            tie_weights=self.config.tie_weights,
-            strict=self.config.strict,
+            clamp_weights=self.clamp_weights,
+            tie_weights=self.tie_weights,
+            strict=self.strict,
         )
         print(f"{layer_wise_weight.size()=}, {layer_wise_weight.numel()=}")
         return module
@@ -105,9 +126,7 @@ class LayerWiseAdaMergingAlgorithm(
             file_path (str): The path to save the merging weights.
             merging_weights (torch.Tensor): The merging weights to save.
         """
-        if self.fabric.is_global_zero and self.config.get(
-            "save_merging_weights", False
-        ):
+        if self.fabric.is_global_zero and self.merging_weights_save_path is not None:
             if isinstance(file_path, str) and not file_path.startswith(("/", ".")):
                 # if the file path is not absolute or relative to current working directory, save it in the log directory
                 save_path = os.path.join(self.log_dir, file_path)
@@ -118,7 +137,7 @@ class LayerWiseAdaMergingAlgorithm(
                 os.makedirs(os.path.dirname(save_path), exist_ok=True)
             torch.save(merging_weights.detach().cpu(), save_path)
 
-    def run(self, modelpool: ModelPool, **kwargs):
+    def run(self, modelpool: GPT2ForSequenceClassificationPool, **kwargs):
         """
         Run the Layer-Wise AdaMerging Algorithm.
 
@@ -132,20 +151,19 @@ class LayerWiseAdaMergingAlgorithm(
         """
         log.info("Fusing models using layer-wise adaptive merging.")
         self.modelpool = modelpool
-        self.log_hyperparams(self.config)
 
         with self.profile("construct the wrapped model"):
             module = self.construct_layer_wise_merged_model(modelpool)
 
-        if self.config.weights is not None:
+        if self.merging_weights_load_path is not None:
             # skip the test-time adaptation
             return module.merge_and_unload()
         else:
             with self.profile("test-time adaptation"):
                 module = self.test_time_adaptation(module)
-            if self.config.get("save_merging_weights", False):
+            if self.merging_weights_save_path is not None:
                 self.save_merging_weights(
-                    self.config.save_merging_weights, module.merge_weight
+                    self.merging_weights_save_path, module.merge_weight
                 )
             return module.merge_and_unload()
 
@@ -153,9 +171,16 @@ class LayerWiseAdaMergingAlgorithm(
         """
         Something to do before the test-time adaptation starts. Such as setting up the task-specific heads.
         """
-        pass
+        self.scores = {}
+        for model_name in self.modelpool.model_names:
+            score = cast(
+                GPT2ForSequenceClassification,
+                self.modelpool.load_classifier(model_name),
+            ).score.requires_grad_(False)
+            score = score.to(self.fabric.device)
+            self.scores[model_name] = score
 
-    @abstractmethod
+    @functools.cache
     def get_shuffled_test_loader_iter(self, task: str) -> DataLoader:
         """
         Loader of test dataset for test-time adaptation. labels are not needed.
@@ -166,10 +191,17 @@ class LayerWiseAdaMergingAlgorithm(
         Returns:
             DataLoader: The data loader for the test dataset.
         """
-        pass
+        dataloader_kwargs = dict(self.dataloader_kwargs)
+        dataloader_kwargs.update(dict(shuffle=True, collate_fn=default_data_collator))
 
-    @abstractmethod
-    def compute_logits(self, module, images: Tensor, task: str) -> Tensor:
+        dataset = self.modelpool.load_test_dataset(task)
+        loader = DataLoader(dataset, **dataloader_kwargs)
+
+        if self.fabric is not None:
+            loader = self.fabric.setup_dataloaders(loader)
+        return iter(InfiniteDataLoader(loader))
+
+    def compute_logits(self, module: GPT2Model, batch, task: str) -> Tensor:
         """
         Compute the logits for the given images and task.
 
@@ -181,7 +213,37 @@ class LayerWiseAdaMergingAlgorithm(
         Returns:
             Tensor: The computed logits.
         """
-        pass
+        input_ids = batch["input_ids"]
+        attention_mask = batch["attention_mask"]
+        batch_size, _ = input_ids.shape[:2]
+        pad_token_id = 50256
+
+        transformer_outputs = module(
+            input_ids,
+            past_key_values=None,
+            attention_mask=attention_mask,
+            token_type_ids=None,
+            position_ids=None,
+            head_mask=None,
+            inputs_embeds=None,
+            use_cache=None,
+            output_attentions=None,
+            output_hidden_states=None,
+            return_dict=True,
+        )
+        hidden_states = transformer_outputs[0]
+        logits = self.scores[task](hidden_states)
+
+        sequence_lengths = torch.eq(input_ids, pad_token_id).int().argmax(-1) - 1
+        sequence_lengths = sequence_lengths % input_ids.shape[-1]
+        sequence_lengths = sequence_lengths.to(logits.device)
+
+        pooled_logits = logits[
+            torch.arange(batch_size, device=logits.device), sequence_lengths
+        ]
+
+        assert pooled_logits.dim() == 2
+        return pooled_logits
 
     def test_time_adaptation(self, module: LayerWiseMergedModel):
         """
@@ -198,18 +260,14 @@ class LayerWiseAdaMergingAlgorithm(
         self.on_test_time_adaptation_start()
 
         # configure optimizer
-        if self.config.optimizer == "adam":
-            optimizer = torch.optim.Adam([module.merge_weight], lr=self.config.lr)
-            print(f"{optimizer=}")
-            module, optimizer = self.fabric.setup(module, optimizer)
-        else:
-            raise ValueError(f"Unsupported optimizer: {self.config.optimizer}")
+        optimizer = instantiate(self._optimizer, [module.merge_weight])
+        module, optimizer = self.fabric.setup(module, optimizer)
 
         module.train()
         module.merge_weights()
         for step_idx in (
             pbar := tqdm(
-                range(self.config.max_steps if not self.is_debug_mode else 1),
+                range(self.max_steps if not self.is_debug_mode else 1),
                 ("[DEBUG MODE] " if self.is_debug_mode else "")
                 + "AdaMerging Test-time adaptation",
                 dynamic_ncols=True,
@@ -220,7 +278,7 @@ class LayerWiseAdaMergingAlgorithm(
                 with self.profile("data loading"):
                     batch = next(self.get_shuffled_test_loader_iter(task))
                 with self.profile("forward pass"):
-                    logits = self.compute_logits(module, batch[0], task)
+                    logits = self.compute_logits(module, batch, task)
                     loss = entropy_loss(logits)
                 with self.profile("backward pass"):
                     self.fabric.backward(loss, retain_graph=True)
