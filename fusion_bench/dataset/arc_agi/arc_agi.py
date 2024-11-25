@@ -90,11 +90,11 @@ def _to_task(
 def _tokenizer_tasks(
     tasks: List[Task],
     tokenizer: "PreTrainedTokenizer",
-    use_data_argumentation: bool = True,
+    use_data_augmentation: bool = True,
     permute_n: int = 1,
     seed: int = 0,
 ):
-    if not use_data_argumentation:
+    if not use_data_augmentation:
         augmenters_to_apply = []
     else:
         augmenters_to_apply = get_augmenters(
@@ -138,7 +138,7 @@ def load_tokenized_arc_agi_dataset(
     path: str = "dataartist/arc-agi",
     split: Optional[str] = None,
     cache_path: Optional[str] = None,
-    use_data_argumentation: bool = True,
+    use_data_augmentation: bool = True,
     permute_n: int = 1,
     seed: int = 0,
     max_num_tasks: Optional[int] = None,
@@ -198,7 +198,7 @@ def load_tokenized_arc_agi_dataset(
             split: _tokenizer_tasks(
                 converted_datasets[split],
                 tokenizer,
-                use_data_argumentation,
+                use_data_augmentation,
                 permute_n,
                 seed,
             )
@@ -225,7 +225,7 @@ def load_tokenized_arc_agi_dataset(
             # limit the number of tasks, useful for debugging
             converted_datasets = converted_datasets[:max_num_tasks]
         converted_datasets = _tokenizer_tasks(
-            converted_datasets, tokenizer, use_data_argumentation, permute_n, seed
+            converted_datasets, tokenizer, use_data_augmentation, permute_n, seed
         )
 
     if cache_path is not None:
