@@ -3,7 +3,7 @@ _recursive_: false
 
 optimizer:
   _target_: torch.optim.Adam
-  lr: 1e-4
+  lr: 1e-3
 
 dataloader_kwargs:
   batch_size: 4
