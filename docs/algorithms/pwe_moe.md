@@ -44,8 +44,8 @@ fusion_bench \
     method=pwe_moe_ls_for_clip \
     modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
     taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
-    fabric_logger.root_dir=outputs/logs/ViT-B-32 \
-    fabric_logger.name=PWEMoE-LS-8tasks
+    fabric.loggers.root_dir=outputs/logs/ViT-B-32 \
+    fabric.loggers.name=PWEMoE-LS-8tasks
 ```
 
 ## References

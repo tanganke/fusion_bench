@@ -20,8 +20,8 @@ if TYPE_CHECKING:
     from .clip_vision import CLIPVisionModelTaskPool, SparseWEMoECLIPVisionModelTaskPool
     from .dummy import DummyTaskPool
     from .gpt2_text_classification import GPT2TextClassificationTaskPool
-    from .nyuv2_taskpool import NYUv2TaskPool
     from .llama import LlamaTestGenerationTaskPool
+    from .nyuv2_taskpool import NYUv2TaskPool
 
 else:
     sys.modules[__name__] = LazyImporter(

@@ -7,7 +7,7 @@ optimizer:
 
 dataloader_kwargs:
   batch_size: 16
-  num_workers: 8
+  num_workers: 0
 
 init_values: 0.3
 max_steps: 1000

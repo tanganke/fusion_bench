@@ -102,4 +102,5 @@ In summary, the Fusion Algorithm module is vital for the model merging operation
 
 ### References
 
+::: fusion_bench.method.BaseAlgorithm
 ::: fusion_bench.method.BaseModelFusionAlgorithm

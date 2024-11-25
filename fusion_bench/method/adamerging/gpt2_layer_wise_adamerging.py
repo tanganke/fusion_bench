@@ -1,3 +1,8 @@
+"""
+This is an experimental implementation of the Layer-Wise AdaMerging Algorithm for GPT-2 models.
+The efficiency of the algorithm is not guaranteed, and it may not work as expected.
+"""
+
 import functools
 import logging
 import os

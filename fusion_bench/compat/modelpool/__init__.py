@@ -9,6 +9,7 @@ from fusion_bench.modelpool.PeftModelForSeq2SeqLM import PeftModelForSeq2SeqLMPo
 from .AutoModelForSeq2SeqLM import AutoModelForSeq2SeqLMPool
 from .base_pool import DictModelPool, ListModelPool, ModelPool, to_modelpool
 from .huggingface_clip_vision import HuggingFaceClipVisionPool
+import warnings
 
 
 class ModelPoolFactory:
@@ -50,6 +51,12 @@ class ModelPoolFactory:
         Raises:
             ValueError: If 'type' attribute is not found in the configuration or does not match any known model pool types.
         """
+        warnings.warn(
+            "ModelPoolFactory.create_modelpool() is deprecated and will be removed in future versions. "
+            "Please implement new model pool using `fusion_bench.modelpool.BaseModelPool` instead.",
+            DeprecationWarning,
+        )
+
         from fusion_bench.utils import import_object
 
         modelpool_type = modelpool_config.get("type")

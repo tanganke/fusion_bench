@@ -209,49 +209,49 @@ class BaseModelPool(BaseYAMLSerializableModel):
         for model_name in self.model_names:
             yield model_name, self.load_model(model_name)
 
-    def load_train_dataset(self, model_name: str, *args, **kwargs) -> Dataset:
+    def load_train_dataset(self, dataset_name: str, *args, **kwargs) -> Dataset:
         """
         Load the training dataset for the specified model.
 
         Args:
-            model_name (str): The name of the model.
+            dataset_name (str): The name of the model.
 
         Returns:
             Dataset: The instantiated training dataset.
         """
-        return instantiate(self._train_datasets[model_name], *args, **kwargs)
+        return instantiate(self._train_datasets[dataset_name], *args, **kwargs)
 
     def train_datasets(self):
         for dataset_name in self.train_dataset_names:
             yield self.load_train_dataset(dataset_name)
 
-    def load_val_dataset(self, model_name: str, *args, **kwargs) -> Dataset:
+    def load_val_dataset(self, dataset_name: str, *args, **kwargs) -> Dataset:
         """
         Load the validation dataset for the specified model.
 
         Args:
-            model_name (str): The name of the model.
+            dataset_name (str): The name of the model.
 
         Returns:
             Dataset: The instantiated validation dataset.
         """
-        return instantiate(self._val_datasets[model_name], *args, **kwargs)
+        return instantiate(self._val_datasets[dataset_name], *args, **kwargs)
 
     def val_datasets(self):
         for dataset_name in self.val_dataset_names:
             yield self.load_val_dataset(dataset_name)
 
-    def load_test_dataset(self, model_name: str, *args, **kwargs) -> Dataset:
+    def load_test_dataset(self, dataset_name: str, *args, **kwargs) -> Dataset:
         """
         Load the testing dataset for the specified model.
 
         Args:
-            model_name (str): The name of the model.
+            dataset_name (str): The name of the model.
 
         Returns:
             Dataset: The instantiated testing dataset.
         """
-        return instantiate(self._test_datasets[model_name], *args, **kwargs)
+        return instantiate(self._test_datasets[dataset_name], *args, **kwargs)
 
     def test_datasets(self):
         for dataset_name in self.test_dataset_names:

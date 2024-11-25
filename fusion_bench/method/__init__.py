@@ -20,6 +20,7 @@ _import_structure = {
     # model merging methods
     "linear": [
         "ExPOAlgorithm",
+        "ExPOAlgorithmForLlama",
         "SimpleAverageForLlama",
         "TaskArithmeticForLlama",
         "LinearInterpolationAlgorithm",
@@ -89,6 +90,7 @@ _import_structure = {
 
 
 if TYPE_CHECKING:
+    from .adamerging import *
     from .ada_svd import AdaSVDMergingForCLIPVisionModel
     from .analysis import TaskVectorCosSimilarity, TaskVectorViolinPlot
     from .base_algorithm import BaseAlgorithm, BaseModelFusionAlgorithm
@@ -110,6 +112,7 @@ if TYPE_CHECKING:
     from .fisher_merging import FisherMergingForCLIPVisionModel
     from .linear import (
         ExPOAlgorithm,
+        ExPOAlgorithmForLlama,
         LinearInterpolationAlgorithm,
         SimpleAverageForLlama,
         TaskArithmeticForLlama,

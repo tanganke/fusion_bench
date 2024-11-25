@@ -27,7 +27,16 @@ from .utils import state_dict_to_vector, vector_to_state_dict
 log = logging.getLogger(__name__)
 
 
-def trainable_state_dict(module: nn.Module):
+def trainable_state_dict(module: nn.Module) -> StateDictType:
+    """
+    Returns the state dictionary of the module containing only the trainable parameters.
+
+    Args:
+        module (nn.Module): The neural network module.
+
+    Returns:
+        Dict[str, Tensor]: A dictionary containing the names and values of the trainable parameters.
+    """
     return {
         name: param for name, param in module.named_parameters() if param.requires_grad
     }

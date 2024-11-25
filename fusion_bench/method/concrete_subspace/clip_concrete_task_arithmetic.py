@@ -3,7 +3,7 @@ Examples:
 
 ```bash
 fusion_bench \
-    fabric_logger.name=ViT-B-32/concrete_task_arithmetic \
+    fabric.loggers.name=ViT-B-32/concrete_task_arithmetic \
     method=clip_concrete_task_arithmetic \
     modelpool=clip-vit-base-patch32_TA8 \
     taskpool=clip-vit-classification_TA8

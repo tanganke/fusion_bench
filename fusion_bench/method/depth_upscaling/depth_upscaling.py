@@ -30,9 +30,9 @@ class DepthUpscalingAlgorithm(BaseAlgorithm):
         "layer_indices": "layer_indices",
     }
 
-    def __init__(self, layer_indices: list, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, layer_indices: Union[str, List[int]], **kwargs):
         self.layer_indices = layer_indices
+        super().__init__(**kwargs)
 
     @torch.no_grad()
     def run(self, modelpool: nn.ModuleList | BaseModelPool) -> nn.ModuleList:

@@ -19,10 +19,28 @@ __all__ = [
 # Model conversion utils
 
 
-def trainable_state_dict(module: nn.Module):
-    return {
-        name: param for name, param in module.named_parameters() if param.requires_grad
+def trainable_state_dict(
+    module: nn.Module,
+    prefix: str = "",
+    keep_vars: bool = False,
+) -> StateDictType:
+    """
+    Returns the state dictionary of the module containing only the trainable parameters.
+
+    Args:
+        module (nn.Module): The neural network module.
+        prefix (str, optional): The prefix to add to the parameter names. Defaults to "".
+        keep_vars (bool, optional): If True, the parameters are not detached. Defaults to False.
+
+    Returns:
+        Dict[str, Tensor]: A dictionary containing the names and values of the trainable parameters.
+    """
+    state_dict = {
+        prefix + name: param if keep_vars else param.detach()
+        for name, param in module.named_parameters()
+        if param.requires_grad
     }
+    return state_dict
 
 
 def state_dict_to_vector(state_dict, remove_keys=[]):
@@ -78,6 +96,24 @@ def vector_to_state_dict(vector, state_dict, remove_keys=[]):
 
 
 def human_readable(num: int) -> str:
+    """
+    Converts a number into a human-readable string with appropriate magnitude suffix.
+
+    Examples:
+
+        ```python
+        print(human_readable(1500))
+        # Output: '1.50K'
+        print(human_readable(1500000))
+        # Output: '1.50M'
+        ```
+
+    Args:
+        num (int): The number to convert.
+
+    Returns:
+        str: The human-readable string representation of the number.
+    """
     if num < 1000 and isinstance(num, int):
         return str(num)
     magnitude = 0

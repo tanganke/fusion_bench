@@ -175,6 +175,23 @@ def state_dict_mul(state_dict: StateDictType, scalar: float):
     return diff
 
 
+def state_dict_div(state_dict: StateDictType, scalar: float):
+    """
+    Returns the division of a state dict by a scalar.
+
+    Args:
+        state_dict (Dict): The state dict to be divided.
+        scalar (float): The scalar to divide the state dict by.
+
+    Returns:
+        Dict: The division of the state dict by the scalar.
+    """
+    diff = OrderedDict()
+    for k in state_dict:
+        diff[k] = state_dict[k] / scalar
+    return diff
+
+
 def state_dict_power(state_dict: Dict[str, Tensor], p: float):
     """
     Returns the power of a state dict.
