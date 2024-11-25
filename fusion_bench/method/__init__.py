@@ -38,6 +38,9 @@ _import_structure = {
     "adamerging": [
         "CLIPTaskWiseAdaMergingAlgorithm",
         "CLIPLayerWiseAdaMergingAlgorithm",
+        "GPT2LayerWiseAdaMergingAlgorithm",
+        "LayerWiseAdaMergingForLlamaSFT",
+        "FlanT5LayerWiseAdaMergingAlgorithm",
     ],
     "pwe_moe": [
         "PWEMoELinearScalarizationForCLIP",

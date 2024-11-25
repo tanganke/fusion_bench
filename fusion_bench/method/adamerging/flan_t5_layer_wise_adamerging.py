@@ -1,5 +1,5 @@
 """
-This is an experimental implementation of the Layer-Wise AdaMerging Algorithm for GPT-2 models.
+This is an experimental implementation of the Layer-Wise AdaMerging Algorithm for Flan-T5 models.
 The efficiency of the algorithm is not guaranteed, and it may not work as expected.
 """
 
@@ -16,14 +16,14 @@ from omegaconf import DictConfig
 from torch import Tensor, nn
 from torch.utils.data import DataLoader
 from tqdm.autonotebook import tqdm
-from transformers import GPT2ForSequenceClassification, GPT2Model
+from transformers import T5ForConditionalGeneration
 from transformers.data import default_data_collator
 
 from fusion_bench.method import BaseAlgorithm
 from fusion_bench.method.simple_average import simple_average
 from fusion_bench.mixins.lightning_fabric import LightningFabricMixin
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
-from fusion_bench.modelpool import GPT2ForSequenceClassificationPool
+from fusion_bench.modelpool import Seq2SeqLMPool
 from fusion_bench.models.wrappers.layer_wise_fusion import (
     LayerWiseMergedModel,
     get_layer_wise_weights,
@@ -38,12 +38,11 @@ from .utils import get_memory_usage
 log = logging.getLogger(__name__)
 
 
-class GPT2LayerWiseAdaMergingAlgorithm(
+class FlanT5LayerWiseAdaMergingAlgorithm(
     BaseAlgorithm,
     LightningFabricMixin,
     SimpleProfilerMixin,
 ):
-    scores: Dict[str, nn.Linear] = None
 
     def __init__(
         self,
@@ -74,9 +73,7 @@ class GPT2LayerWiseAdaMergingAlgorithm(
         super().__init__(**kwargs)
 
     @torch.no_grad()
-    def construct_layer_wise_merged_model(
-        self, modelpool: GPT2ForSequenceClassificationPool
-    ):
+    def construct_layer_wise_merged_model(self, modelpool: Seq2SeqLMPool):
         """
         Constructs a wrapped layer-wise merged model from model pool.
 
@@ -90,8 +87,8 @@ class GPT2LayerWiseAdaMergingAlgorithm(
         Returns:
             LayerWiseMergedModel: An instance of the merged model with layer-wise weights applied.
         """
-        pretrained_model: GPT2Model = modelpool.load_model("_pretrained_")
-        finetuned_models: List[GPT2Model] = [
+        pretrained_model = modelpool.load_model("_pretrained_")
+        finetuned_models = [
             modelpool.load_model(name) for name in modelpool.model_names
         ]
 
@@ -148,7 +145,7 @@ class GPT2LayerWiseAdaMergingAlgorithm(
                 os.makedirs(os.path.dirname(save_path), exist_ok=True)
             torch.save(merging_weights.detach().cpu(), save_path)
 
-    def run(self, modelpool: GPT2ForSequenceClassificationPool, **kwargs):
+    def run(self, modelpool: Seq2SeqLMPool, **kwargs):
         """
         Run the Layer-Wise AdaMerging Algorithm.
 
@@ -178,19 +175,6 @@ class GPT2LayerWiseAdaMergingAlgorithm(
                 )
             return module.merge_and_unload()
 
-    def on_test_time_adaptation_start(self):
-        """
-        Something to do before the test-time adaptation starts. Such as setting up the task-specific heads.
-        """
-        self.scores = {}
-        for model_name in self.modelpool.model_names:
-            score = cast(
-                GPT2ForSequenceClassification,
-                self.modelpool.load_classifier(model_name),
-            ).score.requires_grad_(False)
-            score = score.to(self.fabric.device)
-            self.scores[model_name] = score
-
     @functools.cache
     def get_shuffled_test_loader_iter(self, task: str) -> DataLoader:
         """
@@ -212,7 +196,12 @@ class GPT2LayerWiseAdaMergingAlgorithm(
             loader = self.fabric.setup_dataloaders(loader)
         return iter(InfiniteDataLoader(loader))
 
-    def compute_logits(self, module: GPT2Model, batch, task: str) -> Tensor:
+    def compute_logits(
+        self,
+        module: Union[T5ForConditionalGeneration, LayerWiseMergedModel],
+        batch,
+        task: str,
+    ) -> Tensor:
         """
         Compute the logits for the given images and task.
 
@@ -224,37 +213,29 @@ class GPT2LayerWiseAdaMergingAlgorithm(
         Returns:
             Tensor: The computed logits.
         """
-        input_ids = batch["input_ids"]
-        attention_mask = batch["attention_mask"]
-        batch_size, _ = input_ids.shape[:2]
-        pad_token_id = 50256
+        input_ids: Tensor = batch["input_ids"]
+        attention_mask: Tensor = batch["attention_mask"]
 
-        transformer_outputs = module(
-            input_ids,
-            past_key_values=None,
+        # remove padding tokens from the input
+        while attention_mask[:, -1].eq(0).all():
+            input_ids = input_ids[:, :-1]
+            attention_mask = attention_mask[:, :-1]
+
+        outputs = module(
+            input_ids=input_ids,
             attention_mask=attention_mask,
-            token_type_ids=None,
-            position_ids=None,
-            head_mask=None,
-            inputs_embeds=None,
-            use_cache=None,
-            output_attentions=None,
-            output_hidden_states=None,
-            return_dict=True,
+            decoder_input_ids=torch.ones(
+                input_ids.size(0), 1, dtype=torch.long, device=input_ids.device
+            ),
         )
-        hidden_states = transformer_outputs[0]
-        logits = self.scores[task](hidden_states)
+        logits = outputs.logits[:, 0, :]
+        return logits
 
-        sequence_lengths = torch.eq(input_ids, pad_token_id).int().argmax(-1) - 1
-        sequence_lengths = sequence_lengths % input_ids.shape[-1]
-        sequence_lengths = sequence_lengths.to(logits.device)
-
-        pooled_logits = logits[
-            torch.arange(batch_size, device=logits.device), sequence_lengths
-        ]
-
-        assert pooled_logits.dim() == 2
-        return pooled_logits
+    def on_test_time_adaptation_start(self):
+        """
+        Something to do before the test-time adaptation starts. Such as setting up the task-specific heads.
+        """
+        pass
 
     def test_time_adaptation(self, module: LayerWiseMergedModel):
         """
