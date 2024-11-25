@@ -9,7 +9,7 @@ _import_structure = {
     "dummy": ["DummyAlgorithm"],
     # single task learning (fine-tuning)
     "classification": ["ImageClassificationFineTuningForCLIP"],
-    "lm_finetune": ["FullFinetuneSFT"],
+    "lm_finetune": ["FullFinetuneSFT", "PeftFinetuneSFT"],
     # analysis
     "analysis": ["TaskVectorCosSimilarity", "TaskVectorViolinPlot"],
     # model ensemble methods
@@ -89,8 +89,8 @@ _import_structure = {
 
 
 if TYPE_CHECKING:
-    from .adamerging import *
     from .ada_svd import AdaSVDMergingForCLIPVisionModel
+    from .adamerging import *
     from .analysis import TaskVectorCosSimilarity, TaskVectorViolinPlot
     from .base_algorithm import BaseAlgorithm, BaseModelFusionAlgorithm
     from .classification import ImageClassificationFineTuningForCLIP
@@ -116,6 +116,7 @@ if TYPE_CHECKING:
         SimpleAverageForLlama,
         TaskArithmeticForLlama,
     )
+    from .lm_finetune import *
     from .mixture_of_experts import (
         MixtralForCausalLMMergingAlgorithm,
         MixtralForCausalLMUpscalingAlgorithm,
@@ -152,7 +153,6 @@ if TYPE_CHECKING:
     from .ties_merging import TiesMergingAlgorithm
     from .we_moe import CLIPWeightEnsemblingMoEAlgorithm
     from .weighted_average import WeightedAverageAlgorithm, WeightedAverageForLLama
-    from .lm_finetune import *
 
 else:
     sys.modules[__name__] = LazyImporter(
