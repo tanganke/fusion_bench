@@ -6,12 +6,14 @@ from typing import Any, Dict, Literal, Optional, Union
 
 import lightning as L
 import omegaconf
+import peft
 import torch
 from lightning.fabric.strategies.fsdp import FSDPStrategy
 from lightning.fabric.utilities import rank_zero_only
 from omegaconf import DictConfig
+from peft import PeftModel, get_peft_config, get_peft_model
 from torch import nn
-from torch.utils.data import ConcatDataset, DataLoader
+from torch.utils.data import DataLoader, ConcatDataset
 from tqdm.auto import tqdm
 from typing_extensions import TYPE_CHECKING, override
 
@@ -33,9 +35,11 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
+class PeftFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
 
-    model: Union[nn.Module, "_FabricModule", "LlamaForCausalLM"]
+    model: Union[
+        nn.Module, "_FabricModule", "LlamaForCausalLM", PeftModel, peft.LoraModel
+    ]
     optimizer: Union[torch.optim.Optimizer, "_FabricOptimizer"]
     train_dataloader: Union[DataLoader, "_FabricDataLoader"]
     lr_scheduler: torch.optim.lr_scheduler.LRScheduler
@@ -44,8 +48,11 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         self,
         optimizer: DictConfig,
         lr_scheduler: Optional[DictConfig],
+        peft_config: DictConfig,
         dataloader_kwargs: DictConfig,
-        max_epochs: int,
+        adapter_name: str = "default",
+        merge_and_unload: bool = False,
+        max_epochs: int = 1,
         max_steps: int = -1,
         max_steps_per_epoch: int = -1,
         lr_scheduler_interval: Literal["epoch", "step"] = "step",
@@ -66,7 +73,10 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         Args:
             optimizer(DictConfig): Configuration for the optimizer.
             lr_scheduler(DictConfig): Configuration for the learning rate scheduler.
+            peft_config(DictConfig): Configuration for the PEFT model.
             dataloader_kwargs(DictConfig): Configuration for the dataloader, such as batch size, num_workers, etc.
+            adapter_name(str): Name of the adapter to use for the PEFT model.
+            merge_and_unload(bool): Whether to merge and unload the model after training.
             max_epochs(int): Maximum number of epochs to train the model. If set to -1, the training will continue indefinitely or until max_steps is reached.
             max_steps(int): Maximum number of steps to train the model. If set to -1, the training will continue indefinitely or until max_epochs is reached.
             max_steps_per_epoch(int): Maximum number of steps to train the model in each epoch. If set to -1, the training will continue until the end of the epoch.
@@ -83,7 +93,10 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         """
         self._optimizer = optimizer
         self._lr_scheduler = lr_scheduler
+        self._peft_config = peft_config
         self.dataloader_kwargs = dataloader_kwargs
+        self.adapter_name = adapter_name
+        self.merge_and_unload = merge_and_unload
         self.max_epochs = max_epochs
         self.max_steps = max_steps
         self.max_steps_per_epoch = max_steps_per_epoch
@@ -103,11 +116,20 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         self.modelpool = modelpool
         self.setup()
         self.train()
+
+        if self.merge_and_unload:
+            self.model = self.model.merge_and_unload()
         return self.model
 
     def setup_model(self):
         model = self.modelpool.load_pretrained_model()
-        self.model = model
+
+        # get the PEFT model
+        peft_config = get_peft_config(self._peft_config)
+        peft_model = get_peft_model(model, peft_config, self.adapter_name)
+        peft_model.print_trainable_parameters()
+
+        self.model = peft_model
 
         if self.fabric.strategy == "fsdp" or isinstance(
             self.fabric.strategy, FSDPStrategy
