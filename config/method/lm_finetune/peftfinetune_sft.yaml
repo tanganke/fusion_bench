@@ -27,7 +27,7 @@ peft_config:
   r: 16
   lora_alpha: 16
   lora_dropout: 0
-  bais: none
+  bias: none
 
 adapter_name: default
 # whether to merge and unload the adapter after training
