@@ -154,10 +154,10 @@ def load_tokenized_arc_agi_dataset(
         cache_path
     ):
         datasets = load_from_disk(cache_path)
-        if split is None:
-            return datasets
-        else:
+        if split is None and split in datasets.column_names:
             return datasets[split]
+        else:
+            return datasets
     else:
         assert (
             tokenizer is not None
@@ -228,7 +228,7 @@ def load_tokenized_arc_agi_dataset(
             converted_datasets, tokenizer, use_data_augmentation, permute_n, seed
         )
 
-    if cache_path is not None:
+    if cache_path is not None and rank_zero_only.rank == 0:
         os.makedirs(cache_path, exist_ok=True)
         converted_datasets.save_to_disk(cache_path)
     return converted_datasets
