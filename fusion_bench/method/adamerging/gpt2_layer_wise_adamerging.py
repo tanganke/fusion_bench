@@ -95,18 +95,6 @@ class GPT2LayerWiseAdaMergingAlgorithm(
             modelpool.load_model(name) for name in modelpool.model_names
         ]
 
-        for name in (
-            ["wte", "wpe", "ln_f"]
-            + [f"h.{i}.ln_1" for i in range(len(pretrained_model.h))]
-            + [f"h.{i}.ln_2" for i in range(len(pretrained_model.h))]
-            + [f"h.{i}.attn" for i in range(len(pretrained_model.h))]
-        ):
-            simple_average(
-                [model.get_submodule(name) for model in finetuned_models],
-                base_module=pretrained_model.get_submodule(name),
-            )
-            pretrained_model.get_submodule(name).requires_grad_(False)
-
         # initialize layer-wise weights using the provided configuration `init_values` or load from file if `weights` is provided
         if self.merging_weights_load_path is None:
             layer_wise_weight = get_layer_wise_weights(
