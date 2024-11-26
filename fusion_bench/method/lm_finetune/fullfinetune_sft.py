@@ -13,6 +13,7 @@ from omegaconf import DictConfig
 from torch import nn
 from torch.utils.data import ConcatDataset, DataLoader
 from tqdm.auto import tqdm
+from transformers import AutoModelForCausalLM, AutoTokenizer
 from typing_extensions import TYPE_CHECKING, override
 
 from fusion_bench import BaseAlgorithm, BaseModelPool
@@ -401,3 +402,28 @@ def load_checkpoint(
     state = {"model": model}
     state.update(state_components)
     fabric.load(ckpt_path, state=state, strict=strict)
+
+
+if __name__ == "__main__":
+    # convert a checkpoint to hf format
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--base_model_path", type=str)
+    parser.add_argument("--ckpt_path", type=str)
+    parser.add_argument("--output_path", type=str)
+
+    args = parser.parse_args()
+
+    fabric = L.Fabric(devices=1, strategy="fsdp")
+    fabric.launch()
+
+    tokenizer = AutoTokenizer.from_pretrained(args.base_model_path)
+    tokenizer.save_pretrained(args.output_path)
+
+    model = AutoModelForCausalLM.from_pretrained(
+        args.base_model_path, torch_dtype=torch.bfloat16
+    )
+    model = fabric.setup_module(model)
+    load_checkpoint(fabric, args.ckpt_path, model=model, strict=True)
+    model.save_pretrained(args.output_path)
