@@ -58,3 +58,4 @@ save_optimizer_state: false
 save_full_model: false
 # Path to checkpoint to load from, used for resuming training
 ckpt_path: null
+max_length: 4096
