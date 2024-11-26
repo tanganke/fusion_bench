@@ -228,17 +228,22 @@ class FabricModelFusionProgram(
             )
 
         merged_model = self.method.run(self.modelpool)
-        self.save_merged_model(merged_model)
-        if self.taskpool is not None:
-            report = self.evaluate_merged_model(self.taskpool, merged_model)
-            print_json(report, print_type=False)
-            if self.report_save_path is not None:
-                # save report (Dict) to a file
-                # if the directory of `save_report` does not exists, create it
-                os.makedirs(os.path.dirname(self.report_save_path), exist_ok=True)
-                json.dump(report, open(self.report_save_path, "w"))
+        if merged_model is None:
+            log.info(
+                "No merged model returned by the method. Skipping saving and evaluation."
+            )
         else:
-            print("No task pool specified. Skipping evaluation.")
+            self.save_merged_model(merged_model)
+            if self.taskpool is not None:
+                report = self.evaluate_merged_model(self.taskpool, merged_model)
+                print_json(report, print_type=False)
+                if self.report_save_path is not None:
+                    # save report (Dict) to a file
+                    # if the directory of `save_report` does not exists, create it
+                    os.makedirs(os.path.dirname(self.report_save_path), exist_ok=True)
+                    json.dump(report, open(self.report_save_path, "w"))
+            else:
+                log.info("No task pool specified. Skipping evaluation.")
 
     @rank_zero_only
     def _link_hydra_output(self):
