@@ -13,7 +13,8 @@ def padded_collate_sft(
     labels_key: Optional[str] = "labels",
     ignore_idx: int = -100,
 ) -> Dict[str, torch.Tensor]:
-    """Pad a batch of sequences to the longest sequence length in the batch, and
+    """
+    Pad (right) a batch of sequences to the longest sequence length in the batch, and
     convert integer lists to tensors.
 
     Args:
@@ -44,10 +45,16 @@ def padded_collate_sft(
     )
 
     if attention_mask is not None:
-        return {
+        collated_batch = {
             input_ids_key: input_ids,
             attention_mask_key: attention_mask,
             labels_key: labels,
         }
     else:
-        return {input_ids_key: input_ids, labels_key: labels}
+        collated_batch = {input_ids_key: input_ids, labels_key: labels}
+
+    for key in batch[0]:
+        if key not in [input_ids_key, attention_mask_key, labels_key]:
+            collated_batch[key] = [x[key] for x in batch]
+
+    return collated_batch
