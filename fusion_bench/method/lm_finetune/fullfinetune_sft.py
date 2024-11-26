@@ -337,14 +337,15 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
                             "checkpoints",
                             "latest_model.ckpt",
                         ),
-                        os.path.join(
+                        dst := os.path.join(
                             self.log_dir,
                             "checkpoints",
                             f"epoch={self.epoch_idx}_step={self.global_step_idx}.ckpt",
                         ),
+                        target_is_directory=os.path.isdir(dst),
                     )
                 except Exception as e:
-                    pass
+                    log.error(f"Failed to create symlink: {e}")
         else:
             raise ValueError(
                 f"Unknown stage: {stage}. Available options: 'end_of_step', 'end_of_epoch', 'end_of_training'"
@@ -373,8 +374,15 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
                 }
             )
 
+        trainable_param_names = set(
+            name
+            for name, param in self.model.state_dict(keep_vars=True).items()
+            if param.requires_grad
+        )
         filter = (
-            None if self.save_full_model else {"model": lambda k, p: p.requires_grad}
+            None
+            if self.save_full_model
+            else {"model": lambda k, p: k in trainable_param_names}
         )
 
         fabric.save(path, state=state, filter=filter)
