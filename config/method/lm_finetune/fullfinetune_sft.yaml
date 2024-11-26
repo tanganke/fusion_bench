@@ -8,9 +8,9 @@ optimizer:
   lr: 5e-5
 
 lr_scheduler:
-  _target_: torchtune.training.lr_schedulers.get_cosine_schedule_with_warmup
-  num_warmup_steps: 5
-  num_training_steps: _T_max_ # this will be replaced by the expected number of training steps
+  _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+  T_max: _T_max_ # this will be replaced by the expected number of training steps
+  eta_min: 1e-6
 
 dataloader_kwargs:
   # per-gpu batch size
