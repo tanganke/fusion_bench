@@ -126,7 +126,7 @@ class PeftFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         model = self.modelpool.load_pretrained_model()
 
         # get the PEFT model
-        peft_config = get_peft_config(self._peft_config)
+        peft_config = instantiate(self._peft_config)
         peft_model = get_peft_model(model, peft_config, self.adapter_name)
         peft_model.print_trainable_parameters()
 
@@ -139,6 +139,10 @@ class PeftFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
             self.model.gradient_checkpointing_enable(
                 gradient_checkpointing_kwargs={"use_reentrant": True}
             )
+            self.use_cache = False
+        else:
+            self.use_cache = True
+
         self.model_dtype = get_dtype(self.model)
 
     def configure_optimizer(self):
@@ -237,7 +241,12 @@ class PeftFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
             # disable gradient synchronization if accumulating gradients across steps for improved performance
             with fabric.no_backward_sync(self.model, enabled=is_accumulating):
                 # use_cache=True is not compatible with gradient checkpointing, so we disable it here
-                output = self.model(**batch, use_cache=False)
+                output = self.model(
+                    input_ids=batch["input_ids"],
+                    attention_mask=batch["attention_mask"],
+                    labels=batch["labels"],
+                    use_cache=self.use_cache,
+                )
                 loss = output["loss"]
 
                 fabric.backward(loss)

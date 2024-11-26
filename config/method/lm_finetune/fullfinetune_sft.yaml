@@ -1,4 +1,4 @@
-_target_: ttt.method.FullFinetuneSFT
+_target_: fusion_bench.method.FullFinetuneSFT
 _recursive_: False
 
 optimizer:

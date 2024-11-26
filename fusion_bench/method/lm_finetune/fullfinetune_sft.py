@@ -118,6 +118,9 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
             self.model.gradient_checkpointing_enable(
                 gradient_checkpointing_kwargs={"use_reentrant": True}
             )
+            self.use_cache = False
+        else:
+            self.use_cache = True
         self.model_dtype = get_dtype(self.model)
 
     def configure_optimizer(self):
@@ -216,7 +219,12 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
             # disable gradient synchronization if accumulating gradients across steps for improved performance
             with fabric.no_backward_sync(self.model, enabled=is_accumulating):
                 # use_cache=True is not compatible with gradient checkpointing, so we disable it here
-                output = self.model(**batch, use_cache=False)
+                output = self.model(
+                    input_ids=batch["input_ids"],
+                    attention_mask=batch["attention_mask"],
+                    labels=batch["labels"],
+                    use_cache=self.use_cache,
+                )
                 loss = output["loss"]
 
                 fabric.backward(loss)
