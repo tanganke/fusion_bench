@@ -261,7 +261,7 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
             ):
                 break
             # break if max_steps is set, and exit training
-            if self.max_steps > 0 and self.global_step_idx >= self.max_steps:
+            if self.max_steps > 0 and self.global_step_idx >= self.max_steps - 1:
                 self.is_training = False
                 break
 
