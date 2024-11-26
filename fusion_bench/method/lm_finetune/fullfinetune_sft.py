@@ -39,6 +39,7 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
     optimizer: Union[torch.optim.Optimizer, "_FabricOptimizer"]
     train_dataloader: Union[DataLoader, "_FabricDataLoader"]
     lr_scheduler: torch.optim.lr_scheduler.LRScheduler
+    _latest_saved_checkpoint_global_step: int = -1
 
     def __init__(
         self,
@@ -244,7 +245,6 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
             # save the model at the end of the step if interval is set to "step" and frequency is met
             self._try_save_checkpoint(stage="end_of_step")
 
-            self.global_step_idx += 1
             # break if max_steps_per_epoch is set, and exit epoch
             if (
                 self.max_steps_per_epoch > 0
@@ -255,6 +255,8 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
             if self.max_steps > 0 and self.global_step_idx >= self.max_steps:
                 self.is_training = False
                 break
+
+            self.global_step_idx += 1
 
     def train(self):
         fabric = self.fabric
@@ -311,21 +313,7 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
                 )
         elif stage == "end_of_training":
             # if the checkpoint has not been saved yet, save it
-            if (
-                self.checkpoint_save_interval == "epoch"
-                and not os.path.exists(
-                    os.path.join(
-                        self.log_dir, "checkpoints", f"epoch={self.epoch_idx}.ckpt"
-                    )
-                )
-            ) or (
-                self.checkpoint_save_interval == "step"
-                and not os.path.exists(
-                    os.path.join(
-                        self.log_dir, "checkpoints", f"step={self.global_step_idx}.ckpt"
-                    )
-                )
-            ):
+            if self.global_step_idx > self._latest_saved_checkpoint_global_step:
                 self.save_checkpoint(
                     os.path.join(
                         self.log_dir,
@@ -335,8 +323,16 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
                 )
                 try:
                     os.symlink(
-                        "latest_model.ckpt",
-                        f"epoch={self.epoch_idx}_step={self.global_step_idx}.ckpt",
+                        os.path.join(
+                            self.log_dir,
+                            "checkpoints",
+                            "latest_model.ckpt",
+                        ),
+                        os.path.join(
+                            self.log_dir,
+                            "checkpoints",
+                            f"epoch={self.epoch_idx}_step={self.global_step_idx}.ckpt",
+                        ),
                     )
                 except Exception as e:
                     pass
@@ -373,6 +369,7 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         )
 
         fabric.save(path, state=state, filter=filter)
+        self._latest_saved_checkpoint_global_step = self.global_step_idx
 
     def load_checkpoint(self, path: Union[str, Path]):
         fabric = self.fabric
