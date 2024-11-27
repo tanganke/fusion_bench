@@ -65,8 +65,7 @@ _import_structure = {
     ],
     "dawe": ["DataAdaptiveWeightEnsemblingForCLIP"],
     "we_moe": ["CLIPWeightEnsemblingMoEAlgorithm"],
-    "rankone_moe": ["CLIPRankOneMoEAlgorithm",
-                    "RankOneMoEAlgorithm"],
+    "rankone_moe": ["CLIPRankOneMoEAlgorithm", "RankOneMoEAlgorithm"],
     "sparse_we_moe": [
         "SparseWeightEnsemblingMoEAlgorithm",
         "SparseCLIPWeightEnsemblingMoEAlgorithm",
@@ -137,6 +136,7 @@ if TYPE_CHECKING:
         PWEMoELinearScalarizationForCLIP,
         PWEMoExactParetoOptimalForCLIP,
     )
+    from .rankone_moe import CLIPRankOneMoEAlgorithm, RankOneMoEAlgorithm
     from .regmean import RegMeanAlgorithmForCLIP, RegMeanAlgorithmForGPT2
     from .simple_average import SimpleAverageAlgorithm
     from .smile_upscaling import (
@@ -155,7 +155,6 @@ if TYPE_CHECKING:
     from .task_arithmetic import TaskArithmeticAlgorithm
     from .ties_merging import TiesMergingAlgorithm
     from .we_moe import CLIPWeightEnsemblingMoEAlgorithm
-    from .rankone_moe import CLIPRankOneMoEAlgorithm, RankOneMoEAlgorithm
     from .weighted_average import WeightedAverageAlgorithm, WeightedAverageForLLama
 
 else:

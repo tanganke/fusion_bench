@@ -1,3 +1,4 @@
+import functools
 import logging
 import re
 from copy import deepcopy
@@ -10,7 +11,7 @@ from tqdm.auto import tqdm
 from fusion_bench.method import BaseAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
-import functools
+
 from .prune_utils import unstructured_magnitude_prune_
 
 log = logging.getLogger(__name__)

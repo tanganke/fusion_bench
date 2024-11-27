@@ -5,11 +5,11 @@ from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union, cast  # noqa: F401
 
 import torch
+from omegaconf import DictConfig
 from torch import nn
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
-from omegaconf import DictConfig
 
 from fusion_bench.dataset.clip_dataset import CLIPDataset
 from fusion_bench.mixins import LightningFabricMixin

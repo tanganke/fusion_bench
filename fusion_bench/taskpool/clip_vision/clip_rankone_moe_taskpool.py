@@ -43,6 +43,7 @@ class LayerWiseRoutingWeightSaver:
             print(f"Saving routing weights to {self.save_path}")
             torch.save(routing_weights, self.save_path)
 
+
 class RankoneMoECLIPVisionModelTaskPool(CLIPVisionModelTaskPool):
 
     # hooks and handles for saving layer-wise routing weights
@@ -87,8 +88,9 @@ class RankoneMoECLIPVisionModelTaskPool(CLIPVisionModelTaskPool):
             for i, layer in enumerate(vision_model.encoder.layers):
                 mlp = layer.mlp
                 assert isinstance(
-                    mlp, (RankOneMoE),), \
-                    f"MLP is expected to be a RankOneWeightEnsemblingMoE, but got {type(mlp)}"
+                    mlp,
+                    (RankOneMoE),
+                ), f"MLP is expected to be a RankOneWeightEnsemblingMoE, but got {type(mlp)}"
                 # layer-wise routing weights
                 hook = LayerWiseRoutingWeightSaver(
                     self.layer_wise_routing_weights_save_path

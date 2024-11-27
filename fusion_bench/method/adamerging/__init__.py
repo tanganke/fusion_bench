@@ -1,6 +1,6 @@
 # flake8: noqa F401
 from .clip_layer_wise_adamerging import CLIPLayerWiseAdaMergingAlgorithm
 from .clip_task_wise_adamerging import CLIPTaskWiseAdaMergingAlgorithm
+from .flan_t5_layer_wise_adamerging import FlanT5LayerWiseAdaMergingAlgorithm
 from .gpt2_layer_wise_adamerging import GPT2LayerWiseAdaMergingAlgorithm
 from .llama_adamerging import LayerWiseAdaMergingForLlamaSFT
-from .flan_t5_layer_wise_adamerging import FlanT5LayerWiseAdaMergingAlgorithm

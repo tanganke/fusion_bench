@@ -19,6 +19,7 @@ from fusion_bench.utils.parameters import print_parameters
 
 log = logging.getLogger(__name__)
 
+
 def entropy_loss(logits: Tensor) -> Tensor:
     """
     Compute the entropy loss of a set of logits.
@@ -45,6 +46,7 @@ class RankOneMoEAlgorithm(ModelFusionAlgorithm):
         modelpool (ModelPool): The pool of models to be fused.
         profiler (SimpleProfiler): The profiler for measuring performance.
     """
+
     _fabric: L.Fabric = None
     modelpool: ModelPool = None
 

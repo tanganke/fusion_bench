@@ -1,6 +1,6 @@
 import functools
 import logging
-from typing import List
+from typing import Dict, List, Tuple  # noqa: F401
 
 import torch
 import torch.func
@@ -9,7 +9,6 @@ from torch.func import functional_call
 from torch.nn import functional as F
 
 from fusion_bench.utils.type import StateDictType
-from typing import Dict, List, Tuple  # noqa: F401
 
 log = logging.getLogger(__name__)
 
@@ -95,8 +94,8 @@ class Depth_1_Gate(nn.Module):
 class Depth_2_Gate(nn.Module):
     def __init__(self, hidden_size: int, num_experts: int):
         super().__init__()
-        self.fc1 = nn.Linear(hidden_size, num_experts*2, bias=True)
-        self.fc2 = nn.Linear(num_experts*2, num_experts, bias=True)
+        self.fc1 = nn.Linear(hidden_size, num_experts * 2, bias=True)
+        self.fc2 = nn.Linear(num_experts * 2, num_experts, bias=True)
 
     def init_weight(self, init_lambda: float):
         nn.init.normal_(self.fc1.weight, std=0.01)
@@ -128,8 +127,11 @@ def construct_rankone_moe_gate(
     gate.init_weight(init_lambda)
     return gate
 
+
 class ExpertNotTrainedError(Exception):
     pass
+
+
 def _is_all_zeros(tensor: Tensor | List[Tensor]) -> bool:
     """
     Check if a tensor or a list of tensors are all zeros.
@@ -138,6 +140,7 @@ def _is_all_zeros(tensor: Tensor | List[Tensor]) -> bool:
         return torch.allclose(tensor, torch.zeros_like(tensor))
     else:
         return all(_is_all_zeros(t) for t in tensor)
+
 
 def _svd(w: Tensor, full_matrices=True) -> Tuple[Tensor, Tensor, Tensor]:
     """
@@ -149,7 +152,10 @@ def _svd(w: Tensor, full_matrices=True) -> Tuple[Tensor, Tensor, Tensor]:
     v = vh.T
     return u, s, v
 
-def svd(w: Tensor, full_matrices=True, accelerator=None) -> Tuple[Tensor, Tensor, Tensor]:
+
+def svd(
+    w: Tensor, full_matrices=True, accelerator=None
+) -> Tuple[Tensor, Tensor, Tensor]:
     """
     Perform SVD on a tensor, optionally using a specified accelerator.
     """
@@ -160,13 +166,18 @@ def svd(w: Tensor, full_matrices=True, accelerator=None) -> Tuple[Tensor, Tensor
     u, s, v = _svd(w)
     return u.to(original_device), s.to(original_device), v.to(original_device)
 
-def fun_joint_svd(w_list: List[Tensor], accelerator=None) -> Tuple[Tensor, Tensor, Tensor]:
 
-    w = torch.cat(w_list, dim=1) # stacked_matrix
+def fun_joint_svd(
+    w_list: List[Tensor], accelerator=None
+) -> Tuple[Tensor, Tensor, Tensor]:
+
+    w = torch.cat(w_list, dim=1)  # stacked_matrix
     original_device = w.device
     if accelerator is not None:
         w = w.to(accelerator)
-    u_c, s_c, vh_c = torch.linalg.svd(w, full_matrices=False, driver="gesvd" if w.is_cuda else None)
+    u_c, s_c, vh_c = torch.linalg.svd(
+        w, full_matrices=False, driver="gesvd" if w.is_cuda else None
+    )
 
     svd_list = []
     offset = 0
@@ -174,12 +185,15 @@ def fun_joint_svd(w_list: List[Tensor], accelerator=None) -> Tuple[Tensor, Tenso
         n_cols = matrix.size(1)
         u = u_c
         s = s_c
-        vh_ = vh_c[:, offset:offset + n_cols]
+        vh_ = vh_c[:, offset : offset + n_cols]
         v = vh_.T
-        svd_list.append([u.to(original_device), s.to(original_device), v.to(original_device)])
+        svd_list.append(
+            [u.to(original_device), s.to(original_device), v.to(original_device)]
+        )
 
         offset += n_cols
     return svd_list
+
 
 class RankOneMoE(nn.Module):
     # variable to store the merged state dict temporarily
@@ -195,8 +209,8 @@ class RankOneMoE(nn.Module):
         router_hidden_layers: int = 2,
         batch_reduce: bool = False,
         svd_accelerator=False,
-        rank_k: int =-1,
-        select_k: int=-1,
+        rank_k: int = -1,
+        select_k: int = -1,
     ):
         """
         Initializes the RankOneMoE class.
@@ -245,8 +259,12 @@ class RankOneMoE(nn.Module):
             m.requires_grad_(False)
 
         # task vecotr  (only bias term)
-        self.task_vectors_fc1_bias = nn.Parameter(torch.stack([e.fc1.bias for e in expert_models], dim=0), requires_grad=False)
-        self.task_vectors_fc2_bias = nn.Parameter(torch.stack([e.fc2.bias for e in expert_models], dim=0), requires_grad=False)
+        self.task_vectors_fc1_bias = nn.Parameter(
+            torch.stack([e.fc1.bias for e in expert_models], dim=0), requires_grad=False
+        )
+        self.task_vectors_fc2_bias = nn.Parameter(
+            torch.stack([e.fc2.bias for e in expert_models], dim=0), requires_grad=False
+        )
 
         # SVD representation of task vector (only weight term)
         self.task_vectors_fc1_u = nn.ParameterList()
@@ -256,23 +274,31 @@ class RankOneMoE(nn.Module):
 
         for m in expert_models:
             for name, param in m.named_parameters():
-                if '.weight' in name:
+                if ".weight" in name:
 
                     if _is_all_zeros(param):
                         # All fine-tuned models are identical to the pretrained model
                         raise ExpertNotTrainedError()
 
                     u, s, v = svd(param, accelerator=self.svd_accelerator)
-                    u = u[:, :self.rank_k]
-                    s = s[:self.rank_k]
-                    v = v[:, :self.rank_k]
+                    u = u[:, : self.rank_k]
+                    s = s[: self.rank_k]
+                    v = v[:, : self.rank_k]
 
-                    if 'fc1.weight' == name:
-                        self.task_vectors_fc1_u.append(nn.Parameter(u.T, requires_grad=False))
-                        self.task_vectors_fc1_svh.append(nn.Parameter((s * v).T, requires_grad=False))
-                    elif 'fc2.weight' == name:
-                        self.task_vectors_fc2_u.append(nn.Parameter(u.T, requires_grad=False))
-                        self.task_vectors_fc2_svh.append(nn.Parameter((s * v).T, requires_grad=False))
+                    if "fc1.weight" == name:
+                        self.task_vectors_fc1_u.append(
+                            nn.Parameter(u.T, requires_grad=False)
+                        )
+                        self.task_vectors_fc1_svh.append(
+                            nn.Parameter((s * v).T, requires_grad=False)
+                        )
+                    elif "fc2.weight" == name:
+                        self.task_vectors_fc2_u.append(
+                            nn.Parameter(u.T, requires_grad=False)
+                        )
+                        self.task_vectors_fc2_svh.append(
+                            nn.Parameter((s * v).T, requires_grad=False)
+                        )
 
         # remove the original module from fine-tuned models to save memory
         for name, param in base_model.named_parameters():
@@ -283,7 +309,9 @@ class RankOneMoE(nn.Module):
     @property
     def forward_model(self):
         return functools.partial(
-            functional_call, self.base_model, self._merged_state_dict,
+            functional_call,
+            self.base_model,
+            self._merged_state_dict,
         )
 
     def top_k_soft(self, s, k):
@@ -302,24 +330,36 @@ class RankOneMoE(nn.Module):
             expert_weights = self.top_k_soft(expert_weights, self.select_k)
 
         for name in state_dict:
-            if name == 'fc1.bias':
+            if name == "fc1.bias":
                 for param in self.task_vectors_fc1_bias:
                     state_dict[name] = state_dict[name] + self.init_lambda * param
-            elif name == 'fc2.bias':
+            elif name == "fc2.bias":
                 for param in self.task_vectors_fc2_bias:
                     state_dict[name] = state_dict[name] + self.init_lambda * param
 
-            elif name == 'fc1.weight':
-                w_list = torch.split(expert_weights, int(expert_weights.size(-1) / self.num_experts), dim=-1)
-                for weight, u, svh in zip(w_list, self.task_vectors_fc1_u, self.task_vectors_fc1_svh):
+            elif name == "fc1.weight":
+                w_list = torch.split(
+                    expert_weights,
+                    int(expert_weights.size(-1) / self.num_experts),
+                    dim=-1,
+                )
+                for weight, u, svh in zip(
+                    w_list, self.task_vectors_fc1_u, self.task_vectors_fc1_svh
+                ):
                     weight_diag = torch.diag(weight)
                     weight_u = torch.mm(weight_diag, u)
                     result = torch.matmul(weight_u.T, svh)
                     state_dict[name] = state_dict[name] + result
 
-            elif name == 'fc2.weight':
-                w_list = torch.split(expert_weights, int(expert_weights.size(-1) / self.num_experts), dim=-1)
-                for weight, u, svh in zip(w_list, self.task_vectors_fc2_u, self.task_vectors_fc2_svh):
+            elif name == "fc2.weight":
+                w_list = torch.split(
+                    expert_weights,
+                    int(expert_weights.size(-1) / self.num_experts),
+                    dim=-1,
+                )
+                for weight, u, svh in zip(
+                    w_list, self.task_vectors_fc2_u, self.task_vectors_fc2_svh
+                ):
                     weight_diag = torch.diag(weight)
                     weight_u = torch.mm(weight_diag, u)
                     result = torch.matmul(weight_u.T, svh)
