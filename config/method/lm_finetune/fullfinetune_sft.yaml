@@ -3,9 +3,9 @@ _recursive_: False
 
 optimizer:
   _target_: torch.optim.AdamW
-  fused: True
+  lr: 1e-5
   weight_decay: 0.01
-  lr: 5e-5
+  fused: True
 
 lr_scheduler:
   _target_: torch.optim.lr_scheduler.CosineAnnealingLR
