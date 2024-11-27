@@ -5,8 +5,6 @@ import numpy as np
 import torch
 from torch.optim.optimizer import Optimizer
 
-from fusion_bench.utils import timeit_context
-
 log = logging.getLogger(__name__)
 
 
