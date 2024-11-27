@@ -1,5 +1,9 @@
 !*.template
 /temp/
+/.github/
+/.vscode/
+/.idea/
+/.idea/
 /datasets/
 /datasets
 /lm-evaluation-harness/

@@ -1,3 +1,4 @@
 # flake8: noqa F401
 from .clip_sparse_wemoe_taskpool import SparseWEMoECLIPVisionModelTaskPool
+from .clip_rankone_wemoe_taskpool import RankoneWEMoECLIPVisionModelTaskPool
 from .taskpool import CLIPVisionModelTaskPool
