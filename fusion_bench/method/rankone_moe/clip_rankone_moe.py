@@ -25,7 +25,7 @@ class CLIPRankOneMoEAlgorithm(
     CLIPClassificationMixin,
 ):
     """
-    CLIPRankOneMoEAlgorithm is a class that implements the RankOneMoEAlgorithm
+    CLIPRankOneMoEAlgorithm is a class that implements the RankOneMoEAlgorithm (https://github.com/EnnengYang/RankOne-MoE)
     for CLIP models. It extends the RankOneMoEAlgorithm and CLIPClassificationMixin classes.
 
     Attributes:

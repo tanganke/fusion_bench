@@ -200,6 +200,8 @@ class RankOneMoE(nn.Module):
     ):
         """
         Initializes the RankOneMoE class.
+        https://github.com/EnnengYang/RankOne-MoE
+
         Args:
             hidden_size (int): The size of the hidden layer in the models.
             base_model (nn.Module): The base model that will be used as a reference for the expert models.

@@ -9,7 +9,7 @@ from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 from transformers.models.clip.modeling_clip import CLIPVisionTransformer
 
 from fusion_bench.models.hf_clip import HFCLIPClassifier
-from fusion_bench.models.rankone_wemoe.rankone_we_moe import RankOneWeightEnsemblingMoE
+from fusion_bench.models.rankone_moe import RankOneMoE
 
 from .taskpool import CLIPVisionModelTaskPool
 
@@ -43,7 +43,7 @@ class LayerWiseRoutingWeightSaver:
             print(f"Saving routing weights to {self.save_path}")
             torch.save(routing_weights, self.save_path)
 
-class RankoneWEMoECLIPVisionModelTaskPool(CLIPVisionModelTaskPool):
+class RankoneMoECLIPVisionModelTaskPool(CLIPVisionModelTaskPool):
 
     # hooks and handles for saving layer-wise routing weights
     _layer_wise_routing_weights_save_hooks: Dict[Any, LayerWiseRoutingWeightSaver] = {}
@@ -87,7 +87,7 @@ class RankoneWEMoECLIPVisionModelTaskPool(CLIPVisionModelTaskPool):
             for i, layer in enumerate(vision_model.encoder.layers):
                 mlp = layer.mlp
                 assert isinstance(
-                    mlp, (RankOneWeightEnsemblingMoE),), \
+                    mlp, (RankOneMoE),), \
                     f"MLP is expected to be a RankOneWeightEnsemblingMoE, but got {type(mlp)}"
                 # layer-wise routing weights
                 hook = LayerWiseRoutingWeightSaver(
