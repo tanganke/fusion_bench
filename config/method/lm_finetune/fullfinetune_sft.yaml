@@ -36,5 +36,7 @@ gradient_clip_algorithm: norm
 save_optimizer_state: false
 # save_full_model must be true when using shared FSDP
 save_full_model: true
+# save_ckpt_type can be 'hf' or 'lightning'
+save_ckpt_type: lightning
 # Path to checkpoint to load from, used for resuming training
 ckpt_path: null
