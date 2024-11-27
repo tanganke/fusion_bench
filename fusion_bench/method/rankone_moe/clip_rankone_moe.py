@@ -31,6 +31,7 @@ class CLIPRankOneMoEAlgorithm(
     Attributes:
         modelpool (CLIPVisionModelPool): The model pool containing the CLIP models.
     """
+
     modelpool: CLIPVisionModelPool = None
 
     def load_checkpoint(self, model, checkpoint):
