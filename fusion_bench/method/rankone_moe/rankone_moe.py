@@ -35,7 +35,7 @@ def entropy_loss(logits: Tensor) -> Tensor:
 
 class RankOneMoEAlgorithm(ModelFusionAlgorithm):
     """
-    Algorithm for fusing models using RankOne-MoE.
+    Algorithm for fusing models using RankOne-MoE (https://github.com/EnnengYang/RankOne-MoE).
 
     This class provides methods for constructing the MoE model, performing test-time adaptation,
     and running the fusion process.
