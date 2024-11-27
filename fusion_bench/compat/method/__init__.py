@@ -1,3 +1,5 @@
+import warnings
+
 from omegaconf import DictConfig
 
 from .base_algorithm import ModelFusionAlgorithm
@@ -43,6 +45,12 @@ class AlgorithmFactory:
         Raises:
             ValueError: If 'name' attribute is not found in the configuration or does not match any known algorithm names.
         """
+        warnings.warn(
+            "AlgorithmFactory.create_algorithm() is deprecated and will be removed in future versions. "
+            "Please implement new model fusion algorithm using `fusion_bench.method.BaseModelFusionAlgorithm` instead.",
+            DeprecationWarning,
+        )
+
         from fusion_bench.utils import import_object
 
         algorithm_name = method_config.name

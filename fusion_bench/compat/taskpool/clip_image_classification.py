@@ -154,7 +154,7 @@ class CLIPImageClassificationTaskPool(TaskPool):
 
         return task
 
-    def evaluate(self, model: CLIPVisionModel):
+    def evaluate(self, model: CLIPVisionModel, name=None):
         """
         Evaluate the model on the image classification task.
 
@@ -178,10 +178,29 @@ class CLIPImageClassificationTaskPool(TaskPool):
             "all_params": all_params,
             "trainable_percentage": training_params / all_params,
         }
+        if name is not None:
+            report["model_info"]["name"] = name
         for task_name in tqdm(self.task_names, desc="Evaluating tasks"):
             task = self.load_task(task_name)
             result = task.evaluate(self.clip_model)
             report[task_name] = result
+
+        # calculate the average accuracy and loss
+        if "average" not in report:
+            report["average"] = {}
+            accuracies = [
+                value["accuracy"]
+                for key, value in report.items()
+                if "accuracy" in value
+            ]
+            if len(accuracies) > 0:
+                average_accuracy = sum(accuracies) / len(accuracies)
+                report["average"]["accuracy"] = average_accuracy
+            losses = [value["loss"] for key, value in report.items() if "loss" in value]
+            if len(losses) > 0:
+                average_loss = sum(losses) / len(losses)
+                report["average"]["loss"] = average_loss
+
         log.info(f"Results for taskpool {self.config.name}: {report}")
         if self._fabric.is_global_zero and len(self._fabric._loggers) > 0:
             with open(

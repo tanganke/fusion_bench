@@ -35,7 +35,7 @@ def load_gpt2_tokenizer(pretrained_model_name_or_path: str):
     return tokenizer
 
 
-class HuggingFaceGPT2ClassificationPool(BaseModelPool):
+class GPT2ForSequenceClassificationPool(BaseModelPool):
     _config_mapping = BaseModelPool._config_mapping | {"_tokenizer": "tokenizer"}
 
     def __init__(self, tokenizer: DictConfig, **kwargs):
@@ -57,3 +57,7 @@ class HuggingFaceGPT2ClassificationPool(BaseModelPool):
         )
         model = instantiate(model_config)
         return model
+
+
+# For compatibility
+HuggingFaceGPT2ClassificationPool = GPT2ForSequenceClassificationPool

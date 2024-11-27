@@ -9,6 +9,7 @@ _import_structure = {
     "dummy": ["DummyAlgorithm"],
     # single task learning (fine-tuning)
     "classification": ["ImageClassificationFineTuningForCLIP"],
+    "lm_finetune": ["FullFinetuneSFT", "PeftFinetuneSFT"],
     # analysis
     "analysis": ["TaskVectorCosSimilarity", "TaskVectorViolinPlot"],
     # model ensemble methods
@@ -38,6 +39,9 @@ _import_structure = {
     "adamerging": [
         "CLIPTaskWiseAdaMergingAlgorithm",
         "CLIPLayerWiseAdaMergingAlgorithm",
+        "GPT2LayerWiseAdaMergingAlgorithm",
+        "LayerWiseAdaMergingForLlamaSFT",
+        "FlanT5LayerWiseAdaMergingAlgorithm",
     ],
     "pwe_moe": [
         "PWEMoELinearScalarizationForCLIP",
@@ -86,6 +90,7 @@ _import_structure = {
 
 if TYPE_CHECKING:
     from .ada_svd import AdaSVDMergingForCLIPVisionModel
+    from .adamerging import *
     from .analysis import TaskVectorCosSimilarity, TaskVectorViolinPlot
     from .base_algorithm import BaseAlgorithm, BaseModelFusionAlgorithm
     from .classification import ImageClassificationFineTuningForCLIP
@@ -111,6 +116,7 @@ if TYPE_CHECKING:
         SimpleAverageForLlama,
         TaskArithmeticForLlama,
     )
+    from .lm_finetune import *
     from .mixture_of_experts import (
         MixtralForCausalLMMergingAlgorithm,
         MixtralForCausalLMUpscalingAlgorithm,
