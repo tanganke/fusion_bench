@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import TYPE_CHECKING, Any, Optional, TypeVar, List
+from typing import TYPE_CHECKING, Any, List, Optional, TypeVar
 
 import lightning as L
 import torch
@@ -8,8 +8,8 @@ from lightning.fabric.loggers import TensorBoardLogger
 from lightning.fabric.utilities.rank_zero import rank_zero_only
 from omegaconf import DictConfig, OmegaConf
 
-from fusion_bench.utils.instantiate import instantiate
 from fusion_bench.utils import import_object
+from fusion_bench.utils.instantiate import instantiate
 
 if TYPE_CHECKING:
     import lightning.fabric.loggers.tensorboard
