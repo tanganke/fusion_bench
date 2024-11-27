@@ -7,7 +7,11 @@ from fusion_bench.utils.lazy_imports import LazyImporter
 
 _import_structure = {
     "base_pool": ["BaseTaskPool"],
-    "clip_vision": ["CLIPVisionModelTaskPool", "SparseWEMoECLIPVisionModelTaskPool", "RankoneWEMoECLIPVisionModelTaskPool"],
+    "clip_vision": [
+        "CLIPVisionModelTaskPool",
+        "SparseWEMoECLIPVisionModelTaskPool",
+        "RankoneWEMoECLIPVisionModelTaskPool",
+    ],
     "dummy": ["DummyTaskPool"],
     "gpt2_text_classification": ["GPT2TextClassificationTaskPool"],
     "nyuv2_taskpool": ["NYUv2TaskPool"],
@@ -17,7 +21,11 @@ _import_structure = {
 
 if TYPE_CHECKING:
     from .base_pool import BaseTaskPool
-    from .clip_vision import CLIPVisionModelTaskPool, SparseWEMoECLIPVisionModelTaskPool, RankoneWEMoECLIPVisionModelTaskPool
+    from .clip_vision import (
+        CLIPVisionModelTaskPool,
+        RankoneWEMoECLIPVisionModelTaskPool,
+        SparseWEMoECLIPVisionModelTaskPool,
+    )
     from .dummy import DummyTaskPool
     from .gpt2_text_classification import GPT2TextClassificationTaskPool
     from .llama import LlamaTestGenerationTaskPool
