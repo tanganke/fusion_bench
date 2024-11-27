@@ -5,15 +5,16 @@ import sys
 from multiprocessing import Pool
 from typing import Any, Dict, List, Literal, Optional
 
-import fusion_bench
 import numpy as np
 from datasets import Dataset, DatasetDict, load_dataset, load_from_disk
 from lightning.fabric.utilities import rank_zero_only
 from tqdm.auto import tqdm
 from typing_extensions import TYPE_CHECKING
 
+import fusion_bench
+
 from .arc import Example, Task
-from .preprocess import get_augmenters, process_task_for_ttt, process_task
+from .preprocess import get_augmenters, process_task, process_task_for_ttt
 
 if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from fusion_bench.utils.lazy_imports import LazyImporter
 
 _import_structure = {
+    # --------------
     "base_algorithm": ["BaseModelFusionAlgorithm", "BaseAlgorithm"],
     "dummy": ["DummyAlgorithm"],
     # single task learning (fine-tuning)
@@ -64,6 +65,7 @@ _import_structure = {
     ],
     "dawe": ["DataAdaptiveWeightEnsemblingForCLIP"],
     "we_moe": ["CLIPWeightEnsemblingMoEAlgorithm"],
+    "rankone_moe": ["CLIPRankOneMoEAlgorithm", "RankOneMoEAlgorithm"],
     "sparse_we_moe": [
         "SparseWeightEnsemblingMoEAlgorithm",
         "SparseCLIPWeightEnsemblingMoEAlgorithm",
@@ -134,6 +136,7 @@ if TYPE_CHECKING:
         PWEMoELinearScalarizationForCLIP,
         PWEMoExactParetoOptimalForCLIP,
     )
+    from .rankone_moe import CLIPRankOneMoEAlgorithm, RankOneMoEAlgorithm
     from .regmean import RegMeanAlgorithmForCLIP, RegMeanAlgorithmForGPT2
     from .simple_average import SimpleAverageAlgorithm
     from .smile_upscaling import (

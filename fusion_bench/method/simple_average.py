@@ -11,8 +11,8 @@ from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_add,
     state_dict_avg,
-    state_dict_mul,
     state_dict_div,
+    state_dict_mul,
 )
 from fusion_bench.utils.type import StateDictType
 

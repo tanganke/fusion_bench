@@ -6,7 +6,6 @@ from typing import Callable, Optional, TypeVar, cast
 import numpy as np
 from xxhash import xxh3_64_hexdigest
 
-
 __all__ = ["np_lru_cache"]
 
 TCallable = TypeVar("TCallable", bound=Callable)

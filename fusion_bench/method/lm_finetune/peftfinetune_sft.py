@@ -13,7 +13,7 @@ from lightning.fabric.utilities import rank_zero_only
 from omegaconf import DictConfig, OmegaConf
 from peft import PeftModel, get_peft_config, get_peft_model
 from torch import nn
-from torch.utils.data import DataLoader, ConcatDataset
+from torch.utils.data import ConcatDataset, DataLoader
 from tqdm.auto import tqdm
 from typing_extensions import TYPE_CHECKING, override
 
@@ -67,6 +67,7 @@ class PeftFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         save_full_model: bool = False,
         save_ckpt_type: Literal["lightning", "peft"] = "peft",
         ckpt_path: Optional[str] = None,
+        max_length: int = 6150,
         **kwargs,
     ):
         """
@@ -114,6 +115,7 @@ class PeftFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         self.save_full_model = save_full_model
         self.save_ckpt_type = save_ckpt_type
         self.ckpt_path = ckpt_path
+        self.max_length = max_length
         super().__init__(**kwargs)
 
     def run(self, modelpool: CausalLMPool):
@@ -241,6 +243,13 @@ class PeftFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         ):
             is_accumulating = (step_idx + 1) % self.accumulate_grad_batches != 0
 
+            if self.max_length > 0 and batch["input_ids"].shape[1] > self.max_length:
+                log.warning(
+                    f"Input length exceeds max_length: {batch['input_ids'].shape[1]} > {self.max_length}. Truncating input."
+                )
+                batch["input_ids"] = batch["input_ids"][:, : self.max_length]
+                batch["attention_mask"] = batch["attention_mask"][:, : self.max_length]
+                batch["labels"] = batch["labels"][:, : self.max_length]
             # disable gradient synchronization if accumulating gradients across steps for improved performance
             with fabric.no_backward_sync(self.model, enabled=is_accumulating):
                 # use_cache=True is not compatible with gradient checkpointing, so we disable it here
@@ -305,7 +314,6 @@ class PeftFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
             disable=not fabric.is_global_zero,
         ):
             self.epoch_idx = epoch_idx
-            self.save_checkpoint("test.ckpt", overwrite=True)
             self.train_epoch()
             # run lr_scheduler at the end of the epoch if interval is set to "epoch"
             if (

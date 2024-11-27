@@ -1,4 +1,6 @@
 # flake8: noqa F401
+import warnings
+
 from omegaconf import DictConfig
 
 from fusion_bench.modelpool.huggingface_gpt2_classification import (
@@ -9,7 +11,6 @@ from fusion_bench.modelpool.PeftModelForSeq2SeqLM import PeftModelForSeq2SeqLMPo
 from .AutoModelForSeq2SeqLM import AutoModelForSeq2SeqLMPool
 from .base_pool import DictModelPool, ListModelPool, ModelPool, to_modelpool
 from .huggingface_clip_vision import HuggingFaceClipVisionPool
-import warnings
 
 
 class ModelPoolFactory:
