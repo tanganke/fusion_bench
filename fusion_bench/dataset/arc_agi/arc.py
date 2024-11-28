@@ -157,6 +157,11 @@ class Task:
                     "test": [test_data],
                     "name": data.get("name", ""),
                 },
+                {
+                    "train": data["train"],
+                    "test": [test_data],
+                    "name": data.get("name", ""),
+                },
                 test=test,
             )
             tasks.append(task)

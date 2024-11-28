@@ -6,6 +6,10 @@ Reference:
 """
 
 import logging
+from copy import deepcopy
+
+import torch
+from torch import nn
 
 from fusion_bench import BaseAlgorithm, BaseModelPool
 from fusion_bench.method import SimpleAverageAlgorithm
@@ -16,6 +20,41 @@ from fusion_bench.utils.state_dict_arithmetic import (
 )
 
 log = logging.getLogger(__name__)
+
+
+def expo_merge(
+    sft_model: nn.Module,
+    rlhf_model: nn.Module,
+    extrapolation_factor: float,
+    inplace: bool = True,
+    enable_grad: bool = False,
+):
+    """
+    Minimal implementation of ExPO merge.
+
+    Args:
+        sft_model (nn.Module): The pretrained model (base model).
+        rlhf_model (nn.Module): The finetuned model (medium-aligned model).
+        extrapolation_factor (float): The extrapolation factor.
+        inplace (bool): Whether to perform the merge in-place. If not, the rlhf_model will be copied before merging.
+        enable_grad (bool): Whether to enable gradient computation during the merge.
+
+    Returns:
+        nn.Module: The merged model.
+    """
+
+    if not inplace:
+        rlhf_model = deepcopy(rlhf_model)
+
+    with torch.set_grad_enabled(enable_grad):
+        for (sft_name, sft_param), (rlhf_name, rlhf_param) in zip(
+            sft_model.named_parameters(), rlhf_model.named_parameters()
+        ):
+            assert sft_name == rlhf_name, f"Model mismatch: {sft_name} != {rlhf_name}"
+            rlhf_param.data = rlhf_param.data + extrapolation_factor * (
+                rlhf_param.data - sft_param.data
+            )
+    return rlhf_model
 
 
 class ExPOAlgorithm(BaseAlgorithm):

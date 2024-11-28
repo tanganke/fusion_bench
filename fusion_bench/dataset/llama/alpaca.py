@@ -1,16 +1,95 @@
 import logging
 import os
+import warnings
 from typing import Any, Dict, List, Optional
 
 from datasets import Dataset, load_dataset, load_from_disk
+from tqdm.auto import tqdm
 from transformers import PreTrainedTokenizer
 
 import fusion_bench
+from fusion_bench.utils import timeit_context
 
 log = logging.getLogger(__name__)
 
 
-def tokenize_alpaca_dataset(
+def convert_alpaca_to_conversation(alpaca_data: List[Dict[str, str]]):
+    """
+    Convert Alpaca format data to conversation format.
+
+    Args:
+        alpaca_data (list): List of dictionaries in Alpaca format with
+            'instruction', 'input', and 'output' keys
+
+    Returns:
+        list: List of conversations in ChatML format
+    """
+    conversations = []
+
+    for item in tqdm(alpaca_data, "Converting Alpaca to conversations"):
+        # Skip if required fields are missing
+        if not item.get("instruction") or not item.get("output"):
+            continue
+
+        conversation = []
+
+        # Create user message
+        user_content = item["instruction"]
+        if item.get("input") and item["input"].strip():
+            user_content += f"\n\n{item['input']}"
+
+        conversation.append({"role": "user", "content": user_content})
+
+        # Create assistant message
+        conversation.append({"role": "assistant", "content": item["output"]})
+
+        conversations.append(conversation)
+
+    return conversations
+
+
+def load_tokenized_alpaca_dataset(
+    tokenizer: PreTrainedTokenizer,
+    path: str = "yahma/alpaca-cleaned",
+    split: str = "train",
+    cache_path: Optional[str] = None,
+):
+    """
+    Load and tokenized Alpaca dataset and Alpaca-like dataset.
+
+    Args:
+        tokenizer (PreTrainedTokenizer): The tokenizer to use for tokenizing the dataset.
+        path (str, optional): The path to the Alpaca dataset. Defaults to "yahma/alpaca-cleaned".
+        split (str, optional): The dataset split to load (e.g., "train", "test"). Defaults to "train".
+        cache_path (Optional[str], optional): The path to cache the tokenized dataset. If provided and the cache exists,
+            the dataset will be loaded from the cache. Defaults to None.
+
+    Returns:
+        Dataset: The tokenized dataset.
+    """
+    if cache_path is not None and os.path.exists(cache_path):
+        dataset = load_from_disk(cache_path)
+        if split is not None and split in dataset:
+            return dataset[split]
+        else:
+            return dataset
+
+    dataset = load_dataset(path, split=split)
+
+    alpaca_data = dataset.to_list()
+    conversations = convert_alpaca_to_conversation(alpaca_data)
+    with timeit_context("Tokenizing dataset"):
+        tokenized_dataset = tokenizer.apply_chat_template(
+            conversations, return_dict=True
+        )
+    tokenized_dataset = Dataset.from_dict(tokenized_dataset)
+
+    if cache_path is not None:
+        tokenized_dataset.save_to_disk(cache_path)
+    return tokenized_dataset
+
+
+def _tokenize_alpaca_dataset_with_template(
     dataset: Dataset,
     tokenizer: PreTrainedTokenizer,
     max_length: int = 2048,
@@ -32,6 +111,10 @@ def tokenize_alpaca_dataset(
     Returns:
         Tokenized dataset
     """
+    warnings.warn(
+        "This function is deprecated. Use `apply_chat_template` from `transformers` instead.",
+        DeprecationWarning,
+    )
 
     def prepare_samples(samples: Dict[str, List[str]]) -> Dict[str, List[List[int]]]:
         # Format prompts based on whether input field exists
@@ -115,7 +198,7 @@ def tokenize_alpaca_dataset(
     return tokenized_dataset
 
 
-def load_tokenized_alpaca_dataset_from_json(
+def load_tokenized_alpaca_dataset_from_json_with_prompt(
     data_files: str,
     tokenizer: PreTrainedTokenizer,
     max_length: int,
@@ -138,5 +221,7 @@ def load_tokenized_alpaca_dataset_from_json(
     dataset = load_dataset("json", data_files=data_files)
     if split is not None:
         dataset = dataset[split]
-    dataset = tokenize_alpaca_dataset(dataset, tokenizer, max_length=max_length)
+    dataset = _tokenize_alpaca_dataset_with_template(
+        dataset, tokenizer, max_length=max_length
+    )
     return dataset

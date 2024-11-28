@@ -67,7 +67,7 @@ class PeftFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         save_full_model: bool = False,
         save_ckpt_type: Literal["lightning", "peft"] = "peft",
         ckpt_path: Optional[str] = None,
-        max_length: int = 6150,
+        max_length: int = 6144,
         **kwargs,
     ):
         """
@@ -369,14 +369,13 @@ class PeftFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
                         os.path.join(
                             self.log_dir,
                             "checkpoints",
-                            "latest_model.ckpt",
-                        ),
-                        dst := os.path.join(
-                            self.log_dir,
-                            "checkpoints",
                             f"epoch={self.epoch_idx}_step={self.global_step_idx}.ckpt",
                         ),
-                        target_is_directory=os.path.isdir(dst),
+                        os.path.join(
+                            self.log_dir,
+                            "checkpoints",
+                            "latest_model.ckpt",
+                        )
                     )
                 except Exception as e:
                     log.error(f"Failed to create symlink: {e}")

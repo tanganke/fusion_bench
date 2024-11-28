@@ -59,7 +59,10 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         gradient_clip_algorithm: Literal["value", "norm"] = "norm",
         save_optimizer_state: bool = False,
         save_full_model: bool = False,
+        save_ckpt_type: Literal["lightning", "hf"] = "lightning",
         ckpt_path: Optional[str] = None,
+        max_length: int = 6144,
+        fix_token_embedding: bool = True,
         **kwargs,
     ):
         """
@@ -81,7 +84,10 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
             gradient_clip_algorithm(str): Algorithm to use for gradient clipping. Available options: 'value', 'norm'. If set to 'value', the gradients will be clipped to the specified value. If set to 'norm', the gradients will be clipped to the specified norm.
             save_optimizer_state(bool): Whether to save the optimizer and lr_scheduler state along with the model checkpoint.
             save_full_model(bool): Whether to save the full model or only the trainable parameters in the model checkpoint.
+            save_ckpt_type (str): Type of checkpoint to save. Available options: 'lightning', 'hf'. If set to 'lightning', the checkpoint will be saved in the lightning format. If set to 'hf', the checkpoint will be saved in the huggingface format.
             ckpt_path(str): Path to the checkpoint to load before training. If set to None, no checkpoint will be loaded.
+            max_length(int): Maximum input length to consider. If the input length exceeds this value, it will be truncated.
+            fix_token_embedding(bool): Whether to fix the token embeddings during training. If set to True, the token embeddings will not be updated during training.
         """
         self._optimizer = optimizer
         self._lr_scheduler = lr_scheduler
@@ -98,7 +104,10 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         self.gradient_clip_algorithm = gradient_clip_algorithm
         self.save_optimizer_state = save_optimizer_state
         self.save_full_model = save_full_model
+        self.save_ckpt_type = save_ckpt_type
         self.ckpt_path = ckpt_path
+        self.max_length = max_length
+        self.fix_token_embedding = fix_token_embedding
         super().__init__(**kwargs)
 
     def run(self, modelpool: CausalLMPool):
@@ -109,7 +118,10 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
 
     def setup_model(self):
         model = self.modelpool.load_pretrained_model()
-        self.model = model
+        self.model: "LlamaForCausalLM" = model
+
+        if self.fix_token_embedding:
+            self.model.model.embed_tokens.requires_grad_(False)
 
         if self.fabric.strategy == "fsdp" or isinstance(
             self.fabric.strategy, FSDPStrategy
@@ -215,6 +227,14 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
             )
         ):
             is_accumulating = (step_idx + 1) % self.accumulate_grad_batches != 0
+
+            if self.max_length > 0 and batch["input_ids"].shape[1] > self.max_length:
+                log.warning(
+                    f"Input length exceeds max_length: {batch['input_ids'].shape[1]} > {self.max_length}. Truncating input."
+                )
+                batch["input_ids"] = batch["input_ids"][:, : self.max_length]
+                batch["attention_mask"] = batch["attention_mask"][:, : self.max_length]
+                batch["labels"] = batch["labels"][:, : self.max_length]
 
             # disable gradient synchronization if accumulating gradients across steps for improved performance
             with fabric.no_backward_sync(self.model, enabled=is_accumulating):
@@ -335,14 +355,13 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
                         os.path.join(
                             self.log_dir,
                             "checkpoints",
-                            "latest_model.ckpt",
-                        ),
-                        dst := os.path.join(
-                            self.log_dir,
-                            "checkpoints",
                             f"epoch={self.epoch_idx}_step={self.global_step_idx}.ckpt",
                         ),
-                        target_is_directory=os.path.isdir(dst),
+                        os.path.join(
+                            self.log_dir,
+                            "checkpoints",
+                            "latest_model.ckpt",
+                        ),
                     )
                 except Exception as e:
                     log.error(f"Failed to create symlink: {e}")
@@ -361,31 +380,36 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
             return log.warning(f"Checkpoint already exists at {path}. Skipping save.")
 
         fabric = self.fabric
-        state = {"model": self.model}
 
-        # save the optimizer and lr_scheduler state if needed
-        if self.save_optimizer_state and save_optimizer_state is not False:
-            state.update(
-                {
-                    "optimizer": self.optimizer,
-                    "lr_scheduler": self.lr_scheduler,
-                    "global_step_idx": self.global_step_idx,
-                    "epoch_idx": self.epoch_idx,
-                }
+        if self.save_ckpt_type == "lightning":
+            state = {"model": self.model}
+
+            # save the optimizer and lr_scheduler state if needed
+            if self.save_optimizer_state and save_optimizer_state is not False:
+                state.update(
+                    {
+                        "optimizer": self.optimizer,
+                        "lr_scheduler": self.lr_scheduler,
+                        "global_step_idx": self.global_step_idx,
+                        "epoch_idx": self.epoch_idx,
+                    }
+                )
+
+            trainable_param_names = set(
+                name
+                for name, param in self.model.state_dict(keep_vars=True).items()
+                if param.requires_grad
+            )
+            filter = (
+                None
+                if self.save_full_model
+                else {"model": lambda k, p: k in trainable_param_names}
             )
 
-        trainable_param_names = set(
-            name
-            for name, param in self.model.state_dict(keep_vars=True).items()
-            if param.requires_grad
-        )
-        filter = (
-            None
-            if self.save_full_model
-            else {"model": lambda k, p: k in trainable_param_names}
-        )
+            fabric.save(path, state=state, filter=filter)
+        else:
+            self.model.save_pretrained(path, is_main_process=fabric.is_global_zero)
 
-        fabric.save(path, state=state, filter=filter)
         self._latest_saved_checkpoint_global_step = self.global_step_idx
 
     def load_checkpoint(self, path: Union[str, Path]):
