@@ -141,9 +141,9 @@ def format_and_filter(
     generation_tokens = tokenizer.apply_chat_template(conversation, tokenize=True)
     output_tokens = generation_tokens[len(prompt_tokens) :]
     data = {
-        "input_ids": prompt_tokens + output_tokens,
+        "input_ids":prompt_tokens + output_tokens,
         "attention_mask": [1] * len(prompt_tokens) + [1] * len(output_tokens),
-        "labels": [-100] * len(prompt_tokens) + output_tokens,
+        "labels":  prompt_tokens + output_tokens,
         "task_id": task_id,
         "num_prompt_tokens": len(prompt_tokens),
         "num_output_tokens": len(output_tokens),
