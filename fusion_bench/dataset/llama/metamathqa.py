@@ -2,6 +2,7 @@ import os
 from typing import TYPE_CHECKING, Optional
 
 from datasets import Dataset, load_dataset, load_from_disk
+from lightning.fabric.utilities import rank_zero_only
 from tqdm.auto import tqdm
 
 from fusion_bench.utils import timeit_context
@@ -29,7 +30,7 @@ def load_tokenized_metamathqa(
 
     # convert dataset to alpaca format and save to ../data/MetaMathQA.json
     alpaca_dataset = []
-    for example in tqdm(dataset):
+    for example in tqdm(dataset, disable=not rank_zero_only.rank == 0):
         alpaca_example = {
             "instruction": example["query"],
             "input": "",
@@ -44,6 +45,6 @@ def load_tokenized_metamathqa(
         )
     tokenized_dataset = Dataset.from_dict(tokenized_dataset)
 
-    if cache_path is not None:
+    if cache_path is not None and rank_zero_only.rank == 0:
         tokenized_dataset.save_to_disk(cache_path)
     return tokenized_dataset

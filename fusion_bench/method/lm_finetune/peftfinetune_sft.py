@@ -375,7 +375,7 @@ class PeftFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
                             self.log_dir,
                             "checkpoints",
                             "latest_model.ckpt",
-                        )
+                        ),
                     )
                 except Exception as e:
                     log.error(f"Failed to create symlink: {e}")

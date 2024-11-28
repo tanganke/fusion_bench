@@ -2,6 +2,7 @@ import os
 from typing import TYPE_CHECKING, Optional
 
 from datasets import Dataset, load_dataset, load_from_disk
+from lightning.fabric.utilities import rank_zero_only
 from tqdm.auto import tqdm
 
 from fusion_bench.utils import timeit_context
@@ -58,6 +59,6 @@ def load_tokenized_preference_700k_for_bradley_terry_rm(
 
     dataset = dataset.map(tokenize, num_proc=num_proc)
 
-    if cache_path is not None:
+    if cache_path is not None and rank_zero_only.rank == 0:
         dataset.save_to_disk(cache_path)
     return dataset

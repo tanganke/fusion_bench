@@ -156,7 +156,6 @@ if TYPE_CHECKING:
     from .ties_merging import TiesMergingAlgorithm
     from .we_moe import CLIPWeightEnsemblingMoEAlgorithm
     from .weighted_average import WeightedAverageAlgorithm, WeightedAverageForLLama
-    from .lm_finetune import *
 
 else:
     sys.modules[__name__] = LazyImporter(
