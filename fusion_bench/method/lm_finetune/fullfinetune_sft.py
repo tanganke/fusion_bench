@@ -61,6 +61,7 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         save_full_model: bool = False,
         save_ckpt_type: Literal["lightning", "hf"] = "lightning",
         ckpt_path: Optional[str] = None,
+        max_length: int = 6144,
         **kwargs,
     ):
         """
@@ -102,6 +103,7 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         self.save_full_model = save_full_model
         self.save_ckpt_type = save_ckpt_type
         self.ckpt_path = ckpt_path
+        self.max_length = max_length
         super().__init__(**kwargs)
 
     def run(self, modelpool: CausalLMPool):
@@ -218,6 +220,14 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
             )
         ):
             is_accumulating = (step_idx + 1) % self.accumulate_grad_batches != 0
+
+            if self.max_length > 0 and batch["input_ids"].shape[1] > self.max_length:
+                log.warning(
+                    f"Input length exceeds max_length: {batch['input_ids'].shape[1]} > {self.max_length}. Truncating input."
+                )
+                batch["input_ids"] = batch["input_ids"][:, : self.max_length]
+                batch["attention_mask"] = batch["attention_mask"][:, : self.max_length]
+                batch["labels"] = batch["labels"][:, : self.max_length]
 
             # disable gradient synchronization if accumulating gradients across steps for improved performance
             with fabric.no_backward_sync(self.model, enabled=is_accumulating):
@@ -338,14 +348,13 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
                         os.path.join(
                             self.log_dir,
                             "checkpoints",
-                            "latest_model.ckpt",
-                        ),
-                        dst := os.path.join(
-                            self.log_dir,
-                            "checkpoints",
                             f"epoch={self.epoch_idx}_step={self.global_step_idx}.ckpt",
                         ),
-                        target_is_directory=os.path.isdir(dst),
+                        os.path.join(
+                            self.log_dir,
+                            "checkpoints",
+                            "latest_model.ckpt",
+                        ),
                     )
                 except Exception as e:
                     log.error(f"Failed to create symlink: {e}")

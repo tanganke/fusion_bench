@@ -40,3 +40,4 @@ save_full_model: true
 save_ckpt_type: lightning
 # Path to checkpoint to load from, used for resuming training
 ckpt_path: null
+max_length: 4096
