@@ -9,6 +9,8 @@ import logging
 from copy import deepcopy
 
 import torch
+from torch import nn
+
 from fusion_bench import BaseAlgorithm, BaseModelPool
 from fusion_bench.method import SimpleAverageAlgorithm
 from fusion_bench.utils.state_dict_arithmetic import (
@@ -16,7 +18,6 @@ from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_mul,
     state_dict_sub,
 )
-from torch import nn
 
 log = logging.getLogger(__name__)
 
