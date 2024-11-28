@@ -12,7 +12,7 @@ _recursive_: false
 
 fast_dev_run: false # Run a single batch of data to test the model or method
 # Run the script without actually running the experiment, use with `print_config=true`.
-# You can also use `--cfg` or `-c` to  show the configuration instead of runing.
+# You can also use `--cfg` or `-c` to show the configuration instead of running.
 dry_run: false
 print_config: true # Print the configuration to the console
 report_save_path: null # path to save the result report
