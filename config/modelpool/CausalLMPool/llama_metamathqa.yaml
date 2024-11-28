@@ -13,9 +13,7 @@ tokenizer:
   pretrained_model_name_or_path: ${..pretrained_model_name_or_path}
 
 train_datasets:
-  alpaca-cleaned:
-    _target_: fusion_bench.dataset.llama.alpaca.load_tokenized_alpaca_dataset
+  metamathqa:
+    _target_: fusion_bench.dataset.llama.metamathqa.load_tokenized_metamathqa
     tokenizer: ${...tokenizer}
-    path: "yahma/alpaca-cleaned"
-    split: train
     cache_path: null

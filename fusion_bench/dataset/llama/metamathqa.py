@@ -25,7 +25,7 @@ def load_tokenized_metamathqa(
         else:
             return dataset
 
-    dataset = load_dataset("meta-math/MetaMathQA", split="train")
+    dataset = load_dataset(path, split=split)
 
     # convert dataset to alpaca format and save to ../data/MetaMathQA.json
     alpaca_dataset = []
