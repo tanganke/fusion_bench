@@ -1,8 +1,20 @@
+R"""
+This is basically the same as fullfinetune_sft.py, but with a different loss function.
+
+The dataset contains the following fields:
+
+- input_ids_j: The input token ids for the winner.
+- attention_mask_j: The attention mask for the winner.
+- input_ids_k: The input token ids for the loser.
+- attention_mask_k: The attention mask for the loser.
+
+"""
+
 import itertools
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, Literal, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Union
 
 import lightning as L
 import omegaconf
@@ -10,16 +22,15 @@ import torch
 from lightning.fabric.strategies.fsdp import FSDPStrategy
 from lightning.fabric.utilities import rank_zero_only
 from omegaconf import DictConfig
-from torch import nn
+from torch import Tensor, nn
 from torch.utils.data import ConcatDataset, DataLoader
 from tqdm.auto import tqdm
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from typing_extensions import TYPE_CHECKING, override
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-from fusion_bench import BaseAlgorithm, BaseModelPool
-from fusion_bench.dataset.llama.collate import padded_collate_sft
+from fusion_bench.dataset.llama.collate import bradly_terry_rm_collate
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.mixins import LightningFabricMixin
-from fusion_bench.modelpool import CausalLMPool
+from fusion_bench.modelpool import SeqenceClassificationModelPool
 from fusion_bench.utils import instantiate
 from fusion_bench.utils.dtype import get_dtype
 
@@ -29,14 +40,13 @@ if TYPE_CHECKING:
         _FabricModule,
         _FabricOptimizer,
     )
-    from transformers.models.llama.modeling_llama import LlamaForCausalLM
+    from transformers.models.llama.modeling_llama import LlamaForSequenceClassification
 
 log = logging.getLogger(__name__)
 
 
-class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
-
-    model: Union[nn.Module, "_FabricModule", "LlamaForCausalLM"]
+class BradlyTerryRewardModeling(BaseAlgorithm, LightningFabricMixin):
+    model: Union[nn.Module, "_FabricModule", "LlamaForSequenceClassification"]
     optimizer: Union[torch.optim.Optimizer, "_FabricOptimizer"]
     train_dataloader: Union[DataLoader, "_FabricDataLoader"]
     lr_scheduler: torch.optim.lr_scheduler.LRScheduler
@@ -66,7 +76,7 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         **kwargs,
     ):
         """
-        Class for full finetuning of a language model on given SFT datasets.
+        Class for reward modeling using Bradley-Terry model.
 
         Args:
             optimizer(DictConfig): Configuration for the optimizer.
@@ -110,7 +120,7 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         self.fix_token_embedding = fix_token_embedding
         super().__init__(**kwargs)
 
-    def run(self, modelpool: CausalLMPool):
+    def run(self, modelpool: SeqenceClassificationModelPool):
         self.modelpool = modelpool
         self.setup()
         self.train()
@@ -118,7 +128,7 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
 
     def setup_model(self):
         model = self.modelpool.load_pretrained_model()
-        self.model: "LlamaForCausalLM" = model
+        self.model: "LlamaForSequenceClassification" = model
 
         if self.fix_token_embedding:
             self.model.model.embed_tokens.requires_grad_(False)
@@ -134,6 +144,31 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         else:
             self.use_cache = True
         self.model_dtype = get_dtype(self.model)
+
+    def setup_data(self):
+        fabric = self.fabric
+        modelpool = self.modelpool
+        assert (
+            len(modelpool.train_dataset_names) > 0
+        ), "No training datasets found in modelpool."
+
+        train_datasets = [
+            modelpool.load_train_dataset(dataset_name)
+            for dataset_name in modelpool.train_dataset_names
+        ]
+        if len(train_datasets) > 1:
+            train_dataset = ConcatDataset(train_datasets)
+        else:
+            train_dataset = train_datasets[0]
+
+        self.train_dataset = train_dataset
+        self.train_dataloader = DataLoader(
+            train_dataset,
+            **self.dataloader_kwargs,
+            shuffle=True,
+            collate_fn=bradly_terry_rm_collate,  # NOTE: different from SFT, uses bradly_terry_rm_collate
+        )
+        self.train_dataloader = fabric.setup_dataloaders(self.train_dataloader)
 
     def configure_optimizer(self):
         # compute expected total steps
@@ -165,31 +200,6 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
             lr_scheduler = None
         return {"optimizer": optimizer, "lr_scheduler": lr_scheduler}
 
-    def setup_data(self):
-        fabric = self.fabric
-        modelpool = self.modelpool
-        assert (
-            len(modelpool.train_dataset_names) > 0
-        ), "No training datasets found in modelpool."
-
-        train_datasets = [
-            modelpool.load_train_dataset(dataset_name)
-            for dataset_name in modelpool.train_dataset_names
-        ]
-        if len(train_datasets) > 1:
-            train_dataset = ConcatDataset(train_datasets)
-        else:
-            train_dataset = train_datasets[0]
-
-        self.train_dataset = train_dataset
-        self.train_dataloader = DataLoader(
-            train_dataset,
-            **self.dataloader_kwargs,
-            shuffle=True,
-            collate_fn=padded_collate_sft,
-        )
-        self.train_dataloader = fabric.setup_dataloaders(self.train_dataloader)
-
     def setup(self):
         fabric = self.fabric
 
@@ -215,6 +225,32 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
                     f"Unknown gradient clip algorithm: {self.gradient_clip_algorithm}. Available options: 'value', 'norm'"
                 )
 
+    def compute_loss(self, batch: Dict[str, Union[Tensor, Any]]) -> Dict[str, Tensor]:
+        """
+        Maximize the likelihood of the winner over the loser using the Bradley-Terry model.
+
+        Args:
+            batch (Dict[str, Union[Tensor, Any]]): A dictionary containing the input token ids and attention masks for the winner and loser.
+        """
+        batch_size = batch["input_ids"].size(0)
+        assert batch_size % 2 == 0, "Batch size must be even."
+
+        rewards = self.model.forward(
+            input_ids=batch["input_ids"],
+            attention_mask=batch["attention_mask"],
+            use_cache=self.use_cache,
+        )[0]
+
+        rewards_j = rewards[: batch_size // 2]
+        rewards_k = rewards[batch_size // 2 :]
+        loss = -torch.log(torch.sigmoid(rewards_j - rewards_k)).mean()
+
+        return {
+            "reward_j": rewards_j,
+            "reward_k": rewards_k,
+            "loss": loss,
+        }
+
     def train_epoch(self):
         fabric = self.fabric
         for step_idx, batch in enumerate(
@@ -234,23 +270,19 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
                 )
                 batch["input_ids"] = batch["input_ids"][:, : self.max_length]
                 batch["attention_mask"] = batch["attention_mask"][:, : self.max_length]
-                batch["labels"] = batch["labels"][:, : self.max_length]
 
             # disable gradient synchronization if accumulating gradients across steps for improved performance
             with fabric.no_backward_sync(self.model, enabled=is_accumulating):
                 # use_cache=True is not compatible with gradient checkpointing, so we disable it here
-                output = self.model(
-                    input_ids=batch["input_ids"],
-                    attention_mask=batch["attention_mask"],
-                    labels=batch["labels"],
-                    use_cache=self.use_cache,
-                )
+                output = self.compute_loss(batch)
                 loss = output["loss"]
 
                 fabric.backward(loss)
 
             metrics = {
                 "train/loss": loss.item(),
+                "train/reward_j": output["reward_j"].mean().item(),
+                "train/reward_k": output["reward_k"].mean().item(),
                 "train/epoch_idx": self.epoch_idx,
                 "train/lr": self.optimizer.param_groups[0]["lr"],
             }
@@ -432,7 +464,7 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
 def load_checkpoint(
     fabric: L.Fabric,
     ckpt_path: Union[str, Path],
-    model: Union[nn.Module, "LlamaForCausalLM"],
+    model: Union[nn.Module, "LlamaForSequenceClassification"],
     strict: bool = True,
     **state_components,
 ):
@@ -461,7 +493,7 @@ if __name__ == "__main__":
     tokenizer = AutoTokenizer.from_pretrained(args.base_model_path)
     tokenizer.save_pretrained(args.output_path)
 
-    model = AutoModelForCausalLM.from_pretrained(
+    model = AutoModelForSequenceClassification.from_pretrained(
         args.base_model_path, torch_dtype=torch.bfloat16
     )
     model = fabric.setup_module(model)

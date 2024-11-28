@@ -1,34 +1,23 @@
 import logging
 import os
 from copy import deepcopy
-from typing import Any, Optional, TypeAlias, Union, cast  # noqa: F401
+from typing import TYPE_CHECKING, Any, Optional, TypeAlias, Union, cast  # noqa: F401
 
-import peft
 from omegaconf import DictConfig, flag_override
-from torch import nn
-from torch.nn.modules import Module
-from transformers import (
-    LlamaForCausalLM,
-    MistralForCausalLM,
-    PreTrainedModel,
-    PreTrainedTokenizer,
-)
+from transformers import PreTrainedModel, PreTrainedTokenizer
 from typing_extensions import override
 
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.utils import instantiate
 from fusion_bench.utils.dtype import parse_dtype
 
+if TYPE_CHECKING:
+    from transformers import LlamaForSequenceClassification
+
 log = logging.getLogger(__name__)
 
-CausalLM: TypeAlias = Union[LlamaForCausalLM, MistralForCausalLM, Any]
 
-
-class CausalLMPool(BaseModelPool):
-    _config_mapping = BaseModelPool._config_mapping | {
-        "_tokenizer": "tokenizer",
-        "_model_kwargs": "model_kwargs",
-    }
+class SeqenceClassificationModelPool(BaseModelPool):
 
     def __init__(
         self,
@@ -56,7 +45,7 @@ class CausalLMPool(BaseModelPool):
         model_name_or_config: str | DictConfig,
         *args,
         **kwargs,
-    ) -> LlamaForCausalLM | MistralForCausalLM | nn.Module:
+    ) -> Union[PreTrainedModel, "LlamaForSequenceClassification"]:
         model_kwargs = deepcopy(self._model_kwargs)
         model_kwargs.update(kwargs)
         if isinstance(model_name_or_config, str):
@@ -107,33 +96,3 @@ class CausalLMPool(BaseModelPool):
             push_to_hub=push_to_hub,
             **kwargs,
         )
-
-
-class CausalLMBackbonePool(CausalLMPool):
-    def load_model(
-        self, model_name_or_config: str | DictConfig, *args, **kwargs
-    ) -> Module:
-        model: Union[MistralForCausalLM, LlamaForCausalLM, Any] = super().load_model(
-            model_name_or_config, *args, **kwargs
-        )
-        return model.model.layers
-
-
-def load_peft_causal_lm(
-    base_model_path: str,
-    peft_model_path: str,
-    torch_dtype: str = "bfloat16",
-    is_trainable: bool = True,
-    merge_and_unload: bool = False,
-):
-    base_model = LlamaForCausalLM.from_pretrained(
-        base_model_path, torch_dtype=torch_dtype
-    )
-    model = peft.PeftModel.from_pretrained(
-        base_model,
-        peft_model_path,
-        is_trainable=is_trainable,
-    )
-    if merge_and_unload:
-        model = model.merge_and_unload()
-    return model

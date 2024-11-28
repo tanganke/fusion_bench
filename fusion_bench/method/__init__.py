@@ -10,7 +10,7 @@ _import_structure = {
     "dummy": ["DummyAlgorithm"],
     # single task learning (fine-tuning)
     "classification": ["ImageClassificationFineTuningForCLIP"],
-    "lm_finetune": ["FullFinetuneSFT", "PeftFinetuneSFT"],
+    "lm_finetune": ["FullFinetuneSFT", "PeftFinetuneSFT", "BradlyTerryRewardModeling"],
     # analysis
     "analysis": ["TaskVectorCosSimilarity", "TaskVectorViolinPlot"],
     # model ensemble methods

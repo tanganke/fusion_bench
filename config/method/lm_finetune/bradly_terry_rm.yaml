@@ -1,4 +1,4 @@
-_target_: fusion_bench.method.FullFinetuneSFT
+_target_: fusion_bench.method.BradlyTerryRewardModeling
 _recursive_: False
 
 optimizer:

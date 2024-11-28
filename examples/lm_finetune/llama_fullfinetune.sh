@@ -17,4 +17,7 @@ fusion_bench --config-name llama_full_finetune \
   fabric.loggers.name=llama_full_finetune \
   method=lm_finetune/fullfinetune_sft \
   method.dataloader_kwargs.batch_size=8 \
+  method.checkpoint_save_interval=step \
+  method.checkpoint_save_frequency=2000 \
+  method.max_epochs=1 \
   modelpool=CausalLMPool/llama_metamathqa
