@@ -4,11 +4,11 @@ import warnings
 from typing import Any, Dict, List, Optional
 
 from datasets import Dataset, load_dataset, load_from_disk
+from tqdm.auto import tqdm
 from transformers import PreTrainedTokenizer
 
 import fusion_bench
 from fusion_bench.utils import timeit_context
-from tqdm.auto import tqdm
 
 log = logging.getLogger(__name__)
 
@@ -69,10 +69,10 @@ def load_tokenized_alpaca_dataset(
     """
     if cache_path is not None and os.path.exists(cache_path):
         dataset = load_from_disk(cache_path)
-        if split is None:
-            return dataset
-        else:
+        if split is not None and split in dataset:
             return dataset[split]
+        else:
+            return dataset
 
     dataset = load_dataset(path, split=split)
 
