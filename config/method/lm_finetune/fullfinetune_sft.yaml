@@ -8,9 +8,12 @@ optimizer:
   fused: null
 
 lr_scheduler:
-  _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+  _target_: fusion_bench.optim.lr_scheduler.CosineDecayWithWarmup
   T_max: _T_max_ # this will be replaced by the expected number of training steps
-  eta_min: 1e-6
+  init_lr: 0
+  warmup_steps: 100
+  max_lr: 1e-5
+  min_lr: 1e-6
 
 dataloader_kwargs:
   # per-gpu batch size
@@ -41,3 +44,4 @@ save_ckpt_type: lightning
 # Path to checkpoint to load from, used for resuming training
 ckpt_path: null
 max_length: 4096
+fix_token_embedding: true

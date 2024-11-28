@@ -26,7 +26,7 @@ class BaseLinearWarmupScheduler(ABC):
 
     Args:
         optimizer (torch.optim.Optimizer): Optimizer. It will set learning rate to all trainable parameters in optimizer.
-        t_max (int): Total steps to train.
+        T_max (int): Total steps to train.
         max_lr (float): Maximum learning rate.
         min_lr (float): Minimum learning rate.
         init_lr (float): Initial learning rate.
@@ -36,7 +36,7 @@ class BaseLinearWarmupScheduler(ABC):
     def __init__(
         self,
         optimizer: torch.optim.Optimizer,
-        t_max: int,
+        T_max: int,
         max_lr: float,
         min_lr: float = 0.0,
         init_lr: float = 0.0,
@@ -47,14 +47,14 @@ class BaseLinearWarmupScheduler(ABC):
 
         Args:
             optimizer (torch.optim.Optimizer): Optimizer to apply the learning rate schedule.
-            t_max (int): Total number of training steps.
+            T_max (int): Total number of training steps.
             max_lr (float): Maximum learning rate.
             min_lr (float): Minimum learning rate.
             init_lr (float): Initial learning rate.
             warmup_steps (int): Number of steps for the warm-up phase.
         """
         self.optimizer = optimizer
-        self.total_steps = t_max
+        self.total_steps = T_max
         self.max_lr = max_lr
         self.min_lr = min_lr
         self.init_lr = init_lr
@@ -88,7 +88,7 @@ class BaseLinearWarmupScheduler(ABC):
             raise NegativeLRError(self.init_lr, "init_lr")
 
         if self.total_steps < 0:
-            raise NegativeStepError(self.total_steps, "t_max")
+            raise NegativeStepError(self.total_steps, "T_max")
 
         if self.warmup_steps < 0:
             raise NegativeStepError(self.warmup_steps, "warmup_steps")

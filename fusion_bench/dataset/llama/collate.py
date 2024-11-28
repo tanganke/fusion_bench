@@ -38,6 +38,12 @@ def padded_collate_sft(
         )
     else:
         attention_mask = None
+
+    for i, item in enumerate(batch):
+        # if labels_key not in item, copy input_ids to labels_key
+        if labels_key not in item:
+            item[labels_key] = item[input_ids_key]
+
     labels = pad_sequence(
         [torch.tensor(x[labels_key]) for x in batch],
         batch_first=True,

@@ -62,6 +62,7 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         save_ckpt_type: Literal["lightning", "hf"] = "lightning",
         ckpt_path: Optional[str] = None,
         max_length: int = 6144,
+        fix_token_embedding: bool = True,
         **kwargs,
     ):
         """
@@ -85,6 +86,8 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
             save_full_model(bool): Whether to save the full model or only the trainable parameters in the model checkpoint.
             save_ckpt_type (str): Type of checkpoint to save. Available options: 'lightning', 'hf'. If set to 'lightning', the checkpoint will be saved in the lightning format. If set to 'hf', the checkpoint will be saved in the huggingface format.
             ckpt_path(str): Path to the checkpoint to load before training. If set to None, no checkpoint will be loaded.
+            max_length(int): Maximum input length to consider. If the input length exceeds this value, it will be truncated.
+            fix_token_embedding(bool): Whether to fix the token embeddings during training. If set to True, the token embeddings will not be updated during training.
         """
         self._optimizer = optimizer
         self._lr_scheduler = lr_scheduler
@@ -104,6 +107,7 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         self.save_ckpt_type = save_ckpt_type
         self.ckpt_path = ckpt_path
         self.max_length = max_length
+        self.fix_token_embedding = fix_token_embedding
         super().__init__(**kwargs)
 
     def run(self, modelpool: CausalLMPool):
@@ -114,7 +118,10 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
 
     def setup_model(self):
         model = self.modelpool.load_pretrained_model()
-        self.model = model
+        self.model: "LlamaForCausalLM" = model
+
+        if self.fix_token_embedding:
+            self.model.model.embed_tokens.requires_grad_(False)
 
         if self.fabric.strategy == "fsdp" or isinstance(
             self.fabric.strategy, FSDPStrategy
