@@ -3,9 +3,10 @@ import os
 from typing import Optional
 
 from datasets import load_dataset, load_from_disk
+from omegaconf import DictConfig
 
 from fusion_bench.utils import instantiate, timeit_context
-from omegaconf import DictConfig
+
 from .glue_preprocessors import glue_processors
 from .glue_prompt_templates import glue_prompt_templates
 

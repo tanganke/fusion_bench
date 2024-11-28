@@ -7,6 +7,7 @@ Task: a class to represent a task (task.test_example and task.train_examples are
 read_from_single_file: a function to read challenge problems and solutions from a single file
 make_submission: a function to create a submission file
 """
+
 import dataclasses
 import glob
 import json
@@ -14,7 +15,6 @@ import os
 from typing import List, Optional
 
 import numpy as np
-
 
 Grid = np.ndarray
 
@@ -66,7 +66,9 @@ class Example:
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Example):
             return NotImplemented
-        return np.array_equal(self.input, other.input) and np.array_equal(self.output, other.output)
+        return np.array_equal(self.input, other.input) and np.array_equal(
+            self.output, other.output
+        )
 
     @classmethod
     def deserialize(cls, data: dict, test: bool = False) -> "Example":
@@ -150,7 +152,16 @@ class Task:
         tasks = []
         for test_data in data["test"]:
             task = cls.deserialize(
-                {"train": data["train"], "test": [test_data], "name": data.get("name", "")},
+                {
+                    "train": data["train"],
+                    "test": [test_data],
+                    "name": data.get("name", ""),
+                },
+                {
+                    "train": data["train"],
+                    "test": [test_data],
+                    "name": data.get("name", ""),
+                },
                 test=test,
             )
             tasks.append(task)
@@ -245,7 +256,9 @@ def make_submission(
     """
     Make a submission
     """
-    assert len(tasks) == len(predictions), "Number of tasks and predictions should be the same"
+    assert len(tasks) == len(
+        predictions
+    ), "Number of tasks and predictions should be the same"
 
     # sort by task_name alphabetically to ensure order of subtasks
     indices = np.argsort([task.name for task in tasks])
@@ -259,8 +272,12 @@ def make_submission(
         if task_name not in submissions:
             submissions[task_name] = []
 
-        assert len(prediction) == number_of_attempts, "Number of attempts should be the same"
-        attempts = {f"attempt_{j+1}": to_list(pred) for j, pred in enumerate(prediction)}
+        assert (
+            len(prediction) == number_of_attempts
+        ), "Number of attempts should be the same"
+        attempts = {
+            f"attempt_{j+1}": to_list(pred) for j, pred in enumerate(prediction)
+        }
         while len(submissions[task_name]) <= task_no:
             submissions[task_name].append({"attempt_1": [[0]], "attempt_2": [[0]]})
 
@@ -277,7 +294,9 @@ if __name__ == "__main__":
     arc_path = "/kaggle/input/arc-prize-2024/"
     tasks = read_tasks_from_single_file(arc_path + "arc-agi_training_challenges.json")
     print(tasks[0])
-    tasks = read_tasks_from_single_file(arc_path + "arc-agi_evaluation_challenges.json", test=True)
+    tasks = read_tasks_from_single_file(
+        arc_path + "arc-agi_evaluation_challenges.json", test=True
+    )
     print(tasks[0])
 
     tasks = read_tasks_from_single_file(

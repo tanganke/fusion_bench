@@ -112,19 +112,41 @@ def get_augmenters(
 def format_and_filter(
     formatter: MessageRepresenter,
     tokenizer: "PreTrainedTokenizer",
-    task,
+    task: Task,
 ):
+    """
+    Formats and filters a task for model input.
+
+    Args:
+        formatter (MessageRepresenter): The formatter to encode the task.
+        tokenizer (PreTrainedTokenizer): The tokenizer to tokenize the conversation.
+        task: The task to be formatted and filtered.
+
+    Returns:
+        Dict[str, Any]: A dictionary containing the formatted data with keys:
+            - "input_ids": The tokenized input IDs.
+            - "attention_mask": The attention mask for the input IDs.
+            - "labels": The labels for the input IDs.
+            - "task_id": The task ID.
+            - "num_prompt_tokens": The number of prompt tokens.
+            - "num_output_tokens": The number of output tokens.
+    """
+    task_id = task.name
     task = formatter.encode(task)
     conversation = task[0] + [task[1]]
     assert conversation[-1]["role"] == "assistant", "Last message should be assistant"
     prompt_tokens = tokenizer.apply_chat_template(
         conversation[:-1], tokenize=True, add_generation_prompt=True
     )
-    output_tokens = tokenizer.encode(conversation[-1]["content"] + tokenizer.eos_token)
+    generation_tokens = tokenizer.apply_chat_template(conversation, tokenize=True)
+    output_tokens = generation_tokens[len(prompt_tokens) :]
     data = {
         "input_ids": prompt_tokens + output_tokens,
         "attention_mask": [1] * len(prompt_tokens) + [1] * len(output_tokens),
-        "labels": [-100] * len(prompt_tokens) + output_tokens,
+        "labels": prompt_tokens + output_tokens,
+        "task_id": task_id,
+        "num_prompt_tokens": len(prompt_tokens),
+        "num_output_tokens": len(output_tokens),
     }
     return data
 
@@ -136,6 +158,19 @@ def get_test_time_train_data(
     permute_n: int = 1,
     seed: int = 0,
 ) -> List[Task]:
+    """
+    Generates augmented training data for test-time training.
+
+    Args:
+        original_task (Task): The original task containing training examples.
+        augmenters (List[Augmenter]): A list of augmenters to apply to the tasks.
+        n (int, optional): The number of examples to leave out for testing. Defaults to 1.
+        permute_n (int, optional): The number of times to permute the augmented tasks. Defaults to 1.
+        seed (int, optional): The random seed for reproducibility. Defaults to 0.
+
+    Returns:
+        List[Task]: A list of augmented tasks.
+    """
     rng = np.random.RandomState(seed)
     train_examples = original_task.train_examples.copy()
     initial_tasks = []
@@ -150,7 +185,7 @@ def get_test_time_train_data(
         for comb in combs:
             initial_tasks.append(
                 Task(
-                    name="",
+                    name=original_task.name,
                     train_examples=[examples[j] for j in comb],
                     test_example=examples[i],
                 )
@@ -183,7 +218,6 @@ def get_test_time_train_data(
             color_and_permute_augmented_tasks.append(new_task)
 
     augmented_tasks = color_and_permute_augmented_tasks + augmented_tasks
-
     augmented_tasks = list(set(augmented_tasks))
 
     return augmented_tasks
@@ -193,13 +227,12 @@ def get_formatted_data(
     task: Task,
     augmenters: List[Augmenter],
     formatter: MessageRepresenter,
-    tokenizer,
+    tokenizer: "PreTrainedTokenizer",
     leave_n: int = 1,
     permute_n: int = 1,
     seed: int = 0,
     max_tokens: int = 8192,
 ):
-
     train_data = get_test_time_train_data(
         task, augmenters, n=leave_n, permute_n=permute_n, seed=seed
     )
@@ -213,11 +246,11 @@ def get_formatted_data(
     return formatted_data
 
 
-def process_task(
+def process_task_for_ttt(
     task: Task,
     augmenters: List[Augmenter],
     formatter: MessageRepresenter,
-    tokenizer,
+    tokenizer: "PreTrainedTokenizer",
     permute_n: int = 1,
     Nmax: int = 250,
     seed: int = 0,
@@ -254,3 +287,12 @@ def process_task(
         train = train[:Nmax]
 
     return train
+
+
+def process_task(
+    task: Task,
+    formatter: MessageRepresenter,
+    tokenizer: "PreTrainedTokenizer",
+):
+    formatted = format_and_filter(formatter, tokenizer, task)
+    return [formatted]

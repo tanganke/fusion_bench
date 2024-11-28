@@ -3,6 +3,7 @@ import os
 from copy import deepcopy
 from typing import Any, Optional, TypeAlias, Union, cast  # noqa: F401
 
+import peft
 from omegaconf import DictConfig, flag_override
 from torch import nn
 from torch.nn.modules import Module
@@ -138,3 +139,23 @@ class CausalLMBackbonePool(CausalLMPool):
             model_name_or_config, *args, **kwargs
         )
         return model.model.layers
+
+
+def load_peft_causal_lm(
+    base_model_path: str,
+    peft_model_path: str,
+    torch_dtype: str = "bfloat16",
+    is_trainable: bool = True,
+    merge_and_unload: bool = False,
+):
+    base_model = LlamaForCausalLM.from_pretrained(
+        base_model_path, torch_dtype=torch_dtype
+    )
+    model = peft.PeftModel.from_pretrained(
+        base_model,
+        peft_model_path,
+        is_trainable=is_trainable,
+    )
+    if merge_and_unload:
+        model = model.merge_and_unload()
+    return model

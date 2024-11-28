@@ -6,14 +6,15 @@ from typing import Any, Dict, Literal, Optional, Union
 
 import lightning as L
 import omegaconf
+import peft
 import torch
 from lightning.fabric.strategies.fsdp import FSDPStrategy
 from lightning.fabric.utilities import rank_zero_only
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
+from peft import PeftModel, get_peft_config, get_peft_model
 from torch import nn
 from torch.utils.data import ConcatDataset, DataLoader
 from tqdm.auto import tqdm
-from transformers import AutoModelForCausalLM, AutoTokenizer
 from typing_extensions import TYPE_CHECKING, override
 
 from fusion_bench import BaseAlgorithm, BaseModelPool
@@ -34,9 +35,11 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
+class PeftFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
 
-    model: Union[nn.Module, "_FabricModule", "LlamaForCausalLM"]
+    model: Union[
+        nn.Module, "_FabricModule", "LlamaForCausalLM", PeftModel, peft.LoraModel
+    ]
     optimizer: Union[torch.optim.Optimizer, "_FabricOptimizer"]
     train_dataloader: Union[DataLoader, "_FabricDataLoader"]
     lr_scheduler: torch.optim.lr_scheduler.LRScheduler
@@ -46,8 +49,11 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         self,
         optimizer: DictConfig,
         lr_scheduler: Optional[DictConfig],
+        peft_config: DictConfig,
         dataloader_kwargs: DictConfig,
-        max_epochs: int,
+        adapter_name: str = "default",
+        merge_and_unload: bool = False,
+        max_epochs: int = 1,
         max_steps: int = -1,
         max_steps_per_epoch: int = -1,
         lr_scheduler_interval: Literal["epoch", "step"] = "step",
@@ -59,7 +65,7 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         gradient_clip_algorithm: Literal["value", "norm"] = "norm",
         save_optimizer_state: bool = False,
         save_full_model: bool = False,
-        save_ckpt_type: Literal["lightning", "hf"] = "lightning",
+        save_ckpt_type: Literal["lightning", "peft"] = "peft",
         ckpt_path: Optional[str] = None,
         max_length: int = 6144,
         **kwargs,
@@ -70,7 +76,10 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         Args:
             optimizer(DictConfig): Configuration for the optimizer.
             lr_scheduler(DictConfig): Configuration for the learning rate scheduler.
+            peft_config(DictConfig): Configuration for the PEFT model.
             dataloader_kwargs(DictConfig): Configuration for the dataloader, such as batch size, num_workers, etc.
+            adapter_name(str): Name of the adapter to use for the PEFT model.
+            merge_and_unload(bool): Whether to merge and unload the model after training.
             max_epochs(int): Maximum number of epochs to train the model. If set to -1, the training will continue indefinitely or until max_steps is reached.
             max_steps(int): Maximum number of steps to train the model. If set to -1, the training will continue indefinitely or until max_epochs is reached.
             max_steps_per_epoch(int): Maximum number of steps to train the model in each epoch. If set to -1, the training will continue until the end of the epoch.
@@ -83,12 +92,15 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
             gradient_clip_algorithm(str): Algorithm to use for gradient clipping. Available options: 'value', 'norm'. If set to 'value', the gradients will be clipped to the specified value. If set to 'norm', the gradients will be clipped to the specified norm.
             save_optimizer_state(bool): Whether to save the optimizer and lr_scheduler state along with the model checkpoint.
             save_full_model(bool): Whether to save the full model or only the trainable parameters in the model checkpoint.
-            save_ckpt_type (str): Type of checkpoint to save. Available options: 'lightning', 'hf'. If set to 'lightning', the checkpoint will be saved in the lightning format. If set to 'hf', the checkpoint will be saved in the huggingface format.
+            save_ckpt_type(str): Type of checkpoint to save. Available options: 'lightning', 'peft'. If set to 'lightning', the model will be saved using the Lightning checkpointing mechanism. If set to 'peft', the model will be saved using the PEFT checkpointing mechanism.
             ckpt_path(str): Path to the checkpoint to load before training. If set to None, no checkpoint will be loaded.
         """
         self._optimizer = optimizer
         self._lr_scheduler = lr_scheduler
+        self._peft_config = peft_config
         self.dataloader_kwargs = dataloader_kwargs
+        self.adapter_name = adapter_name
+        self.merge_and_unload = merge_and_unload
         self.max_epochs = max_epochs
         self.max_steps = max_steps
         self.max_steps_per_epoch = max_steps_per_epoch
@@ -110,11 +122,20 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         self.modelpool = modelpool
         self.setup()
         self.train()
+
+        if self.merge_and_unload:
+            self.model = self.model.merge_and_unload()
         return self.model
 
     def setup_model(self):
         model = self.modelpool.load_pretrained_model()
-        self.model = model
+
+        # get the PEFT model
+        peft_config = instantiate(self._peft_config, _convert_="all")
+        peft_model = get_peft_model(model, peft_config, self.adapter_name)
+        peft_model.print_trainable_parameters()
+
+        self.model = peft_model
 
         if self.fabric.strategy == "fsdp" or isinstance(
             self.fabric.strategy, FSDPStrategy
@@ -126,6 +147,7 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
             self.use_cache = False
         else:
             self.use_cache = True
+
         self.model_dtype = get_dtype(self.model)
 
     def configure_optimizer(self):
@@ -228,7 +250,6 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
                 batch["input_ids"] = batch["input_ids"][:, : self.max_length]
                 batch["attention_mask"] = batch["attention_mask"][:, : self.max_length]
                 batch["labels"] = batch["labels"][:, : self.max_length]
-
             # disable gradient synchronization if accumulating gradients across steps for improved performance
             with fabric.no_backward_sync(self.model, enabled=is_accumulating):
                 # use_cache=True is not compatible with gradient checkpointing, so we disable it here
@@ -354,7 +375,7 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
                             self.log_dir,
                             "checkpoints",
                             "latest_model.ckpt",
-                        ),
+                        )
                     )
                 except Exception as e:
                     log.error(f"Failed to create symlink: {e}")
@@ -373,7 +394,6 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
             return log.warning(f"Checkpoint already exists at {path}. Skipping save.")
 
         fabric = self.fabric
-
         if self.save_ckpt_type == "lightning":
             state = {"model": self.model}
 
@@ -387,7 +407,6 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
                         "epoch_idx": self.epoch_idx,
                     }
                 )
-
             trainable_param_names = set(
                 name
                 for name, param in self.model.state_dict(keep_vars=True).items()
@@ -400,9 +419,12 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
             )
 
             fabric.save(path, state=state, filter=filter)
-        else:
+        elif self.save_ckpt_type == "peft":
             self.model.save_pretrained(path, is_main_process=fabric.is_global_zero)
-
+        else:
+            raise ValueError(
+                f"Unknown save_ckpt_type: {self.save_ckpt_type}. Available options: 'lightning', 'peft'"
+            )
         self._latest_saved_checkpoint_global_step = self.global_step_idx
 
     def load_checkpoint(self, path: Union[str, Path]):
@@ -435,28 +457,3 @@ def load_checkpoint(
     state = {"model": model}
     state.update(state_components)
     fabric.load(ckpt_path, state=state, strict=strict)
-
-
-if __name__ == "__main__":
-    # convert a checkpoint to hf format
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--base_model_path", type=str)
-    parser.add_argument("--ckpt_path", type=str)
-    parser.add_argument("--output_path", type=str)
-
-    args = parser.parse_args()
-
-    fabric = L.Fabric(devices=1, strategy="fsdp")
-    fabric.launch()
-
-    tokenizer = AutoTokenizer.from_pretrained(args.base_model_path)
-    tokenizer.save_pretrained(args.output_path)
-
-    model = AutoModelForCausalLM.from_pretrained(
-        args.base_model_path, torch_dtype=torch.bfloat16
-    )
-    model = fabric.setup_module(model)
-    load_checkpoint(fabric, args.ckpt_path, model=model, strict=True)
-    model.save_pretrained(args.output_path)

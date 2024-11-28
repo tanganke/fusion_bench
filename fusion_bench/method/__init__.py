@@ -5,11 +5,12 @@ from typing import TYPE_CHECKING
 from fusion_bench.utils.lazy_imports import LazyImporter
 
 _import_structure = {
+    # --------------
     "base_algorithm": ["BaseModelFusionAlgorithm", "BaseAlgorithm"],
     "dummy": ["DummyAlgorithm"],
     # single task learning (fine-tuning)
     "classification": ["ImageClassificationFineTuningForCLIP"],
-    "lm_finetune": ["FullFinetuneSFT"],
+    "lm_finetune": ["FullFinetuneSFT", "PeftFinetuneSFT"],
     # analysis
     "analysis": ["TaskVectorCosSimilarity", "TaskVectorViolinPlot"],
     # model ensemble methods
@@ -64,6 +65,7 @@ _import_structure = {
     ],
     "dawe": ["DataAdaptiveWeightEnsemblingForCLIP"],
     "we_moe": ["CLIPWeightEnsemblingMoEAlgorithm"],
+    "rankone_moe": ["CLIPRankOneMoEAlgorithm", "RankOneMoEAlgorithm"],
     "sparse_we_moe": [
         "SparseWeightEnsemblingMoEAlgorithm",
         "SparseCLIPWeightEnsemblingMoEAlgorithm",
@@ -89,8 +91,8 @@ _import_structure = {
 
 
 if TYPE_CHECKING:
-    from .adamerging import *
     from .ada_svd import AdaSVDMergingForCLIPVisionModel
+    from .adamerging import *
     from .analysis import TaskVectorCosSimilarity, TaskVectorViolinPlot
     from .base_algorithm import BaseAlgorithm, BaseModelFusionAlgorithm
     from .classification import ImageClassificationFineTuningForCLIP
@@ -116,6 +118,7 @@ if TYPE_CHECKING:
         SimpleAverageForLlama,
         TaskArithmeticForLlama,
     )
+    from .lm_finetune import *
     from .mixture_of_experts import (
         MixtralForCausalLMMergingAlgorithm,
         MixtralForCausalLMUpscalingAlgorithm,
@@ -133,6 +136,7 @@ if TYPE_CHECKING:
         PWEMoELinearScalarizationForCLIP,
         PWEMoExactParetoOptimalForCLIP,
     )
+    from .rankone_moe import CLIPRankOneMoEAlgorithm, RankOneMoEAlgorithm
     from .regmean import RegMeanAlgorithmForCLIP, RegMeanAlgorithmForGPT2
     from .simple_average import SimpleAverageAlgorithm
     from .smile_upscaling import (

@@ -1,9 +1,9 @@
-_target_: fusion_bench.method.FullFinetuneSFT
+_target_: fusion_bench.method.PeftFinetuneSFT
 _recursive_: False
 
 optimizer:
   _target_: torch.optim.AdamW
-  lr: 1e-5
+  lr: 1e-4
   weight_decay: 0.01
   fused: null
 
@@ -17,6 +17,26 @@ dataloader_kwargs:
   batch_size: 1
   num_workers: 0
   pin_memory: True
+
+peft_config:
+  _target_: peft.LoraConfig
+  task_type: peft.TaskType.CAUSAL_LM
+  target_modules:
+    # lora attention modules
+    - q_proj
+    - v_proj
+    # lora mlp modules
+    - gate_proj
+    - down_proj
+    - up_proj
+  r: 64
+  lora_alpha: 16
+  lora_dropout: 0
+  bias: none
+
+adapter_name: default
+# whether to merge and unload the adapter after training
+merge_and_unload: false
 
 # Training hyperparameters
 # if max_epochs=-1, max_steps will be used to determine the number of training steps
@@ -35,9 +55,9 @@ gradient_clip_val: null
 gradient_clip_algorithm: norm
 save_optimizer_state: false
 # save_full_model must be true when using shared FSDP
-save_full_model: true
-# save_ckpt_type can be 'hf' or 'lightning'
-save_ckpt_type: lightning
+save_full_model: false
+# save_ckpt_type can be 'peft' or 'lightning'
+save_ckpt_type: peft
 # Path to checkpoint to load from, used for resuming training
 ckpt_path: null
 max_length: 4096

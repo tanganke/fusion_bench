@@ -26,7 +26,6 @@ class ModelFusionAlgorithm(ABC):
             algorithm_config (Optional[DictConfig]): Configuration for the algorithm. Defaults to an empty configuration if not provided.
                 Get access to the configuration using `self.config`.
         """
-        super().__init__()
         if algorithm_config is None:
             algorithm_config = DictConfig({})
         self.config = algorithm_config
