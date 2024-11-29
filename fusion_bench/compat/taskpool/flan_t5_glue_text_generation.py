@@ -148,7 +148,7 @@ class FlanT5GLUETextGenerationTaskPool(LightningFabricMixin, TaskPool):
         else:
             raise ValueError(f"Unknown task {task_config.name}")
 
-    def evaluate(self, model: T5ForConditionalGeneration):
+    def evaluate(self, model: T5ForConditionalGeneration, name=None):
         """
         Evaluate the model on the FlanT5 GLUE text generation tasks.
 
@@ -169,6 +169,8 @@ class FlanT5GLUETextGenerationTaskPool(LightningFabricMixin, TaskPool):
             "all_params": all_params,
             "trainable_percentage": training_params / all_params,
         }
+        if name is not None:
+            report["model_info"]["name"] = name
         model = self.fabric.setup(model)
         report.update(super().evaluate(model))
         log.info(f"evaluation report: {report}")

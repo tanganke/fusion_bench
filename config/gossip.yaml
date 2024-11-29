@@ -1,7 +1,6 @@
 defaults:
   - hydra: default
   - fabric: auto
-  - fabric_logger: tensorboard_logger
   # --- Model, Method, Task ---
   - modelpool: clip-vit-base-patch32_robustness_clean.yaml
   - method: gossip

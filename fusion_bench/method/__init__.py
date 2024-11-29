@@ -50,7 +50,8 @@ _import_structure = {
     "gossip": [
         "CLIPLayerWiseGossipAlgorithm",
         "CLIPTaskWiseGossipAlgorithm",
-        "GPT2LayerWiseGossipAlgorithm"
+        "GPT2LayerWiseGossipAlgorithm",
+        "FlanT5LayerWiseGossipAlgorithm",
     ],
     # plug-and-play model merging methods
     "concrete_subspace": [
