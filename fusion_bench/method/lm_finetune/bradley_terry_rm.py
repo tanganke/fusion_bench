@@ -12,6 +12,7 @@ The dataset contains the following fields:
 
 import itertools
 import logging
+import functools
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Union
@@ -128,7 +129,13 @@ class BradlyTerryRewardModeling(BaseAlgorithm, LightningFabricMixin):
 
     def setup_model(self):
         model = self.modelpool.load_pretrained_model()
+        self.tokenizer = self.modelpool.load_tokenizer()
         self.model: "LlamaForSequenceClassification" = model
+
+        if tokenizer.pad_token_id is None:
+            tokenizer.pad_token_id = tokenizer.eos_token_id
+        if model.config.pad_token_id is None:
+            model.config.pad_token_id = self.tokenizer.pad_token_id
 
         if self.fix_token_embedding:
             self.model.model.embed_tokens.requires_grad_(False)
@@ -166,7 +173,9 @@ class BradlyTerryRewardModeling(BaseAlgorithm, LightningFabricMixin):
             train_dataset,
             **self.dataloader_kwargs,
             shuffle=True,
-            collate_fn=bradly_terry_rm_collate,  # NOTE: different from SFT, uses bradly_terry_rm_collate
+            collate_fn=functools.partial(
+                bradly_terry_rm_collate, pad_token_id=self.tokenizer.pad_token_id
+            ),  # NOTE: different from SFT, uses bradly_terry_rm_collate
         )
         self.train_dataloader = fabric.setup_dataloaders(self.train_dataloader)
 

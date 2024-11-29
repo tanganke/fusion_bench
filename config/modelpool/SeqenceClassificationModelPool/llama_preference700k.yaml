@@ -13,8 +13,8 @@ tokenizer:
   pretrained_model_name_or_path: ${..pretrained_model_name_or_path}
 
 train_datasets:
-  perference-700k:
-    _target_: fusion_bench.dataset.llama.perference_700k.load_tokenized_preference_700k_for_bradley_terry_rm
+  preference_700k:
+    _target_: fusion_bench.dataset.llama.preference_700k.load_tokenized_preference_700k_for_bradley_terry_rm
     tokenizer: ${...tokenizer}
     path: hendrydong/preference_700K
     split: train

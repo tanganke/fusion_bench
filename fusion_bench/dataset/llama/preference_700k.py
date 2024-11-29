@@ -32,10 +32,7 @@ def load_tokenized_preference_700k_for_bradley_terry_rm(
     """
     if cache_path is not None and os.path.exists(cache_path):
         dataset = load_from_disk(cache_path)
-        if split is not None and split in dataset:
-            return dataset[split]
-        else:
-            return dataset
+        return dataset
 
     dataset = load_dataset(path, split=split)
 

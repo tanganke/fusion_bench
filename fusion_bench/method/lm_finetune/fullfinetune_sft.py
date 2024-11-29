@@ -1,3 +1,4 @@
+import functools
 import itertools
 import logging
 import os
@@ -117,6 +118,10 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         return self.model
 
     def setup_model(self):
+        self.tokenizer = self.modelpool.load_tokenizer()
+        if self.tokenizer.pad_token_id is None:
+            self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
+
         model = self.modelpool.load_pretrained_model()
         self.model: "LlamaForCausalLM" = model
 
@@ -186,7 +191,9 @@ class FullFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
             train_dataset,
             **self.dataloader_kwargs,
             shuffle=True,
-            collate_fn=padded_collate_sft,
+            collate_fn=functools.partial(
+                padded_collate_sft, pad_token_id=self.tokenizer.pad_token_id
+            ),
         )
         self.train_dataloader = fabric.setup_dataloaders(self.train_dataloader)
 
