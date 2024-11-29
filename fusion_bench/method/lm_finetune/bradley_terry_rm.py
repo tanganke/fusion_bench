@@ -128,12 +128,13 @@ class BradlyTerryRewardModeling(BaseAlgorithm, LightningFabricMixin):
         return self.model
 
     def setup_model(self):
-        model = self.modelpool.load_pretrained_model()
         self.tokenizer = self.modelpool.load_tokenizer()
+        if self.tokenizer.pad_token_id is None:
+            self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
+
+        model = self.modelpool.load_pretrained_model()
         self.model: "LlamaForSequenceClassification" = model
 
-        if tokenizer.pad_token_id is None:
-            tokenizer.pad_token_id = tokenizer.eos_token_id
         if model.config.pad_token_id is None:
             model.config.pad_token_id = self.tokenizer.pad_token_id
 
