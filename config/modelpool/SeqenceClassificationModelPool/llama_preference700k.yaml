@@ -7,10 +7,12 @@ models:
     _target_: fusion_bench.modelpool.seq_classification_lm.create_reward_model_from_pretrained
     pretrained_model_name_or_path: ${...pretrained_model_name_or_path}
     torch_dtype: bfloat16
+    use_flash_attention_2: true
 
 tokenizer:
   _target_: transformers.AutoTokenizer.from_pretrained
   pretrained_model_name_or_path: ${..pretrained_model_name_or_path}
+  pad_token: <|end_of_text|> # do not use eos token (<|eos_id|>) as padding token because it is used as the end of each content
 
 train_datasets:
   preference_700k:

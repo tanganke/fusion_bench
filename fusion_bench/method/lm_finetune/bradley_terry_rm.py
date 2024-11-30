@@ -130,7 +130,9 @@ class BradlyTerryRewardModeling(BaseAlgorithm, LightningFabricMixin):
     def setup_model(self):
         self.tokenizer = self.modelpool.load_tokenizer()
         if self.tokenizer.pad_token_id is None:
-            self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
+            self.tokenizer.pad_token_id = (
+                self.tokenizer.eos_token_id
+            )  #! make sure eos_token_id only show up at the end of the sequence
 
         model = self.modelpool.load_pretrained_model()
         self.model: "LlamaForSequenceClassification" = model
@@ -175,7 +177,8 @@ class BradlyTerryRewardModeling(BaseAlgorithm, LightningFabricMixin):
             **self.dataloader_kwargs,
             shuffle=True,
             collate_fn=functools.partial(
-                bradly_terry_rm_collate, pad_token_id=self.tokenizer.pad_token_id
+                bradly_terry_rm_collate,
+                pad_token_id=self.tokenizer.pad_token_id,
             ),  # NOTE: different from SFT, uses bradly_terry_rm_collate
         )
         self.train_dataloader = fabric.setup_dataloaders(self.train_dataloader)
@@ -245,12 +248,13 @@ class BradlyTerryRewardModeling(BaseAlgorithm, LightningFabricMixin):
         batch_size = batch["input_ids"].size(0)
         assert batch_size % 2 == 0, "Batch size must be even."
 
-        rewards = self.model.forward(
+        outputs = self.model(
             input_ids=batch["input_ids"],
             attention_mask=batch["attention_mask"],
             use_cache=self.use_cache,
-        )[0]
+        )
 
+        rewards = outputs[0]
         rewards_j = rewards[: batch_size // 2]
         rewards_k = rewards[batch_size // 2 :]
         loss = -torch.log(torch.sigmoid(rewards_j - rewards_k)).mean()
