@@ -131,6 +131,7 @@ class FabricTrainingMixin(LightningFabricMixin):
                     os.symlink(
                         save_path,
                         os.path.join(self.log_dir, "checkpoints", "latest_model.ckpt"),
+                        os.path.isdir(save_path),
                     )
                 except Exception as e:
                     log.error(f"Failed to create symlink: {e}")
