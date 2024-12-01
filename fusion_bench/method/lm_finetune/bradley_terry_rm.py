@@ -124,7 +124,7 @@ class BradlyTerryRewardModeling(BaseAlgorithm, FabricTrainingMixin):
     def run(self, modelpool: SeqenceClassificationModelPool):
         self.modelpool = modelpool
         self.setup()
-        self.train()
+        self.train(self.model, self.optimizer, self.lr_scheduler)
         return self.model
 
     def setup_model(self):
