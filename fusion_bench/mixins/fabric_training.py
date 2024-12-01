@@ -21,6 +21,9 @@ log = logging.getLogger(__name__)
 
 
 class FabricTrainingMixin(LightningFabricMixin):
+    """
+    This is a general purpose mixin for training a model with PyTorch Lightning.
+    """
 
     _latest_saved_checkpoint_global_step: int = -1
     """The global step index of the latest saved checkpoint."""
@@ -54,6 +57,13 @@ class FabricTrainingMixin(LightningFabricMixin):
     """The frequency to save the model checkpoint."""
 
     def clip_gradients_if_needed(self, model, optimizer):
+        """
+        Clips gradients if the gradient clipping value is set.
+
+        Args:
+            model (nn.Module): The model whose gradients need to be clipped.
+            optimizer (torch.optim.Optimizer): The optimizer used for training.
+        """
         fabric = self.fabric
 
         if self.gradient_clip_val is not None:
@@ -69,6 +79,12 @@ class FabricTrainingMixin(LightningFabricMixin):
     def compute_expected_total_steps(
         self, train_dataloader: torch.utils.data.DataLoader
     ):
+        """
+        Computes the expected total number of steps for the entire training.
+
+        Args:
+            train_dataloader (torch.utils.data.DataLoader): The dataloader for the training data.
+        """
         # compute expected total steps
         self._expected_total_steps = []
         if self.max_steps > 0:
@@ -86,7 +102,12 @@ class FabricTrainingMixin(LightningFabricMixin):
 
     @property
     def expected_total_steps(self):
-        """The expected total number of steps of the entire training. You need to run `compute_expected_total_steps` method to compute this value before accessing it."""
+        """
+        The expected total number of steps of the entire training. You need to run `compute_expected_total_steps` method to compute this value before accessing it.
+
+        Raises:
+            ValueError: If the expected total steps have not been computed.
+        """
         if self._expected_total_steps is None:
             raise ValueError(
                 "The expected total steps have not been computed. Run `compute_expected_total_steps` method."
@@ -100,6 +121,12 @@ class FabricTrainingMixin(LightningFabricMixin):
         *args,
         **kwargs,
     ):
+        """
+        Conditionally saves a checkpoint based on the current training stage.
+
+        Args:
+            stage (Literal["end_of_step", "end_of_epoch", "end_of_training"]): The current stage of training.
+        """
         if stage == "end_of_step":
             if (
                 self.checkpoint_save_interval == "step"
@@ -129,9 +156,11 @@ class FabricTrainingMixin(LightningFabricMixin):
                 self.save_checkpoint(save_path, *args, **kwargs)
                 try:
                     os.symlink(
-                        save_path,
-                        os.path.join(self.log_dir, "checkpoints", "latest_model.ckpt"),
-                        os.path.isdir(save_path),
+                        src=save_path,
+                        dst=os.path.join(
+                            self.log_dir, "checkpoints", "latest_model.ckpt"
+                        ),
+                        target_is_directory=os.path.isdir(save_path),
                     )
                 except Exception as e:
                     log.error(f"Failed to create symlink: {e}")
@@ -142,6 +171,15 @@ class FabricTrainingMixin(LightningFabricMixin):
 
     @abstractmethod
     def save_checkpoint(self, path, **kwargs):
+        """
+        Saves a checkpoint of the model.
+
+        Args:
+            path (str): The path where the checkpoint will be saved.
+
+        Raises:
+            NotImplementedError: If the method is not implemented.
+        """
         raise NotImplementedError("save_checkpoint method is not implemented")
 
     def train(
@@ -151,7 +189,14 @@ class FabricTrainingMixin(LightningFabricMixin):
         lr_scheduler: torch.optim.lr_scheduler.LRScheduler,
     ):
         """
+        Trains the model. 
+        
         The global batch size is `the batch size per device` x `the number of devices` x `the number of gradient accumulation steps`.
+
+        Args:
+            model (Union[nn.Module, "_FabricModule"]): The model to be trained.
+            optimizer (Union[torch.optim.Optimizer, "_FabricOptimizer"]): The optimizer used for training.
+            lr_scheduler (torch.optim.lr_scheduler.LRScheduler): The learning rate scheduler.
         """
         fabric = self.fabric
         self.is_training = True
@@ -193,6 +238,17 @@ class FabricTrainingMixin(LightningFabricMixin):
         optimizer: Union[torch.optim.Optimizer, "_FabricOptimizer"],
         lr_scheduler: torch.optim.lr_scheduler.LRScheduler,
     ):
+        """
+        Trains the model for one epoch.
+
+        Args:
+            model (Union[nn.Module, "_FabricModule"]): The model to be trained.
+            optimizer (Union[torch.optim.Optimizer, "_FabricOptimizer"]): The optimizer used for training.
+            lr_scheduler (torch.optim.lr_scheduler.LRScheduler): The learning rate scheduler.
+
+        Raises:
+            NotImplementedError: If the method is not implemented.
+        """
         raise NotImplementedError(
             "Copy this as a template and implement your own train_epoch method"
         )
