@@ -1,6 +1,6 @@
 fusion_bench --config-name llama_full_finetune \
-  fabric.loggers.name=llama_full_bradly_terry_rm \
-  method=lm_finetune/bradly_terry_rm \
+  fabric.loggers.name=llama_full_bradley_terry_rm \
+  method=lm_finetune/bradley_terry_rm \
   method.dataloader_kwargs.batch_size=8 \
   method.accumulate_grad_batches=16 \
   method.lr_scheduler.min_lr=1e-7 \

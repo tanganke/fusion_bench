@@ -28,7 +28,7 @@ from torch.utils.data import ConcatDataset, DataLoader
 from tqdm.auto import tqdm
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-from fusion_bench.dataset.llama.collate import bradly_terry_rm_collate
+from fusion_bench.dataset.llama.collate import bradley_terry_rm_collate
 from fusion_bench.method import BaseAlgorithm
 from fusion_bench.mixins import FabricTrainingMixin
 from fusion_bench.modelpool import SeqenceClassificationModelPool
@@ -46,7 +46,7 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-class BradlyTerryRewardModeling(BaseAlgorithm, FabricTrainingMixin):
+class BradleyTerryRewardModeling(BaseAlgorithm, FabricTrainingMixin):
 
     model: Union[nn.Module, "_FabricModule", "LlamaForSequenceClassification"]
     optimizer: Union[torch.optim.Optimizer, "_FabricOptimizer"]
@@ -177,9 +177,9 @@ class BradlyTerryRewardModeling(BaseAlgorithm, FabricTrainingMixin):
             **self.dataloader_kwargs,
             shuffle=True,
             collate_fn=functools.partial(
-                bradly_terry_rm_collate,
+                bradley_terry_rm_collate,
                 pad_token_id=self.tokenizer.pad_token_id,
-            ),  # NOTE: different from SFT, uses bradly_terry_rm_collate
+            ),  # NOTE: different from SFT, uses bradley_terry_rm_collate
         )
         self.train_dataloader = fabric.setup_dataloaders(self.train_dataloader)
 

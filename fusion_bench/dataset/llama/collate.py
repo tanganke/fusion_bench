@@ -66,7 +66,7 @@ def padded_collate_sft(
     return collated_batch
 
 
-def bradly_terry_rm_collate(
+def bradley_terry_rm_collate(
     batch: List[Dict[str, List[int]]],
     pad_token_id: int = 0,
     padding_side="right",
