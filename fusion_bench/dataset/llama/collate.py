@@ -7,7 +7,7 @@ from torch.nn.utils.rnn import pad_sequence
 
 def padded_collate_sft(
     batch: List[Dict[str, List[int]]],
-    padding_idx: int = 0,
+    pad_token_id: int = 0,
     input_ids_key: str = "input_ids",
     attention_mask_key: Optional[str] = "attention_mask",
     labels_key: Optional[str] = "labels",
@@ -28,7 +28,7 @@ def padded_collate_sft(
     input_ids = pad_sequence(
         [torch.tensor(x[input_ids_key]) for x in batch],
         batch_first=True,
-        padding_value=padding_idx,
+        padding_value=pad_token_id,
     )
     if attention_mask_key is not None and attention_mask_key in batch[0]:
         attention_mask = pad_sequence(
@@ -63,4 +63,58 @@ def padded_collate_sft(
         if key not in [input_ids_key, attention_mask_key, labels_key]:
             collated_batch[key] = [x[key] for x in batch]
 
+    return collated_batch
+
+
+def bradley_terry_rm_collate(
+    batch: List[Dict[str, List[int]]],
+    pad_token_id: int = 0,
+    padding_side="right",
+):
+    """
+    Collate function for Bradley-Terry reward modeling.
+
+    Args:
+        batch (List[Dict[str, List[int]]]): A list of dictionaries containing input, label pairs.
+        pad_token_id (int): Padding index for input ids. Defaults to 0.
+
+    Returns:
+        Dict[str, torch.Tensor]: Collated input and label tensors. The first half of the batch is the winner, and the second half is the loser.
+    """
+    converted_batch = []
+    for item in batch:
+        new_item = {
+            "input_ids": item["input_ids_j"],
+            "attention_mask": item["attention_mask_j"],
+        }
+        converted_batch.append(new_item)
+    for item in batch:
+        new_item = {
+            "input_ids": item["input_ids_k"],
+            "attention_mask": item["attention_mask_k"],
+        }
+        converted_batch.append(new_item)
+
+    input_ids = pad_sequence(
+        [torch.tensor(x["input_ids"]) for x in converted_batch],
+        batch_first=True,
+        padding_value=pad_token_id,
+        padding_side=padding_side,
+    )
+    attention_mask = pad_sequence(
+        [torch.tensor(x["attention_mask"]) for x in converted_batch],
+        batch_first=True,
+        padding_value=0,
+        padding_side=padding_side,
+    )
+
+    collated_batch = {"input_ids": input_ids, "attention_mask": attention_mask}
+    for key in batch[0]:
+        if key not in [
+            "input_ids_j",
+            "attention_mask_j",
+            "input_ids_k",
+            "attention_mask_k",
+        ]:
+            collated_batch[key] = [x[key] for x in batch]
     return collated_batch

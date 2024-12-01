@@ -1,2 +1,2 @@
-from . import lr_scheduler, exception
+from . import exception, lr_scheduler
 from .mezo import MeZO

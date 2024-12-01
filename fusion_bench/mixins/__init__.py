@@ -10,10 +10,12 @@ _import_structure = {
     "serialization": ["YAMLSerializationMixin", "BaseYAMLSerializableModel"],
     "simple_profiler": ["SimpleProfilerMixin"],
     "clip_classification": ["CLIPClassificationMixin"],
+    "fabric_training": ["FabricTrainingMixin"],
 }
 
 if TYPE_CHECKING:
     from .clip_classification import CLIPClassificationMixin
+    from .fabric_training import FabricTrainingMixin
     from .lightning_fabric import LightningFabricMixin
     from .serialization import BaseYAMLSerializableModel, YAMLSerializationMixin
     from .simple_profiler import SimpleProfilerMixin

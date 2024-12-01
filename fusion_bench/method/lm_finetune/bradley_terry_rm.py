@@ -1,9 +1,21 @@
+R"""
+This is basically the same as fullfinetune_sft.py, but with a different loss function.
+
+The dataset contains the following fields:
+
+- input_ids_j: The input token ids for the winner.
+- attention_mask_j: The attention mask for the winner.
+- input_ids_k: The input token ids for the loser.
+- attention_mask_k: The attention mask for the loser.
+
+"""
+
 import functools
 import itertools
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, Literal, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Union, override
 
 import lightning as L
 import omegaconf
@@ -11,16 +23,15 @@ import torch
 from lightning.fabric.strategies.fsdp import FSDPStrategy
 from lightning.fabric.utilities import rank_zero_only
 from omegaconf import DictConfig
-from torch import nn
+from torch import Tensor, nn
 from torch.utils.data import ConcatDataset, DataLoader
 from tqdm.auto import tqdm
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from typing_extensions import TYPE_CHECKING, override
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-from fusion_bench import BaseAlgorithm, BaseModelPool
-from fusion_bench.dataset.llama.collate import padded_collate_sft
+from fusion_bench.dataset.llama.collate import bradley_terry_rm_collate
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.mixins import FabricTrainingMixin
-from fusion_bench.modelpool import CausalLMPool
+from fusion_bench.modelpool import SeqenceClassificationModelPool
 from fusion_bench.utils import instantiate
 from fusion_bench.utils.dtype import get_dtype
 
@@ -30,18 +41,17 @@ if TYPE_CHECKING:
         _FabricModule,
         _FabricOptimizer,
     )
-    from transformers.models.llama.modeling_llama import LlamaForCausalLM
+    from transformers.models.llama.modeling_llama import LlamaForSequenceClassification
 
 log = logging.getLogger(__name__)
 
 
-class FullFinetuneSFT(BaseAlgorithm, FabricTrainingMixin):
+class BradleyTerryRewardModeling(BaseAlgorithm, FabricTrainingMixin):
 
-    model: Union[nn.Module, "_FabricModule", "LlamaForCausalLM"]
+    model: Union[nn.Module, "_FabricModule", "LlamaForSequenceClassification"]
     optimizer: Union[torch.optim.Optimizer, "_FabricOptimizer"]
     train_dataloader: Union[DataLoader, "_FabricDataLoader"]
     lr_scheduler: torch.optim.lr_scheduler.LRScheduler
-    _latest_saved_checkpoint_global_step: int = -1
 
     def __init__(
         self,
@@ -67,7 +77,7 @@ class FullFinetuneSFT(BaseAlgorithm, FabricTrainingMixin):
         **kwargs,
     ):
         """
-        Class for full finetuning of a language model on given SFT datasets.
+        Class for reward modeling using Bradley-Terry model.
 
         Args:
             optimizer(DictConfig): Configuration for the optimizer.
@@ -111,7 +121,7 @@ class FullFinetuneSFT(BaseAlgorithm, FabricTrainingMixin):
         self.fix_token_embedding = fix_token_embedding
         super().__init__(**kwargs)
 
-    def run(self, modelpool: CausalLMPool):
+    def run(self, modelpool: SeqenceClassificationModelPool):
         self.modelpool = modelpool
         self.setup()
         self.train(self.model, self.optimizer, self.lr_scheduler)
@@ -120,10 +130,15 @@ class FullFinetuneSFT(BaseAlgorithm, FabricTrainingMixin):
     def setup_model(self):
         self.tokenizer = self.modelpool.load_tokenizer()
         if self.tokenizer.pad_token_id is None:
-            self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
+            self.tokenizer.pad_token_id = (
+                self.tokenizer.eos_token_id
+            )  #! make sure eos_token_id only show up at the end of the sequence
 
         model = self.modelpool.load_pretrained_model()
-        self.model: "LlamaForCausalLM" = model
+        self.model: "LlamaForSequenceClassification" = model
+
+        if model.config.pad_token_id is None:
+            model.config.pad_token_id = self.tokenizer.pad_token_id
 
         if self.fix_token_embedding:
             self.model.model.embed_tokens.requires_grad_(False)
@@ -139,26 +154,6 @@ class FullFinetuneSFT(BaseAlgorithm, FabricTrainingMixin):
         else:
             self.use_cache = True
         self.model_dtype = get_dtype(self.model)
-
-    def configure_optimizer(self):
-        # compute expected total steps
-        self.compute_expected_total_steps(self.train_dataloader)
-
-        optimizer = instantiate(self._optimizer, self.model.parameters())
-        if self._lr_scheduler is not None:
-            for key, arg in self._lr_scheduler.items():
-                if arg == "_T_max_":
-                    log.info(
-                        f"Setting key `{key}` of lr_scheduler configuration to {self.expected_total_steps}"
-                    )
-                    self._lr_scheduler[key] = self.expected_total_steps
-            lr_scheduler: torch.optim.lr_scheduler.LRScheduler = instantiate(
-                self._lr_scheduler,
-                optimizer=optimizer,
-            )
-        else:
-            lr_scheduler = None
-        return {"optimizer": optimizer, "lr_scheduler": lr_scheduler}
 
     def setup_data(self):
         fabric = self.fabric
@@ -182,10 +177,31 @@ class FullFinetuneSFT(BaseAlgorithm, FabricTrainingMixin):
             **self.dataloader_kwargs,
             shuffle=True,
             collate_fn=functools.partial(
-                padded_collate_sft, pad_token_id=self.tokenizer.pad_token_id
-            ),
+                bradley_terry_rm_collate,
+                pad_token_id=self.tokenizer.pad_token_id,
+            ),  # NOTE: different from SFT, uses bradley_terry_rm_collate
         )
         self.train_dataloader = fabric.setup_dataloaders(self.train_dataloader)
+
+    def configure_optimizer(self):
+        # compute expected total steps
+        self.compute_expected_total_steps(self.train_dataloader)
+
+        optimizer = instantiate(self._optimizer, self.model.parameters())
+        if self._lr_scheduler is not None:
+            for key, arg in self._lr_scheduler.items():
+                if arg == "_T_max_":
+                    log.info(
+                        f"Setting key `{key}` of lr_scheduler configuration to {self.expected_total_steps}"
+                    )
+                    self._lr_scheduler[key] = self.expected_total_steps
+            lr_scheduler: torch.optim.lr_scheduler.LRScheduler = instantiate(
+                self._lr_scheduler,
+                optimizer=optimizer,
+            )
+        else:
+            lr_scheduler = None
+        return {"optimizer": optimizer, "lr_scheduler": lr_scheduler}
 
     def setup(self):
         fabric = self.fabric
@@ -199,11 +215,40 @@ class FullFinetuneSFT(BaseAlgorithm, FabricTrainingMixin):
         self.model, self.optimizer = fabric.setup(self.model, optimizer)
         self.lr_scheduler = lr_scheduler
 
+    def compute_loss(self, batch: Dict[str, Union[Tensor, Any]]) -> Dict[str, Tensor]:
+        """
+        Maximize the likelihood of the winner over the loser using the Bradley-Terry model.
+
+        Args:
+            batch (Dict[str, Union[Tensor, Any]]): A dictionary containing the input token ids and attention masks for the winner and loser.
+        """
+        batch_size = batch["input_ids"].size(0)
+        assert batch_size % 2 == 0, "Batch size must be even."
+
+        outputs = self.model(
+            input_ids=batch["input_ids"],
+            attention_mask=batch["attention_mask"],
+            use_cache=self.use_cache,
+        )
+
+        rewards = outputs[0]
+        rewards_j = rewards[: batch_size // 2]
+        rewards_k = rewards[batch_size // 2 :]
+        loss = -torch.log(torch.sigmoid(rewards_j - rewards_k)).mean()
+
+        return {
+            "reward_j": rewards_j,
+            "reward_k": rewards_k,
+            "loss": loss,
+        }
+
     @override
     def train_epoch(self, *args, **kwargs):
         fabric = self.fabric
 
         accumulated_loss = 0
+        accumulated_reward_j = 0
+        accumulated_reward_k = 0
         for step_idx, batch in enumerate(
             pbar := tqdm(
                 self.train_dataloader,
@@ -219,24 +264,26 @@ class FullFinetuneSFT(BaseAlgorithm, FabricTrainingMixin):
                 log.warning(
                     f"Input length exceeds max_length: {batch['input_ids'].shape[1]} > {self.max_length}. Truncating input."
                 )
-                batch["input_ids"] = batch["input_ids"][:, : self.max_length]
-                batch["attention_mask"] = batch["attention_mask"][:, : self.max_length]
-                batch["labels"] = batch["labels"][:, : self.max_length]
+                batch["input_ids"] = batch["input_ids"][:, -self.max_length :]
+                batch["attention_mask"] = batch["attention_mask"][:, -self.max_length :]
 
             # disable gradient synchronization if accumulating gradients across steps for improved performance
             with fabric.no_backward_sync(self.model, enabled=is_accumulating):
                 # use_cache=True is not compatible with gradient checkpointing, so we disable it here
-                output = self.model(
-                    input_ids=batch["input_ids"],
-                    attention_mask=batch["attention_mask"],
-                    labels=batch["labels"],
-                    use_cache=self.use_cache,
-                )
+                output = self.compute_loss(batch)
                 loss = output["loss"] / self.accumulate_grad_batches
 
                 fabric.backward(loss)
-                accumulated_loss += loss.item()
 
+                accumulated_loss += loss.item()
+                accumulated_reward_j += output["reward_j"].mean().item()
+                accumulated_reward_k += output["reward_k"].mean().item()
+
+            # 1. update the model parameters if not accumulating gradients
+            # 2. step the lr_scheduler if interval is set to "step" and frequency is met
+            # 3. save the model if interval is set to "step" and frequency is met
+            # 4. log metrics
+            # 5. increase the global step index
             if not is_accumulating:
                 self.clip_gradients_if_needed(self.model, self.optimizer)
 
@@ -253,9 +300,17 @@ class FullFinetuneSFT(BaseAlgorithm, FabricTrainingMixin):
 
                 metrics = {
                     "train/loss": accumulated_loss,
+                    "train/reward_j": accumulated_reward_j
+                    / self.accumulate_grad_batches,
+                    "train/reward_k": accumulated_reward_k
+                    / self.accumulate_grad_batches,
                     "train/epoch_idx": self.epoch_idx,
                     "train/lr": self.optimizer.param_groups[0]["lr"],
                 }
+                metrics["train/reward_j-k"] = (
+                    metrics["train/reward_j"] - metrics["train/reward_k"]
+                )
+
                 fabric.log_dict(metrics, step=self.global_step_idx)
                 pbar.set_postfix(metrics)
 
@@ -275,6 +330,8 @@ class FullFinetuneSFT(BaseAlgorithm, FabricTrainingMixin):
 
                 self.global_step_idx += 1
                 accumulated_loss = 0
+                accumulated_reward_j = 0
+                accumulated_reward_k = 0
 
     def save_checkpoint(
         self,
@@ -338,7 +395,7 @@ class FullFinetuneSFT(BaseAlgorithm, FabricTrainingMixin):
 def load_checkpoint(
     fabric: L.Fabric,
     ckpt_path: Union[str, Path],
-    model: Union[nn.Module, "LlamaForCausalLM"],
+    model: Union[nn.Module, "LlamaForSequenceClassification"],
     strict: bool = True,
     **state_components,
 ):
@@ -367,7 +424,7 @@ if __name__ == "__main__":
     tokenizer = AutoTokenizer.from_pretrained(args.base_model_path)
     tokenizer.save_pretrained(args.output_path)
 
-    model = AutoModelForCausalLM.from_pretrained(
+    model = AutoModelForSequenceClassification.from_pretrained(
         args.base_model_path, torch_dtype=torch.bfloat16
     )
     model = fabric.setup_module(model)

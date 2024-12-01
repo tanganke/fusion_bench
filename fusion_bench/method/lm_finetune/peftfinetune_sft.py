@@ -1,3 +1,4 @@
+import functools
 import itertools
 import logging
 import os
@@ -19,7 +20,7 @@ from typing_extensions import TYPE_CHECKING, override
 
 from fusion_bench import BaseAlgorithm, BaseModelPool
 from fusion_bench.dataset.llama.collate import padded_collate_sft
-from fusion_bench.mixins import LightningFabricMixin
+from fusion_bench.mixins import FabricTrainingMixin
 from fusion_bench.modelpool import CausalLMPool
 from fusion_bench.utils import instantiate
 from fusion_bench.utils.dtype import get_dtype
@@ -35,7 +36,7 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-class PeftFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
+class PeftFinetuneSFT(BaseAlgorithm, FabricTrainingMixin):
 
     model: Union[
         nn.Module, "_FabricModule", "LlamaForCausalLM", PeftModel, peft.LoraModel
@@ -121,13 +122,17 @@ class PeftFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
     def run(self, modelpool: CausalLMPool):
         self.modelpool = modelpool
         self.setup()
-        self.train()
+        self.train(self.model, self.optimizer, self.lr_scheduler)
 
         if self.merge_and_unload:
             self.model = self.model.merge_and_unload()
         return self.model
 
     def setup_model(self):
+        self.tokenizer = self.modelpool.load_tokenizer()
+        if self.tokenizer.pad_token_id is None:
+            self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
+
         model = self.modelpool.load_pretrained_model()
 
         # get the PEFT model
@@ -152,17 +157,7 @@ class PeftFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
 
     def configure_optimizer(self):
         # compute expected total steps
-        self.expected_total_steps = []
-        if self.max_steps > 0:
-            self.expected_total_steps.append(self.max_steps)
-        if self.max_steps_per_epoch > 0 and self.max_epochs > 0:
-            self.expected_total_steps.append(self.max_steps_per_epoch * self.max_epochs)
-        if self.max_epochs > 0:
-            self.expected_total_steps.append(
-                len(self.train_dataloader) * self.max_epochs
-            )
-        self.expected_total_steps = min(self.expected_total_steps)
-        log.info(f"Expected total steps: {self.expected_total_steps}")
+        self.compute_expected_total_steps(self.train_dataloader)
 
         optimizer = instantiate(self._optimizer, self.model.parameters())
         if self._lr_scheduler is not None:
@@ -201,7 +196,9 @@ class PeftFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
             train_dataset,
             **self.dataloader_kwargs,
             shuffle=True,
-            collate_fn=padded_collate_sft,
+            collate_fn=functools.partial(
+                padded_collate_sft, pad_token_id=self.tokenizer.pad_token_id
+            ),
         )
         self.train_dataloader = fabric.setup_dataloaders(self.train_dataloader)
 
@@ -217,25 +214,15 @@ class PeftFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
         self.model, self.optimizer = fabric.setup(self.model, optimizer)
         self.lr_scheduler = lr_scheduler
 
-    def _clip_gradients_if_needed(self):
-        fabric = self.fabric
-
-        if self.gradient_clip_val is not None:
-            if self.gradient_clip_algorithm == "value":
-                fabric.clip_gradients(self.model, clip_val=self.gradient_clip_val)
-            elif self.gradient_clip_algorithm == "norm":
-                fabric.clip_gradients(self.model, max_norm=self.gradient_clip_val)
-            else:
-                raise ValueError(
-                    f"Unknown gradient clip algorithm: {self.gradient_clip_algorithm}. Available options: 'value', 'norm'"
-                )
-
+    @override
     def train_epoch(self):
         fabric = self.fabric
+
+        accumulated_loss = 0
         for step_idx, batch in enumerate(
             pbar := tqdm(
                 self.train_dataloader,
-                desc="Training Steps",
+                desc="Training Batches",
                 dynamic_ncols=True,
                 leave=False,
                 disable=not fabric.is_global_zero,
@@ -250,6 +237,7 @@ class PeftFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
                 batch["input_ids"] = batch["input_ids"][:, : self.max_length]
                 batch["attention_mask"] = batch["attention_mask"][:, : self.max_length]
                 batch["labels"] = batch["labels"][:, : self.max_length]
+
             # disable gradient synchronization if accumulating gradients across steps for improved performance
             with fabric.no_backward_sync(self.model, enabled=is_accumulating):
                 # use_cache=True is not compatible with gradient checkpointing, so we disable it here
@@ -259,12 +247,13 @@ class PeftFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
                     labels=batch["labels"],
                     use_cache=self.use_cache,
                 )
-                loss = output["loss"]
+                loss = output["loss"] / self.accumulate_grad_batches
 
                 fabric.backward(loss)
+                accumulated_loss += loss.item()
 
             metrics = {
-                "train/loss": loss.item(),
+                "train/loss": accumulated_loss,
                 "train/epoch_idx": self.epoch_idx,
                 "train/lr": self.optimizer.param_groups[0]["lr"],
             }
@@ -272,7 +261,7 @@ class PeftFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
             pbar.set_postfix(metrics)
 
             if not is_accumulating:
-                self._clip_gradients_if_needed()
+                self.clip_gradients_if_needed(self.model, self.optimizer)
 
                 # run lr_scheduler at the end of the step if interval is set to "step"
                 if (
@@ -286,7 +275,7 @@ class PeftFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
                 self.optimizer.zero_grad()
 
             # save the model at the end of the step if interval is set to "step" and frequency is met
-            self._try_save_checkpoint(stage="end_of_step")
+            self.conditional_checkpoint_save(stage="end_of_step")
 
             # break if max_steps_per_epoch is set, and exit epoch
             if (
@@ -300,89 +289,7 @@ class PeftFinetuneSFT(BaseAlgorithm, LightningFabricMixin):
                 break
 
             self.global_step_idx += 1
-
-    def train(self):
-        fabric = self.fabric
-        self.is_training = True
-        self.global_step_idx = 0
-        self.model.train()
-        for epoch_idx in tqdm(
-            range(self.max_epochs) if self.max_epochs > 0 else itertools.count(0),
-            "Training Epoch",
-            dynamic_ncols=True,
-            leave=False,
-            disable=not fabric.is_global_zero,
-        ):
-            self.epoch_idx = epoch_idx
-            self.train_epoch()
-            # run lr_scheduler at the end of the epoch if interval is set to "epoch"
-            if (
-                self.lr_scheduler_interval == "epoch"
-                and (epoch_idx + 1) % self.lr_scheduler_frequency == 0
-            ):
-                self.lr_scheduler.step()
-
-            # save the model at the end of the epoch if interval is set to "epoch" and frequency is met
-            self._try_save_checkpoint(stage="end_of_epoch")
-
-            if not self.is_training:
-                break
-
-        # save the model at the end of training
-        self._try_save_checkpoint(stage="end_of_training")
-
-    def _try_save_checkpoint(
-        self, stage: Literal["end_of_step", "end_of_epoch", "end_of_training"]
-    ):
-        if stage == "end_of_step":
-            if (
-                self.checkpoint_save_interval == "step"
-                and (self.global_step_idx + 1) % self.checkpoint_save_frequency == 0
-            ):
-                self.save_checkpoint(
-                    os.path.join(
-                        self.log_dir, "checkpoints", f"step={self.global_step_idx}.ckpt"
-                    )
-                )
-        elif stage == "end_of_epoch":
-            if (
-                self.checkpoint_save_interval == "epoch"
-                and (self.epoch_idx + 1) % self.checkpoint_save_frequency == 0
-            ):
-                self.save_checkpoint(
-                    os.path.join(
-                        self.log_dir, "checkpoints", f"epoch={self.epoch_idx}.ckpt"
-                    )
-                )
-        elif stage == "end_of_training":
-            # if the checkpoint has not been saved yet, save it
-            if self.global_step_idx > self._latest_saved_checkpoint_global_step:
-                self.save_checkpoint(
-                    os.path.join(
-                        self.log_dir,
-                        "checkpoints",
-                        f"epoch={self.epoch_idx}_step={self.global_step_idx}.ckpt",
-                    )
-                )
-                try:
-                    os.symlink(
-                        os.path.join(
-                            self.log_dir,
-                            "checkpoints",
-                            f"epoch={self.epoch_idx}_step={self.global_step_idx}.ckpt",
-                        ),
-                        os.path.join(
-                            self.log_dir,
-                            "checkpoints",
-                            "latest_model.ckpt",
-                        )
-                    )
-                except Exception as e:
-                    log.error(f"Failed to create symlink: {e}")
-        else:
-            raise ValueError(
-                f"Unknown stage: {stage}. Available options: 'end_of_step', 'end_of_epoch', 'end_of_training'"
-            )
+            accumulated_loss = 0
 
     def save_checkpoint(
         self,

@@ -16,6 +16,7 @@ _import_structure = {
         "HuggingFaceGPT2ClassificationPool",
         "GPT2ForSequenceClassificationPool",
     ],
+    "seq_classification_lm": ["SeqenceClassificationModelPool"],
 }
 
 
@@ -31,6 +32,7 @@ if TYPE_CHECKING:
     from .nyuv2_modelpool import NYUv2ModelPool
     from .PeftModelForSeq2SeqLM import PeftModelForSeq2SeqLMPool
     from .seq2seq_lm import Seq2SeqLMPool
+    from .seq_classification_lm import SeqenceClassificationModelPool
 
 else:
     sys.modules[__name__] = LazyImporter(

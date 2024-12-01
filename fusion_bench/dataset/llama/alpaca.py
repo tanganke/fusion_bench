@@ -4,6 +4,7 @@ import warnings
 from typing import Any, Dict, List, Optional
 
 from datasets import Dataset, load_dataset, load_from_disk
+from lightning.fabric.utilities import rank_zero_only
 from tqdm.auto import tqdm
 from transformers import PreTrainedTokenizer
 
@@ -26,7 +27,11 @@ def convert_alpaca_to_conversation(alpaca_data: List[Dict[str, str]]):
     """
     conversations = []
 
-    for item in tqdm(alpaca_data, "Converting Alpaca to conversations"):
+    for item in tqdm(
+        alpaca_data,
+        "Converting Alpaca to conversations",
+        disable=not rank_zero_only.rank == 0,
+    ):
         # Skip if required fields are missing
         if not item.get("instruction") or not item.get("output"):
             continue
@@ -84,7 +89,7 @@ def load_tokenized_alpaca_dataset(
         )
     tokenized_dataset = Dataset.from_dict(tokenized_dataset)
 
-    if cache_path is not None:
+    if cache_path is not None and rank_zero_only.rank == 0:
         tokenized_dataset.save_to_disk(cache_path)
     return tokenized_dataset
 
