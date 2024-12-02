@@ -84,14 +84,14 @@ def bradley_terry_rm_collate(
     converted_batch = []
     for item in batch:
         new_item = {
-            "input_ids": item["input_ids_j"],
-            "attention_mask": item["attention_mask_j"],
+            "input_ids": item["chosen_input_ids"],
+            "attention_mask": item["chosen_attention_mask"],
         }
         converted_batch.append(new_item)
     for item in batch:
         new_item = {
-            "input_ids": item["input_ids_k"],
-            "attention_mask": item["attention_mask_k"],
+            "input_ids": item["rejected_input_ids"],
+            "attention_mask": item["rejected_attention_mask"],
         }
         converted_batch.append(new_item)
 
@@ -111,10 +111,10 @@ def bradley_terry_rm_collate(
     collated_batch = {"input_ids": input_ids, "attention_mask": attention_mask}
     for key in batch[0]:
         if key not in [
-            "input_ids_j",
-            "attention_mask_j",
-            "input_ids_k",
-            "attention_mask_k",
+            "chosen_input_ids",
+            "chosen_attention_mask",
+            "rejected_input_ids",
+            "rejected_attention_mask",
         ]:
             collated_batch[key] = [x[key] for x in batch]
     return collated_batch

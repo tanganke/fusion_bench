@@ -54,5 +54,5 @@ if __name__ == "__main__":
     from transformers import AutoTokenizer
 
     tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.2-1B-Instruct")
-    dataset = load_tokenized_ultrachat_299k(tokenizer)
+    dataset = load_tokenized_ultrachat_200k(tokenizer)
     print(dataset)

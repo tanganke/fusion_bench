@@ -23,10 +23,10 @@ def load_tokenized_preference_700k_for_bradley_terry_rm(
 
     The returned dataset contains the following fields:
 
-    - input_ids_j: The input token ids for the winner.
-    - attention_mask_j: The attention mask for the winner.
-    - input_ids_k: The input token ids for the loser.
-    - attention_mask_k: The attention mask for the loser.
+    - chosen_input_ids: The input token ids for the winner.
+    - chosen_attention_mask: The attention mask for the winner.
+    - rejected_input_ids: The input token ids for the loser.
+    - rejected_attention_mask: The attention mask for the loser.
     """
     if cache_path is not None and os.path.exists(cache_path):
         dataset = load_from_disk(cache_path)
@@ -46,10 +46,10 @@ def load_tokenized_preference_700k_for_bradley_terry_rm(
 
         tokenized_pos = tokenizer(sample["positive"], truncation=True)
         tokenized_neg = tokenizer(sample["negative"], truncation=True)
-        sample["input_ids_j"] = tokenized_pos["input_ids"]
-        sample["attention_mask_j"] = tokenized_pos["attention_mask"]
-        sample["input_ids_k"] = tokenized_neg["input_ids"]
-        sample["attention_mask_k"] = tokenized_neg["attention_mask"]
+        sample["chosen_input_ids"] = tokenized_pos["input_ids"]
+        sample["chosen_attention_mask"] = tokenized_pos["attention_mask"]
+        sample["rejected_input_ids"] = tokenized_neg["input_ids"]
+        sample["rejected_attention_mask"] = tokenized_neg["attention_mask"]
         return sample
 
     dataset = dataset.map(tokenize, num_proc=num_proc)
