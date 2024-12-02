@@ -7,8 +7,6 @@ from tqdm.auto import tqdm
 
 from fusion_bench.utils import timeit_context
 
-from .alpaca import convert_alpaca_to_conversation
-
 if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer
 
