@@ -16,7 +16,7 @@ tokenizer:
 
 train_datasets:
   preference_700k:
-    _target_: fusion_bench.dataset.llama.preference_700k.load_tokenized_preference_700k_for_bradley_terry_rm
+    _target_: fusion_bench.dataset.llama.preference_700k.load_tokenized_preference_700k_for_rlhf
     tokenizer: ${...tokenizer}
     path: hendrydong/preference_700K
     split: train
