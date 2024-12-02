@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer
 
 
-def load_tokenized_ultrachat_299k(
+def load_tokenized_ultrachat_200k(
     tokenizer: "PreTrainedTokenizer",
     path: str = "HuggingFaceH4/ultrachat_200k",
     split: str = "train_sft",
