@@ -1,3 +1,4 @@
+import functools
 import logging
 import os
 from typing import TYPE_CHECKING, Any, List, Optional, TypeVar
@@ -13,6 +14,7 @@ from fusion_bench.utils.instantiate import instantiate
 
 if TYPE_CHECKING:
     import lightning.fabric.loggers.tensorboard
+    from lightning.fabric.strategies import FSDPStrategy
 
 log = logging.getLogger(__name__)
 
@@ -30,6 +32,13 @@ def get_policy(*args: str) -> set:
         set: A set of policy objects.
     """
     return {import_object(arg) for arg in args}
+
+
+def get_size_based_auto_wrap_policy(*args, **kwargs):
+    from torch.distributed.fsdp.wrap import size_based_auto_wrap_policy
+
+    policy = functools.partial(size_based_auto_wrap_policy, *args, **kwargs)
+    return policy
 
 
 class LightningFabricMixin:

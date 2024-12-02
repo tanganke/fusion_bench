@@ -189,8 +189,8 @@ class FabricTrainingMixin(LightningFabricMixin):
         lr_scheduler: torch.optim.lr_scheduler.LRScheduler,
     ):
         """
-        Trains the model. 
-        
+        Trains the model.
+
         The global batch size is `the batch size per device` x `the number of devices` x `the number of gradient accumulation steps`.
 
         Args:
