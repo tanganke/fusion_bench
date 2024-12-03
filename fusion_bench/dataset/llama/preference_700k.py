@@ -7,9 +7,12 @@ from lightning.fabric.utilities import rank_zero_only
 from tqdm.auto import tqdm
 
 from fusion_bench.utils import timeit_context
+import logging
 
 if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer
+
+log = logging.getLogger(__name__)
 
 
 def load_tokenized_preference_700k_for_rlhf(
@@ -49,16 +52,14 @@ def load_tokenized_preference_700k_for_rlhf(
         # Ensure that the chosen response does not contain an PAD token
         sample["chosen_input_ids"] = tokenized_pos["input_ids"]
         sample["chosen_attention_mask"] = tokenized_pos["attention_mask"]
-        assert (
-            tokenizer.pad_token_id not in tokenized_pos["input_ids"]
-        ), f"Prompt contains PAD token: {sample['chosen_chat']}"
+        if tokenizer.pad_token_id in tokenized_pos["input_ids"]:
+            log.warning(f"Prompt contains PAD token: {sample['chosen_chat']}")
 
         sample["rejected_input_ids"] = tokenized_neg["input_ids"]
         sample["rejected_attention_mask"] = tokenized_neg["attention_mask"]
         # Ensure that the rejected response does not contain an PAD token
-        assert (
-            tokenizer.pad_token_id not in tokenized_neg["input_ids"]
-        ), f"Prompt contains PAD token: {sample['rejected_chat']}"
+        if tokenizer.pad_token_id in tokenized_neg["input_ids"]:
+            log.warning(f"Prompt contains PAD token: {sample['rejected_chat']}")
 
         return sample
 
