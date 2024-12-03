@@ -14,6 +14,7 @@ import lightning as L
 import torch
 from omegaconf import DictConfig
 from torch.utils.data import Subset
+import numpy as np
 from tqdm.auto import tqdm
 
 from fusion_bench.dataset.llama.collate import bradley_terry_rm_collate
@@ -102,17 +103,26 @@ class RewardModelEvaluationTaskPool(
         self.max_num_samples = max_num_samples
         super().__init__(**kwargs)
 
-    def setup_data(self):
+    def setup(self):
         if self._tokenizer is None:
             # try to load the tokenizer from the model pool
             tokenizer = self._program.modelpool.load_tokenizer()
         else:
             tokenizer = instantiate(self._tokenizer)
+        self.tokenizer = tokenizer
 
-        test_datasets = [
-            instantiate(self._test_datasets[dataset_name])
+        test_datasets = {
+            dataset_name: instantiate(self._test_datasets[dataset_name])
             for dataset_name in self._test_datasets
-        ]
+        }
+        if self.max_num_samples > 0:
+            test_datasets = {
+                dataset_name: Subset(
+                    test_dataset,
+                    np.random.permutation(len(test_dataset))[: self.max_num_samples],
+                )
+                for dataset_name, test_dataset in test_datasets.items()
+            }
         test_dataloaders = {
             dataset_name: torch.utils.data.DataLoader(
                 test_dataset,
@@ -122,7 +132,7 @@ class RewardModelEvaluationTaskPool(
                 ),
                 **self.dataloader_kwargs,
             )
-            for dataset_name, test_dataset in zip(test_datasets, test_datasets)
+            for dataset_name, test_dataset in test_datasets.items()
         }
 
         self.test_dataloaders = {
@@ -132,13 +142,16 @@ class RewardModelEvaluationTaskPool(
 
     @torch.no_grad()
     def evaluate(self, model: "LlamaForSequenceClassification"):
-        self.setup_data()
+        self.setup()
 
         model = self.fabric.setup_module(model)
+        if model.config.pad_token_id is None:
+            model.config.pad_token_id = self.tokenizer.pad_token_id
 
         model.eval()
         report = {}
         for dataset_name, test_dataloader in self.test_dataloaders.items():
             report[dataset_name] = evaluate_dataloader(model, test_dataloader)
 
+        print(report)
         return report

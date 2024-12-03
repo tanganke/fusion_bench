@@ -425,7 +425,7 @@ if __name__ == "__main__":
     tokenizer.save_pretrained(args.output_path)
 
     model = AutoModelForSequenceClassification.from_pretrained(
-        args.base_model_path, torch_dtype=torch.bfloat16
+        args.base_model_path, num_labels=1, torch_dtype=torch.bfloat16
     )
     model = fabric.setup_module(model)
     load_checkpoint(fabric, args.ckpt_path, model=model, strict=True)
