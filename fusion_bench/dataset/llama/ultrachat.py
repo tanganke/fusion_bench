@@ -19,7 +19,7 @@ def load_tokenized_ultrachat_200k(
     cache_path: Optional[str] = None,
 ):
     R"""
-    Load and tokenized Ultrachat 299k dataset for Bradley-Terry ranking model.
+    Load and tokenized Ultrachat 200k dataset for Bradley-Terry ranking model.
 
     The returned dataset contains the following fields:
 
