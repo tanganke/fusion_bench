@@ -10,9 +10,9 @@ test_datasets:
 
 dataloader_kwargs:
   shuffle: False
-  batch_size: 8
+  batch_size: 16
 
 tokenizer: ${..modelpool.tokenizer}
 
-max_num_samples: 100
+max_num_samples: 1000
 seed: 42
