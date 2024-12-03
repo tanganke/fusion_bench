@@ -236,7 +236,11 @@ class FabricModelFusionProgram(
             self.save_merged_model(merged_model)
             if self.taskpool is not None:
                 report = self.evaluate_merged_model(self.taskpool, merged_model)
-                print_json(report, print_type=False)
+                try:
+                    print_json(report, print_type=False)
+                except Exception as e:
+                    log.warning(f"Failed to pretty print the report: {e}")
+                    print(report)
                 if self.report_save_path is not None:
                     # save report (Dict) to a file
                     # if the directory of `save_report` does not exists, create it

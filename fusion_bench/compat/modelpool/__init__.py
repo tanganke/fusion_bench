@@ -22,7 +22,7 @@ class ModelPoolFactory:
     """
 
     _modelpool = {
-        "NYUv2ModelPool": ".nyuv2_modelpool.NYUv2ModelPool",
+        "NYUv2ModelPool": "fusion_bench.modelpool.nyuv2_modelpool.NYUv2ModelPool",
         "huggingface_clip_vision": HuggingFaceClipVisionPool,
         "HF_GPT2ForSequenceClassification": GPT2ForSequenceClassificationPool,
         "AutoModelPool": ".huggingface_automodel.AutoModelPool",

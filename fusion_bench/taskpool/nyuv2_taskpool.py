@@ -60,4 +60,6 @@ class NYUv2TaskPool(TaskPool):
             num_workers=self.config.num_workers,
         )
         report = self.trainer.validate(model, val_loader)
+        if isinstance(report, list) and len(report) == 1:
+            report = report[0]
         return report
