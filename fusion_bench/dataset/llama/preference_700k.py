@@ -50,8 +50,8 @@ def load_tokenized_preference_700k_for_rlhf(
         sample["chosen_input_ids"] = tokenized_pos["input_ids"]
         sample["chosen_attention_mask"] = tokenized_pos["attention_mask"]
         assert (
-            tokenizer.eos_token_id not in tokenized_pos["input_ids"][:-1]
-        ), f"Prompt contains EOS token: {sample['chosen_chat']}"
+            tokenizer.pad_token_id not in tokenized_pos["input_ids"][:-1]
+        ), f"Prompt contains PAD token: {sample['chosen_chat']}"
         if sample["chosen_input_ids"][-1] != tokenizer.eos_token_id:
             sample["chosen_input_ids"].append(tokenizer.eos_token_id)
             sample["chosen_attention_mask"].append(1)
@@ -60,8 +60,8 @@ def load_tokenized_preference_700k_for_rlhf(
         sample["rejected_attention_mask"] = tokenized_neg["attention_mask"]
         # Ensure that the rejected response does not contain an EOS token
         assert (
-            tokenizer.eos_token_id not in tokenized_neg["input_ids"][:-1]
-        ), f"Prompt contains EOS token: {sample['rejected_chat']}"
+            tokenizer.pad_token_id not in tokenized_neg["input_ids"][:-1]
+        ), f"Prompt contains PAD token: {sample['rejected_chat']}"
         if sample["rejected_input_ids"][-1] != tokenizer.eos_token_id:
             sample["rejected_input_ids"].append(tokenizer.eos_token_id)
             sample["rejected_attention_mask"].append(1)
