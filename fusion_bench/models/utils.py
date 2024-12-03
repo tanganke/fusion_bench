@@ -1,5 +1,6 @@
 from typing import List
 
+import torch
 from torch import nn
 
 
@@ -70,3 +71,10 @@ def find_layers_with_type(
         if isinstance(submodule, tuple(layer_types)):
             res[name] = submodule
     return res
+
+
+def disable_dropout(model: torch.nn.Module):
+    """Disable dropout in a model."""
+    for module in model.modules():
+        if isinstance(module, torch.nn.Dropout):
+            module.p = 0

@@ -3,10 +3,10 @@ This is basically the same as fullfinetune_sft.py, but with a different loss fun
 
 The dataset contains the following fields:
 
-- input_ids_j: The input token ids for the winner.
-- attention_mask_j: The attention mask for the winner.
-- input_ids_k: The input token ids for the loser.
-- attention_mask_k: The attention mask for the loser.
+- chosen_input_ids: The input token ids for the winner.
+- chosen_attention_mask: The attention mask for the winner.
+- rejected_input_ids: The input token ids for the loser.
+- rejected_attention_mask: The attention mask for the loser.
 
 """
 
@@ -232,13 +232,13 @@ class BradleyTerryRewardModeling(BaseAlgorithm, FabricTrainingMixin):
         )
 
         rewards = outputs[0]
-        rewards_j = rewards[: batch_size // 2]
-        rewards_k = rewards[batch_size // 2 :]
-        loss = -torch.log(torch.sigmoid(rewards_j - rewards_k)).mean()
+        chosen_reward = rewards[: batch_size // 2]
+        rejected_rewards = rewards[batch_size // 2 :]
+        loss = -torch.log(torch.sigmoid(chosen_reward - rejected_rewards)).mean()
 
         return {
-            "reward_j": rewards_j,
-            "reward_k": rewards_k,
+            "chosen_reward": chosen_reward,
+            "rejected_reward": rejected_rewards,
             "loss": loss,
         }
 
@@ -247,8 +247,8 @@ class BradleyTerryRewardModeling(BaseAlgorithm, FabricTrainingMixin):
         fabric = self.fabric
 
         accumulated_loss = 0
-        accumulated_reward_j = 0
-        accumulated_reward_k = 0
+        accumulated_chosen_reward = 0
+        accumulated_rejected_reward = 0
         for step_idx, batch in enumerate(
             pbar := tqdm(
                 self.train_dataloader,
@@ -276,8 +276,8 @@ class BradleyTerryRewardModeling(BaseAlgorithm, FabricTrainingMixin):
                 fabric.backward(loss)
 
                 accumulated_loss += loss.item()
-                accumulated_reward_j += output["reward_j"].mean().item()
-                accumulated_reward_k += output["reward_k"].mean().item()
+                accumulated_chosen_reward += output["chosen_reward"].mean().item()
+                accumulated_rejected_reward += output["rejected_reward"].mean().item()
 
             # 1. update the model parameters if not accumulating gradients
             # 2. step the lr_scheduler if interval is set to "step" and frequency is met
@@ -300,15 +300,15 @@ class BradleyTerryRewardModeling(BaseAlgorithm, FabricTrainingMixin):
 
                 metrics = {
                     "train/loss": accumulated_loss,
-                    "train/reward_j": accumulated_reward_j
+                    "train/chosen_reward": accumulated_chosen_reward
                     / self.accumulate_grad_batches,
-                    "train/reward_k": accumulated_reward_k
+                    "train/rejected_reward": accumulated_rejected_reward
                     / self.accumulate_grad_batches,
                     "train/epoch_idx": self.epoch_idx,
                     "train/lr": self.optimizer.param_groups[0]["lr"],
                 }
-                metrics["train/reward_j-k"] = (
-                    metrics["train/reward_j"] - metrics["train/reward_k"]
+                metrics["train/chosen_reward-rejected_reward"] = (
+                    metrics["train/chosen_reward"] - metrics["train/rejected_reward"]
                 )
 
                 fabric.log_dict(metrics, step=self.global_step_idx)
@@ -330,8 +330,8 @@ class BradleyTerryRewardModeling(BaseAlgorithm, FabricTrainingMixin):
 
                 self.global_step_idx += 1
                 accumulated_loss = 0
-                accumulated_reward_j = 0
-                accumulated_reward_k = 0
+                accumulated_chosen_reward = 0
+                accumulated_rejected_reward = 0
 
     def save_checkpoint(
         self,
@@ -425,7 +425,7 @@ if __name__ == "__main__":
     tokenizer.save_pretrained(args.output_path)
 
     model = AutoModelForSequenceClassification.from_pretrained(
-        args.base_model_path, torch_dtype=torch.bfloat16
+        args.base_model_path, num_labels=1, torch_dtype=torch.bfloat16
     )
     model = fabric.setup_module(model)
     load_checkpoint(fabric, args.ckpt_path, model=model, strict=True)

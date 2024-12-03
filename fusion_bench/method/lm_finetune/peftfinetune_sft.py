@@ -12,7 +12,7 @@ import torch
 from lightning.fabric.strategies.fsdp import FSDPStrategy
 from lightning.fabric.utilities import rank_zero_only
 from omegaconf import DictConfig, OmegaConf
-from peft import PeftModel, get_peft_config, get_peft_model
+from peft import LoraConfig, PeftModel, get_peft_config, get_peft_model
 from torch import nn
 from torch.utils.data import ConcatDataset, DataLoader
 from tqdm.auto import tqdm
@@ -129,6 +129,7 @@ class PeftFinetuneSFT(BaseAlgorithm, FabricTrainingMixin):
         return self.model
 
     def setup_model(self):
+        # https://github.com/Lightning-AI/litgpt/blob/main/litgpt/finetune/lora.py
         self.tokenizer = self.modelpool.load_tokenizer()
         if self.tokenizer.pad_token_id is None:
             self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
@@ -137,6 +138,7 @@ class PeftFinetuneSFT(BaseAlgorithm, FabricTrainingMixin):
 
         # get the PEFT model
         peft_config = instantiate(self._peft_config, _convert_="all")
+        peft_config.save_pretrained(os.path.join(self.log_dir, "peft_config"))
         peft_model = get_peft_model(model, peft_config, self.adapter_name)
         peft_model.print_trainable_parameters()
 
@@ -154,6 +156,7 @@ class PeftFinetuneSFT(BaseAlgorithm, FabricTrainingMixin):
             self.use_cache = True
 
         self.model_dtype = get_dtype(self.model)
+        self.model = self.model.to(dtype=self.model_dtype)
 
     def configure_optimizer(self):
         # compute expected total steps
@@ -211,11 +214,12 @@ class PeftFinetuneSFT(BaseAlgorithm, FabricTrainingMixin):
         optimizer = self.configure_optimizer()
         optimizer, lr_scheduler = optimizer["optimizer"], optimizer["lr_scheduler"]
 
-        self.model, self.optimizer = fabric.setup(self.model, optimizer)
+        self.model = self.fabric.setup_module(self.model)
+        self.optimizer = self.fabric.setup_optimizers(optimizer)
         self.lr_scheduler = lr_scheduler
 
     @override
-    def train_epoch(self):
+    def train_epoch(self, *args, **kwargs):
         fabric = self.fabric
 
         accumulated_loss = 0
@@ -252,14 +256,6 @@ class PeftFinetuneSFT(BaseAlgorithm, FabricTrainingMixin):
                 fabric.backward(loss)
                 accumulated_loss += loss.item()
 
-            metrics = {
-                "train/loss": accumulated_loss,
-                "train/epoch_idx": self.epoch_idx,
-                "train/lr": self.optimizer.param_groups[0]["lr"],
-            }
-            fabric.log_dict(metrics, step=self.global_step_idx)
-            pbar.set_postfix(metrics)
-
             if not is_accumulating:
                 self.clip_gradients_if_needed(self.model, self.optimizer)
 
@@ -274,22 +270,30 @@ class PeftFinetuneSFT(BaseAlgorithm, FabricTrainingMixin):
                 self.optimizer.step()
                 self.optimizer.zero_grad()
 
-            # save the model at the end of the step if interval is set to "step" and frequency is met
-            self.conditional_checkpoint_save(stage="end_of_step")
+                metrics = {
+                    "train/loss": accumulated_loss,
+                    "train/epoch_idx": self.epoch_idx,
+                    "train/lr": self.optimizer.param_groups[0]["lr"],
+                }
+                fabric.log_dict(metrics, step=self.global_step_idx)
+                pbar.set_postfix(metrics)
 
-            # break if max_steps_per_epoch is set, and exit epoch
-            if (
-                self.max_steps_per_epoch > 0
-                and step_idx + 1 >= self.max_steps_per_epoch
-            ):
-                break
-            # break if max_steps is set, and exit training
-            if self.max_steps > 0 and self.global_step_idx >= self.max_steps - 1:
-                self.is_training = False
-                break
+                # save the model at the end of the step if interval is set to "step" and frequency is met
+                self.conditional_checkpoint_save(stage="end_of_step")
 
-            self.global_step_idx += 1
-            accumulated_loss = 0
+                # break if max_steps_per_epoch is set, and exit epoch
+                if (
+                    self.max_steps_per_epoch > 0
+                    and step_idx + 1 >= self.max_steps_per_epoch
+                ):
+                    break
+                # break if max_steps is set, and exit training
+                if self.max_steps > 0 and self.global_step_idx >= self.max_steps - 1:
+                    self.is_training = False
+                    break
+
+                self.global_step_idx += 1
+                accumulated_loss = 0
 
     def save_checkpoint(
         self,
@@ -324,7 +328,7 @@ class PeftFinetuneSFT(BaseAlgorithm, FabricTrainingMixin):
                 if self.save_full_model
                 else {"model": lambda k, p: k in trainable_param_names}
             )
-
+            os.makedirs(os.path.dirname(path), exist_ok=True)
             fabric.save(path, state=state, filter=filter)
         elif self.save_ckpt_type == "peft":
             self.model.save_pretrained(path, is_main_process=fabric.is_global_zero)
