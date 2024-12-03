@@ -1,0 +1,9 @@
+type: AutoModelForCausalLMPool
+# each model should have a name and a path, and the model is loaded from the path
+# this is equivalent to `AutoModelForCausalLM.from_pretrained(path)`
+models:
+  - name: _pretrained_
+    path: mistralai/Mistral-7B-v0.1
+  - name: expert_1
+    path: meta-math/MetaMath-Mistral-7B
+dtype: float16

@@ -1,0 +1,8 @@
+# This algorithm merges a pretrained model with a finetuned model.
+#
+# $$\theta_{merged} = \theta_{ft} + \alpha (\theta_{ft} - \theta_{pre})$$
+#
+# where $\theta_{merged}$ is the merged model, $\theta_{ft}$ is the finetuned model (medium-aligned model),
+# $\theta_{pre}$ is the pretrained model (base model), and $\alpha$ is the extrapolation factor.
+_target_: fusion_bench.method.ExPOAlgorithm
+extrapolation_factor: 0.1
