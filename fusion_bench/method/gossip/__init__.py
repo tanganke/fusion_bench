@@ -2,3 +2,6 @@ from .clip_layer_wise_gossip import CLIPLayerWiseGossipAlgorithm
 from .clip_task_wise_gossip import CLIPTaskWiseGossipAlgorithm
 from .gpt2_layer_wise_gossip import GPT2LayerWiseGossipAlgorithm
 from .flan_t5_layer_wise_gossip import FlanT5LayerWiseGossipAlgorithm
+from .clip_simple_average_gossip import SimpleAverage_Gossip_Algorithm
+from .clip_task_arithmetic_gossip import TaskArithmetic_Gossip_Algorithm
+from .clip_ties_merging_gossip import TiesMerging_Gossip_Algorithm

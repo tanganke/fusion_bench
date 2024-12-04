@@ -1,0 +1,14 @@
+_target_: fusion_bench.method.gossip.clip_ties_merging_gossip.TiesMerging_Gossip_Algorithm
+_recursive_: false
+threshold: 20
+# List of keys to remove from the state dict, default is empty
+remove_keys: []
+# Function to merge the models, default is sum. Options are 'sum', 'mean', and 'max'
+merge_func: sum
+
+# this is the parameter about gossip
+gossip_max_steps: 30
+accuracy_test_interval: 0  #if this value is equal to 1, we will evaluate all models each time after Gossip [1, 5, 10, 15, 20] it can also be a list #
+scaling_factor: 0.343
+ties_merging_steps: -1   # the number of steps to run the task arithmetic  algorithm, the remaining turns will run ties merging
+task_using_task_arithmetic: ["eurosat", "svhn", "gtsrb", "mnist", "dtd"] # not all task apply to ties-merging when only merge three models

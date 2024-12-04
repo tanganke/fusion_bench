@@ -46,7 +46,7 @@ def entropy_loss(logits: Tensor) -> Tensor:
 class ModelScheduler:
     """
     Manage the storage of models, schedule the order in which models are loaded to GPU
-    transfer data between the CPU and GPu
+    transfer data between the CPU and GPU
     """
     def __init__(
         self,
