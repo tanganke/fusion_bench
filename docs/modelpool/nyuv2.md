@@ -23,7 +23,7 @@ fusion_bench --config-name nyuv2_config \
 ### Ties-Merging
 
 ```bash
-fusion --config-name nyuv2_config \
+fusion_bench --config-name nyuv2_config \
     method=ties_merging \
         method.scaling_factor=0.3
 ```
