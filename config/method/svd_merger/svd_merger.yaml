@@ -1,0 +1,5 @@
+_target_: fusion_bench.method.svd_merger.SVDMergerAlgorithm
+
+rank: 100
+task_weights: null
+subspace_threshold: 0.5
