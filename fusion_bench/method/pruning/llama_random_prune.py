@@ -1,7 +1,7 @@
-from typing import Literal, Optional, Union  # noqa: F401
+from typing import Dict, Literal, Optional, Union  # noqa: F401
 
 import torch
-from torch import Dict, nn
+from torch import nn
 from tqdm.auto import tqdm
 from transformers import LlamaForCausalLM, LlamaModel
 
