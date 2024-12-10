@@ -81,6 +81,8 @@ def load_tokenized_stanford_shp_for_rlhf(
             sample["rejected_input_ids"].append(tokenizer.eos_token_id)
             sample["rejected_attention_mask"].append(1)
 
+        return sample
+
     dataset = dataset.map(tokenize, num_proc=num_proc)
 
     if cache_path is not None and rank_zero_only.rank == 0:

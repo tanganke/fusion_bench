@@ -178,10 +178,13 @@ class CLIPClassificationMixin(LightningFabricMixin):
         module: Union[nn.Module, CLIPVisionModel],
         images: torch.Tensor,
         task: str,
+        image_embeds: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         text_embeds = self.zeroshot_weights[task]
 
-        image_embeds = module(images)[1]
+        if image_embeds is None:
+            image_embeds = module(images)[1]
+        assert isinstance(image_embeds, torch.Tensor), f"`image_embeds` must be a tensor, but got {type(image_embeds)}"
         image_embeds = self.visual_projection(image_embeds)
 
         # normalize embeddings
