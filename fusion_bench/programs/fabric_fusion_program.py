@@ -103,7 +103,8 @@ class FabricModelFusionProgram(
             )
             if compat_load_fn is not None:
                 compat_load_fn = import_object(compat_load_fn)
-                print_bordered(
+                if rank_zero_only.rank == 0:
+                    print_bordered(
                     OmegaConf.to_yaml(config),
                     title="instantiate compat object",
                     style="magenta",

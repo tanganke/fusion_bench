@@ -71,6 +71,8 @@ class CLIPTemplateFactory:
         "emnist_mnist": ".emnist_mnist",
         "emnist_letters": ".emnist_letters",
         "kmnist": ".kmnist",
+        "food101": ".food101",
+        "fashion_mnist": ".fashion_mnist",
     }
 
     @staticmethod
