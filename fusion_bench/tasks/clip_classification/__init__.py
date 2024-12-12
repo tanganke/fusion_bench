@@ -58,6 +58,7 @@ class CLIPTemplateFactory:
             "templates": "templates",
         },
         "nateraw/rendered-sst2": ".rendered_sst2",
+        "rendered-sst2": ".rendered_sst2",
         "tanganke/stl10": ".stl10",
         "dpdl-benchmark/oxford_flowers102": ".flower102",
         "oxford_flowers102": ".flower102",
@@ -67,6 +68,9 @@ class CLIPTemplateFactory:
         "tiny-imagenet": ".tiny_imagenet",
         "pcam": ".pcam",
         "fer2013": ".fer2013",
+        "emnist_mnist": ".emnist_mnist",
+        "emnist_letters": ".emnist_letters",
+        "kmnist": ".kmnist",
     }
 
     @staticmethod

@@ -4,7 +4,7 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 MODEL=openai/clip-vit-base-patch32
 MODEL_SHORT_NAME=ViT-B-32
 # TASKS: sun397 stanford_cars resisc45 eurosat svhn gtsrb mnist dtd
-TASK=oxford-iiit-pet
+TASK=kmnist
 
 # Full fine-tune CLIP-ViT-B/16:
 function full_finetune() {
