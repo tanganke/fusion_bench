@@ -1,7 +1,7 @@
-from typing import Literal, Optional, Union
+from typing import Dict, Literal, Optional, Union
 
 import torch
-from torch import Dict, nn
+from torch import nn
 from tqdm.auto import tqdm
 from transformers import LlamaForCausalLM, LlamaModel
 

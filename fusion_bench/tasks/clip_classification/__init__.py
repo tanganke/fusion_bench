@@ -60,9 +60,11 @@ class CLIPTemplateFactory:
         "nateraw/rendered-sst2": ".rendered_sst2",
         "tanganke/stl10": ".stl10",
         "dpdl-benchmark/oxford_flowers102": ".flower102",
+        "oxford_flowers102": ".flower102",
         "timm/oxford-iiit-pet": ".oxford_iiit_pet",
         "imagenet": ".imagenet",
         "tiny-imagenet": ".tiny_imagenet",
+        "pcam": ".pcam",
     }
 
     @staticmethod

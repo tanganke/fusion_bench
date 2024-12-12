@@ -172,7 +172,7 @@ fusion_bench \
     # (2)
     method=simple_averaging  \
     # (3)
-    modelpool=clip-vit-base-patch32_robustness_corrupted \
+    modelpool=CLIPVisionModelPool/clip-vit-base-patch32_robustness_corrupted \
     # (4)
     taskpool=clip-vit-base-patch32_robustness_corrupted
 ```
@@ -184,7 +184,7 @@ fusion_bench \
 2. The `method` option specifies the fusion algorithm to be used. In this case, we use the simple averaging algorithm.
 3. Here we specify the model pool to be used. 
     The model pool is responsible for managing the loading, preprocessing, and saving of the models.
-    By pass option `modelpool=clip-vit-base-patch32_robustness_corrupted`, the program instantiate a modelpool object that manages 4 task-specific CLIP-ViT-B/32 models that are fine-tuned on Stanford Cars, EuroSAT, RESISC45, and GTSRB datasets.
+    By pass option `modelpool=CLIPVisionModelPool/clip-vit-base-patch32_robustness_corrupted`, the program instantiate a modelpool object that manages 4 task-specific CLIP-ViT-B/32 models that are fine-tuned on Stanford Cars, EuroSAT, RESISC45, and GTSRB datasets.
 4. Here we specify the task pool to be used. 
     The task pool is responsible for managing the evaluation datasets and metrics.
     By pass option `taskpool=clip-vit-base-patch32_robustness_corrupted`, the program instantiate a taskpool object that manages 4 tasks with data corrupted by Gaussian noise.
