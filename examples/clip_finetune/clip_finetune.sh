@@ -4,11 +4,11 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 MODEL=openai/clip-vit-base-patch32
 MODEL_SHORT_NAME=ViT-B-32
 # TASKS: sun397 stanford_cars resisc45 eurosat svhn gtsrb mnist dtd
-TASK=oxford_flowers102
+TASK=oxford-iiit-pet
 
 # Full fine-tune CLIP-ViT-B/16:
 function full_finetune() {
-    echo fusion_bench \
+    fusion_bench \
         --config-dir ${SCRIPT_DIR}/config \
         method=clip_finetune \
         method.num_steps=4000 \
@@ -29,7 +29,7 @@ function lora_finetune() {
         modelpool=clip-finetune_${TASK} \
         modelpool.models.0.path=${MODEL} \
         fabric.loggers.root_dir=outputs/${MODEL_SHORT_NAME}/lora_finetune \
-        fabric.loggers.name=${TASK} \
+        fabric.loggers.name=${TASK}
 }
 
 function l_lora_finetune() {
@@ -43,7 +43,7 @@ function l_lora_finetune() {
         modelpool=clip-finetune_${TASK} \
         modelpool.models.0.path=${MODEL} \
         fabric.loggers.root_dir=outputs/${MODEL_SHORT_NAME}/l_lora_finetune \
-        fabric.loggers.name=${TASK} \
+        fabric.loggers.name=${TASK}
 }
 
 full_finetune

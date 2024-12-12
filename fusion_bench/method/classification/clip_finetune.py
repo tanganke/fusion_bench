@@ -180,7 +180,7 @@ class ImageClassificationFineTuningForCLIP(
                 save_path = os.path.join(
                     self.log_dir, "checkpoints", f"step={step_idx}.ckpt"
                 )
-                self.save_model(classifier, save_path, trainable_only=True)
+                self.save_model(classifier, save_path)
 
         if config.state_dict_save_path is not None:
             self.save_model(
