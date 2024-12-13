@@ -154,6 +154,7 @@ class ImageClassificationFineTuningForCLIP(
             range(config.num_steps),
             desc=self.finetune_method,
             disable=not self.fabric.is_global_zero,
+            dynamic_ncols=True,
         ):
             optimizer.zero_grad()
             loss = 0
