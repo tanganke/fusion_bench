@@ -11,7 +11,7 @@ defaults:
       - mnist
       - dtd
       # additional 6 tasks in the TALL mask paper (TALL 14)
-      - oxford-flowers102
+      - oxford_flowers102
       - pcam
       - fer2013
       - oxford-iiit-pet

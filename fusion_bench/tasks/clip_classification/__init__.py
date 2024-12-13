@@ -74,6 +74,8 @@ class CLIPTemplateFactory:
         "kmnist": ".kmnist",
         "food101": ".food101",
         "fashion_mnist": ".fashion_mnist",
+        "cub-200-2011": ".cub_200_2011",
+        "mango-leaf-disease": ".mango_leaf_disease",
     }
 
     @staticmethod
