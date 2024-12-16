@@ -3,6 +3,9 @@ from typing import Tuple
 import torch
 from torch import Tensor, nn
 
+from fusion_bench.utils.parameters import state_dict_to_vector
+from fusion_bench.utils.state_dict_arithmetic import state_dict_sub
+
 
 def _svd(w: Tensor, full_matrices=True) -> Tuple[Tensor, Tensor, Tensor]:
     """
@@ -50,3 +53,21 @@ def frobenius_inner_product(w1: Tensor, w2: Tensor) -> Tensor:
 
 def is_leaf_module(module: nn.Module) -> bool:
     return len(list(module.children())) == 0
+
+
+def get_task_vector_norm(model: nn.Module, pretrained_model: nn.Module) -> Tensor:
+    """
+    Get the vector norm of the task model.
+
+    Args:
+        model (nn.Module): The task model.
+        pretrained_model (nn.Module): The pretrained model.
+
+    Returns:
+        Tensor: The vector norm of the task model.
+    """
+    return torch.linalg.norm(
+        state_dict_to_vector(
+            state_dict_sub(model.state_dict(), pretrained_model.state_dict())
+        )
+    )
