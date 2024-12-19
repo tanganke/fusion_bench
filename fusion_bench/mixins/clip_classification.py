@@ -33,8 +33,6 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-TensorOrModule = TypeVar("TensorOrModule", torch.Tensor, torch.nn.Module, Any)
-
 # disable tokenizers parallelism by default to avoid deadlocks
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
