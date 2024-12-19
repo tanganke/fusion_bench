@@ -197,3 +197,17 @@ class CLIPClassificationMixin(LightningFabricMixin):
         logits_per_image = logits_per_text.t()
 
         return logits_per_image
+
+
+    def compute_features(
+        self,
+        module: Union[nn.Module, CLIPVisionModel],
+        images: torch.Tensor,
+    ) -> torch.Tensor:
+        image_embeds = module(images)[1]
+        image_embeds = self.visual_projection(image_embeds)
+
+        # normalize embeddings
+        image_embeds = image_embeds / image_embeds.norm(p=2, dim=-1, keepdim=True)
+
+        return image_embeds
