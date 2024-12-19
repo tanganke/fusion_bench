@@ -1,3 +1,21 @@
+"""
+Implementation of the Layer-Wise AdaMerging+Surgery Algorithm.
+
+For more details, please refer to:
+
+- (ICLR 2024) Yang, et.al. AdaMerging: Adaptive Model Merging for Multi-Task Learning. http://arxiv.org/abs/2310.02575
+- (ICML 2024) Yang, et.al. Representation Surgery for Multi-Task Model Merging. https://arxiv.org/abs/2402.02705
+
+Basic Example:
+
+```shell
+fusion_bench \
+    method=surgery/adamerging_surgery \
+    modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
+    taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
+```
+"""
+
 import copy
 import functools
 import gc
@@ -7,13 +25,14 @@ import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from fusion_bench.compat.modelpool import ModelPool
+from fusion_bench import BaseModelPool
 from fusion_bench.dataset.clip_dataset import CLIPDataset
+from fusion_bench.method.adamerging.layer_wise_adamerging import (
+    LayerWiseAdaMergingAlgorithm,
+)
+from fusion_bench.method.adamerging.utils import get_memory_usage
 from fusion_bench.mixins import CLIPClassificationMixin
 from fusion_bench.models.surgery.surgerymodelwrapper import SurgeryModelWrapper
-
-from .layer_wise_adamerging import LayerWiseAdaMergingAlgorithm
-from .utils import get_memory_usage
 
 log = logging.getLogger(__name__)
 
@@ -36,7 +55,7 @@ class CLIPLayerWiseAdaMergingSurgeryAlgorithm(
             num_workers=self.config.num_workers,
         )
 
-    def run(self, modelpool: ModelPool, **kwargs):
+    def run(self, modelpool: BaseModelPool, **kwargs):
         """
         Run the Layer-Wise AdaMerging+Aurgery Algorithm.
 
@@ -52,6 +71,7 @@ class CLIPLayerWiseAdaMergingSurgeryAlgorithm(
         self.modelpool = modelpool
         self.log_hyperparams(self.config)
 
+        # === Start of the AdaMerging Algorithm ===
         with self.profile("construct the wrapped model"):
             module = self.construct_layer_wise_merged_model(modelpool)
 
@@ -67,12 +87,13 @@ class CLIPLayerWiseAdaMergingSurgeryAlgorithm(
                 )
             merged_model = copy.deepcopy(module.merge_and_unload())
 
-        log.info("start performing Surgery")
-
         # free memory
         del module
         gc.collect()
         torch.cuda.empty_cache()
+
+        # === Start of the Surgery Algorithm ===
+        log.info("start performing Surgery")
         alpha_model = SurgeryModelWrapper(merged_model, modelpool.model_names, self)
         log.info(get_memory_usage("after freeing memory, the memory usage of GPU is:"))
 
