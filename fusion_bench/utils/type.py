@@ -6,18 +6,20 @@ from typing_extensions import TypeAlias
 
 try:
     import torch
-    from torch import Tensor
+    from torch import Tensor, nn
 
     StateDictType: TypeAlias = Dict[str, Tensor]
+    ModuleType = TypeVar("ModuleType", bound=nn.Module)
+
 except ImportError:
     pass
 
 
-ModuleType = type(sys)
+PyModuleType = type(sys)
 T = TypeVar("T")
 T1 = TypeVar("T1")
 T2 = TypeVar("T2")
 T3 = TypeVar("T3")
 T4 = TypeVar("T4")
 
-__all__ = ["StateDictType", "ModuleType", "T", "T1", "T2", "T3", "T4"]
+__all__ = ["StateDictType", "PyModuleType", "ModuleType", "T", "T1", "T2", "T3", "T4"]

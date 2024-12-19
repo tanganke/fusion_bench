@@ -20,19 +20,22 @@ import copy
 import functools
 import gc
 import logging
+from typing import cast
 
 import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+from transformers import CLIPVisionModel
 
-from fusion_bench import BaseModelPool
 from fusion_bench.dataset.clip_dataset import CLIPDataset
 from fusion_bench.method.adamerging.layer_wise_adamerging import (
     LayerWiseAdaMergingAlgorithm,
 )
 from fusion_bench.method.adamerging.utils import get_memory_usage
 from fusion_bench.mixins import CLIPClassificationMixin
+from fusion_bench.modelpool import CLIPVisionModelPool
 from fusion_bench.models.surgery.surgerymodelwrapper import SurgeryModelWrapper
+from fusion_bench.models.wrappers.layer_wise_fusion import LayerWiseMergedModel
 
 log = logging.getLogger(__name__)
 
@@ -55,7 +58,7 @@ class CLIPLayerWiseAdaMergingSurgeryAlgorithm(
             num_workers=self.config.num_workers,
         )
 
-    def run(self, modelpool: BaseModelPool, **kwargs):
+    def run(self, modelpool: CLIPVisionModelPool, **kwargs):
         """
         Run the Layer-Wise AdaMerging+Aurgery Algorithm.
 
@@ -73,7 +76,10 @@ class CLIPLayerWiseAdaMergingSurgeryAlgorithm(
 
         # === Start of the AdaMerging Algorithm ===
         with self.profile("construct the wrapped model"):
-            module = self.construct_layer_wise_merged_model(modelpool)
+            module = cast(
+                LayerWiseMergedModel[CLIPVisionModel],
+                self.construct_layer_wise_merged_model(modelpool),
+            )
 
         if self.config.weights is not None:
             # skip the test-time adaptation

@@ -1,12 +1,12 @@
 import logging
 import os
 from abc import abstractmethod
-from typing import Any, List, Mapping, Union, cast  # noqa: F401
+from typing import Any, List, Mapping, TypeVar, Union, cast  # noqa: F401
 
 import torch
 from lightning.fabric.utilities.rank_zero import rank_zero_only
 from omegaconf import DictConfig
-from torch import Tensor
+from torch import Tensor, nn
 from torch.utils.data import DataLoader
 from tqdm.autonotebook import tqdm
 
@@ -19,6 +19,7 @@ from fusion_bench.models.wrappers.layer_wise_fusion import (
     get_layer_wise_weights,
 )
 from fusion_bench.utils.data import load_tensor_from_file
+from fusion_bench.utils.type import ModuleType
 
 from .entropy_loss import entropy_loss
 from .utils import get_memory_usage
@@ -48,7 +49,7 @@ class LayerWiseAdaMergingAlgorithm(
         super().__init__(algorithm_config)
 
     @torch.no_grad()
-    def construct_layer_wise_merged_model(self, modelpool: ModelPool):
+    def construct_layer_wise_merged_model(self, modelpool: "ModelPool"):
         """
         Constructs a wrapped layer-wise merged model from model pool.
 
@@ -183,7 +184,7 @@ class LayerWiseAdaMergingAlgorithm(
         """
         pass
 
-    def test_time_adaptation(self, module: LayerWiseMergedModel):
+    def test_time_adaptation(self, module: "LayerWiseMergedModel[ModuleType]"):
         """
         Perform test-time adaptation on the merged model.
 

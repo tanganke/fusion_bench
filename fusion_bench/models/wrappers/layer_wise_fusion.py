@@ -1,13 +1,22 @@
 import functools
 import logging
 from copy import deepcopy
-from typing import Any, Callable, Dict, Iterator, List, Optional  # noqa: F401
+from typing import (  # noqa: F401
+    Any,
+    Callable,
+    Dict,
+    Generic,
+    Iterator,
+    List,
+    Optional,
+    TypeVar,
+)
 
 import torch
 from torch import Tensor, nn
 from torch.func import functional_call
 
-from fusion_bench.utils.type import StateDictType
+from fusion_bench.utils.type import ModuleType, StateDictType
 
 __all__ = ["get_layer_wise_weights", "fuse_weights", "LayerWiseMergedModel"]
 
@@ -132,14 +141,14 @@ def fuse_weights(
     }
 
 
-class LayerWiseMergedModel(nn.Module):
+class LayerWiseMergedModel(nn.Module, Generic[ModuleType]):
     _merged_state_dict: StateDictType = None
 
     def __init__(
         self,
         layer_wise_weight: Tensor,
-        pretrained_model: nn.Module,
-        finetuned_models: List[nn.Module],
+        pretrained_model: ModuleType,
+        finetuned_models: List[ModuleType],
         clamp_weights: bool = True,
         tie_weights: bool = False,
         strict: bool = True,
