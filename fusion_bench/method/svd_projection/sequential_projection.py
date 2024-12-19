@@ -225,17 +225,12 @@ class SequentialProjection(
         rank = s.size(0)
         split_rank = (s.cumsum(dim=0) / s.sum() > alpha).float().argmax().item()
 
-        interference_u = u[:, :split_rank]
-        interference_v = v[:, :split_rank]
+        projected_task_tv = u.T @ task_tv @ v
+        projected_task_tv.diag().fill_(0)
 
-        cleaned_task_tv = (
-            task_tv
-            - interference_u
-            @ interference_u.T
-            @ task_tv
-            @ interference_v
-            @ interference_v.T
-        )
+        projected_task_tv[:split_rank, :split_rank] = 0
+
+        cleaned_task_tv = u @ projected_task_tv @ v.T
 
         previous_lambda_t = self.previous_lambda_t
         lambda_t = self.lambda_t
