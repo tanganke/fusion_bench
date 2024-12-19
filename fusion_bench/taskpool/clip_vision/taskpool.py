@@ -3,7 +3,17 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast  # noqa: F401
+from typing import (  # noqa: F401
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 import torch
 from omegaconf import DictConfig
@@ -25,6 +35,10 @@ from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.utils import instantiate
 from fusion_bench.utils.parameters import count_parameters
 
+if TYPE_CHECKING:
+    from fusion_bench.models.surgery.surgerymodelwrapper import SurgeryModelWrapper
+
+# disable tokenizers parallelism by default to avoid deadlocks
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 log = logging.getLogger(__name__)
@@ -229,7 +243,12 @@ class CLIPVisionModelTaskPool(
             )
         ):
             inputs, targets = batch
-            outputs = classifier(inputs, task_name, return_image_embeds=True, return_dict=True)
+            outputs = classifier(
+                inputs,
+                return_image_embeds=True,
+                return_dict=True,
+                task_name=task_name,
+            )
             logits: Tensor = outputs["logits"]
 
             loss = F.cross_entropy(logits, targets)
@@ -247,7 +266,12 @@ class CLIPVisionModelTaskPool(
         results = {"accuracy": acc, "loss": loss}
         return results
 
-    def evaluate(self, model: Union[CLIPVisionModel, CLIPVisionTransformer], name=None, **kwargs):
+    def evaluate(
+        self,
+        model: Union[CLIPVisionModel, CLIPVisionTransformer],
+        name=None,
+        **kwargs,
+    ):
         """
         Evaluate the model on the image classification task.
 
@@ -260,17 +284,22 @@ class CLIPVisionModelTaskPool(
         if not self._is_setup:
             self.setup()
 
-        modeltype = kwargs.get("modeltype", None)
         extra_module = None
 
         report = {}
         # CLIPVisionModel works the same with CLIPVisonTransformer, so we can use it directly
-        if modeltype == "surgery_model":
+        if hasattr(model, "is_surgery_model") and model.is_surgery_model:
+            model: "SurgeryModelWrapper" = model
             self.clip_model.vision_model = model.model
             extra_module = model.collect_surgery_module()
         else:
+            # replace the vision encoder with the model
             self.clip_model.vision_model = model
-        classifier = HFCLIPClassifier(self.clip_model, processor=self.processor, modeltype=modeltype, extra_module=extra_module)
+        classifier = HFCLIPClassifier(
+            self.clip_model,
+            processor=self.processor,
+            extra_module=extra_module,
+        )
         classifier = cast(HFCLIPClassifier, self.fabric.to_device(classifier))
         # collect basic model information
         training_params, all_params = count_parameters(model)
@@ -293,7 +322,7 @@ class CLIPVisionModelTaskPool(
                 classifier,
                 test_dataloader,
                 num_classes=len(classnames),
-                task_name= task_name,
+                task_name=task_name,
             )
             report[task_name] = result
             self.on_task_evaluation_end()

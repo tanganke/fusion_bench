@@ -1,14 +1,23 @@
 import math
+from typing import TYPE_CHECKING, List, Union
 
 import torch
 from torch import nn
+from transformers.models.clip.modeling_clip import (
+    CLIPVisionModel,
+    CLIPVisionTransformer,
+)
 
 
 class SurgeryModelWrapper(torch.nn.Module):
+
+    is_surgery_model = True
+    """A flag to indicate that this is a surgery model."""
+
     def __init__(
         self,
-        model,
-        exam_datasets,
+        model: Union[CLIPVisionModel, CLIPVisionTransformer],
+        exam_datasets: List[str],
         Algorithm,
         projection_dim: int = 512,
         hidden_dim: int = 16,
