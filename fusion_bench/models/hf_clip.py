@@ -159,7 +159,7 @@ class HFCLIPClassifier(nn.Module):
             image_embeds = image_embeds - image_embeds_sub
 
             if not getattr(self, '_has_logged', False):
-                log.info('running evaluation on eurgery')
+                log.info('running evaluation on surgery')
                 self._has_logged = True
 
 
