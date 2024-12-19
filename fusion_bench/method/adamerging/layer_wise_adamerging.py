@@ -1,7 +1,7 @@
 import logging
 import os
 from abc import abstractmethod
-from typing import Any, List, Mapping, TypeVar, Union, cast  # noqa: F401
+from typing import TYPE_CHECKING, Any, List, Mapping, TypeVar, Union, cast  # noqa: F401
 
 import torch
 from lightning.fabric.utilities.rank_zero import rank_zero_only
@@ -24,6 +24,9 @@ from fusion_bench.utils.type import ModuleType
 from .entropy_loss import entropy_loss
 from .utils import get_memory_usage
 
+if TYPE_CHECKING:
+    from fusion_bench.programs.fabric_fusion_program import FabricModelFusionProgram
+
 log = logging.getLogger(__name__)
 
 
@@ -32,6 +35,9 @@ class LayerWiseAdaMergingAlgorithm(
     LightningFabricMixin,
     SimpleProfilerMixin,
 ):
+    _program: "FabricModelFusionProgram"
+    """The program that this algorithm is running on."""
+
     """
     Implements the Layer-Wise AdaMerging Algorithm.
 

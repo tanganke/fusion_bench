@@ -20,7 +20,7 @@ import copy
 import functools
 import gc
 import logging
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import torch
 from torch.utils.data import DataLoader
@@ -44,6 +44,7 @@ class CLIPLayerWiseAdaMergingSurgeryAlgorithm(
     CLIPClassificationMixin,
     LayerWiseAdaMergingAlgorithm,
 ):
+
     def on_test_time_adaptation_start(self):
         """
         Here we load the CLIP processor and construct the zero-shot classification head for each task.
@@ -100,7 +101,12 @@ class CLIPLayerWiseAdaMergingSurgeryAlgorithm(
 
         # === Start of the Surgery Algorithm ===
         log.info("start performing Surgery")
-        alpha_model = SurgeryModelWrapper(merged_model, modelpool.model_names, self)
+        alpha_model = SurgeryModelWrapper(
+            merged_model,
+            modelpool.model_names,
+            self,
+            projection_dim=merged_model.config.projection_dim,
+        )
         log.info(get_memory_usage("after freeing memory, the memory usage of GPU is:"))
 
         optimizer = torch.optim.Adam(
