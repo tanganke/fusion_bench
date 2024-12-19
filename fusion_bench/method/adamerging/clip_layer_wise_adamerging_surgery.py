@@ -10,8 +10,8 @@ from tqdm import tqdm
 from fusion_bench.compat.modelpool import ModelPool
 from fusion_bench.dataset.clip_dataset import CLIPDataset
 from fusion_bench.mixins import CLIPClassificationMixin
+from fusion_bench.models.surgery.surgerymodelwrapper import SurgeryModelWrapper
 
-from ..surgery.surgerymodelwrapper import SurgeryModelWrapper
 from .layer_wise_adamerging import LayerWiseAdaMergingAlgorithm
 from .utils import get_memory_usage
 

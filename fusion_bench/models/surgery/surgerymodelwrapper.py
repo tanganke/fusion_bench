@@ -1,42 +1,51 @@
 import math
 
 import torch
+from torch import nn
 
-from fusion_bench.mixins import LightningFabricMixin
 
-
-class SurgeryModelWrapper(
-    torch.nn.Module,
-    LightningFabricMixin,
-):
-    def __init__(self, model, exam_datasets, Algorithm):
+class SurgeryModelWrapper(torch.nn.Module):
+    def __init__(
+        self,
+        model,
+        exam_datasets,
+        Algorithm,
+        projection_dim: int = 512,
+        hidden_dim: int = 16,
+    ):
         super(SurgeryModelWrapper, self).__init__()
         self.model = model
         self.compute_features = Algorithm.compute_features
         self.visual_projection = Algorithm.visual_projection
-        self._fabric_instance = Algorithm.fabric
+
         self.exam_datasets = exam_datasets
         self.non_linear_func = torch.nn.ReLU()
 
-        self.model = self.fabric.to_device(self.model)
+        self.projection_dim = projection_dim
+        self.hidden_dim = hidden_dim
+
         for dataset_name in exam_datasets:
-            # mapping
-            # ViT-B/32 and ViT-B/16
-            down_proj = torch.nn.Linear(512, 16, bias=False)
-            up_proj = torch.nn.Linear(16, 512, bias=False)
-            # ViT-L/14
-            # down_proj = torch.nn.Linear(768, 16, bias=False)
-            # up_proj = torch.nn.Linear(16, 768, bias=False)
-            torch.nn.init.kaiming_uniform_(down_proj.weight, a=math.sqrt(5))
-            torch.nn.init.zeros_(up_proj.weight)
-            down_proj = self.fabric.to_device(down_proj)
-            up_proj = self.fabric.to_device(up_proj)
-            self.add_module(
-                "feature_mapping_to_head_down_proj_{}".format(dataset_name), down_proj
-            )
-            self.add_module(
-                "feature_mapping_to_head_up_proj_{}".format(dataset_name), up_proj
-            )
+            self.add_surgery_module(dataset_name)
+
+    def add_surgery_module(self, dataset_name: str):
+        """
+        Add a surgery module for a given dataset.
+
+        Args:
+            dataset_name (str): The name of the dataset.
+        """
+        down_proj = torch.nn.Linear(self.projection_dim, self.hidden_dim, bias=False)
+        up_proj = torch.nn.Linear(self.hidden_dim, self.projection_dim, bias=False)
+
+        torch.nn.init.kaiming_uniform_(down_proj.weight, a=math.sqrt(5))
+        torch.nn.init.zeros_(up_proj.weight)
+
+        self.add_module(
+            "feature_mapping_to_head_down_proj_{}".format(dataset_name), down_proj
+        )
+        self.add_module(
+            "feature_mapping_to_head_up_proj_{}".format(dataset_name), up_proj
+        )
 
     def collect_trainable_params(self):
         trainable_params = []
