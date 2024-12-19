@@ -213,7 +213,7 @@ class TaskArithmetic_Gossip_Algorithm(
             log.info(f'Gossip merging step:, {step_idx}')
             for model_id in tqdm(
                 range(self.num_finetuned_models),
-                "local admerging",
+                "local merging (task arthemetic)",
                 dynamic_ncols=True
             ):
                 task_vector = None

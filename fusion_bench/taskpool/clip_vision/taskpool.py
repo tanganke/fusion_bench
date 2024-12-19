@@ -16,6 +16,7 @@ from torchmetrics.classification.accuracy import MulticlassAccuracy
 from tqdm.autonotebook import tqdm
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 from transformers.models.clip.modeling_clip import CLIPVisionTransformer
+from fusion_bench.method.gossip.clip_layer_wise_ada_surgery_gossip import SurgeryModelWrapper
 
 from fusion_bench.dataset import CLIPDataset
 from fusion_bench.mixins import LightningFabricMixin
@@ -198,6 +199,7 @@ class CLIPVisionModelTaskPool(
         classifier: HFCLIPClassifier,
         test_loader: DataLoader,
         num_classes: int,
+        task_name: str,
     ):
         """
         Evaluate the classifier on the test dataset.
@@ -228,7 +230,7 @@ class CLIPVisionModelTaskPool(
             )
         ):
             inputs, targets = batch
-            outputs = classifier(inputs, return_image_embeds=True, return_dict=True)
+            outputs = classifier(inputs, task_name, return_image_embeds=True, return_dict=True)
             logits: Tensor = outputs["logits"]
 
             loss = F.cross_entropy(logits, targets)
@@ -246,7 +248,7 @@ class CLIPVisionModelTaskPool(
         results = {"accuracy": acc, "loss": loss}
         return results
 
-    def evaluate(self, model: Union[CLIPVisionModel, CLIPVisionTransformer], name=None):
+    def evaluate(self, model: Union[CLIPVisionModel, CLIPVisionTransformer, SurgeryModelWrapper], name=None, **kwargs):
         """
         Evaluate the model on the image classification task.
 
@@ -259,10 +261,16 @@ class CLIPVisionModelTaskPool(
         if not self._is_setup:
             self.setup()
 
+        modeltype = kwargs.get("modeltype", None)
+        extra_module = None
         report = {}
         # CLIPVisionModel works the same with CLIPVisonTransformer, so we can use it directly
-        self.clip_model.vision_model = model
-        classifier = HFCLIPClassifier(self.clip_model, processor=self.processor)
+        if modeltype == "surgery_model":
+            self.clip_model.vision_model = model.model
+            extra_module = model.collect_surgery_module()
+        else:
+            self.clip_model.vision_model = model
+        classifier = HFCLIPClassifier(self.clip_model, processor=self.processor, modeltype=modeltype, extra_module=extra_module)
         classifier = cast(HFCLIPClassifier, self.fabric.to_device(classifier))
         # collect basic model information
         training_params, all_params = count_parameters(model)
@@ -285,6 +293,7 @@ class CLIPVisionModelTaskPool(
                 classifier,
                 test_dataloader,
                 num_classes=len(classnames),
+                task_name= task_name,
             )
             report[task_name] = result
             self.on_task_evaluation_end()

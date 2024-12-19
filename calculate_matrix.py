@@ -36,4 +36,11 @@ for i in range(num):
     A = A * B
 
 print(A)
-print(float(A[0, 0] / A[0, 3]))
+print('max diff:', float(A[0, 0] / A[0, dim // 2]))
+
+from sympy import symbols, solve
+
+equation = A[0, 0] - 0.3
+solutions = solve(equation, k)
+for solution in solutions:
+    print(solution)

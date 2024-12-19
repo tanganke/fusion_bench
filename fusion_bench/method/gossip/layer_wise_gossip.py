@@ -41,8 +41,8 @@ class ModelScheduler:
     """
     def __init__(
         self,
-        modelpool: ModelPool,
         config: DictConfig,
+        modelpool: ModelPool,
     ):
         self.pretrained_model = modelpool.load_model("_pretrained_")
         self.finetuned_models = [
@@ -71,11 +71,17 @@ class ModelScheduler:
         # ]
         # merge four models
         pretrained_model = copy.deepcopy(self.pretrained_model)
-        finetuned_models = [
-            copy.deepcopy(self.finetuned_models[(model_id+1)%self.num_finetuned_models]),
-            copy.deepcopy(self.finetuned_models[model_id]),
-            copy.deepcopy(self.finetuned_models[(model_id-1)%self.num_finetuned_models])
-        ]
+        if self.config.topo == 'ring':
+            finetuned_models = [
+                copy.deepcopy(self.finetuned_models[(model_id+1)%self.num_finetuned_models]),
+                copy.deepcopy(self.finetuned_models[model_id]),
+                copy.deepcopy(self.finetuned_models[(model_id-1)%self.num_finetuned_models])
+            ]
+        elif 'rotate' in self.config.topo:
+            number = self.config.topo.split('_')[1]
+            finetuned_models = [copy.deepcopy(self.finetuned_models[model_id])]
+            for i in range(0, int(number)):
+                finetuned_models.append(copy.deepcopy(self.finetuned_models[(model_id+i+1)%self.num_finetuned_models]))
         # initialize layer-wise weights using the provided configuration `init_values` or load from file if `weights` is provided
         if self.config.weights is None:
             layer_wise_weight = get_layer_wise_weights(
@@ -114,8 +120,11 @@ class ModelScheduler:
     def update_models(self):
         self.finetuned_models = copy.deepcopy(self.new_finetuned_models)
 
-    def get_final_models(self):
+    def get_final_models(self, idx = None):
         # need a check
+        if idx is not None:
+            return copy.deepcopy(self.finetuned_models[idx])
+
         final_models = [{'name': name, 'model': model} for name, model in zip(self.finetuned_models_name, self.finetuned_models)]
         num_finetuned_models = len(self.finetuned_models)
     
@@ -157,6 +166,7 @@ class LayerWiseGossipAlgorithm(
             algorithm_config (DictConfig): The configuration for the algorithm.
         """
         super().__init__(algorithm_config)
+        self._program = None
 
 
     @rank_zero_only
@@ -196,11 +206,18 @@ class LayerWiseGossipAlgorithm(
         """
         num_datasets = len(datasets)
         datasets_copy = datasets.copy()
-        for i in range(num_datasets):
-            datasets[i] = datasets_copy[i].union(datasets_copy[(i+1)%num_datasets]).union(datasets_copy[(i-1)%num_datasets])
+        if self.config.topo == 'ring':
+            for i in range(num_datasets):
+                datasets[i] = datasets_copy[i].union(datasets_copy[(i+1)%num_datasets]).union(datasets_copy[(i-1)%num_datasets])
+        elif 'rotate' in self.config.topo:
+            number = self.config.topo.split('_')[1]
+            for i in range(num_datasets):
+                datasets[i] = datasets_copy[i]
+                for j in range(0, int(number)):
+                    datasets[i] = datasets[i].union(datasets_copy[(i+j+1)%num_datasets])
         return datasets
 
-    def run(self, modelpool: ModelPool, evaluate_merged_model: Callable, taskpool):
+    def run(self, modelpool: ModelPool):
         """
         Run the Layer-Wise AdaMerging Algorithm.
 
@@ -219,7 +236,7 @@ class LayerWiseGossipAlgorithm(
         datasets = [{dataset} for dataset in modelpool.model_names]
 
         with self.profile("construct the wrapped model"):
-            model_scheduler = ModelScheduler(self.modelpool, self.config)
+            model_scheduler = ModelScheduler(modelpool=self.modelpool, config=self.config)
 
         if self.config.weights is not None:
             # skip the test-time adaptation
@@ -264,7 +281,7 @@ class LayerWiseGossipAlgorithm(
 
                 model_scheduler.update_models()
                 if ((step_idx+1) % self.config.accuracy_test_interval == 0):
-                    evaluate_merged_model(taskpool,  model_scheduler.get_final_models())
+                    self._program.evaluate_merged_model(self._program.taskpool,  model_scheduler.get_final_models())
                     model_scheduler.move_to('cpu')
         return model_scheduler.get_final_models()
 

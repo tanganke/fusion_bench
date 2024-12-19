@@ -11,4 +11,5 @@ gossip_max_steps: 30
 accuracy_test_interval: 0  #if this value is equal to 1, we will evaluate all models each time after Gossip [1, 5, 10, 15, 20] it can also be a list #
 scaling_factor: 0.343
 ties_merging_steps: -1   # the number of steps to run the task arithmetic  algorithm, the remaining turns will run ties merging
-task_using_task_arithmetic: ["eurosat", "svhn", "gtsrb", "mnist", "dtd"] # not all task apply to ties-merging when only merge three models
+# task_using_task_arithmetic: ["eurosat", "svhn", "gtsrb", "mnist", "dtd"] # not all task apply to ties-merging when only merge three models
+task_using_task_arithmetic: []

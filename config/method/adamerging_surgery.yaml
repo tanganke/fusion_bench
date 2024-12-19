@@ -1,6 +1,5 @@
-# this option can be "clip_task_wise_gossip"
-name: clip_layer_wise_gossip
-# _target_: fusion_bench.method.CLIPLayerWiseGossipAlgorithm
+# this option can be "clip_task_wise_adamerging"
+name: clip_layer_wise_adamerging_surgery
 # this weights can be a list of float, or a string that points to a *.np, *.pt file containing the weights
 # if weights is specified, skip the test-time adaptation training
 weights: null
@@ -17,14 +16,12 @@ strict: false
 devices: 1
 batch_size: 16
 num_workers: 8
-max_steps: 400 # 1000
+max_steps: 1000
 fast_dev_run: ${fast_dev_run}
 # the path for saving the merging weights
 save_merging_weights: 'merging_weights.pt'
 cache_dir: outputs
-# this is the parameter about gossip
-gossip_max_steps: 20
-gossip_skip_adamerging: false
-accuracy_test_interval: 1  # if this value is equal to 1, we will evaluate all models each time after Gossip
-improve_dataset: true
-topo: rotate_1
+
+# parameters of Surgery
+eval_iterations: 500
+surgery_steps: 500

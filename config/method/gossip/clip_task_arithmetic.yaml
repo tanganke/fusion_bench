@@ -3,5 +3,5 @@ _recursive_: false
 
 # this is the parameter about gossip
 gossip_max_steps: 30
-accuracy_test_interval: 1  #if this value is equal to 1, we will evaluate all models each time after Gossip [1, 5, 10, 15, 20] it can also be a list #
+accuracy_test_interval: 1  #if this value is equal to 1, we will evaluate all models each time after Gossip # [1, 5, 10, 15, 20] it can also be a list #
 scaling_factor: 0.343

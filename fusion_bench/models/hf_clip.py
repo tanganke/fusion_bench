@@ -4,6 +4,7 @@ import torch
 from torch import Tensor, nn
 from transformers import CLIPModel, CLIPProcessor
 from transformers.models.clip.modeling_clip import BaseModelOutputWithPooling
+import logging
 
 from fusion_bench.utils.devices import get_device
 
@@ -11,6 +12,7 @@ default_templates = [
     lambda c: f"a photo of a {c}",
 ]
 
+log = logging.getLogger(__name__)
 
 class HFCLIPClassifier(nn.Module):
     """
@@ -33,6 +35,8 @@ class HFCLIPClassifier(nn.Module):
         self,
         clip_model: CLIPModel,
         processor: CLIPProcessor,
+        modeltype = None,
+        extra_module = None,
     ):
         """
         Initialize the HFCLIPClassifier.
@@ -55,6 +59,9 @@ class HFCLIPClassifier(nn.Module):
             None,
             persistent=False,
         )
+
+        self.modeltype = modeltype
+        self.extra_module = extra_module
 
     @property
     def text_model(self):
@@ -111,7 +118,7 @@ class HFCLIPClassifier(nn.Module):
 
         self.zeroshot_weights = zeroshot_weights
 
-    def forward(self, images, return_image_embeds=False, return_dict=False):
+    def forward(self, images, task_name, return_image_embeds=False, return_dict=False):
         """
         Perform forward pass for zero-shot image classification.
 
@@ -140,6 +147,20 @@ class HFCLIPClassifier(nn.Module):
 
         # normalize embeddings
         image_embeds = image_embeds / image_embeds.norm(p=2, dim=-1, keepdim=True)
+
+        if self.modeltype is not None and self.modeltype == "surgery_model":
+            down_proj = self.extra_module['feature_mapping_to_head_down_proj_{}'.format(task_name)]
+            up_proj = self.extra_module['feature_mapping_to_head_up_proj_{}'.format(task_name)]
+            image_embeds_sub = down_proj(image_embeds)
+            image_embeds_sub = self.extra_module['non_linear_func'](image_embeds_sub)
+            image_embeds_sub = up_proj(image_embeds_sub)
+
+            image_embeds = image_embeds - image_embeds_sub
+
+            if not getattr(self, '_has_logged', False):
+                log.info('running evaluation on eurgery')
+                self._has_logged = True
+
 
         # cosine similarity
         logit_scale = self.clip_model.logit_scale.exp()

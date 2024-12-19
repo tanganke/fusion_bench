@@ -19,6 +19,7 @@ from fusion_bench.utils import import_object, instantiate, timeit_context
 from fusion_bench.utils.hydra_utils import get_hydra_output_dir
 from fusion_bench.utils.json import print_json
 from fusion_bench.utils.rich_utils import print_bordered, print_config_tree
+from fusion_bench.method.surgery.surgerymodelwrapper import SurgeryModelWrapper
 
 log = logging.getLogger(__name__)
 
@@ -181,7 +182,11 @@ class FabricModelFusionProgram(
             - If the merged model is a dictionary, the report is a dictionary updated with the remaining dictionary items.
             - If the merged model is an iterable, the report is a list of evaluation reports.
         """
-        if isinstance(merged_model, nn.Module):
+        if isinstance(merged_model, SurgeryModelWrapper):
+            report = taskpool.evaluate(merged_model, modeltype='surgery_model')
+            # report.update(merged_model)
+            return report
+        elif isinstance(merged_model, nn.Module):
             report = taskpool.evaluate(merged_model)
             return report
         elif isinstance(merged_model, Dict):
