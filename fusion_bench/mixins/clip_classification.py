@@ -2,7 +2,17 @@ import functools
 import logging
 import os
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union, cast  # noqa: F401
+from typing import (  # noqa: F401
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+    Union,
+    cast,
+)
 
 import torch
 from omegaconf import DictConfig
@@ -18,10 +28,14 @@ from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.utils.data import InfiniteDataLoader
 
+if TYPE_CHECKING:
+    from transformers.models.clip.modeling_clip import CLIPVisionTransformer
+
 log = logging.getLogger(__name__)
 
 TensorOrModule = TypeVar("TensorOrModule", torch.Tensor, torch.nn.Module, Any)
 
+# disable tokenizers parallelism by default to avoid deadlocks
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
@@ -175,16 +189,30 @@ class CLIPClassificationMixin(LightningFabricMixin):
 
     def compute_logits(
         self,
-        module: Union[nn.Module, CLIPVisionModel],
+        module: Union[nn.Module, CLIPVisionModel, "CLIPVisionTransformer"],
         images: torch.Tensor,
         task: str,
         image_embeds: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
+        """
+        Compute the logits of the images for a given task.
+
+        Args:
+            module (Union[nn.Module, CLIPVisionModel, "CLIPVisionTransformer"]): The module to compute the logits.
+            images (torch.Tensor): The images to compute the logits.
+            task (str): The task to compute the logits.
+            image_embeds (Optional[torch.Tensor]): The precomputed image embeddings. If None, the image embeddings will be computed.
+
+        Returns:
+            torch.Tensor: The logits of the images.
+        """
         text_embeds = self.zeroshot_weights[task]
 
         if image_embeds is None:
             image_embeds = module(images)[1]
-        assert isinstance(image_embeds, torch.Tensor), f"`image_embeds` must be a tensor, but got {type(image_embeds)}"
+        assert isinstance(
+            image_embeds, torch.Tensor
+        ), f"`image_embeds` must be a tensor, but got {type(image_embeds)}"
         image_embeds = self.visual_projection(image_embeds)
 
         # normalize embeddings
@@ -198,16 +226,24 @@ class CLIPClassificationMixin(LightningFabricMixin):
 
         return logits_per_image
 
-
     def compute_features(
         self,
-        module: Union[nn.Module, CLIPVisionModel],
+        module: Union[nn.Module, CLIPVisionModel, "CLIPVisionTransformer"],
         images: torch.Tensor,
     ) -> torch.Tensor:
+        """
+        Extracts normalized image features using CLIP's vision encoder and visual projection.
+
+        Args:
+            module (Union[nn.Module, CLIPVisionModel, "CLIPVisionTransformer"]): The CLIP vision encoder module.
+            images (torch.Tensor): Input image batch to process.
+
+        Returns:
+            torch.Tensor: Normalized image embeddings with dimension matching CLIP's projection space (`projection_dim` in model config).
+        """
         image_embeds = module(images)[1]
         image_embeds = self.visual_projection(image_embeds)
 
         # normalize embeddings
         image_embeds = image_embeds / image_embeds.norm(p=2, dim=-1, keepdim=True)
-
         return image_embeds
