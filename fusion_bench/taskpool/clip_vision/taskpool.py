@@ -215,7 +215,7 @@ class CLIPVisionModelTaskPool(
         task_name: str = None,
     ):
         """
-        Evaluate the classifier on the test dataset.
+        Evaluate the classifier on the test dataset (single-task evaluation).
 
         Args:
             classifier (HFCLIPClassifier): The classifier to evaluate.
@@ -277,6 +277,7 @@ class CLIPVisionModelTaskPool(
 
         Args:
             model (Union[CLIPVisionModel, CLIPVisionTransformer]): The model to evaluate.
+            name (Optional[str]): The name of the model. This will be logged into the report if not None.
 
         Returns:
             Dict[str, Any]: A dictionary containing the evaluation results for each task.
@@ -284,21 +285,18 @@ class CLIPVisionModelTaskPool(
         if not self._is_setup:
             self.setup()
 
-        extra_module = None
-
         report = {}
         # CLIPVisionModel works the same with CLIPVisonTransformer, so we can use it directly
         if hasattr(model, "is_surgery_model") and model.is_surgery_model:
+            log.info("running evaluation on a surgery model.")
             model: "SurgeryModelWrapper" = model
-            self.clip_model.vision_model = model.model
-            extra_module = model.collect_surgery_module()
+            self.clip_model.vision_model = model
         else:
             # replace the vision encoder with the model
             self.clip_model.vision_model = model
         classifier = HFCLIPClassifier(
             self.clip_model,
             processor=self.processor,
-            extra_module=extra_module,
         )
         classifier = cast(HFCLIPClassifier, self.fabric.to_device(classifier))
         # collect basic model information

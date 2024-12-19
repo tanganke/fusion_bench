@@ -228,13 +228,15 @@ class CLIPClassificationMixin(LightningFabricMixin):
         self,
         module: Union[nn.Module, CLIPVisionModel, "CLIPVisionTransformer"],
         images: torch.Tensor,
+        normalize: bool = True,
     ) -> torch.Tensor:
         """
-        Extracts normalized image features using CLIP's vision encoder and visual projection.
+        Extracts image features using CLIP's vision encoder and visual projection.
 
         Args:
             module (Union[nn.Module, CLIPVisionModel, "CLIPVisionTransformer"]): The CLIP vision encoder module.
             images (torch.Tensor): Input image batch to process.
+            normalize (bool): Whether to normalize the image embeddings.
 
         Returns:
             torch.Tensor: Normalized image embeddings with dimension matching CLIP's projection space (`projection_dim` in model config).
@@ -242,6 +244,6 @@ class CLIPClassificationMixin(LightningFabricMixin):
         image_embeds = module(images)[1]
         image_embeds = self.visual_projection(image_embeds)
 
-        # normalize embeddings
-        image_embeds = image_embeds / image_embeds.norm(p=2, dim=-1, keepdim=True)
+        if normalize:
+            image_embeds = image_embeds / image_embeds.norm(p=2, dim=-1, keepdim=True)
         return image_embeds
