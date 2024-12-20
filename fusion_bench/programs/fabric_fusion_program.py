@@ -13,7 +13,6 @@ import fusion_bench.utils.instantiate
 from fusion_bench.method import BaseAlgorithm
 from fusion_bench.mixins import LightningFabricMixin
 from fusion_bench.modelpool import BaseModelPool
-from fusion_bench.models.surgery.surgerymodelwrapper import SurgeryModelWrapper
 from fusion_bench.programs import BaseHydraProgram
 from fusion_bench.taskpool import BaseTaskPool
 from fusion_bench.utils import import_object, instantiate, timeit_context
@@ -182,11 +181,7 @@ class FabricModelFusionProgram(
             - If the merged model is a dictionary, the report is a dictionary updated with the remaining dictionary items.
             - If the merged model is an iterable, the report is a list of evaluation reports.
         """
-        if isinstance(merged_model, SurgeryModelWrapper):
-            report = taskpool.evaluate(merged_model, modeltype="surgery_model")
-            # report.update(merged_model)
-            return report
-        elif isinstance(merged_model, nn.Module):
+        if isinstance(merged_model, nn.Module):
             report = taskpool.evaluate(merged_model)
             return report
         elif isinstance(merged_model, Dict):
