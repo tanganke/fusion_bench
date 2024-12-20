@@ -104,19 +104,36 @@ class SurgeryModelWrapper(torch.nn.Module, Generic[TorchModelType]):
 
     def compute_surgery_features(
         self,
-        compute_features_fn: Callable[[TorchModelType], torch.Tensor],
+        compute_features_fn: Union[
+            torch.Tensor, Callable[[TorchModelType], torch.Tensor]
+        ],
         dataset_name: str,
     ):
         """
-        Forward pass for surgery.
+        Compute the surgery features.
 
         Args:
-            compute_features_fn (Callable[[nn.Module], torch.Tensor]): A function that computes the features.
+            compute_features_fn (Union[torch.Tensor, Callable[[nn.Module], torch.Tensor]]): A function that computes the features or a tensor that represents the features.
             dataset_name (str): The name of the dataset.
+
+        Returns:
+            feature (torch.Tensor): The surgery features.
+            feature0 (torch.Tensor): The original features.
+            feature_sub (torch.Tensor): feature0 - feature.
         """
         dataset_name = regularize_name(dataset_name)
 
-        feature = compute_features_fn(self.model)
+        if isinstance(compute_features_fn, torch.Tensor):
+            feature = compute_features_fn
+        elif callable(compute_features_fn):
+            feature = compute_features_fn(self.model)
+        else:
+            raise ValueError(
+                "compute_features_fn must be a tensor or a callable, but got {}".format(
+                    type(compute_features_fn)
+                )
+            )
+
         feature0 = feature
 
         # feature bias

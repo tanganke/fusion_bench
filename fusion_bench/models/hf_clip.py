@@ -39,6 +39,7 @@ class HFCLIPClassifier(nn.Module):
         self,
         clip_model: CLIPModel,
         processor: CLIPProcessor,
+        extra_module=None,
     ):
         """
         Initialize the HFCLIPClassifier.
@@ -61,6 +62,8 @@ class HFCLIPClassifier(nn.Module):
             None,
             persistent=False,
         )
+
+        self.extra_module = extra_module
 
     @property
     def text_model(self):
@@ -158,18 +161,9 @@ class HFCLIPClassifier(nn.Module):
             # (ICML 2024) Yang, et.al. Representation Surgery for Multi-Task Model Merging
             # https://arxiv.org/abs/2402.02705
             self.vision_model: "SurgeryModelWrapper" = self.vision_model
-            down_proj = self.vision_model.get_submodule(
-                "feature_mapping_to_head_down_proj_{}".format(task_name)
+            image_embeds, _, _ = self.vision_model.compute_surgery_features(
+                image_embeds, dataset_name=task_name
             )
-            up_proj = self.vision_model.get_submodule(
-                "feature_mapping_to_head_up_proj_{}".format(task_name)
-            )
-
-            image_embeds_sub = down_proj(image_embeds)
-            image_embeds_sub = self.vision_model.non_linear_func(image_embeds_sub)
-            image_embeds_sub = up_proj(image_embeds_sub)
-
-            image_embeds = image_embeds - image_embeds_sub
 
         # cosine similarity
         logit_scale = self.clip_model.logit_scale.exp()
