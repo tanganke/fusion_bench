@@ -282,4 +282,72 @@ for scaling_factor in 0.05 0.1 0.15 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0; do
 done
 
 # === Simple Average ===
-# 20 tasks
+# clip-vit-base-patch32, 14 tasks
+if [ ! -f outputs/simple_average/vit-b-32-TALL14/version_0/report.json ]; then
+    fusion_bench \
+        fabric.loggers.root_dir=outputs/simple_average \
+        fabric.loggers.name=vit-b-32-TALL14 \
+        fabric.loggers.version=0 \
+        method=simple_average \
+        modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TALL14_model_only \
+        taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TALL14
+fi
+
+# clip-vit-base-patch16, 14 tasks
+if [ ! -f outputs/simple_average/vit-b-16-TALL14/version_0/report.json ]; then
+    fusion_bench \
+        fabric.loggers.root_dir=outputs/simple_average \
+        fabric.loggers.name=vit-b-16-TALL14 \
+        fabric.loggers.version=0 \
+        method=simple_average \
+        modelpool=CLIPVisionModelPool/clip-vit-base-patch16_TALL14_model_only \
+        taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TALL14 \
+        taskpool.base_model=openai/clip-vit-base-patch16
+fi
+
+# clip-vit-large-patch14, 14 tasks
+if [ ! -f outputs/simple_average/vit-l-14-TALL14/version_0/report.json ]; then
+    fusion_bench \
+        fabric.loggers.root_dir=outputs/simple_average \
+        fabric.loggers.name=vit-l-14-TALL14 \
+        fabric.loggers.version=0 \
+        method=simple_average \
+        modelpool=CLIPVisionModelPool/clip-vit-large-patch14_TALL14_model_only \
+        taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TALL14 \
+        taskpool.base_model=openai/clip-vit-large-patch14
+fi
+
+# clip-vit-base-patch32, 20 tasks
+if [ ! -f outputs/simple_average/vit-b-32-TALL20/version_0/report.json ]; then
+    fusion_bench \
+        fabric.loggers.root_dir=outputs/simple_average \
+        fabric.loggers.name=vit-b-32-TALL20 \
+        fabric.loggers.version=0 \
+        method=simple_average \
+        modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TALL20_model_only \
+        taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TALL20
+fi
+
+# clip-vit-base-patch16, 20 tasks
+if [ ! -f outputs/simple_average/vit-b-16-TALL20/version_0/report.json ]; then
+    fusion_bench \
+        fabric.loggers.root_dir=outputs/simple_average \
+        fabric.loggers.name=vit-b-16-TALL20 \
+        fabric.loggers.version=0 \
+        method=simple_average \
+        modelpool=CLIPVisionModelPool/clip-vit-base-patch16_TALL20_model_only \
+        taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TALL20 \
+        taskpool.base_model=openai/clip-vit-base-patch16
+fi
+
+# clip-vit-large-patch14, 20 tasks
+if [ ! -f outputs/simple_average/vit-l-14-TALL20/version_0/report.json ]; then
+    fusion_bench \
+        fabric.loggers.root_dir=outputs/simple_average \
+        fabric.loggers.name=vit-l-14-TALL20 \
+        fabric.loggers.version=0 \
+        method=simple_average \
+        modelpool=CLIPVisionModelPool/clip-vit-large-patch14_TALL20_model_only \
+        taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TALL20 \
+        taskpool.base_model=openai/clip-vit-large-patch14
+fi

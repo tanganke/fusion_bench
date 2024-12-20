@@ -1,8 +1,9 @@
 import logging
 from copy import deepcopy
-from typing import Optional
+from typing import Optional, Union
 
 from omegaconf import DictConfig, open_dict
+from torch import nn
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 from typing_extensions import override
 
@@ -59,3 +60,39 @@ class CLIPVisionModelPool(BaseModelPool):
         """
         with timeit_context(f'Saving clip vision model to "{path}"'):
             model.save_pretrained(path)
+
+    def load_model(
+        self, model_name_or_config: Union[str, DictConfig], *args, **kwargs
+    ) -> CLIPVisionModel:
+        """
+        This method is used to load a CLIPVisionModel from the model pool.
+
+        Example configuration could be:
+
+        ```yaml
+        models:
+            cifar10: tanganke/clip-vit-base-patch32_cifar10
+            sun397: tanganke/clip-vit-base-patch32_sun397
+            stanford-cars: tanganke/clip-vit-base-patch32_stanford-cars
+        ```
+
+        Args:
+            model_name_or_config (Union[str, DictConfig]): The name of the model or the model configuration.
+
+        Returns:
+            CLIPVisionModel: The loaded CLIPVisionModel.
+        """
+        if (
+            isinstance(model_name_or_config, str)
+            and model_name_or_config in self._models
+        ):
+            model = self._models[model_name_or_config]
+            if isinstance(model, str):
+                log.info(f"Loading CLIPVisionModel: {model}")
+                return CLIPVisionModel.from_pretrained(model, *args, **kwargs)
+            if isinstance(model, nn.Module):
+                log.info(f"Returning existing model: {model}")
+                return model
+
+        # If the model is not a string, we use the default load_model method
+        return super().load_model(model_name_or_config, *args, **kwargs)
