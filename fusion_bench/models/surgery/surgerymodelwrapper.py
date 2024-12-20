@@ -153,5 +153,5 @@ class SurgeryModelWrapper(torch.nn.Module, Generic[TorchModelType]):
         return feature, feature0, feature_sub
 
     def forward(self, *args, **kwargs):
-        """The wrapper the model should just forward like normal."""
+        """The wrappered model should just forward like normal."""
         return self.model(*args, **kwargs)
