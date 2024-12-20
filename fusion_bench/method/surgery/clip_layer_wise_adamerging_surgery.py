@@ -62,7 +62,7 @@ class CLIPLayerWiseAdaMergingSurgeryAlgorithm(
 
     def run(self, modelpool: CLIPVisionModelPool, **kwargs):
         """
-        Run the Layer-Wise AdaMerging+Aurgery Algorithm.
+        Run the Layer-Wise AdaMerging+Surgery Algorithm.
 
         This method constructs the wrapped model and performs test-time adaptation if necessary. Then, it will perform surgery.
 
