@@ -4,9 +4,12 @@ This is modified based on https://github.com/EnnengYang/AdaMerging/blob/main/src
 
 import copy
 from collections import OrderedDict
+from typing import List
 
 import torch
 from torch import Tensor, nn
+
+from fusion_bench.utils.type import StateDictType
 
 
 # Model conversion utils
@@ -82,7 +85,7 @@ def add_ptm_to_tv(tv_dict, ptm_dict):
     return final_dict
 
 
-def check_parameterNamesMatch(checkpoints):
+def check_parameterNamesMatch(checkpoints: List[StateDictType]) -> None:
     """
     Check if the parameter names match across multiple checkpoints.
 
@@ -105,7 +108,9 @@ def check_parameterNamesMatch(checkpoints):
                 )
 
 
-def check_state_dicts_equal(state_dict1, state_dict2):
+def check_state_dicts_equal(
+    state_dict1: StateDictType, state_dict2: StateDictType
+) -> bool:
     """
     Check if two state dictionaries are equal.
 
