@@ -1,0 +1,22 @@
+type: clip_vit_classification
+name: clip-vit-base-patch32_svhn_and_mnist # whatever you like
+dataset_type: huggingface_image_classification
+tasks:
+  - name: svhn
+    dataset:
+      type: instantiate
+      name: svhn
+      object:
+        _target_: datasets.load_dataset
+        _args_:
+          - svhn
+          - cropped_digits
+        split: test
+  - name: mnist
+    dataset:
+      name: mnist
+      split: test
+clip_model: openai/clip-vit-base-patch32
+batch_size: 128
+num_workers: 16
+fast_dev_run: ${fast_dev_run}
