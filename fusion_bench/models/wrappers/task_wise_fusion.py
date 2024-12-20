@@ -22,7 +22,7 @@ import torch
 from torch import Tensor, nn
 from torch.func import functional_call
 
-from fusion_bench.utils.type import TorchModelType, StateDictType
+from fusion_bench.utils.type import StateDictType, TorchModelType
 
 log = logging.getLogger(__name__)
 

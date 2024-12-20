@@ -22,4 +22,13 @@ T2 = TypeVar("T2")
 T3 = TypeVar("T3")
 T4 = TypeVar("T4")
 
-__all__ = ["StateDictType", "PyModuleType", "TorchModelType", "T", "T1", "T2", "T3", "T4"]
+__all__ = [
+    "StateDictType",
+    "PyModuleType",
+    "TorchModelType",
+    "T",
+    "T1",
+    "T2",
+    "T3",
+    "T4",
+]
