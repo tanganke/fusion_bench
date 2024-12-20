@@ -105,7 +105,6 @@ class CLIPLayerWiseAdaMergingSurgeryAlgorithm(
         alpha_model = SurgeryModelWrapper(
             merged_model,
             modelpool.model_names,
-            self,
             projection_dim=merged_model.config.projection_dim,
         )
         alpha_model = self.fabric.setup(alpha_model)

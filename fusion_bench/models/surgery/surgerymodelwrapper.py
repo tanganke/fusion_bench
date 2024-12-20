@@ -68,6 +68,7 @@ class SurgeryModelWrapper(torch.nn.Module, Generic[TorchModelType]):
 
         # surgery parameter
         for dataset_name in self.test_datasets:
+            dataset_name = regularize_name(dataset_name)
             down_proj = getattr(
                 self, "feature_mapping_to_head_down_proj_{}".format(dataset_name)
             )
@@ -83,6 +84,7 @@ class SurgeryModelWrapper(torch.nn.Module, Generic[TorchModelType]):
 
         # surgery parameter
         for dataset_name in self.test_datasets:
+            dataset_name = regularize_name(dataset_name)
             down_proj = getattr(
                 self, "feature_mapping_to_head_down_proj_{}".format(dataset_name)
             )
@@ -102,7 +104,7 @@ class SurgeryModelWrapper(torch.nn.Module, Generic[TorchModelType]):
 
     def compute_surgery_features(
         self,
-        compute_features_fn: Callable[[nn.Module], torch.Tensor],
+        compute_features_fn: Callable[[TorchModelType], torch.Tensor],
         dataset_name: str,
     ):
         """
