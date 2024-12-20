@@ -16,7 +16,7 @@ import torch
 from torch import Tensor, nn
 from torch.func import functional_call
 
-from fusion_bench.utils.type import TorchModelType, StateDictType
+from fusion_bench.utils.type import StateDictType, TorchModelType
 
 __all__ = ["get_layer_wise_weights", "fuse_weights", "LayerWiseMergedModel"]
 
