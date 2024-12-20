@@ -11,10 +11,10 @@ import functools
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, cast
 
 import lightning as L
+import numpy as np
 import torch
 from omegaconf import DictConfig
 from torch.utils.data import Subset
-import numpy as np
 from tqdm.auto import tqdm
 
 from fusion_bench.dataset.llama.collate import bradley_terry_rm_collate

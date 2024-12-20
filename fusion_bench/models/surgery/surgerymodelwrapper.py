@@ -1,5 +1,5 @@
 import math
-from typing import TYPE_CHECKING, List, Union, Callable, Generic
+from typing import TYPE_CHECKING, Callable, Generic, List, Union
 
 import torch
 from torch import nn
@@ -7,6 +7,7 @@ from transformers.models.clip.modeling_clip import (
     CLIPVisionModel,
     CLIPVisionTransformer,
 )
+
 from fusion_bench.utils.type import TorchModelType
 
 
