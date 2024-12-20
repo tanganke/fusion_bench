@@ -39,7 +39,6 @@ class HFCLIPClassifier(nn.Module):
         self,
         clip_model: CLIPModel,
         processor: CLIPProcessor,
-        extra_module=None,
     ):
         """
         Initialize the HFCLIPClassifier.
@@ -62,8 +61,6 @@ class HFCLIPClassifier(nn.Module):
             None,
             persistent=False,
         )
-
-        self.extra_module = extra_module
 
     @property
     def text_model(self):
