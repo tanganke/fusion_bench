@@ -22,7 +22,7 @@ import torch
 from torch import Tensor, nn
 from torch.func import functional_call
 
-from fusion_bench.utils.type import ModuleType, StateDictType
+from fusion_bench.utils.type import TorchModelType, StateDictType
 
 log = logging.getLogger(__name__)
 
@@ -157,14 +157,14 @@ def fuse_weights(
     }
 
 
-class TaskWiseMergedModel(nn.Module, Generic[ModuleType]):
+class TaskWiseMergedModel(nn.Module, Generic[TorchModelType]):
     _merged_state_dict: StateDictType = None
 
     def __init__(
         self,
         task_wise_weight: Tensor,
-        pretrained_model: ModuleType,
-        finetuned_models: List[ModuleType],
+        pretrained_model: TorchModelType,
+        finetuned_models: List[TorchModelType],
         clamp_weights: bool = True,
         tie_weights: bool = False,
         strict: bool = True,

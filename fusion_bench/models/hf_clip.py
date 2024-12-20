@@ -174,10 +174,6 @@ class HFCLIPClassifier(nn.Module):
 
             image_embeds = image_embeds - image_embeds_sub
 
-            if not getattr(self, "_has_logged", False):
-                log.info("running evaluation on surgery")
-                self._has_logged = True
-
         # cosine similarity
         logit_scale = self.clip_model.logit_scale.exp()
         logits_per_text = torch.matmul(text_embeds, image_embeds.t()) * logit_scale

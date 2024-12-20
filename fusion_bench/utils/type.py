@@ -9,7 +9,7 @@ try:
     from torch import Tensor, nn
 
     StateDictType: TypeAlias = Dict[str, Tensor]
-    ModuleType = TypeVar("ModuleType", bound=nn.Module)
+    TorchModelType = TypeVar("TorchModelType", bound=nn.Module)
 
 except ImportError:
     pass
@@ -22,4 +22,4 @@ T2 = TypeVar("T2")
 T3 = TypeVar("T3")
 T4 = TypeVar("T4")
 
-__all__ = ["StateDictType", "PyModuleType", "ModuleType", "T", "T1", "T2", "T3", "T4"]
+__all__ = ["StateDictType", "PyModuleType", "TorchModelType", "T", "T1", "T2", "T3", "T4"]

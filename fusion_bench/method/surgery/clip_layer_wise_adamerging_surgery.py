@@ -23,6 +23,7 @@ import logging
 from typing import TYPE_CHECKING, cast
 
 import torch
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import CLIPVisionModel
@@ -107,6 +108,7 @@ class CLIPLayerWiseAdaMergingSurgeryAlgorithm(
             self,
             projection_dim=merged_model.config.projection_dim,
         )
+        alpha_model = self.fabric.setup(alpha_model)
         log.info(get_memory_usage("after freeing memory, the memory usage of GPU is:"))
 
         optimizer = torch.optim.Adam(
@@ -115,13 +117,13 @@ class CLIPLayerWiseAdaMergingSurgeryAlgorithm(
             betas=(0.9, 0.999),
             weight_decay=0.0,
         )
-        loss_func = torch.nn.L1Loss()
 
         finetuned_models = {
             model_name: modelpool.load_model(model_name)
             for model_name in modelpool.model_names
         }
         for name, model in finetuned_models.items():
+            model.requires_grad_(False)
             model = self.fabric.to_device(model)
             model.eval()
 
@@ -135,9 +137,12 @@ class CLIPLayerWiseAdaMergingSurgeryAlgorithm(
                 finetuned_feature = self.compute_features(
                     finetuned_models[dataset_name], batch[0]
                 )
-                outputs, features, _, _ = alpha_model(batch[0], dataset_name)
+                features, _, _ = alpha_model.compute_surgery_features(
+                    lambda model: self.compute_features(model, batch[0]),
+                    dataset_name,
+                )
 
-                loss = loss_func(features, finetuned_feature)
+                loss = F.l1_loss(features, finetuned_feature)
 
                 optimizer.zero_grad()
                 loss.backward()

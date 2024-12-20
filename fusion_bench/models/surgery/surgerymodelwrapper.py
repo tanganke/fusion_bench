@@ -1,5 +1,5 @@
 import math
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING, List, Union, Callable, Generic
 
 import torch
 from torch import nn
@@ -7,33 +7,38 @@ from transformers.models.clip.modeling_clip import (
     CLIPVisionModel,
     CLIPVisionTransformer,
 )
+from fusion_bench.utils.type import TorchModelType
 
 
-class SurgeryModelWrapper(torch.nn.Module):
+def regularize_name(name: str):
+    name = name.replace("-", "_")
+    name = name.replace(".", "_")
+    return name
+
+
+class SurgeryModelWrapper(torch.nn.Module, Generic[TorchModelType]):
 
     is_surgery_model = True
     """A flag to indicate that this is a surgery model."""
 
     def __init__(
         self,
-        model: Union[CLIPVisionModel, CLIPVisionTransformer],
-        exam_datasets: List[str],
-        Algorithm,
+        model: TorchModelType,
+        test_datasets: List[str],
         projection_dim: int = 512,
         hidden_dim: int = 16,
     ):
         super(SurgeryModelWrapper, self).__init__()
         self.model = model
-        self.compute_features = Algorithm.compute_features
-        self.visual_projection = Algorithm.visual_projection
+        self.model.requires_grad_(False)
 
-        self.exam_datasets = exam_datasets
+        self.test_datasets = test_datasets
         self.non_linear_func = torch.nn.ReLU()
 
         self.projection_dim = projection_dim
         self.hidden_dim = hidden_dim
 
-        for dataset_name in exam_datasets:
+        for dataset_name in test_datasets:
             self.add_surgery_module(dataset_name)
 
     def add_surgery_module(self, dataset_name: str):
@@ -43,6 +48,8 @@ class SurgeryModelWrapper(torch.nn.Module):
         Args:
             dataset_name (str): The name of the dataset.
         """
+        dataset_name = regularize_name(dataset_name)
+
         down_proj = torch.nn.Linear(self.projection_dim, self.hidden_dim, bias=False)
         up_proj = torch.nn.Linear(self.hidden_dim, self.projection_dim, bias=False)
 
@@ -60,7 +67,7 @@ class SurgeryModelWrapper(torch.nn.Module):
         trainable_params = []
 
         # surgery parameter
-        for dataset_name in self.exam_datasets:
+        for dataset_name in self.test_datasets:
             down_proj = getattr(
                 self, "feature_mapping_to_head_down_proj_{}".format(dataset_name)
             )
@@ -75,7 +82,7 @@ class SurgeryModelWrapper(torch.nn.Module):
         surgery_module = {}
 
         # surgery parameter
-        for dataset_name in self.exam_datasets:
+        for dataset_name in self.test_datasets:
             down_proj = getattr(
                 self, "feature_mapping_to_head_down_proj_{}".format(dataset_name)
             )
@@ -93,9 +100,21 @@ class SurgeryModelWrapper(torch.nn.Module):
 
         return surgery_module
 
-    def forward(self, inp, dataset_name):
+    def compute_surgery_features(
+        self,
+        compute_features_fn: Callable[[nn.Module], torch.Tensor],
+        dataset_name: str,
+    ):
+        """
+        Forward pass for surgery.
 
-        feature = self.compute_features(self.model, inp)
+        Args:
+            compute_features_fn (Callable[[nn.Module], torch.Tensor]): A function that computes the features.
+            dataset_name (str): The name of the dataset.
+        """
+        dataset_name = regularize_name(dataset_name)
+
+        feature = compute_features_fn(self.model)
         feature0 = feature
 
         # feature bias
@@ -112,10 +131,8 @@ class SurgeryModelWrapper(torch.nn.Module):
         # surgery feature
         feature = feature0 - feature_sub
 
-        out = None  # we do not need this
-        # # classifier
-        # layer_name = 'classifier_{}'.format(dataset_name)
-        # classification_head = getattr(self, layer_name)
-        # out = classification_head(feature)
+        return feature, feature0, feature_sub
 
-        return out, feature, feature0, feature_sub
+    def forward(self, *args, **kwargs):
+        """The wrapper the model should just forward like normal."""
+        return self.model(*args, **kwargs)

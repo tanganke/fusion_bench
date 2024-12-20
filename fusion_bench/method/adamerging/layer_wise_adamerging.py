@@ -19,7 +19,7 @@ from fusion_bench.models.wrappers.layer_wise_fusion import (
     get_layer_wise_weights,
 )
 from fusion_bench.utils.data import load_tensor_from_file
-from fusion_bench.utils.type import ModuleType
+from fusion_bench.utils.type import TorchModelType
 
 from .entropy_loss import entropy_loss
 from .utils import get_memory_usage
@@ -190,7 +190,7 @@ class LayerWiseAdaMergingAlgorithm(
         """
         pass
 
-    def test_time_adaptation(self, module: "LayerWiseMergedModel[ModuleType]"):
+    def test_time_adaptation(self, module: "LayerWiseMergedModel[TorchModelType]"):
         """
         Perform test-time adaptation on the merged model.
 

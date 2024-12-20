@@ -16,7 +16,7 @@ import torch
 from torch import Tensor, nn
 from torch.func import functional_call
 
-from fusion_bench.utils.type import ModuleType, StateDictType
+from fusion_bench.utils.type import TorchModelType, StateDictType
 
 __all__ = ["get_layer_wise_weights", "fuse_weights", "LayerWiseMergedModel"]
 
@@ -141,14 +141,14 @@ def fuse_weights(
     }
 
 
-class LayerWiseMergedModel(nn.Module, Generic[ModuleType]):
+class LayerWiseMergedModel(nn.Module, Generic[TorchModelType]):
     _merged_state_dict: StateDictType = None
 
     def __init__(
         self,
         layer_wise_weight: Tensor,
-        pretrained_model: ModuleType,
-        finetuned_models: List[ModuleType],
+        pretrained_model: TorchModelType,
+        finetuned_models: List[TorchModelType],
         clamp_weights: bool = True,
         tie_weights: bool = False,
         strict: bool = True,
