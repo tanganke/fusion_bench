@@ -221,6 +221,7 @@ class CLIPVisionModelTaskPool(
             classifier (HFCLIPClassifier): The classifier to evaluate.
             test_loader (DataLoader): The data loader for the test dataset.
             num_classes (int): The number of classes in the classification task.
+            task_name (str): The name of the task.
 
         Returns:
             Dict[str, float]: A dictionary containing the accuracy and loss of the classifier on the test dataset.
