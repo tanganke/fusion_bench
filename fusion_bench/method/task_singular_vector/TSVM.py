@@ -6,7 +6,7 @@ from torch import Tensor, nn
 from fusion_bench import BaseAlgorithm
 from fusion_bench.mixins import LightningFabricMixin
 from fusion_bench.utils import timeit_context
-from fusion_bench.utils.state_dict_arithmetic import state_dict_sub, state_dict_add
+from fusion_bench.utils.state_dict_arithmetic import state_dict_add, state_dict_sub
 from fusion_bench.utils.type import StateDictType
 
 from .utils import (
@@ -44,5 +44,7 @@ class TaskSingularVectorMerging(BaseAlgorithm, LightningFabricMixin):
             task_vectors, accelerator=self.fabric.device
         )
 
-        pretrained_model.load_state_dict(state_dict_add(new_merged_tv, pretrained_model.state_dict()))
+        pretrained_model.load_state_dict(
+            state_dict_add(new_merged_tv, pretrained_model.state_dict())
+        )
         return pretrained_model

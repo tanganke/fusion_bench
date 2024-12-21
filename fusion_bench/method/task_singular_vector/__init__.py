@@ -5,4 +5,5 @@ This module is modified from the original code of the paper:
     - http://arxiv.org/abs/2412.00081
     - https://github.com/AntoAndGar/task_singular_vectors/
 """
+
 from .TSVM import TaskSingularVectorMerging
