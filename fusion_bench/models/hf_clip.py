@@ -1,4 +1,5 @@
-from typing import Callable, Iterable, List  # noqa: F401
+import logging
+from typing import TYPE_CHECKING, Callable, Iterable, List  # noqa: F401
 
 import torch
 from torch import Tensor, nn
@@ -6,6 +7,11 @@ from transformers import CLIPModel, CLIPProcessor
 from transformers.models.clip.modeling_clip import BaseModelOutputWithPooling
 
 from fusion_bench.utils.devices import get_device
+
+if TYPE_CHECKING:
+    from fusion_bench.models.surgery.surgerymodelwrapper import SurgeryModelWrapper
+
+log = logging.getLogger(__name__)
 
 default_templates = [
     lambda c: f"a photo of a {c}",
@@ -33,6 +39,7 @@ class HFCLIPClassifier(nn.Module):
         self,
         clip_model: CLIPModel,
         processor: CLIPProcessor,
+        extra_module=None,
     ):
         """
         Initialize the HFCLIPClassifier.
@@ -55,6 +62,8 @@ class HFCLIPClassifier(nn.Module):
             None,
             persistent=False,
         )
+
+        self.extra_module = extra_module
 
     @property
     def text_model(self):
@@ -111,7 +120,13 @@ class HFCLIPClassifier(nn.Module):
 
         self.zeroshot_weights = zeroshot_weights
 
-    def forward(self, images, return_image_embeds=False, return_dict=False):
+    def forward(
+        self,
+        images: Tensor,
+        return_image_embeds=False,
+        return_dict=False,
+        task_name=None,
+    ):
         """
         Perform forward pass for zero-shot image classification.
 
@@ -120,6 +135,9 @@ class HFCLIPClassifier(nn.Module):
 
         Args:
             images (Tensor): Input images to classify.
+            return_image_embeds (bool): Whether to return the image embeddings.
+            return_dict (bool): Whether to return a dictionary with logits and image embeddings.
+            task_name (Optional[str]): The name of the task.
 
         Returns:
             Tensor: Classification logits for each input image.
@@ -131,15 +149,21 @@ class HFCLIPClassifier(nn.Module):
             raise ValueError("Must set classification task before forward pass")
         text_embeds = self.zeroshot_weights
 
-        image_embeds = self.vision_model(images)
-        if isinstance(image_embeds, Tensor):
-            pass
-        elif isinstance(image_embeds, BaseModelOutputWithPooling):
-            image_embeds = image_embeds[1]
-        image_embeds = self.clip_model.visual_projection(image_embeds)
-
+        image_embeds = self.get_image_features(images)
         # normalize embeddings
         image_embeds = image_embeds / image_embeds.norm(p=2, dim=-1, keepdim=True)
+
+        if (
+            hasattr(self.vision_model, "is_surgery_model")
+            and self.vision_model.is_surgery_model
+        ):
+            # Dealing with the surgery model, for more details, please refer to:
+            # (ICML 2024) Yang, et.al. Representation Surgery for Multi-Task Model Merging
+            # https://arxiv.org/abs/2402.02705
+            self.vision_model: "SurgeryModelWrapper" = self.vision_model
+            image_embeds, _, _ = self.vision_model.compute_surgery_features(
+                image_embeds, dataset_name=task_name
+            )
 
         # cosine similarity
         logit_scale = self.clip_model.logit_scale.exp()
@@ -156,3 +180,20 @@ class HFCLIPClassifier(nn.Module):
                 return logits_per_image, image_embeds
             else:
                 return logits_per_image
+
+    def get_image_features(self, images: Tensor) -> Tensor:
+        """
+        Compute the image embeddings.
+
+        Returns:
+            image_features (`torch.FloatTensor` of shape `(batch_size, output_dim`): The image embeddings obtained by
+            applying the projection layer to the pooled output of [`CLIPVisionModel`].
+        """
+
+        image_embeds = self.vision_model(images)
+        if isinstance(image_embeds, Tensor):
+            pass
+        elif isinstance(image_embeds, BaseModelOutputWithPooling):
+            image_embeds = image_embeds[1]
+        image_embeds = self.clip_model.visual_projection(image_embeds)
+        return image_embeds
