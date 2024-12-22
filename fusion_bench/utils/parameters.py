@@ -1,6 +1,6 @@
 import copy
 from collections import OrderedDict
-from typing import List, Mapping, Union
+from typing import List, Mapping, Optional, Union
 
 import torch
 from torch import nn
@@ -43,7 +43,10 @@ def trainable_state_dict(
     return state_dict
 
 
-def state_dict_to_vector(state_dict, remove_keys=[]):
+def state_dict_to_vector(
+    state_dict: StateDictType,
+    remove_keys: Optional[List[str]] = None,
+):
     """
     Convert a state dictionary to a vector.
 
@@ -54,6 +57,7 @@ def state_dict_to_vector(state_dict, remove_keys=[]):
     Returns:
         torch.Tensor: The converted vector.
     """
+    remove_keys = remove_keys if remove_keys is not None else []
     shared_state_dict = copy.deepcopy(state_dict)
     for key in remove_keys:
         if key in shared_state_dict:
@@ -64,7 +68,11 @@ def state_dict_to_vector(state_dict, remove_keys=[]):
     )
 
 
-def vector_to_state_dict(vector, state_dict, remove_keys=[]):
+def vector_to_state_dict(
+    vector: torch.Tensor,
+    state_dict: StateDictType,
+    remove_keys: Optional[List[str]] = None,
+):
     """
     Convert a vector to a state dictionary.
 
@@ -76,6 +84,7 @@ def vector_to_state_dict(vector, state_dict, remove_keys=[]):
     Returns:
         dict: The converted state dictionary.
     """
+    remove_keys = remove_keys if remove_keys is not None else []
     # create a reference dict to define the order of the vector
     reference_dict = copy.deepcopy(state_dict)
     for key in remove_keys:

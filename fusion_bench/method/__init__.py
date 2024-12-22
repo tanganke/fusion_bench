@@ -49,6 +49,7 @@ _import_structure = {
         "PWEMoExactParetoOptimalForCLIP",
     ],
     "ada_svd": ["AdaSVDMergingForCLIPVisionModel"],
+    "task_singular_vector": ["TaskSingularVectorMerging"],
     # plug-and-play model merging methods
     "concrete_subspace": [
         "ConcreteTaskArithmeticAlgorithmForCLIP",
@@ -153,6 +154,7 @@ if TYPE_CHECKING:
         SparseLoForLlama,
     )
     from .task_arithmetic import TaskArithmeticAlgorithm
+    from .task_singular_vector import TaskSingularVectorMerging
     from .ties_merging import TiesMergingAlgorithm
     from .we_moe import CLIPWeightEnsemblingMoEAlgorithm
     from .weighted_average import WeightedAverageAlgorithm, WeightedAverageForLLama
