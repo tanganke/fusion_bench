@@ -37,7 +37,10 @@ class CLIPVisionModelPool(BaseModelPool):
 
     def load_processor(self, *args, **kwargs) -> CLIPProcessor:
         assert self._processor is not None, "Processor is not defined in the config"
-        processor = instantiate(self._processor, *args, **kwargs)
+        if isinstance(self._processor, str):
+            processor = CLIPProcessor.from_pretrained(self._processor)
+        else:
+            processor = instantiate(self._processor, *args, **kwargs)
         return processor
 
     def load_clip_model(self, model_name: str, *args, **kwargs) -> CLIPModel:
