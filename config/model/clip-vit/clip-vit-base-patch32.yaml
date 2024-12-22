@@ -1,3 +1,1 @@
-_pretrained_:
-  _target_: transformers.CLIPVisionModel.from_pretrained
-  pretrained_model_name_or_path: openai/clip-vit-base-patch32
+_pretrained_: openai/clip-vit-base-patch32

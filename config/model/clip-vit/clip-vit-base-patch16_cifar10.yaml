@@ -1,3 +1,1 @@
-cifar10:
-  _target_: transformers.CLIPVisionModel.from_pretrained
-  pretrained_model_name_or_path: tanganke/clip-vit-base-patch16_cifar10
+cifar10: tanganke/clip-vit-base-patch16_cifar10

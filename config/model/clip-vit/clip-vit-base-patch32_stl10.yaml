@@ -1,3 +1,1 @@
-stl10:
-  _target_: transformers.CLIPVisionModel.from_pretrained
-  pretrained_model_name_or_path: tanganke/clip-vit-base-patch32_stl10
+stl10: tanganke/clip-vit-base-patch32_stl10

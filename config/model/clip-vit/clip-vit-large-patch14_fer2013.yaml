@@ -1,3 +1,1 @@
-fer2013:
-  _target_: transformers.CLIPVisionModel.from_pretrained
-  pretrained_model_name_or_path: tanganke/clip-vit-large-patch14_fer2013
+fer2013: tanganke/clip-vit-large-patch14_fer2013
