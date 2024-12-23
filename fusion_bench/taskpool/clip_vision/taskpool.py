@@ -309,11 +309,15 @@ class CLIPVisionModelTaskPool(
         }
         if name is not None:
             report["model_info"]["name"] = name
-        for task_name, test_dataloader in tqdm(
+
+        # evaluate on each task
+        pbar = tqdm(
             self.test_dataloaders.items(),
             desc="Evaluating tasks",
             total=len(self.test_dataloaders),
-        ):
+        )
+        for task_name, test_dataloader in pbar:
+            pbar.set_description(f"Evaluating task: {task_name}")
             classnames, templates = get_classnames_and_templates(task_name)
             self.on_task_evaluation_begin(classifier, task_name)
             classifier.set_classification_task(classnames, templates)
