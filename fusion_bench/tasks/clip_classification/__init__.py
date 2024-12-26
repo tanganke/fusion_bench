@@ -58,11 +58,24 @@ class CLIPTemplateFactory:
             "templates": "templates",
         },
         "nateraw/rendered-sst2": ".rendered_sst2",
+        "rendered-sst2": ".rendered_sst2",
         "tanganke/stl10": ".stl10",
+        "stl10": ".stl10",
         "dpdl-benchmark/oxford_flowers102": ".flower102",
+        "oxford_flowers102": ".flower102",
         "timm/oxford-iiit-pet": ".oxford_iiit_pet",
+        "oxford-iiit-pet": ".oxford_iiit_pet",
         "imagenet": ".imagenet",
         "tiny-imagenet": ".tiny_imagenet",
+        "pcam": ".pcam",
+        "fer2013": ".fer2013",
+        "emnist_mnist": ".emnist_mnist",
+        "emnist_letters": ".emnist_letters",
+        "kmnist": ".kmnist",
+        "food101": ".food101",
+        "fashion_mnist": ".fashion_mnist",
+        "cub-200-2011": ".cub_200_2011",
+        "mango-leaf-disease": ".mango_leaf_disease",
     }
 
     @staticmethod
@@ -168,48 +181,3 @@ class CLIPTemplateFactory:
 
 def get_classnames_and_templates(dataset_name: str):
     return CLIPTemplateFactory.get_classnames_and_templates(dataset_name)
-
-
-def _load_hf_dataset(dataset_name: str):
-    """
-    Load a dataset from the Hugging Face datasets library based on the specified dataset name.
-
-    This function handles specific preprocessing steps for certain datasets to ensure consistency in dataset format.
-    For example, it renames columns, removes unnecessary columns, and specifies subsets for certain datasets.
-
-    Expected dataset format:
-        - The dataset should have an "image" column containing the image data.
-        - The dataset should have a "label" column containing the class labels.
-
-    Args:
-        dataset_name (str): The name of the dataset to load. Can be one of "svhn", "cifar10", "cifar100", "timm/oxford-iiit-pet", or any other dataset name supported by the Hugging Face datasets library. By default, the datasets have two columns: "image" and "label".
-
-    Returns:
-        A dataset object loaded from the Hugging Face datasets library, with any necessary preprocessing applied.
-    """
-    if dataset_name == "svhn":
-        return load_dataset(dataset_name, "cropped_digits")
-    elif dataset_name == "cifar10":
-        dataset = load_dataset(dataset_name)
-        dataset = dataset.rename_columns({"img": "image"})
-        return dataset
-    elif dataset_name == "cifar100":
-        dataset = load_dataset(dataset_name)
-        dataset = dataset.remove_columns(["coarse_label"]).rename_columns(
-            {"img": "image", "fine_label": "label"}
-        )
-        return dataset
-    elif dataset_name == "timm/oxford-iiit-pet":
-        dataset = load_dataset(dataset_name)
-        dataset = dataset.remove_columns(["image_id", "label_cat_dog"])
-        return dataset
-    else:
-        return load_dataset(dataset_name)
-
-
-def load_clip_dataset(dataset: str, processor):
-    hf_dataset = _load_hf_dataset(dataset)
-    return (
-        CLIPDataset(hf_dataset["train"], processor),
-        CLIPDataset(hf_dataset["test"], processor),
-    )

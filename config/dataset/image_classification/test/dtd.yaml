@@ -1,5 +1,4 @@
 dtd:
   _target_: datasets.load_dataset
-#  path: tanganke/dtd
-  path: /home/htl/.cache/huggingface/datasets/tanganke___dtd/default/0.0.0/d2afa97d9f335b1a6b3b09c637aef667f98f966e
+  path: tanganke/dtd
   split: test

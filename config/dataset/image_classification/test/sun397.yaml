@@ -1,5 +1,4 @@
 sun397:
   _target_: datasets.load_dataset
-#  path: tanganke/sun397
-  path: /home/htl/.cache/huggingface/datasets/tanganke___sun397/default/0.0.0/9c4afd6174afa3974f209a0ef099dbbe244dfd27
+  path: tanganke/sun397
   split: test

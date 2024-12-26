@@ -280,9 +280,16 @@ class LayerWiseGossipAlgorithm(
                         self.free_gpu_memory(module) # simulate distributed GPU memory usage as much as possible
 
                 model_scheduler.update_models()
-                if ((step_idx+1) % self.config.accuracy_test_interval == 0):
-                    self._program.evaluate_merged_model(self._program.taskpool,  model_scheduler.get_final_models())
-                    model_scheduler.move_to('cpu')
+
+                if 'rotate' in self.config.topo:
+                    number = self.config.topo.split('_')[1]
+                    if int(number) == 1 and step_idx >= 20:
+                        self._program.evaluate_merged_model(self._program.taskpool,  model_scheduler.get_final_models())
+                        model_scheduler.move_to('cpu')
+                else:
+                    if ((step_idx+1) % self.config.accuracy_test_interval == 0):
+                        self._program.evaluate_merged_model(self._program.taskpool,  model_scheduler.get_final_models())
+                        model_scheduler.move_to('cpu')
         return model_scheduler.get_final_models()
 
     def on_test_time_adaptation_start(self):

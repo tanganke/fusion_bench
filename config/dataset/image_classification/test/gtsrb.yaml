@@ -1,5 +1,4 @@
 gtsrb:
   _target_: datasets.load_dataset
-#  path: tanganke/gtsrb
-  path: /home/htl/.cache/huggingface/datasets/tanganke___gtsrb/default/0.0.0/ea889fff70dda7b09e94a4b207dded438deca549
+  path: tanganke/gtsrb
   split: test

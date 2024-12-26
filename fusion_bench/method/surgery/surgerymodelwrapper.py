@@ -18,12 +18,12 @@ class SurgeryModelWrapper(
         self.model = self.fabric.to_device(self.model)
         for dataset_name in exam_datasets:
             # mapping
-            # ViT-B/32 and ViT-B/16
-            down_proj = torch.nn.Linear(512, 16, bias=False)
-            up_proj = torch.nn.Linear(16, 512, bias=False)
+            # # ViT-B/32 and ViT-B/16
+            # down_proj = torch.nn.Linear(512, 16, bias=False)
+            # up_proj = torch.nn.Linear(16, 512, bias=False)
             # ViT-L/14
-            # down_proj = torch.nn.Linear(768, 16, bias=False)
-            # up_proj = torch.nn.Linear(16, 768, bias=False)
+            down_proj = torch.nn.Linear(768, 16, bias=False)
+            up_proj = torch.nn.Linear(16, 768, bias=False)
             torch.nn.init.kaiming_uniform_(down_proj.weight, a=math.sqrt(5))
             torch.nn.init.zeros_(up_proj.weight)
             down_proj = self.fabric.to_device(down_proj)

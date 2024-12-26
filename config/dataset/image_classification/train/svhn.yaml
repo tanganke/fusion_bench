@@ -1,7 +1,6 @@
 svhn:
   _target_: datasets.load_dataset
-  # _args_:
-  #   - svhn
-  #   - cropped_digits
-  path: /home/htl/.cache/huggingface/datasets/svhn/cropped_digits/0.0.0/f9e1717d73324ebbc1ece84267ccd80d0aca0690
-  split: test
+  _args_:
+    - svhn
+    - cropped_digits
+  split: train

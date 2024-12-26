@@ -1,5 +1,4 @@
 mnist:
   _target_: datasets.load_dataset
-#  path: mnist
-  path: /home/htl/.cache/huggingface/datasets/mnist/mnist/0.0.0/77f3279092a1c1579b2250db8eafed0ad422088c
+  path: mnist
   split: test
