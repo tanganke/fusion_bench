@@ -238,11 +238,13 @@ class CLIPVisionModelTaskPool(
         else:
             test_loader = test_loader
 
-        for batch in (
-            pbar := tqdm(
-                test_loader, desc="Evaluating", leave=False, dynamic_ncols=True
-            )
-        ):
+        pbar = tqdm(
+            test_loader,
+            desc=f"Evaluating {task_name}",
+            leave=False,
+            dynamic_ncols=True,
+        )
+        for batch in pbar:
             inputs, targets = batch
             outputs = classifier(
                 inputs,
@@ -317,7 +319,6 @@ class CLIPVisionModelTaskPool(
             total=len(self.test_dataloaders),
         )
         for task_name, test_dataloader in pbar:
-            pbar.set_description(f"Evaluating task: {task_name}")
             classnames, templates = get_classnames_and_templates(task_name)
             self.on_task_evaluation_begin(classifier, task_name)
             classifier.set_classification_task(classnames, templates)

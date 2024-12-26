@@ -5,7 +5,7 @@ Example:
 fusion_bench \
     method=task_singular_vector/TaskSingularVectorMerging \
     modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TALL20_model_only \
-    taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TALL20                                                                           
+    taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TALL20
 ```
 """
 
