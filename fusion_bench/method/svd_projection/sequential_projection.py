@@ -12,6 +12,7 @@ import torch
 from omegaconf import DictConfig
 from torch import Tensor, nn
 from tqdm.auto import tqdm
+from transformers import CLIPVisionModel
 
 from fusion_bench import BaseAlgorithm, BaseModelPool
 from fusion_bench.mixins import LightningFabricMixin
@@ -27,7 +28,7 @@ if TYPE_CHECKING:
     from torch.utils.tensorboard import SummaryWriter
 
 
-class SequentialProjection(
+class SequentialProjectionForCLIP(
     BaseAlgorithm,
     LightningFabricMixin,
 ):
@@ -198,7 +199,7 @@ class SequentialProjection(
 
         return merged_model
 
-    def save_merged_model(self, merged_model: nn.Module, step: int):
+    def save_merged_model(self, merged_model: CLIPVisionModel, step: int):
         os.makedirs(Path(self.log_dir) / "checkpoints", exist_ok=True)
         merged_model.save_pretrained(
             Path(self.log_dir) / "checkpoints" / f"merged_model_{step}"
