@@ -187,7 +187,7 @@ class FabricModelFusionProgram(
         elif isinstance(merged_model, Dict):
             report = {}
             for key, item in merged_model.items():
-                if isinstance(key, nn.Module):
+                if isinstance(item, nn.Module):
                     report[key] = taskpool.evaluate(item)
                 else:
                     # metadata
