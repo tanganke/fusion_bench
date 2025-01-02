@@ -1,3 +1,14 @@
+"""
+Example:
+
+```bash
+fusion_bench \
+    method=task_singular_vector/TaskSingularVectorMerging \
+    modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TALL20_model_only \
+    taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TALL20
+```
+"""
+
 from typing import List, Optional
 
 import torch
@@ -41,8 +52,12 @@ class TaskSingularVectorMerging(BaseAlgorithm, LightningFabricMixin):
             task_vectors = [state_dict_sub(check, ptm_check) for check in ft_checks]
 
         new_merged_tv = TSVM_utils.compute_and_sum_svd_mem_reduction(
-            task_vectors, accelerator=self.fabric.device
+            task_vectors,
+            exclude_keys=self.remove_keys,
+            accelerator=self.fabric.device,
         )
 
-        pretrained_model.load_state_dict(state_dict_add(new_merged_tv, pretrained_model.state_dict()))
+        pretrained_model.load_state_dict(
+            state_dict_add(new_merged_tv, pretrained_model.state_dict())
+        )
         return pretrained_model

@@ -185,10 +185,13 @@ class FabricModelFusionProgram(
             report = taskpool.evaluate(merged_model)
             return report
         elif isinstance(merged_model, Dict):
-            model = merged_model.pop("model")
-            report: dict = taskpool.evaluate(model)
-            report.update(merged_model)
-            print(report)
+            report = {}
+            for key, item in merged_model.items():
+                if isinstance(item, nn.Module):
+                    report[key] = taskpool.evaluate(item)
+                else:
+                    # metadata
+                    report[key] = item
             return report
         elif isinstance(merged_model, Iterable):
             return [
