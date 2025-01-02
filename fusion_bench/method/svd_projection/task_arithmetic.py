@@ -18,17 +18,16 @@ from fusion_bench import BaseAlgorithm, BaseModelPool
 from fusion_bench.mixins import LightningFabricMixin
 from fusion_bench.taskpool import CLIPVisionModelTaskPool
 from fusion_bench.utils.json import load_from_json, save_to_json
+from fusion_bench.utils.state_dict_arithmetic import state_dict_add, state_dict_sub
 
 if TYPE_CHECKING:
     from torch.utils.tensorboard import SummaryWriter
 
 
-class WeightAverageForCLIP(
-    BaseAlgorithm,
-    LightningFabricMixin,
-):
+class TaskArithmeticForCLIP(BaseAlgorithm, LightningFabricMixin):
     def __init__(
         self,
+        scaling_factor: float,
         shuffle_order: bool = True,
         seed: Optional[int] = None,
         save_on_every_step: bool = True,
@@ -36,20 +35,23 @@ class WeightAverageForCLIP(
         **kwargs,
     ):
         """
-        Continual Model Merging via Weight Average.
+        Continual Model Merging via Task Arithmetic.
 
         Args:
+            scaling_factor (float): the scaling factor to use.
             shuffle_order (bool): whether to shuffle the order of the models.
             seed (Optional[int]): the seed to use.
             save_on_every_step (bool): whether to save the merged model on every step.
             evaluate_on_every_step (bool): whether to evaluate the merged model on every step.
         """
+        self.scaling_factor = scaling_factor
         self.shuffle_order = shuffle_order
         self.seed = seed
         self.save_on_every_step = save_on_every_step
         self.evaluate_on_every_step = evaluate_on_every_step
         super().__init__(**kwargs)
 
+    @torch.no_grad()
     def run(self, modelpool: BaseModelPool):
         if self.seed is not None:
             L.seed_everything(self.seed)
@@ -69,25 +71,14 @@ class WeightAverageForCLIP(
             tensorboard_summarywriter.add_text(
                 "global/model_names", str(model_names), global_step=0
             )
-
+        
         # get the average model
-        merged_model = modelpool.load_model(model_names[0])
-
-        if self.evaluate_on_every_step:
-            self.taskpool._is_setup = False
-            self.taskpool._test_datasets = DictConfig(
-                {model_names[0]: self._test_datasets[model_names[0]]}
-            )
-            report = self.taskpool.evaluate(deepcopy(merged_model))
-            save_to_json(report, Path(self.log_dir) / "report_0.json")
-
-        if self.save_on_every_step:
-            self.save_merged_model(merged_model, 0)
+        pretrained_model = modelpool.load_pretrained_model()
+        merged_model = deepcopy(pretrained_model)
 
         for model_idx, model_name in tqdm(
-            enumerate(model_names[1:]), desc="Processing models"
+            enumerate(model_names), desc="Processing models"
         ):
-            model_idx += 1
             task_model = modelpool.load_model(model_name)
 
             for param_name, param in task_model.named_parameters():
@@ -96,8 +87,9 @@ class WeightAverageForCLIP(
 
                 task_param = param
                 merged_param = merged_model.get_parameter(param_name)
+                pretrained_param = pretrained_model.get_parameter(param_name)
 
-                new_param = (merged_param * model_idx + task_param) / (model_idx + 1)
+                new_param = merged_param + self.scaling_factor * (task_param - pretrained_param)
                 merged_model.get_parameter(param_name).data = new_param
 
             if self.save_on_every_step:
@@ -115,6 +107,4 @@ class WeightAverageForCLIP(
 
     def save_merged_model(self, merged_model: CLIPVisionModel, step: int):
         os.makedirs(Path(self.log_dir) / "checkpoints", exist_ok=True)
-        merged_model.save_pretrained(
-            Path(self.log_dir) / "checkpoints" / f"merged_model_{step}"
-        )
+        torch.save(merged_model.state_dict(), Path(self.log_dir) / "checkpoints" / f"model_{step}.pth")

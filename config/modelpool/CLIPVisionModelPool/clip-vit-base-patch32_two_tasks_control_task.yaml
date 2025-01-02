@@ -8,8 +8,8 @@ _recursive_: false
 
 models:
   _pretrained_: openai/clip-vit-base-patch32
-  model_1: clip-vit-base-patch32_sun397
-  model_2: clip-vit-base-patch32_stanford-cars
+  model_1: tanganke/clip-vit-base-patch32_sun397
+  model_2: tanganke/clip-vit-base-patch32_stanford-cars
   
 train_datasets: ???
 

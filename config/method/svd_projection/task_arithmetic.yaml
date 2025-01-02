@@ -1,4 +1,4 @@
-_target_: fusion_bench.method.svd_projection.task_arithmetic.TaskArithmeticWithProjection
+_target_: fusion_bench.method.svd_projection.task_arithmetic.TaskArithmeticForCLIP
 
 scaling_factor: 0.3
 

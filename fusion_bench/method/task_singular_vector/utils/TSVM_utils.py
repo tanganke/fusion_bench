@@ -307,6 +307,7 @@ def compute_and_sum_svd_mem_reduction_lossless_eigen(task_vectors, config):
 @torch.no_grad()
 def compute_and_sum_svd_mem_reduction(
     task_vectors: List[StateDictType],
+    exclude_keys: Optional[List[str]] = None,
     accelerator: torch.device = "cuda" if torch.cuda.is_available() else "cpu",
 ) -> StateDictType:
     """
@@ -318,11 +319,14 @@ def compute_and_sum_svd_mem_reduction(
     Args:
         task_vectors (list): A list of task vector objects, where each object contains a
                             dictionary of vectors.
+        exclude_keys (list): A list of keys to exclude from the TSVM.
         accelerator (torch.device): The device to use for the computation.
 
     Returns:
         dict: A dictionary containing the new vectors after SVD computation and merging.
     """
+    if exclude_keys is None:
+        exclude_keys = []
     sv_reduction = 1 / len(task_vectors)
 
     new_vector = {}
@@ -332,7 +336,7 @@ def compute_and_sum_svd_mem_reduction(
         for i, task_vector in enumerate(task_vectors):
             vec = task_vector[key].to(accelerator)
 
-            if len(task_vector[key].shape) == 2 and "text_projection" not in key:
+            if len(task_vector[key].shape) == 2 and key not in exclude_keys:
                 u, s, v = torch.linalg.svd(vec, full_matrices=False)
 
                 if i == 0:
@@ -355,13 +359,13 @@ def compute_and_sum_svd_mem_reduction(
                 ]
 
             else:
-                # if the vector is not a 2D tensor or is "text_projection", compute the mean
+                # if the vector is not a 2D tensor or is in exclude_keys, compute the mean
                 if i == 0:
                     new_vector[key] = vec.clone()
                 else:
                     new_vector[key] += (vec - new_vector[key]) / (i + 1)
 
-        if len(task_vector[key].shape) == 2 and "text_projection" not in key:
+        if len(task_vector[key].shape) == 2 and key not in exclude_keys:
             u_u, s_u, v_u = torch.linalg.svd(sum_u, full_matrices=False)
             u_v, s_v, v_v = torch.linalg.svd(sum_v, full_matrices=False)
 
@@ -374,7 +378,6 @@ def compute_and_sum_svd_mem_reduction(
                     v_v,
                 )
             )
-
         new_vector[key] = new_vector[key].to(original_device, non_blocking=True)
     return new_vector
 
