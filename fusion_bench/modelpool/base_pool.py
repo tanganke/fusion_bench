@@ -147,7 +147,6 @@ class BaseModelPool(BaseYAMLSerializableModel):
             DictConfig: The configuration for the specified model.
         """
         model_config = self._models[model_name]
-        assert isinstance(model_config, DictConfig), "Model config must be a DictConfig"
         if return_copy:
             model_config = deepcopy(model_config)
         return model_config
