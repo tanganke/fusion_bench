@@ -1,4 +1,4 @@
-cifar10:
+pcam:
   _target_: datasets.load_dataset
-  path: tanganke/cifar10
+  path: 1aurent/PatchCamelyon
   split: train
