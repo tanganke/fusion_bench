@@ -28,3 +28,4 @@ gossip_max_steps: 20
 gossip_skip_adamerging: false
 accuracy_test_interval: 5  #if this value is equal to 1, we will evaluate all models each time after Gossip [1, 5, 10, 15, 20] it can also be a list #
 improve_dataset: true
+topo: ring

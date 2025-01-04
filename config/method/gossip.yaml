@@ -27,4 +27,4 @@ gossip_max_steps: 20
 gossip_skip_adamerging: false
 accuracy_test_interval: 1  # if this value is equal to 1, we will evaluate all models each time after Gossip
 improve_dataset: true
-topo: rotate_1
+topo: ring

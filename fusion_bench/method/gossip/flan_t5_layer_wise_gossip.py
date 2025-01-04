@@ -146,7 +146,7 @@ class FlanT5LayerWiseGossipAlgorithm(
 
 
         with self.profile("construct the wrapped model"):
-            model_scheduler = ModelScheduler(self.modelpool, self.configs)
+            model_scheduler = ModelScheduler(self.configs, self.modelpool)
 
         if self.merging_weights_load_path is not None:
             # skip the test-time adaptation
@@ -198,7 +198,7 @@ class FlanT5LayerWiseGossipAlgorithm(
                     if ((step_idx+1) % self.configs.accuracy_test_interval == 0):
                         do_evaluation = True
                 if do_evaluation:
-                    kwargs['evaluate_merged_model'](kwargs['taskpool'],  model_scheduler.get_final_models())
+                    self._program.evaluate_merged_model(self._program.taskpool,  model_scheduler.get_final_models())
                     model_scheduler.move_to('cpu')
 
         return model_scheduler.get_final_models()
