@@ -27,6 +27,7 @@ _import_structure = {
         "TaskArithmeticForLlama",
         "LinearInterpolationAlgorithm",
     ],
+    "slerp": ["SlerpMergeAlgorithm"],
     "simple_average": ["SimpleAverageAlgorithm"],
     "weighted_average": ["WeightedAverageAlgorithm", "WeightedAverageForLLama"],
     "task_arithmetic": ["TaskArithmeticAlgorithm"],
@@ -140,6 +141,7 @@ if TYPE_CHECKING:
     from .rankone_moe import CLIPRankOneMoEAlgorithm, RankOneMoEAlgorithm
     from .regmean import RegMeanAlgorithmForCLIP, RegMeanAlgorithmForGPT2
     from .simple_average import SimpleAverageAlgorithm
+    from .slerp import SlerpMergeAlgorithm
     from .smile_upscaling import (
         SingularProjectionMergingAlgorithm,
         SmileUpscalingAlgorithm,
