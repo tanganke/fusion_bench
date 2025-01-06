@@ -159,7 +159,11 @@ class FabricModelFusionProgram(
             print("No save path specified for the merged model. Skipping saving.")
 
     def evaluate_merged_model(
-        self, taskpool: BaseTaskPool, merged_model: Union[nn.Module, Dict, Iterable]
+        self,
+        taskpool: BaseTaskPool,
+        merged_model: Union[nn.Module, Dict, Iterable],
+        *args,
+        **kwargs,
     ):
         """
         Evaluates the merged model using the provided task pool.
@@ -174,6 +178,8 @@ class FabricModelFusionProgram(
         Args:
             taskpool: The task pool used for evaluating the merged model.
             merged_model: The merged model to be evaluated. It can be an instance of `nn.Module`, a dictionary, or an iterable.
+            *args: Additional positional arguments to be passed to the `evaluate` method of the taskpool.
+            **kwargs: Additional keyword arguments to be passed to the `evaluate` method of the taskpool.
 
         Returns:
             The evaluation report. The type of the report depends on the type of the merged model:
@@ -182,20 +188,20 @@ class FabricModelFusionProgram(
             - If the merged model is an iterable, the report is a list of evaluation reports.
         """
         if isinstance(merged_model, nn.Module):
-            report = taskpool.evaluate(merged_model)
+            report = taskpool.evaluate(merged_model, *args, **kwargs)
             return report
         elif isinstance(merged_model, Dict):
             report = {}
             for key, item in merged_model.items():
                 if isinstance(item, nn.Module):
-                    report[key] = taskpool.evaluate(item)
+                    report[key] = taskpool.evaluate(item, *args, **kwargs)
                 else:
                     # metadata
                     report[key] = item
             return report
         elif isinstance(merged_model, Iterable):
             return [
-                self.evaluate_merged_model(taskpool, m)
+                self.evaluate_merged_model(taskpool, m, *args, **kwargs)
                 for m in tqdm(merged_model, desc="Evaluating models")
             ]
         else:
