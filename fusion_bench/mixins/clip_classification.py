@@ -161,12 +161,14 @@ class CLIPClassificationMixin(LightningFabricMixin):
                     cache_dir, os.path.normpath(f"{task}_zeroshot_weights.pt")
                 )
                 if os.path.exists(cache_file):
-                    log.info(f"Loading cached zeroshot weights for task: {task}")
                     zeroshot_weights = torch.load(
                         cache_file,
                         map_location="cpu",
                         weights_only=True,
                     ).detach()
+                    log.info(
+                        f"Loadded cached zeroshot weights for task: {task}, shape: {zeroshot_weights.shape}"
+                    )
                 else:
                     log.info(
                         f"Construct zero shot classification head for task: {task}"
@@ -180,6 +182,7 @@ class CLIPClassificationMixin(LightningFabricMixin):
             self.fabric.barrier()
             self.zeroshot_weights[task] = self.fabric.broadcast(zeroshot_weights, src=0)
             self.zeroshot_weights[task] = self.to_device(self.zeroshot_weights[task])
+            self.fabric.barrier()
 
         del clip_classifier
         if torch.cuda.is_available():

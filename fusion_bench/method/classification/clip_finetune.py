@@ -184,9 +184,7 @@ class ImageClassificationFineTuningForCLIP(
                 self.save_model(classifier, save_path)
 
         if config.state_dict_save_path is not None:
-            self.save_model(
-                classifier, config.state_dict_save_path, trainable_only=True
-            )
+            self.save_model(classifier, config.state_dict_save_path)
         self.print_profile_summary()
         return classifier.clip_model.vision_model
 

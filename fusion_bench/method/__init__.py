@@ -9,7 +9,10 @@ _import_structure = {
     "base_algorithm": ["BaseModelFusionAlgorithm", "BaseAlgorithm"],
     "dummy": ["DummyAlgorithm"],
     # single task learning (fine-tuning)
-    "classification": ["ImageClassificationFineTuningForCLIP"],
+    "classification": [
+        "ImageClassificationFineTuningForCLIP",
+        "ContinualImageClassificationFineTuningForCLIP",
+    ],
     "lm_finetune": ["FullFinetuneSFT", "PeftFinetuneSFT", "BradleyTerryRewardModeling"],
     # analysis
     "analysis": ["TaskVectorCosSimilarity", "TaskVectorViolinPlot"],
@@ -27,6 +30,7 @@ _import_structure = {
         "TaskArithmeticForLlama",
         "LinearInterpolationAlgorithm",
     ],
+    "slerp": ["SlerpMergeAlgorithm"],
     "simple_average": ["SimpleAverageAlgorithm"],
     "weighted_average": ["WeightedAverageAlgorithm", "WeightedAverageForLLama"],
     "task_arithmetic": ["TaskArithmeticAlgorithm"],
@@ -50,6 +54,7 @@ _import_structure = {
     ],
     "ada_svd": ["AdaSVDMergingForCLIPVisionModel"],
     "task_singular_vector": ["TaskSingularVectorMerging"],
+    "opcm": ["OPCMForCLIP"],
     # plug-and-play model merging methods
     "concrete_subspace": [
         "ConcreteTaskArithmeticAlgorithmForCLIP",
@@ -96,7 +101,10 @@ if TYPE_CHECKING:
     from .adamerging import *
     from .analysis import TaskVectorCosSimilarity, TaskVectorViolinPlot
     from .base_algorithm import BaseAlgorithm, BaseModelFusionAlgorithm
-    from .classification import ImageClassificationFineTuningForCLIP
+    from .classification import (
+        ContinualImageClassificationFineTuningForCLIP,
+        ImageClassificationFineTuningForCLIP,
+    )
     from .concrete_subspace import (
         ConcreteLayerWiseAdaMergingForCLIP,
         ConcreteTaskArithmeticAlgorithmForCLIP,
@@ -127,6 +135,7 @@ if TYPE_CHECKING:
         MixtralUpscalingAlgorithm,
     )
     from .model_recombination import ModelRecombinationAlgorithm
+    from .opcm import OPCMForCLIP
     from .pruning import (
         MagnitudeDiffPruningAlgorithm,
         MagnitudePruningForLlama,
@@ -140,6 +149,7 @@ if TYPE_CHECKING:
     from .rankone_moe import CLIPRankOneMoEAlgorithm, RankOneMoEAlgorithm
     from .regmean import RegMeanAlgorithmForCLIP, RegMeanAlgorithmForGPT2
     from .simple_average import SimpleAverageAlgorithm
+    from .slerp import SlerpMergeAlgorithm
     from .smile_upscaling import (
         SingularProjectionMergingAlgorithm,
         SmileUpscalingAlgorithm,
