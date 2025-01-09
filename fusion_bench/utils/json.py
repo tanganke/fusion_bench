@@ -1,3 +1,33 @@
+import json
+from pathlib import Path
+from typing import Any, Union
+
+
+def save_to_json(obj, path: Union[str, Path]):
+    """
+    save an object to a json file
+
+    Args:
+        obj (Any): the object to save
+        path (Union[str, Path]): the path to save the object
+    """
+    with open(path, "w") as f:
+        json.dump(obj, f)
+
+
+def load_from_json(path: Union[str, Path]) -> Union[dict, list]:
+    """load an object from a json file
+
+    Args:
+        path (Union[str, Path]): the path to load the object
+
+    Returns:
+        dict: the loaded object
+    """
+    with open(path, "r") as f:
+        return json.load(f)
+
+
 def _is_list_of_dict(obj) -> bool:
     if not isinstance(obj, list):
         return False

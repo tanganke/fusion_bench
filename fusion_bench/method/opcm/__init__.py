@@ -1,0 +1,4 @@
+from .opcm import OPCMForCLIP
+from .task_arithmetic import ContinualTaskArithmeticForCLIP
+from .ties_merging import ContinualTiesMergingForCLIP
+from .weight_average import ContinualWeightAverageForCLIP

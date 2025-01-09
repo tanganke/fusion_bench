@@ -103,12 +103,13 @@ class FabricModelFusionProgram(
             )
             if compat_load_fn is not None:
                 compat_load_fn = import_object(compat_load_fn)
-                print_bordered(
-                    OmegaConf.to_yaml(config),
-                    title="instantiate compat object",
-                    style="magenta",
-                    code_style="yaml",
-                )
+                if rank_zero_only.rank == 0:
+                    print_bordered(
+                        OmegaConf.to_yaml(config),
+                        title="instantiate compat object",
+                        style="magenta",
+                        code_style="yaml",
+                    )
                 obj = compat_load_fn(config)
             else:
                 raise ValueError(
@@ -278,7 +279,11 @@ class FabricModelFusionProgram(
         """
         if self.log_dir is not None:
             # make symlink to the hydra output directory
-            hydra_output_dir = get_hydra_output_dir()
+            try:
+                hydra_output_dir = get_hydra_output_dir()
+            except Exception as e:
+                hydra_output_dir = None
+
             if hydra_output_dir is not None:
                 os.makedirs(self.log_dir, exist_ok=True)
                 try:
