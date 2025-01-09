@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from torch.utils.tensorboard import SummaryWriter
 
 
-class SequentialProjectionForCLIP(
+class OPCMForCLIP(
     BaseAlgorithm,
     LightningFabricMixin,
 ):

@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from torch.utils.tensorboard import SummaryWriter
 
 
-class TaskArithmeticForCLIP(BaseAlgorithm, LightningFabricMixin):
+class ContinualTaskArithmeticForCLIP(BaseAlgorithm, LightningFabricMixin):
     def __init__(
         self,
         scaling_factor: float,
@@ -71,7 +71,7 @@ class TaskArithmeticForCLIP(BaseAlgorithm, LightningFabricMixin):
             tensorboard_summarywriter.add_text(
                 "global/model_names", str(model_names), global_step=0
             )
-        
+
         # get the average model
         pretrained_model = modelpool.load_pretrained_model()
         merged_model = deepcopy(pretrained_model)
@@ -89,7 +89,9 @@ class TaskArithmeticForCLIP(BaseAlgorithm, LightningFabricMixin):
                 merged_param = merged_model.get_parameter(param_name)
                 pretrained_param = pretrained_model.get_parameter(param_name)
 
-                new_param = merged_param + self.scaling_factor * (task_param - pretrained_param)
+                new_param = merged_param + self.scaling_factor * (
+                    task_param - pretrained_param
+                )
                 merged_model.get_parameter(param_name).data = new_param
 
             if self.save_on_every_step:
@@ -107,4 +109,7 @@ class TaskArithmeticForCLIP(BaseAlgorithm, LightningFabricMixin):
 
     def save_merged_model(self, merged_model: CLIPVisionModel, step: int):
         os.makedirs(Path(self.log_dir) / "checkpoints", exist_ok=True)
-        torch.save(merged_model.state_dict(), Path(self.log_dir) / "checkpoints" / f"model_{step}.pth")
+        torch.save(
+            merged_model.state_dict(),
+            Path(self.log_dir) / "checkpoints" / f"model_{step}.pth",
+        )

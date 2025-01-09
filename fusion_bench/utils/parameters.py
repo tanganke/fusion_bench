@@ -14,6 +14,7 @@ __all__ = [
     "get_parameter_statistics",
     "state_dict_to_vector",
     "vector_to_state_dict",
+    "trainable_state_dict",
 ]
 
 # Model conversion utils

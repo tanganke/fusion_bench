@@ -332,11 +332,19 @@ def compute_and_sum_svd_mem_reduction(
     new_vector = {}
     for key in task_vectors[0]:
         original_device = task_vectors[0][key].device
+        original_dtype = task_vectors[0][key].dtype
+
         new_vector[key] = {}
         for i, task_vector in enumerate(task_vectors):
             vec = task_vector[key].to(accelerator)
 
             if len(task_vector[key].shape) == 2 and key not in exclude_keys:
+                # at current, the SVD is not supported for half precision, so we need to convert to float32
+                if not (
+                    original_dtype == torch.float32 or original_dtype == torch.float64
+                ):
+                    vec = vec.to(dtype=torch.float32)
+
                 u, s, v = torch.linalg.svd(vec, full_matrices=False)
 
                 if i == 0:
@@ -378,7 +386,9 @@ def compute_and_sum_svd_mem_reduction(
                     v_v,
                 )
             )
-        new_vector[key] = new_vector[key].to(original_device, non_blocking=True)
+        new_vector[key] = new_vector[key].to(
+            device=original_device, dtype=original_dtype, non_blocking=True
+        )
     return new_vector
 
 

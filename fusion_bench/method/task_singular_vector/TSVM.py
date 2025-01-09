@@ -52,7 +52,9 @@ class TaskSingularVectorMerging(BaseAlgorithm, LightningFabricMixin):
             task_vectors = [state_dict_sub(check, ptm_check) for check in ft_checks]
 
         new_merged_tv = TSVM_utils.compute_and_sum_svd_mem_reduction(
-            task_vectors, accelerator=self.fabric.device
+            task_vectors,
+            exclude_keys=self.remove_keys,
+            accelerator=self.fabric.device,
         )
 
         pretrained_model.load_state_dict(
