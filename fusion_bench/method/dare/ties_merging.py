@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch
 from torch import Tensor, nn
 
@@ -25,7 +27,7 @@ class DareTiesMerging(BaseAlgorithm):
         scaling_factor: float,
         threshold: int,
         remove_keys: list[str],
-        merge_func: str,
+        merge_func: Literal["sum", "mean", "max"],
         **kwargs,
     ):
         self.sparsity_ratio = sparsity_ratio
