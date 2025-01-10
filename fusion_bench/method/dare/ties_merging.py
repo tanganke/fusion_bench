@@ -37,6 +37,7 @@ class DareTiesMerging(BaseAlgorithm):
         self.merge_func = merge_func
         super().__init__(**kwargs)
 
+    @torch.no_grad()
     def _load_task_vector(
         self,
         modelpool: BaseModelPool,
@@ -72,11 +73,11 @@ class DareTiesMerging(BaseAlgorithm):
                 print(f"pruning model: `{model_name}`")
                 module_random_drop_(tv, self.sparsity_ratio, rescale=self.rescale)
 
-        ptm_check = pretrained_model.state_dict(keep_vars=True)
+        ptm_check = pretrained_model.state_dict()
         flat_ptm = state_dict_to_vector(ptm_check, self.remove_keys)
         tv_flat_checks = torch.vstack(
             [
-                state_dict_to_vector(check, self.remove_keys)
+                state_dict_to_vector(check.state_dict(), self.remove_keys)
                 for check in task_vectors.values()
             ]
         )
