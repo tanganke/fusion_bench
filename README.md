@@ -22,7 +22,30 @@ FusionBench is a benchmark suite designed to evaluate the performance of various
 Projects based on FusionBench and news from the community (descending order of date):
 
 <details>
-  <summary>Hongling Zheng, Li Shen, Anke Tang, Yong Luo et al. Learn From Model Beyond Fine-Tuning: A Survey. has been accepted for publication in Nature Machine Intelligence. Nov, 2024. https://arxiv.org/abs/2310.08184</summary>
+  <summary>Y Wei, et al. Modeling Multi-Task Model Merging as Adaptive Projective Gradient Descent. Jan 2025. https://arxiv.org/abs/2501.01230</summary>
+
+  Merging multiple expert models offers a promising approach for performing multi-task learning
+  without accessing their original data. Existing
+  methods attempt to alleviate task conflicts by sparsifying task vectors or promoting orthogonality
+  among them. However, they overlook the fundamental requirement of model merging: ensuring the merged model performs comparably to
+  task-specific models on respective tasks. We find
+  these methods inevitably discard task-specific information that, while causing conflicts, is crucial for performance. Based on our findings, we
+  frame model merging as a constrained optimization problem (i.e., minimizing the gap between
+  the merged model and individual models, subject to the constraint of retaining shared knowledge) and solve it via adaptive projective gradient descent. Specifically, we align the merged
+  model with individual models by decomposing
+  and reconstituting the loss function, alleviating
+  conflicts through data-free optimization of task
+  vectors. To retain shared knowledge, we optimize this objective by projecting gradients within
+  a shared subspace spanning all tasks. Moreover,
+  we view merging coefficients as adaptive learning rates and propose a task-aware, training-free
+  strategy. Experiments show that our plug-andplay approach consistently outperforms previous
+  methods, achieving state-of-the-art results across
+  diverse architectures and tasks in both vision and
+  NLP domains. Our code is available here.
+</details>
+
+<details>
+  <summary>Hongling Zheng, Li Shen, Anke Tang, Yong Luo et al. Learn From Model Beyond Fine-Tuning: A Survey. Nature Machine Intelligence. Jan, 2025. https://www.nature.com/articles/s42256-024-00961-0</summary>
 
   > Foundation models (FM) have demonstrated remarkable performance across a wide range of tasks (especially in the fields
   of natural language processing and computer vision), primarily attributed to their ability to comprehend instructions and access
