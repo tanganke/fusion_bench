@@ -22,7 +22,7 @@ FusionBench is a benchmark suite designed to evaluate the performance of various
 Projects based on FusionBench and news from the community (descending order of date):
 
 <details>
-  <summary>Hongling Zheng, Li Shen, Anke Tang, Yong Luo et al. Learn From Model Beyond Fine-Tuning: A Survey. has been accepted for publication in Nature Machine Intelligence. Nov, 2024. https://arxiv.org/abs/2310.08184</summary>
+  <summary>Hongling Zheng, Li Shen, Anke Tang, Yong Luo et al. Learn From Model Beyond Fine-Tuning: A Survey. Nature Machine Intelligence. Jan, 2025. https://www.nature.com/articles/s42256-024-00961-0</summary>
 
   > Foundation models (FM) have demonstrated remarkable performance across a wide range of tasks (especially in the fields
   of natural language processing and computer vision), primarily attributed to their ability to comprehend instructions and access
