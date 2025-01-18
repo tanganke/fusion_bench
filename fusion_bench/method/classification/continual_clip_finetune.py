@@ -26,8 +26,8 @@ from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.models.linearized.linearized_model_utils import LinearizedModelWraper
 from fusion_bench.taskpool import CLIPVisionModelTaskPool
 from fusion_bench.utils.data import InfiniteDataLoader
-from fusion_bench.utils.json import load_from_json, save_to_json
 from fusion_bench.utils.fabric import seed_everything_by_time
+from fusion_bench.utils.json import load_from_json, save_to_json
 
 
 class ContinualImageClassificationFineTuningForCLIP(
