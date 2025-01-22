@@ -108,14 +108,15 @@ class ModelScheduler:
     def get_final_models(self):
         # need a check
         final_models = [{'name': name, 'model': model} for name, model in zip(self.finetuned_midels_name, self.finetuned_models)]
+        num_finetuned_models = len(self.finetuned_models)
         
         state_dict = self.pretrained_model.state_dict(keep_vars=True)
         for name in state_dict.keys():
             state_dict[name].data.zero_()
         for model in self.finetuned_models:
             for name, param in model.named_parameters():
-                state_dict[name] = state_dict[name] + 1/6 * param
-            
+                state_dict[name] = state_dict[name] + 1/num_finetuned_models * param
+                            
         self.pretrained_model.load_state_dict(state_dict)
         final_models += [{'name': 'average model', 'model': self.pretrained_model}]
         
