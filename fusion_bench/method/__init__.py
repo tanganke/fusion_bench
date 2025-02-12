@@ -54,6 +54,12 @@ _import_structure = {
     ],
     "ada_svd": ["AdaSVDMergingForCLIPVisionModel"],
     "task_singular_vector": ["TaskSingularVectorMerging"],
+    "isotropic_merging": [
+        "ISO_C_Merge",  # alias
+        "ISO_CTS_Merge",  # alias
+        "IsotropicMergingInCommonAndTaskSubspace",
+        "IsotropicMergingInCommonSubspace",
+    ],
     "opcm": ["OPCMForCLIP"],
     # plug-and-play model merging methods
     "concrete_subspace": [
@@ -120,6 +126,12 @@ if TYPE_CHECKING:
         WeightedEnsembleAlgorithm,
     )
     from .fisher_merging import FisherMergingForCLIPVisionModel
+    from .isotropic_merging import (
+        ISO_C_Merge,
+        ISO_CTS_Merge,
+        IsotropicMergingInCommonAndTaskSubspace,
+        IsotropicMergingInCommonSubspace,
+    )
     from .linear import (
         ExPOAlgorithm,
         ExPOAlgorithmForLlama,
