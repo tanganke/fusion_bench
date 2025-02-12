@@ -23,6 +23,7 @@ nav:
         - AdaMerging: algorithms/adamerging.md
         - RegMean: algorithms/regmean.md
         - Concrete Subspace: algorithms/concrete_subspace.md
+        - Isotropic Merging: algorithms/isotropic_merging.md
       - Model Mixing:
         - Depth Upscaling: algorithms/depth_upscaling.md
         - MoE-based Upscaling: algorithms/moe_based_upscaling.md
