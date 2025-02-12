@@ -3,8 +3,8 @@ from typing import List
 
 import torch
 
-from fusion_bench.utils.type import StateDictType
 from fusion_bench.utils import timeit_context
+from fusion_bench.utils.type import StateDictType
 
 
 def iso_c(
@@ -12,10 +12,13 @@ def iso_c(
     accelerator="cuda",
     exclude_keys: List[str] = None,
 ) -> StateDictType:
+    exclude_keys = [] if exclude_keys is None else exclude_keys
+
     with torch.no_grad(), timeit_context("ISO-C Merging"):
         new_vector = {}
         for key in task_vectors[0]:
             print(f"Merging {key}...")
+            original_device = task_vectors[0][key].device
             tvs = [
                 task_vector[key].to(device=accelerator, non_blocking=True)
                 for task_vector in task_vectors
@@ -37,7 +40,9 @@ def iso_c(
                         V,
                     )
                 )
-
+            new_vector[key] = new_vector[key].to(
+                device=original_device, non_blocking=True
+            )
     return new_vector
 
 
@@ -48,12 +53,13 @@ def iso_cts(
     accelerator: str = "cuda",
     exclude_keys: List[str] = None,
 ):
+    exclude_keys = [] if exclude_keys is None else exclude_keys
     new_vector = {}
 
     print("ISO-CTS Merging")
     for key in task_vectors[0]:
         shape_ = task_vectors[0][key].shape
-
+        original_device = task_vectors[0][key].device
         is_2d_matrix = (len(shape_) == 2) and (key not in exclude_keys)
         if not is_2d_matrix:
             print(f"Combining by avg {key}...")
@@ -63,6 +69,11 @@ def iso_cts(
                     new_vector[key] = vec.clone()
                 else:
                     new_vector[key] += (vec - new_vector[key]) / (i + 1)
+
+            # move the new vector to the original device
+            new_vector[key] = new_vector[key].to(
+                device=original_device, non_blocking=True
+            )
             continue
 
         print(f"Computing common space using sum for {key}...")
@@ -146,6 +157,7 @@ def iso_cts(
                 combined_space_v,
             )
         )
+        new_vector[key] = new_vector[key].to(device=original_device, non_blocking=True)
 
     return new_vector
 
