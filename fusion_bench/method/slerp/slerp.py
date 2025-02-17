@@ -51,7 +51,7 @@ class SlerpMergeAlgorithm(BaseAlgorithm):
     General purpose implementation of Slerp (Spherical Linear Interpolation) for PyTorch models.
     """
 
-    _config_mapping = BaseAlgorithm._config_mapping + {
+    _config_mapping = BaseAlgorithm._config_mapping | {
         "t": "t",
         "DOT_THRESHOLD": "DOT_THRESHOLD",
         "epsilon": "epsilon",

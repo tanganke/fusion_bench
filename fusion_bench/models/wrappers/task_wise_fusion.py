@@ -16,13 +16,13 @@ outputs = merged_model(inputs)
 
 import functools
 import logging
-from typing import Any, Callable, Dict, Iterator, List, Optional  # noqa: F401
+from typing import Any, Callable, Dict, Generic, Iterator, List, Optional  # noqa: F401
 
 import torch
 from torch import Tensor, nn
 from torch.func import functional_call
 
-from fusion_bench.utils.type import StateDictType
+from fusion_bench.utils.type import StateDictType, TorchModelType
 
 log = logging.getLogger(__name__)
 
@@ -157,14 +157,14 @@ def fuse_weights(
     }
 
 
-class TaskWiseMergedModel(nn.Module):
+class TaskWiseMergedModel(nn.Module, Generic[TorchModelType]):
     _merged_state_dict: StateDictType = None
 
     def __init__(
         self,
         task_wise_weight: Tensor,
-        pretrained_model: nn.Module,
-        finetuned_models: List[nn.Module],
+        pretrained_model: TorchModelType,
+        finetuned_models: List[TorchModelType],
         clamp_weights: bool = True,
         tie_weights: bool = False,
         strict: bool = True,

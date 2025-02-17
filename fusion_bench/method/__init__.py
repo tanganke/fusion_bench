@@ -9,7 +9,10 @@ _import_structure = {
     "base_algorithm": ["BaseModelFusionAlgorithm", "BaseAlgorithm"],
     "dummy": ["DummyAlgorithm"],
     # single task learning (fine-tuning)
-    "classification": ["ImageClassificationFineTuningForCLIP"],
+    "classification": [
+        "ImageClassificationFineTuningForCLIP",
+        "ContinualImageClassificationFineTuningForCLIP",
+    ],
     "lm_finetune": ["FullFinetuneSFT", "PeftFinetuneSFT", "BradleyTerryRewardModeling"],
     # analysis
     "analysis": ["TaskVectorCosSimilarity", "TaskVectorViolinPlot"],
@@ -27,11 +30,12 @@ _import_structure = {
         "TaskArithmeticForLlama",
         "LinearInterpolationAlgorithm",
     ],
+    "slerp": ["SlerpMergeAlgorithm"],
     "simple_average": ["SimpleAverageAlgorithm"],
     "weighted_average": ["WeightedAverageAlgorithm", "WeightedAverageForLLama"],
     "task_arithmetic": ["TaskArithmeticAlgorithm"],
     "ties_merging": ["TiesMergingAlgorithm"],
-    "dare": ["DareSimpleAverage", "DareTaskArithmetic"],
+    "dare": ["DareSimpleAverage", "DareTaskArithmetic", "DareTiesMerging"],
     "fisher_merging": [
         "FisherMergingForCLIPVisionModel",
         "FisherMergingAlgorithmForGPT2",
@@ -49,6 +53,14 @@ _import_structure = {
         "PWEMoExactParetoOptimalForCLIP",
     ],
     "ada_svd": ["AdaSVDMergingForCLIPVisionModel"],
+    "task_singular_vector": ["TaskSingularVectorMerging"],
+    "isotropic_merging": [
+        "ISO_C_Merge",  # alias
+        "ISO_CTS_Merge",  # alias
+        "IsotropicMergingInCommonAndTaskSubspace",
+        "IsotropicMergingInCommonSubspace",
+    ],
+    "opcm": ["OPCMForCLIP"],
     # plug-and-play model merging methods
     "concrete_subspace": [
         "ConcreteTaskArithmeticAlgorithmForCLIP",
@@ -95,13 +107,16 @@ if TYPE_CHECKING:
     from .adamerging import *
     from .analysis import TaskVectorCosSimilarity, TaskVectorViolinPlot
     from .base_algorithm import BaseAlgorithm, BaseModelFusionAlgorithm
-    from .classification import ImageClassificationFineTuningForCLIP
+    from .classification import (
+        ContinualImageClassificationFineTuningForCLIP,
+        ImageClassificationFineTuningForCLIP,
+    )
     from .concrete_subspace import (
         ConcreteLayerWiseAdaMergingForCLIP,
         ConcreteTaskArithmeticAlgorithmForCLIP,
         ConcreteTaskWiseAdaMergingForCLIP,
     )
-    from .dare import DareSimpleAverage, DareTaskArithmetic
+    from .dare import DareSimpleAverage, DareTaskArithmetic, DareTiesMerging
     from .dawe import DataAdaptiveWeightEnsemblingForCLIP
     from .depth_upscaling import DepthUpscalingAlgorithm, DepthUpscalingForLlama
     from .dummy import DummyAlgorithm
@@ -111,6 +126,12 @@ if TYPE_CHECKING:
         WeightedEnsembleAlgorithm,
     )
     from .fisher_merging import FisherMergingForCLIPVisionModel
+    from .isotropic_merging import (
+        ISO_C_Merge,
+        ISO_CTS_Merge,
+        IsotropicMergingInCommonAndTaskSubspace,
+        IsotropicMergingInCommonSubspace,
+    )
     from .linear import (
         ExPOAlgorithm,
         ExPOAlgorithmForLlama,
@@ -126,6 +147,7 @@ if TYPE_CHECKING:
         MixtralUpscalingAlgorithm,
     )
     from .model_recombination import ModelRecombinationAlgorithm
+    from .opcm import OPCMForCLIP
     from .pruning import (
         MagnitudeDiffPruningAlgorithm,
         MagnitudePruningForLlama,
@@ -139,6 +161,7 @@ if TYPE_CHECKING:
     from .rankone_moe import CLIPRankOneMoEAlgorithm, RankOneMoEAlgorithm
     from .regmean import RegMeanAlgorithmForCLIP, RegMeanAlgorithmForGPT2
     from .simple_average import SimpleAverageAlgorithm
+    from .slerp import SlerpMergeAlgorithm
     from .smile_upscaling import (
         SingularProjectionMergingAlgorithm,
         SmileUpscalingAlgorithm,
@@ -153,6 +176,7 @@ if TYPE_CHECKING:
         SparseLoForLlama,
     )
     from .task_arithmetic import TaskArithmeticAlgorithm
+    from .task_singular_vector import TaskSingularVectorMerging
     from .ties_merging import TiesMergingAlgorithm
     from .we_moe import CLIPWeightEnsemblingMoEAlgorithm
     from .weighted_average import WeightedAverageAlgorithm, WeightedAverageForLLama

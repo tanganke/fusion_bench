@@ -19,7 +19,6 @@ from fusion_bench.utils import import_object, instantiate, timeit_context
 from fusion_bench.utils.hydra_utils import get_hydra_output_dir
 from fusion_bench.utils.json import print_json
 from fusion_bench.utils.rich_utils import print_bordered, print_config_tree
-from fusion_bench.method.surgery.surgerymodelwrapper import SurgeryModelWrapper
 
 log = logging.getLogger(__name__)
 
@@ -104,12 +103,13 @@ class FabricModelFusionProgram(
             )
             if compat_load_fn is not None:
                 compat_load_fn = import_object(compat_load_fn)
-                print_bordered(
-                    OmegaConf.to_yaml(config),
-                    title="instantiate compat object",
-                    style="magenta",
-                    code_style="yaml",
-                )
+                if rank_zero_only.rank == 0:
+                    print_bordered(
+                        OmegaConf.to_yaml(config),
+                        title="instantiate compat object",
+                        style="magenta",
+                        code_style="yaml",
+                    )
                 obj = compat_load_fn(config)
             else:
                 raise ValueError(
@@ -160,7 +160,11 @@ class FabricModelFusionProgram(
             print("No save path specified for the merged model. Skipping saving.")
 
     def evaluate_merged_model(
-        self, taskpool: BaseTaskPool, merged_model: Union[nn.Module, Dict, Iterable]
+        self,
+        taskpool: BaseTaskPool,
+        merged_model: Union[nn.Module, Dict, Iterable],
+        *args,
+        **kwargs,
     ):
         """
         Evaluates the merged model using the provided task pool.
@@ -175,6 +179,8 @@ class FabricModelFusionProgram(
         Args:
             taskpool: The task pool used for evaluating the merged model.
             merged_model: The merged model to be evaluated. It can be an instance of `nn.Module`, a dictionary, or an iterable.
+            *args: Additional positional arguments to be passed to the `evaluate` method of the taskpool.
+            **kwargs: Additional keyword arguments to be passed to the `evaluate` method of the taskpool.
 
         Returns:
             The evaluation report. The type of the report depends on the type of the merged model:
@@ -182,22 +188,21 @@ class FabricModelFusionProgram(
             - If the merged model is a dictionary, the report is a dictionary updated with the remaining dictionary items.
             - If the merged model is an iterable, the report is a list of evaluation reports.
         """
-        if isinstance(merged_model, SurgeryModelWrapper):
-            report = taskpool.evaluate(merged_model, modeltype='surgery_model')
-            # report.update(merged_model)
-            return report
-        elif isinstance(merged_model, nn.Module):
-            report = taskpool.evaluate(merged_model)
+        if isinstance(merged_model, nn.Module):
+            report = taskpool.evaluate(merged_model, *args, **kwargs)
             return report
         elif isinstance(merged_model, Dict):
-            model = merged_model.pop("model")
-            report: dict = taskpool.evaluate(model)
-            report.update(merged_model)
-            print(report)
+            report = {}
+            for key, item in merged_model.items():
+                if isinstance(item, nn.Module):
+                    report[key] = taskpool.evaluate(item, *args, **kwargs)
+                else:
+                    # metadata
+                    report[key] = item
             return report
         elif isinstance(merged_model, Iterable):
             return [
-                self.evaluate_merged_model(taskpool, m)
+                self.evaluate_merged_model(taskpool, m, *args, **kwargs)
                 for m in tqdm(merged_model, desc="Evaluating models")
             ]
         else:
@@ -274,7 +279,11 @@ class FabricModelFusionProgram(
         """
         if self.log_dir is not None:
             # make symlink to the hydra output directory
-            hydra_output_dir = get_hydra_output_dir()
+            try:
+                hydra_output_dir = get_hydra_output_dir()
+            except Exception as e:
+                hydra_output_dir = None
+
             if hydra_output_dir is not None:
                 os.makedirs(self.log_dir, exist_ok=True)
                 try:

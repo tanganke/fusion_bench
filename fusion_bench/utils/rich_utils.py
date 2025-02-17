@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Sequence
 
@@ -10,6 +11,7 @@ from omegaconf import DictConfig, OmegaConf, open_dict
 from rich import print
 from rich.columns import Columns
 from rich.console import Console
+from rich.logging import RichHandler
 from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.syntax import Syntax
@@ -184,3 +186,16 @@ if __name__ == "__main__":
 
     print("\nAvailable Styles:")
     display_available_styles()
+
+
+def setup_colorlogging(force=False, **config_kwargs):
+    FORMAT = "%(message)s"
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format=FORMAT,
+        datefmt="[%X]",
+        handlers=[RichHandler()],
+        force=force,
+        **config_kwargs,
+    )

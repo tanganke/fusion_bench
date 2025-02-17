@@ -1,3 +1,4 @@
+import logging
 import os
 from copy import deepcopy
 from typing import TYPE_CHECKING, Optional
@@ -7,7 +8,6 @@ from lightning.fabric.utilities import rank_zero_only
 from tqdm.auto import tqdm
 
 from fusion_bench.utils import timeit_context
-import logging
 
 if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer

@@ -6,7 +6,8 @@ from . import data, functools, path
 from .cache_utils import *
 from .devices import *
 from .dtype import parse_dtype
-from .instantiate import instantiate
+from .fabric import seed_everything_by_time
+from .instantiate import instantiate, is_instantiable
 from .misc import *
 from .packages import import_object
 from .parameters import *

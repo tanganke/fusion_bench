@@ -1,7 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from omegaconf import DictConfig
+
+if TYPE_CHECKING:
+    from fusion_bench.programs.base_program import BaseHydraProgram
 
 __all__ = ["ModelFusionAlgorithm"]
 
@@ -17,6 +20,9 @@ class ModelFusionAlgorithm(ABC):
     Attributes:
         config (DictConfig): Configuration for the algorithm.
     """
+
+    _program: "BaseHydraProgram" = None
+    """A reference to the program that is running the algorithm."""
 
     def __init__(self, algorithm_config: Optional[DictConfig] = None):
         """

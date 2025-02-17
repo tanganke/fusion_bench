@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, List, Optional, TypeVar
 
 import lightning as L
 import torch
+from lightning.fabric.connector import _is_using_cli
 from lightning.fabric.loggers import TensorBoardLogger
 from lightning.fabric.utilities.rank_zero import rank_zero_only
 from omegaconf import DictConfig, OmegaConf
@@ -79,7 +80,8 @@ class LightningFabricMixin:
                 self._fabric_instance = L.Fabric()
             else:
                 self._fabric_instance = instantiate(config.fabric)
-            self._fabric_instance.launch()
+            if not _is_using_cli():  # if not using cli, launch the fabric
+                self._fabric_instance.launch()
             # Set the log directory in config if it is not already set
             if (
                 self.log_dir is not None

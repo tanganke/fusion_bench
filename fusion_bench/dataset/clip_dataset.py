@@ -65,4 +65,7 @@ class CLIPDataset(torch.utils.data.Dataset):
         else:
             # if processor is None, return the raw image directly
             inputs = image
+        # convert boolean label to int, this is for the case when the label is a binary classification task
+        if isinstance(item["label"], bool):
+            item["label"] = 1 if item["label"] else 0
         return inputs, item["label"]

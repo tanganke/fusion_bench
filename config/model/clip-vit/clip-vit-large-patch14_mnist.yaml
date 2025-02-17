@@ -1,3 +1,1 @@
-mnist:
-  _target_: transformers.CLIPVisionModel.from_pretrained
-  pretrained_model_name_or_path: tanganke/clip-vit-large-patch14_mnist
+mnist: tanganke/clip-vit-large-patch14_mnist

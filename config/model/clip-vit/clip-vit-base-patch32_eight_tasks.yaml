@@ -1,3 +1,4 @@
+# The 8 task used in the Task Arithmetic paper
 defaults:
   - clip-vit-base-patch32
   - clip-vit-base-patch32_sun397

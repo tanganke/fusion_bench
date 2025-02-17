@@ -10,7 +10,7 @@ from hydra._internal.utils import _locate
 from hydra.errors import InstantiationException
 from hydra.types import ConvertMode, TargetConf
 from lightning_utilities.core.rank_zero import rank_zero_only
-from omegaconf import OmegaConf, SCMode
+from omegaconf import DictConfig, OmegaConf, SCMode
 from omegaconf._utils import is_structured_config
 from rich import print
 from rich.panel import Panel
@@ -28,6 +28,12 @@ Function to be used for printing function calls.
 """
 
 CATCH_EXCEPTION = True
+
+
+def is_instantiable(config: Union[DictConfig, Any]) -> bool:
+    if OmegaConf.is_dict(config):
+        return "_target_" in config
+    return False
 
 
 def _resolve_callable_name(f: Callable[..., Any]) -> str:

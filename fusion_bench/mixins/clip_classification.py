@@ -2,7 +2,17 @@ import functools
 import logging
 import os
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union, cast  # noqa: F401
+from typing import (  # noqa: F401
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+    Union,
+    cast,
+)
 
 import torch
 from omegaconf import DictConfig
@@ -18,10 +28,12 @@ from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.utils.data import InfiniteDataLoader
 
+if TYPE_CHECKING:
+    from transformers.models.clip.modeling_clip import CLIPVisionTransformer
+
 log = logging.getLogger(__name__)
 
-TensorOrModule = TypeVar("TensorOrModule", torch.Tensor, torch.nn.Module, Any)
-
+# disable tokenizers parallelism by default to avoid deadlocks
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
@@ -120,13 +132,13 @@ class CLIPClassificationMixin(LightningFabricMixin):
 
         # get cache directory
         if self.modelpool.has_pretrained:
-            model_name = self.modelpool.get_model_config(
-                "_pretrained_"
-            ).pretrained_model_name_or_path
+            model_name = self.modelpool.get_model_config("_pretrained_")
+            if not isinstance(model_name, str):
+                model_name = model_name.pretrained_model_name_or_path
         else:
-            model_name = self.modelpool.get_model_config(
-                self.modelpool.model_names[0]
-            ).pretrained_model_name_or_path
+            model_name = self.modelpool.get_model_config(self.modelpool.model_names[0])
+            if not isinstance(model_name, str):
+                model_name = model_name.pretrained_model_name_or_path
         cache_dir = os.path.join(
             self.zeroshot_weights_cache_dir,
             os.path.normpath(model_name.split("/")[-1]),
@@ -149,12 +161,14 @@ class CLIPClassificationMixin(LightningFabricMixin):
                     cache_dir, os.path.normpath(f"{task}_zeroshot_weights.pt")
                 )
                 if os.path.exists(cache_file):
-                    log.info(f"Loading cached zeroshot weights for task: {task}")
                     zeroshot_weights = torch.load(
                         cache_file,
                         map_location="cpu",
                         weights_only=True,
                     ).detach()
+                    log.info(
+                        f"Loadded cached zeroshot weights for task: {task}, shape: {zeroshot_weights.shape}"
+                    )
                 else:
                     log.info(
                         f"Construct zero shot classification head for task: {task}"
@@ -168,6 +182,7 @@ class CLIPClassificationMixin(LightningFabricMixin):
             self.fabric.barrier()
             self.zeroshot_weights[task] = self.fabric.broadcast(zeroshot_weights, src=0)
             self.zeroshot_weights[task] = self.to_device(self.zeroshot_weights[task])
+            self.fabric.barrier()
 
         del clip_classifier
         if torch.cuda.is_available():
@@ -175,16 +190,30 @@ class CLIPClassificationMixin(LightningFabricMixin):
 
     def compute_logits(
         self,
-        module: Union[nn.Module, CLIPVisionModel],
+        module: Union[nn.Module, CLIPVisionModel, "CLIPVisionTransformer"],
         images: torch.Tensor,
         task: str,
         image_embeds: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
+        """
+        Compute the logits of the images for a given task.
+
+        Args:
+            module (Union[nn.Module, CLIPVisionModel, "CLIPVisionTransformer"]): The module to compute the logits.
+            images (torch.Tensor): The images to compute the logits.
+            task (str): The task to compute the logits.
+            image_embeds (Optional[torch.Tensor]): The precomputed image embeddings. If None, the image embeddings will be computed.
+
+        Returns:
+            torch.Tensor: The logits of the images.
+        """
         text_embeds = self.zeroshot_weights[task]
 
         if image_embeds is None:
             image_embeds = module(images)[1]
-        assert isinstance(image_embeds, torch.Tensor), f"`image_embeds` must be a tensor, but got {type(image_embeds)}"
+        assert isinstance(
+            image_embeds, torch.Tensor
+        ), f"`image_embeds` must be a tensor, but got {type(image_embeds)}"
         image_embeds = self.visual_projection(image_embeds)
 
         # normalize embeddings
@@ -198,16 +227,26 @@ class CLIPClassificationMixin(LightningFabricMixin):
 
         return logits_per_image
 
-
     def compute_features(
         self,
-        module: Union[nn.Module, CLIPVisionModel],
+        module: Union[nn.Module, CLIPVisionModel, "CLIPVisionTransformer"],
         images: torch.Tensor,
+        normalize: bool = True,
     ) -> torch.Tensor:
+        """
+        Extracts image features using CLIP's vision encoder and visual projection.
+
+        Args:
+            module (Union[nn.Module, CLIPVisionModel, "CLIPVisionTransformer"]): The CLIP vision encoder module.
+            images (torch.Tensor): Input image batch to process.
+            normalize (bool): Whether to normalize the image embeddings.
+
+        Returns:
+            torch.Tensor: Normalized image embeddings with dimension matching CLIP's projection space (`projection_dim` in model config).
+        """
         image_embeds = module(images)[1]
         image_embeds = self.visual_projection(image_embeds)
 
-        # normalize embeddings
-        image_embeds = image_embeds / image_embeds.norm(p=2, dim=-1, keepdim=True)
-
+        if normalize:
+            image_embeds = image_embeds / image_embeds.norm(p=2, dim=-1, keepdim=True)
         return image_embeds
