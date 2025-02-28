@@ -1,3 +1,5 @@
+# Reference: Jinluan Yang, et al. Mitigating the Backdoor Effect for Multi-Task Model Merging via Safety-Aware Subspace. ICLR 2025.
+
 name: clip_post_defense_SAU
 
 # batch size per gpu
