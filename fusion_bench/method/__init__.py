@@ -66,6 +66,10 @@ _import_structure = {
         "ConcreteTaskArithmeticAlgorithmForCLIP",
         "ConcreteTaskWiseAdaMergingForCLIP",
         "ConcreteLayerWiseAdaMergingForCLIP",
+        "ConcreteSafeLayerWiseAdaMergingForCLIP",
+        "ConcreteSafeTaskWiseAdaMergingForCLIP",
+        "PostDefenseAWMAlgorithmForCLIP",
+        "PostDefenseSAUAlgorithmForCLIP",
     ],
     # model mixing methods
     "depth_upscaling": ["DepthUpscalingAlgorithm", "DepthUpscalingForLlama"],
@@ -113,8 +117,12 @@ if TYPE_CHECKING:
     )
     from .concrete_subspace import (
         ConcreteLayerWiseAdaMergingForCLIP,
+        ConcreteSafeLayerWiseAdaMergingForCLIP,
+        ConcreteSafeTaskWiseAdaMergingForCLIP,
         ConcreteTaskArithmeticAlgorithmForCLIP,
         ConcreteTaskWiseAdaMergingForCLIP,
+        PostDefenseAWMAlgorithmForCLIP,
+        PostDefenseSAUAlgorithmForCLIP,
     )
     from .dare import DareSimpleAverage, DareTaskArithmetic, DareTiesMerging
     from .dawe import DataAdaptiveWeightEnsemblingForCLIP
