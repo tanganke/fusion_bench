@@ -1,0 +1,27 @@
+type: clip_vit_classification
+name: clip-vit-robustness_clean
+# corrption can be one of:
+# contrast, gaussian_noise, impulse_noise, jpeg_compression, motion_blur, pixelate, spatter
+corruption: ${corruption}
+dataset_type: huggingface_image_classification
+tasks:
+  - name: stanford_cars
+    dataset:
+      name: tanganke/stanford_cars
+      split: ${taskpool.corruption}
+  - name: eurosat
+    dataset:
+      name: tanganke/eurosat
+      split: ${taskpool.corruption}
+  - name: resisc45
+    dataset:
+      name: tanganke/resisc45
+      split: ${taskpool.corruption}
+  - name: gtsrb
+    dataset:
+      name: tanganke/gtsrb
+      split: ${taskpool.corruption}
+clip_model: openai/clip-vit-base-patch32
+batch_size: 128
+num_workers: 16
+fast_dev_run: ${fast_dev_run}
