@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 import torch
 from torch import Tensor, nn
@@ -21,103 +21,32 @@ from fusion_bench.method.pruning.prune_utils import (
 )
 from fusion_bench.mixins import LightningFabricMixin, SimpleProfilerMixin
 from fusion_bench.modelpool import CausalLMPool
+from fusion_bench.models.modeling_deepseek_v2 import (
+    DeepseekV2DecoderLayer,
+    DeepseekV2ForCausalLM,
+    DeepseekV2MLP,
+    DeepseekV2MoE,
+    DeepseekV2MoEGate,
+)
 from fusion_bench.utils import timeit_context
 from fusion_bench.utils.cache_utils import cache_to_disk
 from fusion_bench.utils.devices import to_device
 
+from .hooks.deepseek_v2 import (
+    MoEPrunerHookFnForDeepseekV2Gate,
+    MoEPrunerHookFnForDeepseekV2Linear,
+)
+from .hooks.hook import BaseHookFn
+from .hooks.mixtral import (
+    MoEPrunerHookFnForMixtralGate,
+    MoEPrunerHookFnForMixtralLinear,
+)
 from .utils.data import get_loaders
-from .utils.hook import BaseHookFn
 from .utils.prune import prepare_calibration_input
 
-MoEModel = TypeVar("MoEModel", bound=MixtralForCausalLM)
+MoEModel = TypeVar("MoEModel", bound=Union[MixtralForCausalLM, DeepseekV2ForCausalLM])
 
 log = logging.getLogger(__name__)
-
-
-class MoEPrunerHookFnForMixtralLinear(BaseHookFn):
-    _routing_weights = None  # set by gate hook
-
-    def __init__(
-        self,
-        linear: nn.Linear,
-        name: str,
-    ):
-        super().__init__(linear)
-        self.linear = linear
-        self.scalar_row = torch.zeros(
-            (linear.weight.size(1),), device=linear.weight.device
-        )
-        self.nsamples = 0
-        self.name = name
-
-    def compute(self):
-        return torch.abs(self.linear.weight) * torch.sqrt(
-            self.scalar_row.reshape(1, -1)
-        )
-
-    def __call__(self, linear: nn.Linear, inps: Tuple[Tensor], out: Tensor):
-        assert len(inps) == 1
-        inp = inps[0]
-        if len(inp.shape) == 2:
-            inp = inp.unsqueeze(0)
-
-        batch_size = inp.shape[0]
-        if len(inp.shape) == 3:
-            inp = inp.reshape((-1, inp.shape[-1]))
-        # (NxL, C) -> (C, NxL)
-        inp = inp.t()
-
-        self.scalar_row *= self.nsamples / (self.nsamples + batch_size)
-        self.nsamples += batch_size
-
-        inp = inp.type(torch.float32)
-        routing_weights = self._routing_weights.t()
-        self.scalar_row += (
-            torch.norm(inp * routing_weights, p=2, dim=1) ** 2 / self.nsamples
-        )
-
-
-class MoEPrunerLinearHookFnForMixtralGate(BaseHookFn):
-
-    def __init__(
-        self,
-        router: nn.Module,
-        linear_layer_hooks: Dict[str, MoEPrunerHookFnForMixtralLinear],
-        top_k: int,
-        num_experts: int,
-    ):
-        self.nsamples = 0
-        self.linear_layer_hooks = linear_layer_hooks
-        self.top_k = top_k
-        self.num_experts = num_experts
-        super().__init__(router)
-
-    def __call__(self, router, inps: Tuple[Tensor], out: Tensor):
-        assert len(inps) == 1
-        inp = inps[0]
-
-        router_logits = out
-        routing_weights = F.softmax(router_logits, dim=1, dtype=torch.float)
-        routing_weights, selected_experts = torch.topk(
-            routing_weights, self.top_k, dim=-1
-        )
-        routing_weights /= routing_weights.sum(dim=-1, keepdim=True)
-
-        # One hot encode the selected experts to create an expert mask
-        # this will be used to easily index which expert is going to be sollicitated
-        expert_mask = torch.nn.functional.one_hot(
-            selected_experts, num_classes=self.num_experts
-        ).permute(2, 1, 0)
-
-        for expert_idx in range(self.num_experts):
-            idx, top_x = torch.where(expert_mask[expert_idx])
-            for name, hook in self.linear_layer_hooks.items():
-                if not name.startswith(f"{expert_idx}."):
-                    continue
-                hook._routing_weights = routing_weights[top_x, idx, None]
-
-    def compute(self):
-        pass
 
 
 class MoEPruner(BaseAlgorithm, SimpleProfilerMixin, LightningFabricMixin):
@@ -226,6 +155,7 @@ class MoEPruner(BaseAlgorithm, SimpleProfilerMixin, LightningFabricMixin):
         position_ids,
         position_embeddings,
     ):
+        model.eval()
         layers = model.model.layers
         for layer_idx, layer in tqdm(
             enumerate(layers),
@@ -253,6 +183,21 @@ class MoEPruner(BaseAlgorithm, SimpleProfilerMixin, LightningFabricMixin):
 
             if isinstance(layer, MixtralDecoderLayer):
                 linear_layers = find_linear_layers(layer.block_sparse_moe.experts)
+            elif isinstance(layer, DeepseekV2DecoderLayer):
+                if isinstance(layer.mlp, DeepseekV2MoE):
+                    linear_layers = find_linear_layers(layer.mlp.experts)
+                elif isinstance(layer.mlp, DeepseekV2MLP):
+                    # compute the input to the next layer
+                    with torch.no_grad():
+                        for j in range(self.nsamples):
+                            outs[j] = layer(
+                                inps[j].unsqueeze(0),
+                                attention_mask=attention_mask,
+                                position_ids=position_ids,
+                                position_embeddings=position_embeddings,
+                            )[0]
+                    inps, outs = outs, inps
+                    continue
             else:
                 raise ValueError(f"Unsupported layer type: {type(layer)}")
 
@@ -261,13 +206,15 @@ class MoEPruner(BaseAlgorithm, SimpleProfilerMixin, LightningFabricMixin):
             for name, linear in linear_layers.items():
                 if isinstance(model, MixtralForCausalLM):
                     hook_fn = MoEPrunerHookFnForMixtralLinear(linear, name)
+                elif isinstance(model, DeepseekV2ForCausalLM):
+                    hook_fn = MoEPrunerHookFnForDeepseekV2Linear(linear, name)
                 else:
                     raise ValueError(f"Unsupported model type: {type(model)}")
                 linear_hooks[name] = hook_fn
                 handles.append(linear.register_forward_hook(hook_fn))
 
             if isinstance(model, MixtralForCausalLM):
-                gate_hook = MoEPrunerLinearHookFnForMixtralGate(
+                gate_hook = MoEPrunerHookFnForMixtralGate(
                     layer.block_sparse_moe.gate,
                     linear_hooks,
                     top_k=layer.block_sparse_moe.top_k,
@@ -276,6 +223,14 @@ class MoEPruner(BaseAlgorithm, SimpleProfilerMixin, LightningFabricMixin):
                 handles.append(
                     layer.block_sparse_moe.gate.register_forward_hook(gate_hook)
                 )
+            elif isinstance(model, DeepseekV2ForCausalLM):
+                gate_hook = MoEPrunerHookFnForDeepseekV2Gate(
+                    layer.mlp.gate,
+                    linear_hooks,
+                    top_k=layer.mlp.gate.top_k,
+                    num_experts=layer.mlp.config.n_routed_experts,
+                )
+                handles.append(layer.mlp.gate.register_forward_hook(gate_hook))
             else:
                 raise ValueError(f"Unsupported model type: {type(model)}")
 

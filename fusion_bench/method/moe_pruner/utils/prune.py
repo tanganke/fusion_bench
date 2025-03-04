@@ -120,7 +120,10 @@ def prepare_calibration_input(
             # collect attention_mask and position_ids
             cache["attention_mask"] = kwargs["attention_mask"]
             cache["position_ids"] = kwargs["position_ids"]
-            cache["position_embeddings"] = kwargs["position_embeddings"]
+            if "position_embeddings" in kwargs:
+                cache["position_embeddings"] = kwargs["position_embeddings"]
+            else:
+                cache["position_embeddings"] = None
             raise ValueError  # stop the forward pass
 
     layers[0] = Catcher(layers[0])
