@@ -53,7 +53,6 @@ class LayerWiseAdaMergingAlgorithm(
         """
         super().__init__(algorithm_config)
 
-    @torch.no_grad()
     def construct_layer_wise_merged_model(self, modelpool: "ModelPool"):
         """
         Constructs a wrapped layer-wise merged model from model pool.
