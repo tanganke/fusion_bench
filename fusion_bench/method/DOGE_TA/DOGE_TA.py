@@ -1,4 +1,4 @@
-"""
+R"""
 This script contains the general implementation of Modeling Multi-Task Model Merging as Adaptive Projective Gradient Descent.
 
 https://arxiv.org/abs/2501.01230
@@ -6,7 +6,16 @@ https://arxiv.org/abs/2501.01230
 Example Usage:
 
 ```bash
-fusion_bench method=DOGE_TA modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8_model_only taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
+fusion_bench \
+    method=DOGE_TA/DOGE_TA \
+    modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8_model_only \
+    taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
+
+fusion_bench \
+    method=adamerging \
+    method.name=clip_layer_wise_adamerging_doge_ta \
+    modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
+    taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
 ```
 """
 
@@ -16,7 +25,6 @@ import time
 from collections import OrderedDict
 from copy import deepcopy
 from functools import reduce
-from tkinter.constants import SEL_FIRST
 from typing import Dict, List, Mapping, TypeVar, Union  # noqa: F401
 
 import lightning as L
