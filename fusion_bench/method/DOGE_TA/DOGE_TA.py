@@ -2,30 +2,37 @@
 This script contains the general implementation of Modeling Multi-Task Model Merging as Adaptive Projective Gradient Descent.
 
 https://arxiv.org/abs/2501.01230
+
+Example Usage:
+
+```bash
+fusion_bench method=DOGE_TA modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8_model_only taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
+```
 """
 
+import copy
 import logging
+import time
+from collections import OrderedDict
 from copy import deepcopy
+from functools import reduce
 from tkinter.constants import SEL_FIRST
 from typing import Dict, List, Mapping, TypeVar, Union  # noqa: F401
 
+import lightning as L
 import torch
 from torch import nn
-from functools import reduce
 
 from fusion_bench.method.base_algorithm import BaseAlgorithm
+from fusion_bench.mixins.lightning_fabric import LightningFabricMixin
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_add,
     state_dict_mul,
-    state_dict_sub
+    state_dict_sub,
 )
 from fusion_bench.utils.type import StateDictType
-import lightning as L
-import copy
-from collections import OrderedDict
-import time
 
 log = logging.getLogger(__name__)
 
@@ -33,6 +40,7 @@ log = logging.getLogger(__name__)
 class DOGE_TA_Algorithm(
     BaseAlgorithm,
     SimpleProfilerMixin,
+    LightningFabricMixin,
 ):
     """
     Task Arithmetic Algorithm for model fusion with learnable delta.
@@ -44,7 +52,7 @@ class DOGE_TA_Algorithm(
         scaling_factor (int): The factor by which the task vectors will be scaled before merging.
         delta (StateDictType): A learnable parameter to adjust task vectors, initialized as zeros.
     """
-    _fabric: L.Fabric = None
+
     _config_mapping = BaseAlgorithm._config_mapping | {
         "subspace": "subspace",
         "K": "K",
@@ -56,29 +64,34 @@ class DOGE_TA_Algorithm(
         self.subspace = subspace
         self.K = K
         self.lamda = lamda
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        if self._fabric is None and torch.cuda.is_available():
-            self._fabric = L.Fabric(devices=self.config.get("devices", 1))
-            self._fabric.launch()
         super().__init__()
 
+    @property
+    def device(self) -> torch.device:
+        return self.fabric.device
+
     @torch.no_grad()
-    def compute_task_vectors(self, modelpool: BaseModelPool, pretrained_model: nn.Module) -> List[StateDictType]:
+    def compute_task_vectors(
+        self, modelpool: BaseModelPool, pretrained_model: nn.Module
+    ) -> List[StateDictType]:
         """
         Computes task vectors for each model in the model pool relative to the pretrained model.
         """
         task_vectors = []
         pretrained_sd = pretrained_model.state_dict(keep_vars=True)
-        filtered_keys = [k for k in pretrained_sd.keys() if (
-                    "encoder" in k and "layer_norm" not in k and "weight" in k)]  #Flan T5: "layer_norm" not in k and ("q.weight" in k or "v.weight" in k)
+        filtered_keys = [
+            k
+            for k in pretrained_sd.keys()
+            if ("encoder" in k and "layer_norm" not in k and "weight" in k)
+        ]  # Flan T5: "layer_norm" not in k and ("q.weight" in k or "v.weight" in k)
 
         for model_name in modelpool.model_names:
             model = modelpool.load_model(model_name)
             model_sd = model.state_dict(keep_vars=True)
 
-            filtered_task_vector = {k: (model_sd[k] - pretrained_sd[k]) for k in filtered_keys}
-            # if self._fabric is not None:
-            #     filtered_task_vector = self._fabric.to_device(filtered_task_vector)
+            filtered_task_vector = {
+                k: (model_sd[k] - pretrained_sd[k]) for k in filtered_keys
+            }
             task_vectors.append(filtered_task_vector)
 
         return task_vectors
@@ -97,8 +110,8 @@ class DOGE_TA_Algorithm(
 
         # Iterate through each vector and calculate the loss one by one
         for v_j in layer_vectors:
-            part1 = - v_j * sum_over_num_vectors
-            part2 = - v_j * sum_over_delta
+            part1 = -v_j * sum_over_num_vectors
+            part2 = -v_j * sum_over_delta
             part3 = v_j * v_j
 
             expression = part1 + part2 + part3
@@ -118,21 +131,29 @@ class DOGE_TA_Algorithm(
                 k: nn.Parameter(torch.zeros_like(v, device=self.device).detach())
                 for k, v in task_vectors[0].items()
             }
-            # if self._fabric is not None:
-            #     self.delta = self._fabric.to_device(self.delta)
 
         optimizer = torch.optim.Adam(self.delta.values(), lr=1e-4)
         initial_mem = torch.cuda.memory_allocated()
         start_time = time.time()
         for layer_name in task_vectors[0].keys():
-            layer_vectors = torch.stack([vec[layer_name] for vec in task_vectors]).to(self.device)
-            layer_lamdas = torch.stack([lamdas[layer_name] for lamdas in self.lamdas]).to(self.device)
+            layer_vectors = torch.stack([vec[layer_name] for vec in task_vectors]).to(
+                self.device
+            )
+            layer_lamdas = torch.stack(
+                [lamdas[layer_name] for lamdas in self.lamdas]
+            ).to(self.device)
             for _ in range(400):
                 optimizer.zero_grad()
-                loss = self.taskvector_loss(layer_vectors, self.delta[layer_name], layer_lamdas)
-                self._fabric.backward(loss)
-                grad_proj = self.projection[layer_name] @ self.delta[layer_name].grad.detach()
-                self.delta[layer_name].grad.data = self.delta[layer_name].grad.data.sub_(grad_proj)
+                loss = self.taskvector_loss(
+                    layer_vectors, self.delta[layer_name], layer_lamdas
+                )
+                self.fabric.backward(loss)
+                grad_proj = (
+                    self.projection[layer_name] @ self.delta[layer_name].grad.detach()
+                )
+                self.delta[layer_name].grad.data = self.delta[
+                    layer_name
+                ].grad.data.sub_(grad_proj)
                 optimizer.step()
                 self.delta[layer_name].grad = None
         end_time = time.time()
@@ -169,40 +190,41 @@ class DOGE_TA_Algorithm(
                 u, s, v = torch.linalg.svd(layer_vector, full_matrices=False)
                 if i == 0:
                     print(f"Computed SVD for {layer_name}...")
-                    sum_u = torch.zeros_like(
-                        u, device=layer_vector.device
-                    )
-                    sum_s = torch.zeros_like(
-                        s, device=layer_vector.device
-                    )
-                    sum_v = torch.zeros_like(
-                        v, device=layer_vector.device
-                    )
+                    sum_u = torch.zeros_like(u, device=layer_vector.device)
+                    sum_s = torch.zeros_like(s, device=layer_vector.device)
+                    sum_v = torch.zeros_like(v, device=layer_vector.device)
 
                 reduced_index_s = int(s.shape[0] / len(task_vectors))
 
                 # select only the first reduced_index_s columns of u and place them
-                sum_u[:, i * reduced_index_s: (i + 1) * reduced_index_s] = u[
-                                                                           :, :reduced_index_s
-                                                                           ]
-                sum_s[i * reduced_index_s: (i + 1) * reduced_index_s] = s[
-                                                                        :reduced_index_s
-                                                                        ]
+                sum_u[:, i * reduced_index_s : (i + 1) * reduced_index_s] = u[
+                    :, :reduced_index_s
+                ]
+                sum_s[i * reduced_index_s : (i + 1) * reduced_index_s] = s[
+                    :reduced_index_s
+                ]
                 # select only the first reduced_index_s rows of v and place them
-                sum_v[i * reduced_index_s: (i + 1) * reduced_index_s, :] = v[
-                                                                           :reduced_index_s, :
-                                                                           ]
+                sum_v[i * reduced_index_s : (i + 1) * reduced_index_s, :] = v[
+                    :reduced_index_s, :
+                ]
             u_u, s_u, v_u = torch.linalg.svd(sum_u, full_matrices=False)
-            layer_proj = torch.matmul(u_u[:, :int(s.shape[0] / self.config.subspace)],
-                                      u_u[:, :int(s.shape[0] / self.config.subspace)].T)
+            layer_proj = torch.matmul(
+                u_u[:, : int(s.shape[0] / self.config.subspace)],
+                u_u[:, : int(s.shape[0] / self.config.subspace)].T,
+            )
             self.projection[layer_name] = layer_proj
 
         self.optimize_delta(task_vectors)
 
         del self.projection
         self.delta = {key: param.detach().cpu() for key, param in self.delta.items()}
-        self.lamdas = [{key: param.cpu() for key, param in lamdas.items()} for lamdas in self.lamdas]
-        task_vectors = [{k: v.cpu() for k, v in task_vector.items()} for task_vector in task_vectors]
+        self.lamdas = [
+            {key: param.cpu() for key, param in lamdas.items()}
+            for lamdas in self.lamdas
+        ]
+        task_vectors = [
+            {k: v.cpu() for k, v in task_vector.items()} for task_vector in task_vectors
+        ]
         flat_vectors = []
         vector_masks = []
         for idx, task_vector in enumerate(task_vectors):
@@ -213,13 +235,19 @@ class DOGE_TA_Algorithm(
         flat_delta = self.state_dict_to_vector(self.delta)
 
         adjusted_vectors = [
-            self.vector_to_state_dict((flat_vector + flat_delta) * vector_mask, self.delta)
+            self.vector_to_state_dict(
+                (flat_vector + flat_delta) * vector_mask, self.delta
+            )
             for flat_vector, vector_mask in zip(flat_vectors, vector_masks)
         ]
 
         for layer_name in adjusted_vectors[0].keys():
-            layer_vectors = torch.stack([vec[layer_name] for vec in adjusted_vectors], dim=0)
-            layer_lamdas = torch.stack([lamdas[layer_name] for lamdas in self.lamdas], dim=0)
+            layer_vectors = torch.stack(
+                [vec[layer_name] for vec in adjusted_vectors], dim=0
+            )
+            layer_lamdas = torch.stack(
+                [lamdas[layer_name] for lamdas in self.lamdas], dim=0
+            )
             layer_vectors_scale = layer_vectors * layer_lamdas.view(-1, 1, 1)
             task_vectors[0][layer_name] = layer_vectors_scale.sum(dim=0)
 
@@ -239,7 +267,9 @@ class DOGE_TA_Algorithm(
     def compute_lamdas(self, vectors: List[StateDictType]) -> torch.Tensor:
         lamdas = []
         for vec in vectors:
-            norm_vec = torch.norm(torch.cat([param.flatten() for param in vec.values()]))
+            norm_vec = torch.norm(
+                torch.cat([param.flatten() for param in vec.values()])
+            )
             # norm_vec = sum([torch.norm(param) for param in vec.values()])
             lamdas.append(self.config.lamda / norm_vec)
         print(lamdas)
@@ -251,7 +281,7 @@ class DOGE_TA_Algorithm(
             tmp = {}
             for layer_name in vec.keys():
                 norm_vec = torch.norm(vec[layer_name])
-                tmp[layer_name]= self.config.lamda / norm_vec
+                tmp[layer_name] = self.config.lamda / norm_vec
             lamdas.append(tmp)
         return lamdas
 
