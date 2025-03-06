@@ -25,6 +25,8 @@ import os
 from copy import deepcopy
 
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 from tqdm.autonotebook import tqdm
 
 from fusion_bench.compat.method import ModelFusionAlgorithm
@@ -44,11 +46,8 @@ from fusion_bench.models.wrappers.task_wise_fusion import (
     TaskWiseMergedModel,
     get_task_wise_weights,
 )
-from fusion_bench.utils.parameters import print_parameters
 from fusion_bench.utils.dtype import parse_dtype
-import torch.nn.functional as F
-
-import torch.nn as nn
+from fusion_bench.utils.parameters import print_parameters
 
 log = logging.getLogger(__name__)
 
@@ -104,7 +103,9 @@ class ConcreteSafeTaskWiseAdaMergingForCLIP(
         )
 
         self.pertubed_model = nn.Module()
-        self.pertubed_model.perturbed_input = nn.Parameter(torch.zeros([len(modelpool.model_names),3,224,224]), requires_grad=True)
+        self.pertubed_model.perturbed_input = nn.Parameter(
+            torch.zeros([len(modelpool.model_names), 3, 224, 224]), requires_grad=True
+        )
         return module, mask_model
 
     def train_mask(self, module: TaskWiseMergedModel, mask_model: MaskModel):
@@ -126,8 +127,12 @@ class ConcreteSafeTaskWiseAdaMergingForCLIP(
             mask_model, optimizer = self.fabric.setup(mask_model, optimizer)
 
             ### for perturbed noise
-            batch_opt_adv = torch.optim.Adam(params=self.pertubed_model.parameters(), lr=self.config.adv_lr)
-            self.pertubed_model, batch_opt_adv = self.fabric.setup(self.pertubed_model, batch_opt_adv)
+            batch_opt_adv = torch.optim.Adam(
+                params=self.pertubed_model.parameters(), lr=self.config.adv_lr
+            )
+            self.pertubed_model, batch_opt_adv = self.fabric.setup(
+                self.pertubed_model, batch_opt_adv
+            )
         else:
             raise ValueError(f"Unsupported optimizer: {self.config.optimizer}")
 
@@ -186,13 +191,12 @@ class ConcreteSafeTaskWiseAdaMergingForCLIP(
             with self.profile("merge weights"):
                 module.merge_weights(task_vector_mask=mask)
 
-
             # (2)noise optimization based on the merging model
 
             # detach merged state_dict
             merged_state_dict = module._merged_state_dict
             detached_merged_state_dict = {
-               k: p.detach() for k,p in merged_state_dict.items()
+                k: p.detach() for k, p in merged_state_dict.items()
             }
             module._merged_state_dict = detached_merged_state_dict
 
@@ -202,16 +206,20 @@ class ConcreteSafeTaskWiseAdaMergingForCLIP(
                     batch = next(self.get_shuffled_test_loader_iter(task))
                     # NOTE: The labels are not allowed to be used during test-time adaptation
                     images = batch[0]
-                    perturbed_images = images + self.pertubed_model.perturbed_input[task_idx]
+                    perturbed_images = (
+                        images + self.pertubed_model.perturbed_input[task_idx]
+                    )
                     combined_images = torch.cat((images, perturbed_images), dim=0)
 
                 with self.profile("forward pass"):
                     combined_logits = self.compute_logits(module, combined_images, task)
-                    logits = combined_logits[:images.size(0)]
-                    logits_adv = combined_logits[images.size(0):]
+                    logits = combined_logits[: images.size(0)]
+                    logits_adv = combined_logits[images.size(0) :]
                     ori_label = torch.argmax(logits, axis=1).long()
-                    loss = torch.mean(-F.cross_entropy(logits_adv, ori_label, reduction='mean'))
-                    total_loss = loss  if total_loss is None else total_loss + loss 
+                    loss = torch.mean(
+                        -F.cross_entropy(logits_adv, ori_label, reduction="mean")
+                    )
+                    total_loss = loss if total_loss is None else total_loss + loss
 
             with self.profile("compute grad"):
                 self.fabric.backward(total_loss)
@@ -220,8 +228,7 @@ class ConcreteSafeTaskWiseAdaMergingForCLIP(
                 batch_opt_adv.step()
                 batch_opt_adv.zero_grad()
 
-
-            # (3)mask optimization 
+            # (3)mask optimization
             total_loss = None
             module._merged_state_dict = merged_state_dict
 
@@ -230,14 +237,16 @@ class ConcreteSafeTaskWiseAdaMergingForCLIP(
                     batch = next(self.get_shuffled_test_loader_iter(task))
                     # NOTE: The labels are not allowed to be used during test-time adaptation
                     images = batch[0]
-                    perturbed_images = images + self.pertubed_model.perturbed_input[task_idx]
+                    perturbed_images = (
+                        images + self.pertubed_model.perturbed_input[task_idx]
+                    )
                     perturbed_images = torch.clamp(perturbed_images, min=0, max=1)
                     combined_images = torch.cat((images, perturbed_images), dim=0)
 
                 with self.profile("forward pass"):
                     combined_logits = self.compute_logits(module, combined_images, task)
-                    logits = combined_logits[:images.size(0)]
-                    logits_adv = combined_logits[images.size(0):]
+                    logits = combined_logits[: images.size(0)]
+                    logits_adv = combined_logits[images.size(0) :]
 
                     # # ### regu1
                     # ori_label = torch.argmax(logits, axis=1).long()
@@ -245,10 +254,10 @@ class ConcreteSafeTaskWiseAdaMergingForCLIP(
                     # loss_regu = torch.mean(-F.cross_entropy(logits_adv, ori_label, reduction='mean'))
 
                     ### regu2
-                    loss_regu = entropy_loss(logits_adv) 
+                    loss_regu = entropy_loss(logits_adv)
                     loss_nat = entropy_loss(logits)
 
-                    loss = loss_nat + self.config.adv_weight*loss_regu
+                    loss = loss_nat + self.config.adv_weight * loss_regu
                     total_loss = loss if total_loss is None else total_loss + loss
 
             with self.profile("compute grad"):
@@ -262,7 +271,13 @@ class ConcreteSafeTaskWiseAdaMergingForCLIP(
                     lr_scheduler.step()
 
             # metrics.update({"train/loss": loss.item()})
-            metrics.update({"train/loss": loss.item(),"loss_nat": loss_nat.item(),"loss_regu": loss_regu.item()})
+            metrics.update(
+                {
+                    "train/loss": loss.item(),
+                    "loss_nat": loss_nat.item(),
+                    "loss_regu": loss_regu.item(),
+                }
+            )
             self.fabric.log_dict(metrics, step=step_idx)
             pbar.set_postfix(metrics)
             self.print_profile_summary()
@@ -441,7 +456,9 @@ class ConcreteSafeLayerWiseAdaMergingForCLIP(
         )
 
         self.pertubed_model = nn.Module()
-        self.pertubed_model.perturbed_input = nn.Parameter(torch.zeros([len(modelpool.model_names),3,224,224]), requires_grad=True)
+        self.pertubed_model.perturbed_input = nn.Parameter(
+            torch.zeros([len(modelpool.model_names), 3, 224, 224]), requires_grad=True
+        )
         return module, mask_model
 
     def train_mask(self, module: LayerWiseMergedModel, mask_model: MaskModel):
@@ -463,8 +480,12 @@ class ConcreteSafeLayerWiseAdaMergingForCLIP(
             module, base_optimizer = self.fabric.setup(module, base_optimizer)
             mask_model, optimizer = self.fabric.setup(mask_model, optimizer)
 
-            batch_opt_adv = torch.optim.Adam(params=self.pertubed_model.parameters(), lr=self.config.adv_lr)
-            self.pertubed_model, batch_opt_adv = self.fabric.setup(self.pertubed_model, batch_opt_adv)
+            batch_opt_adv = torch.optim.Adam(
+                params=self.pertubed_model.parameters(), lr=self.config.adv_lr
+            )
+            self.pertubed_model, batch_opt_adv = self.fabric.setup(
+                self.pertubed_model, batch_opt_adv
+            )
         else:
             raise ValueError(f"Unsupported optimizer: {self.config.optimizer}")
 
@@ -522,12 +543,12 @@ class ConcreteSafeLayerWiseAdaMergingForCLIP(
 
             # ------------------------------------------
 
-           # (2)noise optimization based on the merging model
+            # (2)noise optimization based on the merging model
 
             # detach merged state_dict
             merged_state_dict = module._merged_state_dict
             detached_merged_state_dict = {
-               k: p.detach() for k,p in merged_state_dict.items()
+                k: p.detach() for k, p in merged_state_dict.items()
             }
             module._merged_state_dict = detached_merged_state_dict
 
@@ -537,16 +558,20 @@ class ConcreteSafeLayerWiseAdaMergingForCLIP(
                     batch = next(self.get_shuffled_test_loader_iter(task))
                     # NOTE: The labels are not allowed to be used during test-time adaptation
                     images = batch[0]
-                    perturbed_images = images + self.pertubed_model.perturbed_input[task_idx]
+                    perturbed_images = (
+                        images + self.pertubed_model.perturbed_input[task_idx]
+                    )
                     combined_images = torch.cat((images, perturbed_images), dim=0)
 
                 with self.profile("forward pass"):
                     combined_logits = self.compute_logits(module, combined_images, task)
-                    logits = combined_logits[:images.size(0)]
-                    logits_adv = combined_logits[images.size(0):]
+                    logits = combined_logits[: images.size(0)]
+                    logits_adv = combined_logits[images.size(0) :]
                     ori_label = torch.argmax(logits, axis=1).long()
-                    loss = torch.mean(-F.cross_entropy(logits_adv, ori_label, reduction='mean'))
-                    total_loss = loss  if total_loss is None else total_loss + loss 
+                    loss = torch.mean(
+                        -F.cross_entropy(logits_adv, ori_label, reduction="mean")
+                    )
+                    total_loss = loss if total_loss is None else total_loss + loss
 
             with self.profile("compute grad"):
                 self.fabric.backward(total_loss)
@@ -555,8 +580,7 @@ class ConcreteSafeLayerWiseAdaMergingForCLIP(
                 batch_opt_adv.step()
                 batch_opt_adv.zero_grad()
 
-
-            # (3)mask optimization 
+            # (3)mask optimization
             total_loss = None
             module._merged_state_dict = merged_state_dict
 
@@ -565,14 +589,16 @@ class ConcreteSafeLayerWiseAdaMergingForCLIP(
                     batch = next(self.get_shuffled_test_loader_iter(task))
                     # NOTE: The labels are not allowed to be used during test-time adaptation
                     images = batch[0]
-                    perturbed_images = images + self.pertubed_model.perturbed_input[task_idx]
+                    perturbed_images = (
+                        images + self.pertubed_model.perturbed_input[task_idx]
+                    )
                     perturbed_images = torch.clamp(perturbed_images, min=0, max=1)
                     combined_images = torch.cat((images, perturbed_images), dim=0)
 
                 with self.profile("forward pass"):
                     combined_logits = self.compute_logits(module, combined_images, task)
-                    logits = combined_logits[:images.size(0)]
-                    logits_adv = combined_logits[images.size(0):]
+                    logits = combined_logits[: images.size(0)]
+                    logits_adv = combined_logits[images.size(0) :]
 
                     # # ### regu1
                     # ori_label = torch.argmax(logits, axis=1).long()
@@ -580,10 +606,10 @@ class ConcreteSafeLayerWiseAdaMergingForCLIP(
                     # loss_regu = torch.mean(-F.cross_entropy(logits_adv, ori_label, reduction='mean'))
 
                     ### regu2
-                    loss_regu = entropy_loss(logits_adv) 
+                    loss_regu = entropy_loss(logits_adv)
                     loss_nat = entropy_loss(logits)
 
-                    loss = loss_nat + self.config.adv_weight*loss_regu
+                    loss = loss_nat + self.config.adv_weight * loss_regu
                     total_loss = loss if total_loss is None else total_loss + loss
 
             with self.profile("compute grad"):
@@ -597,7 +623,13 @@ class ConcreteSafeLayerWiseAdaMergingForCLIP(
                     lr_scheduler.step()
 
             # metrics.update({"train/loss": loss.item()})
-            metrics.update({"train/loss": loss.item(),"loss_nat": loss_nat.item(),"loss_regu": loss_regu.item()})
+            metrics.update(
+                {
+                    "train/loss": loss.item(),
+                    "loss_nat": loss_nat.item(),
+                    "loss_regu": loss_regu.item(),
+                }
+            )
             self.fabric.log_dict(metrics, step=step_idx)
             pbar.set_postfix(metrics)
             self.print_profile_summary()
@@ -732,17 +764,17 @@ class ConcreteSafeLayerWiseAdaMergingForCLIP(
     #                 # loss_regu = torch.mean(-F.cross_entropy(logits_adv, ori_label, reduction='mean'))
 
     #                 ### regu2
-    #                 loss_regu = entropy_loss(logits_adv) 
+    #                 loss_regu = entropy_loss(logits_adv)
     #                 loss_nat = entropy_loss(logits)
 
     #                 loss = loss_nat + self.config.adv_weight*loss_regu
     #                 total_loss = loss if total_loss is None else total_loss + loss
     #                 metrics.update({"train/loss": loss.item(),"loss_nat": loss_nat.item(),"loss_regu": loss_regu.item()})
-                    
+
     #         self.fabric.log_dict(metrics, step=step_idx)
     #         pbar.set_postfix(metrics)
-    #         self.print_profile_summary()          
-        
+    #         self.print_profile_summary()
+
     #         if (step_idx + 1) % self.config.save_interval == 0:
     #             with self.profiler.profile("save checkpoint"):
     #                 save_dir = os.path.join(self.fabric.logger.log_dir, "checkpoints")

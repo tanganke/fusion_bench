@@ -1,11 +1,11 @@
+import timeit
 import unittest
 
 import torch
 from torch import nn
 
-from fusion_bench.utils.state_dict_arithmetic import *
 from fusion_bench.utils import timeit_context
-import timeit
+from fusion_bench.utils.state_dict_arithmetic import *
 
 
 def create_test_model():
