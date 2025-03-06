@@ -23,10 +23,11 @@ fusion_bench \
 import logging
 import os
 from typing import cast
-import torch
-from tqdm.autonotebook import tqdm
 
-from fusion_bench.tasks.clip_classification import get_classnames_and_templates
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from tqdm.autonotebook import tqdm
 
 from fusion_bench.compat.method import ModelFusionAlgorithm
 from fusion_bench.compat.modelpool import to_modelpool
@@ -45,11 +46,9 @@ from fusion_bench.models.wrappers.task_wise_fusion import (
     TaskWiseMergedModel,
     get_task_wise_weights,
 )
-from fusion_bench.utils.parameters import print_parameters
+from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.utils.dtype import parse_dtype
-import torch.nn.functional as F
-
-import torch.nn as nn
+from fusion_bench.utils.parameters import print_parameters
 
 log = logging.getLogger(__name__)
 
@@ -145,7 +144,9 @@ class PostDefenseAWMAlgorithmForCLIP(
                     ## (1) mask--directly prune the merged model, the initial logits should be larger than 3
                     # merged_state_dict[name] = merged_state_dict[name]* mask[name]
                     ### (2) mask the task vector, similar to concrete mask, the initial logits can be set as 0
-                    merged_state_dict[name] = (merged_state_dict[name] -pretrained_model_dict[name])* mask[name]+pretrained_model_dict[name]
+                    merged_state_dict[name] = (
+                        merged_state_dict[name] - pretrained_model_dict[name]
+                    ) * mask[name] + pretrained_model_dict[name]
 
             # ------ noise optimization based on the merging model ------
             # detach merged state_dict
@@ -242,7 +243,6 @@ class PostDefenseAWMAlgorithmForCLIP(
 
                     loss_nat = entropy_loss(logits)
 
-
                     # ### regu1
                     # ori_label = torch.argmax(logits, dim=1).long()
                     # loss_regu = -torch.mean(
@@ -250,7 +250,7 @@ class PostDefenseAWMAlgorithmForCLIP(
                     # )
 
                     ### regu2
-                    loss_regu = entropy_loss(logits_adv) 
+                    loss_regu = entropy_loss(logits_adv)
 
                     loss = loss_nat + self.config.adv_weight * loss_regu
                     total_loss = loss if total_loss is None else total_loss + loss
@@ -314,7 +314,11 @@ class PostDefenseAWMAlgorithmForCLIP(
             )
 
         if config.mask_checkpoint is None:
-            self.train_mask(merge_model=merge_model, pretrained_model=pretrained_model,mask_model=mask_model)
+            self.train_mask(
+                merge_model=merge_model,
+                pretrained_model=pretrained_model,
+                mask_model=mask_model,
+            )
         else:
             if self.fabric.is_global_zero:
                 print("loading mask from checkpoint", config.mask_checkpoint)
@@ -336,7 +340,9 @@ class PostDefenseAWMAlgorithmForCLIP(
                 ## (1) mask--directly prune the merged model, the initial logits should be larger than 3
                 # merged_state_dict[name] = merged_state_dict[name]* mask[name]
                 ### (2) mask the task vector, similar to concrete mask, the initial logits can be set as 0
-                merged_state_dict[name] = (merged_state_dict[name] -pretrained_model_dict[name])* mask[name]+pretrained_model_dict[name]
+                merged_state_dict[name] = (
+                    merged_state_dict[name] - pretrained_model_dict[name]
+                ) * mask[name] + pretrained_model_dict[name]
             merge_model.load_state_dict(merged_state_dict)
         return merge_model
 
@@ -380,7 +386,9 @@ class PostDefenseSAUAlgorithmForCLIP(
 
         return merge_model, merge_model_ref, pretrained_model, mask_model
 
-    def train_mask(self, merge_model, merge_model_ref, pretrained_model, mask_model: MaskModel):
+    def train_mask(
+        self, merge_model, merge_model_ref, pretrained_model, mask_model: MaskModel
+    ):
         config = self.config
 
         # configure optimizer
@@ -434,7 +442,9 @@ class PostDefenseSAUAlgorithmForCLIP(
                     ## (1) directy mask/prune the merged model, the initial logits should be larger than 3, without decreasing the acc
                     # merged_state_dict[name] = merged_state_dict[name]* mask[name]
                     ### (2) mask the task vector, similar to concrete mask, the initial logits can be set as 0
-                    merged_state_dict[name] = (merged_state_dict[name] -pretrained_model_dict[name])* mask[name]+pretrained_model_dict[name]
+                    merged_state_dict[name] = (
+                        merged_state_dict[name] - pretrained_model_dict[name]
+                    ) * mask[name] + pretrained_model_dict[name]
 
             # ------ noise optimization based on the merging model ------
             # detach merged state_dict
@@ -474,7 +484,9 @@ class PostDefenseSAUAlgorithmForCLIP(
                     ori_label = torch.argmax(logits, dim=1).long()
                     pert_label = torch.argmax(logits_adv, dim=1).long()
 
-                    combined_logits_ref = self.compute_logits(merge_model_ref, combined_images, task)
+                    combined_logits_ref = self.compute_logits(
+                        merge_model_ref, combined_images, task
+                    )
                     logits_ref, logits_adv_ref = (
                         combined_logits_ref[:num_image],
                         combined_logits_ref[num_image:],
@@ -482,27 +494,35 @@ class PostDefenseSAUAlgorithmForCLIP(
                     ori_label_ref = torch.argmax(logits_ref, dim=1).long()
                     pert_label_ref = torch.argmax(logits_adv_ref, dim=1).long()
 
-
                     success_attack = pert_label != ori_label
                     success_attack_ref = pert_label_ref != ori_label_ref
-                    common_attack = torch.logical_and(success_attack, success_attack_ref)
-                    shared_attack = torch.logical_and(common_attack, pert_label == pert_label_ref)
+                    common_attack = torch.logical_and(
+                        success_attack, success_attack_ref
+                    )
+                    shared_attack = torch.logical_and(
+                        common_attack, pert_label == pert_label_ref
+                    )
 
                     # Shared loss
                     # JS divergence version (https://en.wikipedia.org/wiki/Jensen%E2%80%93Shannon_divergence)
                     p_model = F.softmax(logits_adv, dim=1).clamp(min=1e-8)
                     p_ref = F.softmax(logits_adv_ref, dim=1).clamp(min=1e-8)
-                    mix_p = 0.5*(p_model+p_ref)
-                    loss_js = 0.5*(p_model*p_model.log() + p_ref*p_ref.log()) - 0.5*(p_model*mix_p.log() + p_ref*mix_p.log())
-                    loss_cross = loss_js[torch.logical_not(shared_attack)].sum(dim=1).sum()/images.shape[0]
+                    mix_p = 0.5 * (p_model + p_ref)
+                    loss_js = 0.5 * (
+                        p_model * p_model.log() + p_ref * p_ref.log()
+                    ) - 0.5 * (p_model * mix_p.log() + p_ref * mix_p.log())
+                    loss_cross = (
+                        loss_js[torch.logical_not(shared_attack)].sum(dim=1).sum()
+                        / images.shape[0]
+                    )
 
-                    ### maximization perturbation loss 
+                    ### maximization perturbation loss
                     ## using the test data without the true label
                     loss_adv = torch.mean(
                         -F.cross_entropy(logits_adv, ori_label, reduction="mean")
                     )
-                    
-                    loss= self.config.beta1*loss_adv + self.config.beta2*loss_cross
+
+                    loss = self.config.beta1 * loss_adv + self.config.beta2 * loss_cross
 
                     total_loss = loss if total_loss is None else total_loss + loss
 
@@ -532,9 +552,9 @@ class PostDefenseSAUAlgorithmForCLIP(
                 [c["name"] for c in self.modelpool.config.tta_datasets]
             ):
                 classnames, templates = get_classnames_and_templates(
-                        self.modelpool.get_train_dataset_config(task)["dataset"].name
-                    )
-                num_classes=len(classnames)
+                    self.modelpool.get_train_dataset_config(task)["dataset"].name
+                )
+                num_classes = len(classnames)
 
                 with self.profile("data loading"), torch.no_grad():
                     batch = next(self.get_shuffled_test_loader_iter(task))
@@ -561,7 +581,7 @@ class PostDefenseSAUAlgorithmForCLIP(
                         combined_logits[num_image:],
                     )
                     ori_label = torch.argmax(logits, dim=1).long()
-                    pert_label =  torch.argmax(logits_adv, dim=1).long()
+                    pert_label = torch.argmax(logits_adv, dim=1).long()
                     loss_nat = entropy_loss(logits)
 
                     ########### loss_regu from noise
@@ -571,11 +591,12 @@ class PostDefenseSAUAlgorithmForCLIP(
                     #     F.cross_entropy(logits_adv, ori_label, reduction="mean")
                     # )
                     ### regu2
-                    loss_regu = entropy_loss(logits_adv) 
-
+                    loss_regu = entropy_loss(logits_adv)
 
                     ### loss shared
-                    combined_logits_ref = self.compute_logits(merge_model_ref, combined_images, task)
+                    combined_logits_ref = self.compute_logits(
+                        merge_model_ref, combined_images, task
+                    )
                     logits_ref, logits_adv_ref = (
                         combined_logits_ref[:num_image],
                         combined_logits_ref[num_image:],
@@ -587,32 +608,47 @@ class PostDefenseSAUAlgorithmForCLIP(
 
                     #### due to fact that we only use the test data without true label there, we replace the true label with ori_label
                     success_attack_ref = pert_label_ref != ori_label
-                    success_attack_ref = success_attack_ref & (pert_label_ref != ori_label_ref)
+                    success_attack_ref = success_attack_ref & (
+                        pert_label_ref != ori_label_ref
+                    )
 
-                    common_attack = torch.logical_and(success_attack, success_attack_ref)
-                    shared_attack = torch.logical_and(common_attack, pert_label == pert_label_ref)
+                    common_attack = torch.logical_and(
+                        success_attack, success_attack_ref
+                    )
+                    shared_attack = torch.logical_and(
+                        common_attack, pert_label == pert_label_ref
+                    )
 
                     potential_poison = success_attack_ref
                     if potential_poison.sum() == 0:
                         loss_shared = torch.tensor(0.0).to(merge_model.device)
                     else:
-                        one_hot = F.one_hot(pert_label_ref, num_classes= num_classes)
-                        
+                        one_hot = F.one_hot(pert_label_ref, num_classes=num_classes)
+
                         neg_one_hot = 1 - one_hot
-                        neg_p = (F.softmax(logits_adv, dim = 1)*neg_one_hot).sum(dim = 1)[potential_poison]
-                        pos_p = (F.softmax(logits_adv, dim = 1)*one_hot).sum(dim = 1)[potential_poison]
-                        
+                        neg_p = (F.softmax(logits_adv, dim=1) * neg_one_hot).sum(dim=1)[
+                            potential_poison
+                        ]
+                        pos_p = (F.softmax(logits_adv, dim=1) * one_hot).sum(dim=1)[
+                            potential_poison
+                        ]
+
                         # clamp the too small values to avoid nan and discard samples with p<1% to be shared
-                        # Note: The below equation combine two identical terms in math. Although they are the same in math, they are different in implementation due to the numerical issue. 
+                        # Note: The below equation combine two identical terms in math. Although they are the same in math, they are different in implementation due to the numerical issue.
                         #       Combining them can reduce the numerical issue.
 
-                        loss_shared = (-torch.sum(torch.log(1e-6 + neg_p.clamp(max = 0.999))) - torch.sum(torch.log(1 + 1e-6 - pos_p.clamp(min = 0.001))))/2
-                        loss_shared = loss_shared/images.shape[0]
+                        loss_shared = (
+                            -torch.sum(torch.log(1e-6 + neg_p.clamp(max=0.999)))
+                            - torch.sum(torch.log(1 + 1e-6 - pos_p.clamp(min=0.001)))
+                        ) / 2
+                        loss_shared = loss_shared / images.shape[0]
 
-
-                    loss = loss_nat + self.config.adv_weight * loss_regu + self.config.shared_weight * loss_shared
+                    loss = (
+                        loss_nat
+                        + self.config.adv_weight * loss_regu
+                        + self.config.shared_weight * loss_shared
+                    )
                     total_loss = loss if total_loss is None else total_loss + loss
-
 
             with self.profile("compute grad"):
                 self.fabric.backward(total_loss)
@@ -629,7 +665,7 @@ class PostDefenseSAUAlgorithmForCLIP(
                     "train/loss": loss.item(),
                     "loss_nat": loss_nat.item(),
                     "loss_regu": loss_regu.item(),
-                    "loss_shared":loss_shared.item()
+                    "loss_shared": loss_shared.item(),
                 }
             )
             self.fabric.log_dict(metrics, step=step_idx)
@@ -661,7 +697,9 @@ class PostDefenseSAUAlgorithmForCLIP(
         self.log_hyperparams(config, filename="method_config.yaml")
 
         with self.profile("setup models"):
-            merge_model, merge_model_ref, pretrained_model, mask_model = self.setup_models()
+            merge_model, merge_model_ref, pretrained_model, mask_model = (
+                self.setup_models()
+            )
             mask_model: MaskModel = self.fabric.to_device(mask_model)
             merge_model = self.fabric.to_device(merge_model)
             merge_model_ref = self.fabric.to_device(merge_model_ref)
@@ -672,7 +710,12 @@ class PostDefenseSAUAlgorithmForCLIP(
             )
 
         if config.mask_checkpoint is None:
-            self.train_mask(merge_model=merge_model, merge_model_ref=merge_model_ref, pretrained_model=pretrained_model,mask_model=mask_model)
+            self.train_mask(
+                merge_model=merge_model,
+                merge_model_ref=merge_model_ref,
+                pretrained_model=pretrained_model,
+                mask_model=mask_model,
+            )
         else:
             if self.fabric.is_global_zero:
                 print("loading mask from checkpoint", config.mask_checkpoint)
@@ -694,6 +737,8 @@ class PostDefenseSAUAlgorithmForCLIP(
                 ## (1) mask--directly prune the merged model, the initial logits should be larger than 3
                 # merged_state_dict[name] = merged_state_dict[name]* mask[name]
                 ### (2) mask the task vector, similar to concrete mask, the initial logits can be set as 0
-                merged_state_dict[name] = (merged_state_dict[name] -pretrained_model_dict[name])* mask[name]+pretrained_model_dict[name]
+                merged_state_dict[name] = (
+                    merged_state_dict[name] - pretrained_model_dict[name]
+                ) * mask[name] + pretrained_model_dict[name]
             merge_model.load_state_dict(merged_state_dict)
         return merge_model
