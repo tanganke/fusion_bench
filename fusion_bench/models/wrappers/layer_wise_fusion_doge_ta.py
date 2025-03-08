@@ -10,130 +10,15 @@ import torch
 from torch import Tensor, nn
 from torch.func import functional_call
 
+from fusion_bench.models.utils import del_attr, get_attr, set_attr
 from fusion_bench.utils.state_dict_arithmetic import state_dict_add
 from fusion_bench.utils.type import StateDictType
+
+from .layer_wise_fusion import fuse_weights, get_layer_wise_weights
 
 __all__ = ["get_layer_wise_weights", "fuse_weights", "LayerWiseMergedModel"]
 
 log = logging.getLogger(__name__)
-
-
-def del_attr(obj, names: List[str]):
-    """
-    Deletes an attribute from an object recursively.
-
-    Args:
-        obj (object): Object to delete attribute from.
-        names (list): List of attribute names to delete recursively.
-    """
-    if len(names) == 1:
-        delattr(obj, names[0])
-    else:
-        del_attr(getattr(obj, names[0]), names[1:])
-
-
-def set_attr(obj, names: List[str], val):
-    """
-    Sets an attribute of an object recursively.
-
-    Args:
-        obj (object): Object to set attribute of.
-        names (list): List of attribute names to set recursively.
-        val (object): Value to set the attribute to.
-    """
-    if len(names) == 1:
-        setattr(obj, names[0], val)
-    else:
-        set_attr(getattr(obj, names[0]), names[1:], val)
-
-
-def get_attr(obj, names: List[str]):
-    """
-    Gets an attribute of an object recursively.
-
-    Args:
-        obj (object): Object to get attribute of.
-        names (list): List of attribute names to get recursively.
-
-    Returns:
-        object: The attribute of the object.
-    """
-    if len(names) == 1:
-        return getattr(obj, names[0])
-    else:
-        return get_attr(getattr(obj, names[0]), names[1:])
-
-
-def get_layer_wise_weights(
-    num_models: int,
-    num_layers: int,
-    init_values: float = None,
-    dtype: torch.dtype = torch.float32,
-):
-    """
-    Return a tensor of layer-wise weights for the given number of models and layers.
-
-    Args:
-        num_models (int): The number of models to fuse.
-        num_layers (int): The number of layers in each model.
-        init_values (float, optional): The initial value for each weight. Defaults to 1.0 / num_models.
-        dtype (torch.dtype): dtype of weights. This should be the same with model dtype.
-
-    Returns:
-        Tensor: A tensor of shape (num_models, num_layers) containing the layer-wise weights.
-    """
-    assert num_models >= 1, f"num_models must be >= 1, got {num_models}"
-    assert num_layers >= 1, f"num_layers must be >= 1, got {num_layers}"
-    if init_values is None:
-        init_values = 1.0 / num_models
-    return torch.full((num_models, num_layers), init_values, dtype=dtype)
-
-
-def _fuse_weights(layer_wise_weight: Tensor, tensors: List[Tensor]):
-    """
-    Fuse the layer-wise weights with the given state dictionaries.
-
-    Args:
-        layer_wise_weight (Tensor): A tensor of shape (num_models,) containing the layer-wise weights.
-        state_dicts (List[Tensor]): A list of state dictionaries, each containing the weights for a single layer.
-
-    Returns:
-        Tensor: A tensor of shape (num_params,) containing the fused weights.
-    """
-    assert len(layer_wise_weight) == len(
-        tensors
-    ), f"layer_wise_weight.shape={layer_wise_weight.shape}, len(tensors)={len(tensors)}"
-    return sum(
-        layer_wise_weight[i] * w.to(layer_wise_weight.device)
-        for i, w in enumerate(tensors)
-    )
-
-
-def fuse_weights(
-    layer_wise_weight: Tensor, state_dicts: List[StateDictType]
-) -> StateDictType:
-    """
-    Fuse the weights of multiple models using layer-wise fusion.
-
-    Args:
-        layer_wise_weight (Tensor): A tensor of shape (num_models, num_layers) representing the weight of each layer for each model.
-        state_dicts (List[StateDict]): A list of state dictionaries, one for each model.
-
-    Returns:
-        A dictionary mapping each weight tensor key to the fused weight tensor.
-    """
-    num_models = len(state_dicts)
-    num_layers = len(state_dicts[0])
-    assert layer_wise_weight.shape == (
-        num_models,
-        num_layers,
-    ), f"layer_wise_weight.shape={layer_wise_weight.shape}, expected (num_models, num_layers): ({num_models}, {num_layers})"
-    return {
-        k: _fuse_weights(
-            layer_wise_weight[:, i], [state_dict[k] for state_dict in state_dicts]
-        )
-        for i, k in enumerate(state_dicts[0].keys())
-    }
 
 
 class LayerWiseMergedModel(nn.Module):
@@ -390,7 +275,7 @@ class LayerWiseMergedModel(nn.Module):
         layer_vectors_scale = layer_vectors * layer_lamdas.view(-1, 1, 1)
         sum_over_num_vectors = layer_vectors_scale.sum(dim=0)
 
-        layer_delta_scale = layer_delta.unsqueeze(0) * layer_lamdas.view(-1, 1, 1)
+        layer_delta_scale = layer_delta * layer_lamdas.view(-1, 1, 1)
         sum_over_delta = layer_delta_scale.sum(dim=0)
 
         # Iterate through each vector and calculate the loss one by one
