@@ -7,7 +7,7 @@ Example Usage:
 
 ```bash
 fusion_bench \
-    method=DOGE_TA/DOGE_TA \
+    method=doge_ta/doge_ta \
     modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8_model_only \
     taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
 
