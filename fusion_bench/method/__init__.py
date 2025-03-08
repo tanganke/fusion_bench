@@ -53,7 +53,7 @@ _import_structure = {
         "PWEMoExactParetoOptimalForCLIP",
     ],
     "ada_svd": ["AdaSVDMergingForCLIPVisionModel"],
-    "DOGE_TA": ["DOGE_TA_Algorithm"],
+    "doge_ta": ["DOGE_TA_Algorithm"],
     "task_singular_vector": ["TaskSingularVectorMerging"],
     "isotropic_merging": [
         "ISO_C_Merge",  # alias
@@ -128,7 +128,7 @@ if TYPE_CHECKING:
     from .dare import DareSimpleAverage, DareTaskArithmetic, DareTiesMerging
     from .dawe import DataAdaptiveWeightEnsemblingForCLIP
     from .depth_upscaling import DepthUpscalingAlgorithm, DepthUpscalingForLlama
-    from .DOGE_TA import DOGE_TA_Algorithm
+    from .doge_ta import DOGE_TA_Algorithm
     from .dummy import DummyAlgorithm
     from .ensemble import (
         MaxModelPredictorAlgorithm,
