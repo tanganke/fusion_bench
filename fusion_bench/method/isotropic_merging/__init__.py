@@ -10,6 +10,6 @@ Reference:
 from .iso import (
     ISO_C_Merge,
     ISO_CTS_Merge,
-    IsotropicMergingInCommonSubspace,
     IsotropicMergingInCommonAndTaskSubspace,
+    IsotropicMergingInCommonSubspace,
 )

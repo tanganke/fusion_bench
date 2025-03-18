@@ -9,19 +9,19 @@ fusion_bench \
 ```
 """
 
-from typing import List, Optional, Union, Iterable
+from typing import Iterable, List, Optional, Union
 
 import torch
-from torch import Tensor, nn
 from omegaconf import ListConfig
+from torch import Tensor, nn
 
 from fusion_bench import BaseAlgorithm
 from fusion_bench.mixins import LightningFabricMixin
 from fusion_bench.utils import timeit_context
 from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_add,
-    state_dict_sub,
     state_dict_mul,
+    state_dict_sub,
 )
 from fusion_bench.utils.type import StateDictType
 

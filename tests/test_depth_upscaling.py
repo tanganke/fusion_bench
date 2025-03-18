@@ -3,8 +3,8 @@ import unittest
 from omegaconf import DictConfig
 from torch import nn
 
-from fusion_bench.method.depth_upscaling import DepthUpscalingAlgorithm
 from fusion_bench.compat.modelpool import to_modelpool
+from fusion_bench.method.depth_upscaling import DepthUpscalingAlgorithm
 
 
 class TestDepthUpscalingAlgorithm(unittest.TestCase):

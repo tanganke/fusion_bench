@@ -11,7 +11,7 @@ for alpha in 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0; do
             fabric.loggers.root_dir=outputs/opcm/ablation-alpha \
             fabric.loggers.name=vit-b-32-TA8-alpha-${alpha} \
             fabric.loggers.version=${i} \
-            method=opcm/sequential_projection \
+            method=opcm/opcm \
             method.alpha=$alpha \
             method.seed=null \
             method.save_on_every_step=false \
@@ -33,7 +33,7 @@ for alpha in 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0; do
             fabric.loggers.root_dir=outputs/opcm/ablation-alpha \
             fabric.loggers.name=vit-l-14-TA8-alpha-${alpha} \
             fabric.loggers.version=${i} \
-            method=opcm/sequential_projection \
+            method=opcm/opcm \
             method.alpha=$alpha \
             method.seed=null \
             method.save_on_every_step=false \
@@ -54,7 +54,7 @@ for i in {0..9}; do
         fabric.loggers.root_dir=outputs/opcm/ablation-alpha \
         fabric.loggers.name=vit-b-16-TA8-alpha-0.5 \
         fabric.loggers.version=${i} \
-        method=opcm/sequential_projection \
+        method=opcm/opcm \
         method.alpha=0.5 \
         method.seed=null \
         method.save_on_every_step=false \
@@ -73,7 +73,7 @@ for i in {0..9}; do
         fabric.loggers.root_dir=outputs/opcm/ablation-alpha \
         fabric.loggers.name=vit-b-32-TALL14-alpha-0.5 \
         fabric.loggers.version=${i} \
-        method=opcm/sequential_projection \
+        method=opcm/opcm \
         method.alpha=0.5 \
         method.seed=null \
         method.save_on_every_step=false \
@@ -92,7 +92,7 @@ for alpha in 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0; do
             fabric.loggers.root_dir=outputs/opcm/ablation-alpha \
             fabric.loggers.name=vit-b-16-TA8-alpha-${alpha} \
             fabric.loggers.version=${i} \
-            method=opcm/sequential_projection \
+            method=opcm/opcm \
             method.evaluate_on_every_step=false \
             method.alpha=${alpha} \
             method.seed=null \
@@ -114,7 +114,7 @@ for alpha in 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0; do
             fabric.loggers.root_dir=outputs/opcm/ablation-alpha \
             fabric.loggers.name=vit-b-32-TALL14-alpha-${alpha} \
             fabric.loggers.version=${i} \
-            method=opcm/sequential_projection \
+            method=opcm/opcm \
             method.evaluate_on_every_step=false \
             method.alpha=${alpha} \
             method.seed=null \
@@ -135,7 +135,7 @@ for i in {0..9}; do
         fabric.loggers.root_dir=outputs/opcm/ablation-alpha \
         fabric.loggers.name=vit-b-16-TALL14-alpha-0.5 \
         fabric.loggers.version=${i} \
-        method=opcm/sequential_projection \
+        method=opcm/opcm \
         method.alpha=0.5 \
         method.seed=null \
         method.save_on_every_step=false \
@@ -155,7 +155,7 @@ for alpha in 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0; do
             fabric.loggers.root_dir=outputs/opcm/ablation-alpha \
             fabric.loggers.name=vit-b-16-TALL14-alpha-${alpha} \
             fabric.loggers.version=${i} \
-            method=opcm/sequential_projection \
+            method=opcm/opcm \
             method.evaluate_on_every_step=false \
             method.alpha=${alpha} \
             method.seed=null \
@@ -177,7 +177,7 @@ for i in {0..9}; do
         fabric.loggers.root_dir=outputs/opcm/ablation-alpha \
         fabric.loggers.name=vit-l-14-TALL14-alpha-0.5 \
         fabric.loggers.version=${i} \
-        method=opcm/sequential_projection \
+        method=opcm/opcm \
         method.alpha=0.5 \
         method.seed=null \
         method.save_on_every_step=false \
@@ -197,7 +197,7 @@ for alpha in 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0; do
             fabric.loggers.root_dir=outputs/opcm/ablation-alpha \
             fabric.loggers.name=vit-l-14-TALL14-alpha-${alpha} \
             fabric.loggers.version=${i} \
-            method=opcm/sequential_projection \
+            method=opcm/opcm \
             method.evaluate_on_every_step=false \
             method.alpha=${alpha} \
             method.seed=null \
@@ -219,7 +219,7 @@ for i in {0..9}; do
         fabric.loggers.root_dir=outputs/opcm/ablation-alpha \
         fabric.loggers.name=vit-b-32-TALL20-alpha-0.5 \
         fabric.loggers.version=${i} \
-        method=opcm/sequential_projection \
+        method=opcm/opcm \
         method.alpha=0.5 \
         method.seed=null \
         method.save_on_every_step=false \
@@ -238,7 +238,7 @@ for alpha in 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0; do
             fabric.loggers.root_dir=outputs/opcm/ablation-alpha \
             fabric.loggers.name=vit-b-32-TALL20-alpha-${alpha} \
             fabric.loggers.version=${i} \
-            method=opcm/sequential_projection \
+            method=opcm/opcm \
             method.evaluate_on_every_step=false \
             method.alpha=${alpha} \
             method.seed=null \
@@ -259,7 +259,7 @@ for i in {0..9}; do
         fabric.loggers.root_dir=outputs/opcm/ablation-alpha \
         fabric.loggers.name=vit-b-16-TALL20-alpha-0.5 \
         fabric.loggers.version=${i} \
-        method=opcm/sequential_projection \
+        method=opcm/opcm \
         method.alpha=0.5 \
         method.seed=null \
         method.save_on_every_step=false \
@@ -279,7 +279,7 @@ for alpha in 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0; do
             fabric.loggers.root_dir=outputs/opcm/ablation-alpha \
             fabric.loggers.name=vit-b-16-TALL20-alpha-${alpha} \
             fabric.loggers.version=${i} \
-            method=opcm/sequential_projection \
+            method=opcm/opcm \
             method.evaluate_on_every_step=false \
             method.alpha=${alpha} \
             method.seed=null \
@@ -301,7 +301,7 @@ for i in {0..9}; do
         fabric.loggers.root_dir=outputs/opcm/ablation-alpha \
         fabric.loggers.name=vit-l-14-TALL20-alpha-0.5 \
         fabric.loggers.version=${i} \
-        method=opcm/sequential_projection \
+        method=opcm/opcm \
         method.alpha=0.5 \
         method.seed=null \
         method.save_on_every_step=false \
@@ -321,7 +321,7 @@ for alpha in 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0; do
             fabric.loggers.root_dir=outputs/opcm/ablation-alpha \
             fabric.loggers.name=vit-l-14-TALL20-alpha-${alpha} \
             fabric.loggers.version=${i} \
-            method=opcm/sequential_projection \
+            method=opcm/opcm \
             method.evaluate_on_every_step=false \
             method.alpha=${alpha} \
             method.seed=null \
