@@ -47,13 +47,13 @@ _import_structure = {
         "GPT2LayerWiseAdaMergingAlgorithm",
         "LayerWiseAdaMergingForLlamaSFT",
         "FlanT5LayerWiseAdaMergingAlgorithm",
+        "RobertaLayerWiseAdaMergingAlgorithm",
     ],
     "pwe_moe": [
         "PWEMoELinearScalarizationForCLIP",
         "PWEMoExactParetoOptimalForCLIP",
     ],
     "ada_svd": ["AdaSVDMergingForCLIPVisionModel"],
-    "doge_ta": ["DOGE_TA_Algorithm"],
     "task_singular_vector": ["TaskSingularVectorMerging"],
     "isotropic_merging": [
         "ISO_C_Merge",  # alias
@@ -67,10 +67,6 @@ _import_structure = {
         "ConcreteTaskArithmeticAlgorithmForCLIP",
         "ConcreteTaskWiseAdaMergingForCLIP",
         "ConcreteLayerWiseAdaMergingForCLIP",
-        "ConcreteSafeLayerWiseAdaMergingForCLIP",
-        "ConcreteSafeTaskWiseAdaMergingForCLIP",
-        "PostDefenseAWMAlgorithmForCLIP",
-        "PostDefenseSAUAlgorithmForCLIP",
     ],
     # model mixing methods
     "depth_upscaling": ["DepthUpscalingAlgorithm", "DepthUpscalingForLlama"],
@@ -104,6 +100,7 @@ _import_structure = {
         "SparseLoForLlama",
         "PCPSparseLoForLlama",
     ],
+    "fw_merging": ["FrankWolfeHardAlgorithm", "FrankWolfeSoftAlgorithm"],
 }
 
 
@@ -118,17 +115,12 @@ if TYPE_CHECKING:
     )
     from .concrete_subspace import (
         ConcreteLayerWiseAdaMergingForCLIP,
-        ConcreteSafeLayerWiseAdaMergingForCLIP,
-        ConcreteSafeTaskWiseAdaMergingForCLIP,
         ConcreteTaskArithmeticAlgorithmForCLIP,
         ConcreteTaskWiseAdaMergingForCLIP,
-        PostDefenseAWMAlgorithmForCLIP,
-        PostDefenseSAUAlgorithmForCLIP,
     )
     from .dare import DareSimpleAverage, DareTaskArithmetic, DareTiesMerging
     from .dawe import DataAdaptiveWeightEnsemblingForCLIP
     from .depth_upscaling import DepthUpscalingAlgorithm, DepthUpscalingForLlama
-    from .doge_ta import DOGE_TA_Algorithm
     from .dummy import DummyAlgorithm
     from .ensemble import (
         MaxModelPredictorAlgorithm,
@@ -190,6 +182,7 @@ if TYPE_CHECKING:
     from .ties_merging import TiesMergingAlgorithm
     from .we_moe import CLIPWeightEnsemblingMoEAlgorithm
     from .weighted_average import WeightedAverageAlgorithm, WeightedAverageForLLama
+    from .fw_merging import FrankWolfeHardAlgorithm, FrankWolfeSoftAlgorithm
 
 else:
     sys.modules[__name__] = LazyImporter(
