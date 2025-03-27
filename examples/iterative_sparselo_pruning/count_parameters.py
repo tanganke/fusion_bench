@@ -1,8 +1,15 @@
+"""
+This script is used to count the number of parameters in a model.
+
+Usage:
+    python count_parameters.py <model_path>
+"""
 import argparse
 
 import torch
 from transformers import AutoModelForCausalLM
 
+import fusion_bench.models.modeling_losparse_llama
 from fusion_bench.utils.parameters import count_parameters
 
 if __name__ == "__main__":

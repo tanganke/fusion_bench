@@ -1,4 +1,4 @@
-_target_: fusion_bench.method.losparse.sparselo.IterativeSparseLoForLlama
+_target_: fusion_bench.method.sparselo.sparselo.IterativeSparseLoForLlama
 _recursive_: false
 nsamples: 128
 seed: 0
