@@ -93,6 +93,7 @@ _import_structure = {
         "RandomPruningForLlama",
         "MagnitudePruningForLlama",
         "WandaPruningForLlama",
+        "SparseGPTPruningForLlama",
     ],
     "sparselo": [
         "IterativeSparseLoForLlama",
@@ -152,6 +153,7 @@ if TYPE_CHECKING:
         MagnitudeDiffPruningAlgorithm,
         MagnitudePruningForLlama,
         RandomPruningForLlama,
+        SparseGPTPruningForLlama,
         WandaPruningForLlama,
     )
     from .pwe_moe import (
