@@ -60,9 +60,9 @@ evaluate the fine-tuned CLIP-ViT-B/32 models on the eight tasks:
 for task in sun397 stanford-cars resisc45 eurosat svhn gtsrb mnist dtd
 do
     fusion_bench method=dummy \
-        modelpool=clip-vit-base-patch32_individual \
-            modelpool.models.0.path=tanganke/clip-vit-base-patch32_${task} \
-        taskpool=clip-vit-classification_TA8 \
+        modelpool=CLIPVisionModelPool/clip-vit-base-patch32_individual \
+            modelpool.models._pretrained_.pretrained_model_name_or_path=tanganke/clip-vit-base-patch32_${task} \
+        taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
         report_save_path="outputs/ViT-B-32/single-task/clip-vit-base-patch32_${task}.json"
 done
 ```
@@ -77,9 +77,9 @@ CUDA_DEVICES=(0 1 2 3 4 5 6 7)  # List of CUDA devices to use
 for i in "${!CUDA_DEVICES[@]}"; do
     task=${tasks[$i]}
     CUDA_VISIBLE_DEVICES=${CUDA_DEVICES[$i]} fusion_bench method=dummy \
-        modelpool=clip-vit-large-patch14_individual \
-            modelpool.models.0.path=tanganke/clip-vit-large-patch14_${task} \
-        taskpool=clip-vit-classification_TA8 \
+        modelpool=CLIPVisionModelPool/clip-vit-large-patch14_individual \
+            modelpool.models._pretrained_.pretrained_model_name_or_path=tanganke/clip-vit-large-patch14_${task} \
+        taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
             taskpool.clip_model=openai/clip-vit-large-patch14 \
         report_save_path="outputs/ViT-L-14/single-task/clip-vit-large-patch14_${task}.json" &
 done
