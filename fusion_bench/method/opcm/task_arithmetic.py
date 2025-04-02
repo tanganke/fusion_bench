@@ -24,7 +24,11 @@ if TYPE_CHECKING:
     from torch.utils.tensorboard import SummaryWriter
 
 
-class ContinualTaskArithmeticForCLIP(BaseAlgorithm, LightningFabricMixin, SimpleProfilerMixin):
+class ContinualTaskArithmeticForCLIP(
+    BaseAlgorithm,
+    LightningFabricMixin,
+    SimpleProfilerMixin,
+):
     def __init__(
         self,
         scaling_factor: float,
@@ -95,7 +99,7 @@ class ContinualTaskArithmeticForCLIP(BaseAlgorithm, LightningFabricMixin, Simple
                         task_param - pretrained_param
                     )
                     merged_model.get_parameter(param_name).data = new_param
-    
+
             if self.save_on_every_step:
                 with self.profile("saving model"):
                     self.save_merged_model(merged_model, model_idx)
@@ -104,10 +108,15 @@ class ContinualTaskArithmeticForCLIP(BaseAlgorithm, LightningFabricMixin, Simple
                 with self.profile("evaluating model"):
                     self.taskpool._is_setup = False
                     self.taskpool._test_datasets = DictConfig(
-                        {n: self._test_datasets[n] for n in model_names[: model_idx + 1]}
+                        {
+                            n: self._test_datasets[n]
+                            for n in model_names[: model_idx + 1]
+                        }
                     )
                     report = self.taskpool.evaluate(deepcopy(merged_model))
-                    save_to_json(report, Path(self.log_dir) / f"report_{model_idx}.json")
+                    save_to_json(
+                        report, Path(self.log_dir) / f"report_{model_idx}.json"
+                    )
 
         self.print_profile_summary()
         return merged_model

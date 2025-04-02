@@ -236,7 +236,7 @@ class OPCMForCLIP(
         split_rank = (s.cumsum(dim=0) / s.sum() > alpha).float().argmax().item()
 
         projected_task_tv = u.T @ task_tv @ v
-        projected_task_tv.diag().fill_(0)
+        projected_task_tv.diagonal().fill_(0)
 
         projected_task_tv[:split_rank, :split_rank] = 0
 

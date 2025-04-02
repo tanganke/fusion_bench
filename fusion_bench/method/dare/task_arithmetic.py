@@ -33,21 +33,28 @@ class DareTaskArithmetic(BaseAlgorithm):
         self.rescale = rescale
         super().__init__(**kwargs)
 
+    def _load_task_vector(
+        self,
+        modelpool: BaseModelPool,
+        model_name: str,
+        pretrained_model: nn.Module,
+    ):
+        finetuned_model = modelpool.load_model(model_name)
+        task_vector = module_sub_(finetuned_model, pretrained_model)
+        return task_vector
+
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool):
         assert (
             self.sparsity_ratio >= 0 and self.sparsity_ratio <= 1
         ), "Sparsity ratio must be between 0 and 1"
         pretrained_model = modelpool.load_pretrained_model()
-        finetuned_models = {
-            model_name: modelpool.load_model(model_name)
+
+        # load task vectors
+        task_vectors = {
+            model_name: self._load_task_vector(modelpool, model_name, pretrained_model)
             for model_name in modelpool.model_names
         }
-        task_vectors = {
-            model_name: module_sub_(finetuned_models[model_name], pretrained_model)
-            for model_name in finetuned_models
-        }
-        del finetuned_models
 
         # drop and rescale task vectors
         for model_name, tv in task_vectors.items():

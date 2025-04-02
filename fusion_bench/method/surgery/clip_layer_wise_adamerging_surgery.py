@@ -154,4 +154,4 @@ class CLIPLayerWiseAdaMergingSurgeryAlgorithm(
                 self._program.evaluate_merged_model(self._program.taskpool, alpha_model)
 
         log.info("test the result of Adamerging")
-        return merged_model
+        return {"adamerging": merged_model, "surgery": alpha_model}

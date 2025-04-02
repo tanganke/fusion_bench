@@ -30,11 +30,12 @@ _import_structure = {
         "TaskArithmeticForLlama",
         "LinearInterpolationAlgorithm",
     ],
+    "slerp": ["SlerpMergeAlgorithm"],
     "simple_average": ["SimpleAverageAlgorithm"],
     "weighted_average": ["WeightedAverageAlgorithm", "WeightedAverageForLLama"],
     "task_arithmetic": ["TaskArithmeticAlgorithm"],
     "ties_merging": ["TiesMergingAlgorithm"],
-    "dare": ["DareSimpleAverage", "DareTaskArithmetic"],
+    "dare": ["DareSimpleAverage", "DareTaskArithmetic", "DareTiesMerging"],
     "fisher_merging": [
         "FisherMergingForCLIPVisionModel",
         "FisherMergingAlgorithmForGPT2",
@@ -52,13 +53,24 @@ _import_structure = {
         "PWEMoExactParetoOptimalForCLIP",
     ],
     "ada_svd": ["AdaSVDMergingForCLIPVisionModel"],
+    "doge_ta": ["DOGE_TA_Algorithm"],
     "task_singular_vector": ["TaskSingularVectorMerging"],
+    "isotropic_merging": [
+        "ISO_C_Merge",  # alias
+        "ISO_CTS_Merge",  # alias
+        "IsotropicMergingInCommonAndTaskSubspace",
+        "IsotropicMergingInCommonSubspace",
+    ],
     "opcm": ["OPCMForCLIP"],
     # plug-and-play model merging methods
     "concrete_subspace": [
         "ConcreteTaskArithmeticAlgorithmForCLIP",
         "ConcreteTaskWiseAdaMergingForCLIP",
         "ConcreteLayerWiseAdaMergingForCLIP",
+        "ConcreteSafeLayerWiseAdaMergingForCLIP",
+        "ConcreteSafeTaskWiseAdaMergingForCLIP",
+        "PostDefenseAWMAlgorithmForCLIP",
+        "PostDefenseSAUAlgorithmForCLIP",
     ],
     # model mixing methods
     "depth_upscaling": ["DepthUpscalingAlgorithm", "DepthUpscalingForLlama"],
@@ -106,12 +118,17 @@ if TYPE_CHECKING:
     )
     from .concrete_subspace import (
         ConcreteLayerWiseAdaMergingForCLIP,
+        ConcreteSafeLayerWiseAdaMergingForCLIP,
+        ConcreteSafeTaskWiseAdaMergingForCLIP,
         ConcreteTaskArithmeticAlgorithmForCLIP,
         ConcreteTaskWiseAdaMergingForCLIP,
+        PostDefenseAWMAlgorithmForCLIP,
+        PostDefenseSAUAlgorithmForCLIP,
     )
-    from .dare import DareSimpleAverage, DareTaskArithmetic
+    from .dare import DareSimpleAverage, DareTaskArithmetic, DareTiesMerging
     from .dawe import DataAdaptiveWeightEnsemblingForCLIP
     from .depth_upscaling import DepthUpscalingAlgorithm, DepthUpscalingForLlama
+    from .doge_ta import DOGE_TA_Algorithm
     from .dummy import DummyAlgorithm
     from .ensemble import (
         MaxModelPredictorAlgorithm,
@@ -119,6 +136,12 @@ if TYPE_CHECKING:
         WeightedEnsembleAlgorithm,
     )
     from .fisher_merging import FisherMergingForCLIPVisionModel
+    from .isotropic_merging import (
+        ISO_C_Merge,
+        ISO_CTS_Merge,
+        IsotropicMergingInCommonAndTaskSubspace,
+        IsotropicMergingInCommonSubspace,
+    )
     from .linear import (
         ExPOAlgorithm,
         ExPOAlgorithmForLlama,
@@ -148,6 +171,7 @@ if TYPE_CHECKING:
     from .rankone_moe import CLIPRankOneMoEAlgorithm, RankOneMoEAlgorithm
     from .regmean import RegMeanAlgorithmForCLIP, RegMeanAlgorithmForGPT2
     from .simple_average import SimpleAverageAlgorithm
+    from .slerp import SlerpMergeAlgorithm
     from .smile_upscaling import (
         SingularProjectionMergingAlgorithm,
         SmileUpscalingAlgorithm,

@@ -7,7 +7,7 @@ class BaseTaskPool(BaseYAMLSerializableModel):
     _program = None
 
     @abstractmethod
-    def evaluate(self, model):
+    def evaluate(self, model, *args, **kwargs):
         """
         Evaluate the model on all tasks in the task pool, and return a report.
 

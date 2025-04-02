@@ -9,15 +9,20 @@ fusion_bench \
 ```
 """
 
-from typing import List, Optional
+from typing import Iterable, List, Optional, Union
 
 import torch
+from omegaconf import ListConfig
 from torch import Tensor, nn
 
 from fusion_bench import BaseAlgorithm
 from fusion_bench.mixins import LightningFabricMixin
 from fusion_bench.utils import timeit_context
-from fusion_bench.utils.state_dict_arithmetic import state_dict_sub, state_dict_add
+from fusion_bench.utils.state_dict_arithmetic import (
+    state_dict_add,
+    state_dict_mul,
+    state_dict_sub,
+)
 from fusion_bench.utils.type import StateDictType
 
 from .utils import (
@@ -33,9 +38,11 @@ class TaskSingularVectorMerging(BaseAlgorithm, LightningFabricMixin):
 
     def __init__(
         self,
+        alpha: Union[float, Iterable[float]] = None,
         remove_keys: Optional[List[str]] = None,
         **kwargs,
     ):
+        self.alpha = alpha
         self.remove_keys = remove_keys if remove_keys is not None else []
         super().__init__(**kwargs)
 
@@ -50,12 +57,25 @@ class TaskSingularVectorMerging(BaseAlgorithm, LightningFabricMixin):
 
         with timeit_context("Flattening out Checkpoints"):
             task_vectors = [state_dict_sub(check, ptm_check) for check in ft_checks]
+            if isinstance(self.alpha, Iterable):
+                assert len(self.alpha) == len(
+                    task_vectors
+                ), "Alpha and task vectors must have the same length"
+                task_vectors = [
+                    state_dict_mul(state_dict=tv, scalar=alpha)
+                    for alpha, tv in zip(self.alpha, task_vectors)
+                ]
 
         new_merged_tv = TSVM_utils.compute_and_sum_svd_mem_reduction(
             task_vectors,
             exclude_keys=self.remove_keys,
             accelerator=self.fabric.device,
         )
+
+        # If alpha is a float, we need to scale the new merged task vector by alpha
+        if self.alpha is not None and isinstance(self.alpha, float):
+            print(f"Scaling new merged task vector by alpha: {self.alpha}")
+            new_merged_tv = state_dict_mul(state_dict=new_merged_tv, scalar=self.alpha)
 
         pretrained_model.load_state_dict(
             state_dict_add(new_merged_tv, pretrained_model.state_dict())

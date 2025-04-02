@@ -132,13 +132,13 @@ class CLIPClassificationMixin(LightningFabricMixin):
 
         # get cache directory
         if self.modelpool.has_pretrained:
-            model_name = self.modelpool.get_model_config(
-                "_pretrained_"
-            ).pretrained_model_name_or_path
+            model_name = self.modelpool.get_model_config("_pretrained_")
+            if not isinstance(model_name, str):
+                model_name = model_name.pretrained_model_name_or_path
         else:
-            model_name = self.modelpool.get_model_config(
-                self.modelpool.model_names[0]
-            ).pretrained_model_name_or_path
+            model_name = self.modelpool.get_model_config(self.modelpool.model_names[0])
+            if not isinstance(model_name, str):
+                model_name = model_name.pretrained_model_name_or_path
         cache_dir = os.path.join(
             self.zeroshot_weights_cache_dir,
             os.path.normpath(model_name.split("/")[-1]),
