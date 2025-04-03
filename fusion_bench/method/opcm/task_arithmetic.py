@@ -15,7 +15,7 @@ from tqdm.auto import tqdm
 from transformers import CLIPVisionModel
 
 from fusion_bench import BaseAlgorithm, BaseModelPool
-from fusion_bench.mixins import LightningFabricMixin
+from fusion_bench.mixins import LightningFabricMixin, SimpleProfilerMixin
 from fusion_bench.taskpool import CLIPVisionModelTaskPool
 from fusion_bench.utils.json import load_from_json, save_to_json
 from fusion_bench.utils.state_dict_arithmetic import state_dict_add, state_dict_sub
@@ -24,7 +24,11 @@ if TYPE_CHECKING:
     from torch.utils.tensorboard import SummaryWriter
 
 
-class ContinualTaskArithmeticForCLIP(BaseAlgorithm, LightningFabricMixin):
+class ContinualTaskArithmeticForCLIP(
+    BaseAlgorithm,
+    LightningFabricMixin,
+    SimpleProfilerMixin,
+):
     def __init__(
         self,
         scaling_factor: float,
@@ -79,32 +83,42 @@ class ContinualTaskArithmeticForCLIP(BaseAlgorithm, LightningFabricMixin):
         for model_idx, model_name in tqdm(
             enumerate(model_names), desc="Processing models"
         ):
-            task_model = modelpool.load_model(model_name)
+            with self.profile("loading model"):
+                task_model = modelpool.load_model(model_name)
 
-            for param_name, param in task_model.named_parameters():
-                if not param.requires_grad:
-                    continue
+            with self.profile("merging model"):
+                for param_name, param in task_model.named_parameters():
+                    if not param.requires_grad:
+                        continue
 
-                task_param = param
-                merged_param = merged_model.get_parameter(param_name)
-                pretrained_param = pretrained_model.get_parameter(param_name)
+                    task_param = param
+                    merged_param = merged_model.get_parameter(param_name)
+                    pretrained_param = pretrained_model.get_parameter(param_name)
 
-                new_param = merged_param + self.scaling_factor * (
-                    task_param - pretrained_param
-                )
-                merged_model.get_parameter(param_name).data = new_param
+                    new_param = merged_param + self.scaling_factor * (
+                        task_param - pretrained_param
+                    )
+                    merged_model.get_parameter(param_name).data = new_param
 
             if self.save_on_every_step:
-                self.save_merged_model(merged_model, model_idx)
+                with self.profile("saving model"):
+                    self.save_merged_model(merged_model, model_idx)
 
             if self.evaluate_on_every_step:
-                self.taskpool._is_setup = False
-                self.taskpool._test_datasets = DictConfig(
-                    {n: self._test_datasets[n] for n in model_names[: model_idx + 1]}
-                )
-                report = self.taskpool.evaluate(deepcopy(merged_model))
-                save_to_json(report, Path(self.log_dir) / f"report_{model_idx}.json")
+                with self.profile("evaluating model"):
+                    self.taskpool._is_setup = False
+                    self.taskpool._test_datasets = DictConfig(
+                        {
+                            n: self._test_datasets[n]
+                            for n in model_names[: model_idx + 1]
+                        }
+                    )
+                    report = self.taskpool.evaluate(deepcopy(merged_model))
+                    save_to_json(
+                        report, Path(self.log_dir) / f"report_{model_idx}.json"
+                    )
 
+        self.print_profile_summary()
         return merged_model
 
     def save_merged_model(self, merged_model: CLIPVisionModel, step: int):

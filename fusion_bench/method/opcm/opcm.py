@@ -15,7 +15,7 @@ from tqdm.auto import tqdm
 from transformers import CLIPVisionModel
 
 from fusion_bench import BaseAlgorithm, BaseModelPool
-from fusion_bench.mixins import LightningFabricMixin
+from fusion_bench.mixins import LightningFabricMixin, SimpleProfilerMixin
 from fusion_bench.taskpool import CLIPVisionModelTaskPool
 from fusion_bench.utils import instantiate
 from fusion_bench.utils.json import load_from_json, save_to_json
@@ -31,6 +31,7 @@ if TYPE_CHECKING:
 class OPCMForCLIP(
     BaseAlgorithm,
     LightningFabricMixin,
+    SimpleProfilerMixin,
 ):
     def __init__(
         self,
@@ -64,7 +65,8 @@ class OPCMForCLIP(
             L.seed_everything(self.seed)
         accelerator = self.fabric.device
 
-        pretrained_model = modelpool.load_pretrained_model()
+        with self.profile("loading model"):
+            pretrained_model = modelpool.load_pretrained_model()
 
         model_names = modelpool.model_names
         if self.shuffle_order:
@@ -83,15 +85,17 @@ class OPCMForCLIP(
             )
 
         # get the average model
-        merged_model = modelpool.load_model(model_names[0])
+        with self.profile("loading model"):
+            merged_model = modelpool.load_model(model_names[0])
 
         if self.evaluate_on_every_step:
-            self.taskpool._is_setup = False
-            self.taskpool._test_datasets = DictConfig(
-                {model_names[0]: self._test_datasets[model_names[0]]}
-            )
-            report = self.taskpool.evaluate(deepcopy(merged_model))
-            save_to_json(report, Path(self.log_dir) / "report_0.json")
+            with self.profile("evaluating model"):
+                self.taskpool._is_setup = False
+                self.taskpool._test_datasets = DictConfig(
+                    {model_names[0]: self._test_datasets[model_names[0]]}
+                )
+                report = self.taskpool.evaluate(deepcopy(merged_model))
+                save_to_json(report, Path(self.log_dir) / "report_0.json")
 
         self.avg_task_vector_norm = get_task_vector_norm(merged_model, pretrained_model)
         self.all_task_vector_norm = [self.avg_task_vector_norm]
@@ -113,90 +117,95 @@ class OPCMForCLIP(
             enumerate(model_names[1:]), desc="Processing models"
         ):
             model_idx += 1
-            task_model = modelpool.load_model(model_name)
+            with self.profile("loading model"):
+                task_model = modelpool.load_model(model_name)
 
-            self.all_task_vector_norm.append(
-                get_task_vector_norm(task_model, pretrained_model)
-            )
-            self.avg_task_vector_norm = np.mean(self.all_task_vector_norm)
-            self.fabric.log(
-                "model/task_vector_norm", self.all_task_vector_norm[-1], step=model_idx
-            )
-            self.fabric.log(
-                "model/avg_task_vector_norm", self.avg_task_vector_norm, step=model_idx
-            )
+            with self.profile("merging model"):
+                self.all_task_vector_norm.append(
+                    get_task_vector_norm(task_model, pretrained_model)
+                )
+                self.avg_task_vector_norm = np.mean(self.all_task_vector_norm)
+                self.fabric.log(
+                    "model/task_vector_norm", self.all_task_vector_norm[-1], step=model_idx
+                )
+                self.fabric.log(
+                    "model/avg_task_vector_norm", self.avg_task_vector_norm, step=model_idx
+                )
 
-            self.lambda_t = 1  # temporary value
+                self.lambda_t = 1  # temporary value
 
-            for module_name, module in tqdm(
-                list(merged_model.named_modules()),
-                desc=f"Processing {model_name}",
-                leave=False,
-            ):
-                if not is_leaf_module(module):
-                    continue
+                for module_name, module in tqdm(
+                    list(merged_model.named_modules()),
+                    desc=f"Processing {model_name}",
+                    leave=False,
+                ):
+                    if not is_leaf_module(module):
+                        continue
 
-                if isinstance(module, nn.Linear):
-                    module.weight.data = self.merge_linear_weights(
-                        module.weight,
-                        pretrained_model.get_submodule(module_name).weight,
-                        task_model.get_submodule(module_name).weight,
-                        param_name=".".join([module_name, "weight"]),
-                        alpha=self.alpha,
-                        accelerator=accelerator,
-                    )
-                    if module.bias is not None:
-                        module.bias.data = self.merge_other_parameters(
-                            module.bias,
-                            pretrained_model.get_submodule(module_name).bias,
-                            task_model.get_submodule(module_name).bias,
-                            param_name=".".join([module_name, "bias"]),
+                    if isinstance(module, nn.Linear):
+                        module.weight.data = self.merge_linear_weights(
+                            module.weight,
+                            pretrained_model.get_submodule(module_name).weight,
+                            task_model.get_submodule(module_name).weight,
+                            param_name=".".join([module_name, "weight"]),
+                            alpha=self.alpha,
                             accelerator=accelerator,
                         )
-                else:
-                    for param_name, param in module.named_parameters():
-                        param.data = self.merge_other_parameters(
-                            merged_W=param,
-                            pretrained_W=pretrained_model.get_submodule(
-                                module_name
-                            ).get_parameter(param_name),
-                            task_W=task_model.get_submodule(module_name).get_parameter(
-                                param_name
-                            ),
-                            param_name=".".join([module_name, param_name]),
-                            accelerator=accelerator,
-                        )
+                        if module.bias is not None:
+                            module.bias.data = self.merge_other_parameters(
+                                module.bias,
+                                pretrained_model.get_submodule(module_name).bias,
+                                task_model.get_submodule(module_name).bias,
+                                param_name=".".join([module_name, "bias"]),
+                                accelerator=accelerator,
+                            )
+                    else:
+                        for param_name, param in module.named_parameters():
+                            param.data = self.merge_other_parameters(
+                                merged_W=param,
+                                pretrained_W=pretrained_model.get_submodule(
+                                    module_name
+                                ).get_parameter(param_name),
+                                task_W=task_model.get_submodule(module_name).get_parameter(
+                                    param_name
+                                ),
+                                param_name=".".join([module_name, param_name]),
+                                accelerator=accelerator,
+                            )
 
-            task_vector_norm = get_task_vector_norm(merged_model, pretrained_model)
-            self.lambda_t *= task_vector_norm / self.avg_task_vector_norm
-            for param_name, param in merged_model.named_parameters():
-                param.data = pretrained_model.get_parameter(param_name) + (
-                    param - pretrained_model.get_parameter(param_name)
-                ) * (self.avg_task_vector_norm / task_vector_norm)
-            self.fabric.log("model/lambda_t", self.lambda_t, step=model_idx)
-            self.fabric.log(
-                "empirical/lambda_t", np.sqrt(model_idx + 1), step=model_idx
-            )
-            self.previous_lambda_t = self.lambda_t
-            self.lambda_t = None
+                task_vector_norm = get_task_vector_norm(merged_model, pretrained_model)
+                self.lambda_t *= task_vector_norm / self.avg_task_vector_norm
+                for param_name, param in merged_model.named_parameters():
+                    param.data = pretrained_model.get_parameter(param_name) + (
+                        param - pretrained_model.get_parameter(param_name)
+                    ) * (self.avg_task_vector_norm / task_vector_norm)
+                self.fabric.log("model/lambda_t", self.lambda_t, step=model_idx)
+                self.fabric.log(
+                    "empirical/lambda_t", np.sqrt(model_idx + 1), step=model_idx
+                )
+                self.previous_lambda_t = self.lambda_t
+                self.lambda_t = None
 
-            self.fabric.log(
-                "model/merged_task_vector_norm",
-                get_task_vector_norm(merged_model, pretrained_model),
-                step=model_idx,
-            )
+                self.fabric.log(
+                    "model/merged_task_vector_norm",
+                    get_task_vector_norm(merged_model, pretrained_model),
+                    step=model_idx,
+                )
 
             if self.save_on_every_step:
-                self.save_merged_model(merged_model, model_idx)
+                with self.profile("saving model"):
+                    self.save_merged_model(merged_model, model_idx)
 
             if self.evaluate_on_every_step:
-                self.taskpool._is_setup = False
-                self.taskpool._test_datasets = DictConfig(
-                    {n: self._test_datasets[n] for n in model_names[: model_idx + 1]}
-                )
-                report = self.taskpool.evaluate(deepcopy(merged_model))
-                save_to_json(report, Path(self.log_dir) / f"report_{model_idx}.json")
+                with self.profile("evaluating model"):
+                    self.taskpool._is_setup = False
+                    self.taskpool._test_datasets = DictConfig(
+                        {n: self._test_datasets[n] for n in model_names[: model_idx + 1]}
+                    )
+                    report = self.taskpool.evaluate(deepcopy(merged_model))
+                    save_to_json(report, Path(self.log_dir) / f"report_{model_idx}.json")
 
+        self.print_profile_summary()
         return merged_model
 
     def save_merged_model(self, merged_model: CLIPVisionModel, step: int):
@@ -227,7 +236,7 @@ class OPCMForCLIP(
         split_rank = (s.cumsum(dim=0) / s.sum() > alpha).float().argmax().item()
 
         projected_task_tv = u.T @ task_tv @ v
-        projected_task_tv.diag().fill_(0)
+        projected_task_tv.diagonal().fill_(0)
 
         projected_task_tv[:split_rank, :split_rank] = 0
 
