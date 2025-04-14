@@ -1,4 +1,4 @@
-from typing import List, Mapping, Optional
+from typing import List, Mapping, Optional, Tuple
 
 import torch
 from torch import nn
@@ -109,8 +109,8 @@ class ParameterDictModel(nn.Module):
     def keys(self):
         return [name for name, _ in self.named_parameters()]
 
-    def items(self):
+    def items(self) -> List[Tuple[str, nn.Parameter]]:
         return [(name, self[name]) for name in self.keys()]
 
-    def values(self):
+    def values(self) -> List[nn.Parameter]:
         return [self[name] for name in self.keys()]
