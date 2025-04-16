@@ -58,6 +58,16 @@ Use the following command to run the Ties-Merging algorithm:
 fusion_bench method=ties_merging ...
 ```
 
+## Scope
+
+Use Ties-Merging to merge multiple task-specific models and evaluate the performance of the merged model.
+
+```bash
+fusion_bench method=ties_merging \
+  modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8_model_only \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
+```
+
 ## Reference
 
 ::: fusion_bench.method.ties_merging.TiesMergingAlgorithm
