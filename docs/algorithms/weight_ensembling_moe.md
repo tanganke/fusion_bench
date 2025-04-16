@@ -226,12 +226,12 @@ multi-task model fusion experiment on eight image classification tasks.
 ```bash
 # merge eight CLIP-ViT-B/32 models using WE MoE
 fusion_bench \
-  method=weight_ensembling_moe \
+  method=wemoe/weight_ensembling_moe \
     method.name=clip_weight_ensembling_moe \
     method.use_grad_accumulate=false \
     method.save_checkpoint=outputs/clip-vit-base-patch32_TA8_weight_ensembling_moe_checkpoint.ckpt \
-  modelpool=clip-vit-base-patch32_TA8 \
-  taskpool=clip-vit-classification_TA8
+  modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
 ```
 
 merge eight CLIP-ViT-L/14 models:
@@ -239,21 +239,21 @@ merge eight CLIP-ViT-L/14 models:
 ```bash
 # merge eight CLIP-ViT-L/14 models using WE MoE, fine-tune the routers
 fusion_bench print_config=false \
-  method=weight_ensembling_moe \
+  method=wemoe/weight_ensembling_moe \
     method.name=clip_weight_ensembling_moe \
     method.use_grad_accumulate=true \
     method.save_checkpoint=outputs/clip-vit-large-patch14_TA8_weight_ensembling_moe_checkpoint.ckpt \
     method.batch_size=4 method.devices=4 \
-  modelpool=clip-vit-large-patch14_TA8 \
+  modelpool=CLIPVisionModelPool/clip-vit-large-patch14_TA8 \
   taskpool=dummy &&
 
 # load the checkpoint and evaluate the model
 fusion_bench \
-  method=weight_ensembling_moe \
+  method=wemoe/weight_ensembling_moe \
     method.name=clip_weight_ensembling_moe \
     method.checkpoint=outputs/clip-vit-large-patch14_TA8_weight_ensembling_moe_checkpoint.ckpt \
-  modelpool=clip-vit-large-patch14_TA8 \
-  taskpool=clip-vit-classification_TA8 \
+  modelpool=CLIPVisionModelPool/clip-vit-large-patch14_TA8 \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
     taskpool.clip_model=openai/clip-vit-large-patch14
 ```
 
