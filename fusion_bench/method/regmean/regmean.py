@@ -13,6 +13,7 @@ from torch import Tensor, nn
 from tqdm.autonotebook import tqdm
 
 from fusion_bench.method import BaseAlgorithm
+from fusion_bench.mixins import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
 
 log = logging.getLogger(__name__)
@@ -279,7 +280,7 @@ def regmean_merging(
     return merged_params
 
 
-class RegMeanAlgorithm(BaseAlgorithm):
+class RegMeanAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
     _include_module_type = [nn.Linear]
     _config_mapping = {
         "num_regmean_examples": "num_regmean_examples",
@@ -342,24 +343,31 @@ class RegMeanAlgorithm(BaseAlgorithm):
                 )
                 assert len(linear_modules_to_merge) > 0, "No linear modules to merge"
 
-                regmean_weights = self.get_regmean_weights(
-                    name,
-                    model,
-                    train_dataset=modelpool.load_train_dataset(name),
-                    linear_modules_to_merge=linear_modules_to_merge,
-                )
-                models_to_merge_regmean_weights_list.append(regmean_weights)
+                with (
+                    self.profile("merging models"),
+                    self.profile("computing regmean weights"),
+                ):
+                    regmean_weights = self.get_regmean_weights(
+                        name,
+                        model,
+                        train_dataset=modelpool.load_train_dataset(name),
+                        linear_modules_to_merge=linear_modules_to_merge,
+                    )
+                    models_to_merge_regmean_weights_list.append(regmean_weights)
 
-        # merging with regmean weights
-        merged_params = merging_with_regmean_weights(
-            models_to_merge_param_dict=models_to_merge_param_dict,
-            models_to_merge_regmean_weights_list=models_to_merge_regmean_weights_list,
-            reduce_non_diagonal_ratio=self.reduce_non_diagonal_ratio,
-            weight_transpose=self.config.get("weight_transpose", True),
-        )
+        with self.profile("merging models"):
+            # merging with regmean weights
+            merged_params = merging_with_regmean_weights(
+                models_to_merge_param_dict=models_to_merge_param_dict,
+                models_to_merge_regmean_weights_list=models_to_merge_regmean_weights_list,
+                reduce_non_diagonal_ratio=self.reduce_non_diagonal_ratio,
+                weight_transpose=self.config.get("weight_transpose", True),
+            )
 
-        merged_model = modelpool.load_model("_pretrained_")
-        merged_model.load_state_dict(merged_params, strict=False)
+            merged_model = modelpool.load_model("_pretrained_")
+            merged_model.load_state_dict(merged_params, strict=False)
+
+        self.print_profile_summary()
         return merged_model
 
     def on_regmean_start(self):
