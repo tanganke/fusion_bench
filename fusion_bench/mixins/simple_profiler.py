@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Generator
+from typing import Generator, Optional
 
 from lightning.fabric.utilities.rank_zero import rank_zero_only
 from lightning.pytorch.profilers import SimpleProfiler
@@ -70,7 +70,9 @@ class SimpleProfilerMixin:
         self.profiler.stop(action_name)
 
     @rank_zero_only
-    def print_profile_summary(self):
+    def print_profile_summary(self, title: Optional[str] = None):
+        if title is not None:
+            print(title)
         print(self.profiler.summary())
 
     def __del__(self):
