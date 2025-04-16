@@ -12,6 +12,7 @@ from torch import Tensor, nn
 from tqdm.autonotebook import tqdm
 
 from fusion_bench.method import BaseAlgorithm
+from fusion_bench.mixins import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
 
 log = logging.getLogger(__name__)
@@ -352,7 +353,7 @@ def filter_state_dict(
     return filtered_state_dict
 
 
-class FisherMergingAlgorithm(BaseAlgorithm):
+class FisherMergingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
     """
     Implements the Fisher Merging Algorithm.
 
@@ -432,25 +433,34 @@ class FisherMergingAlgorithm(BaseAlgorithm):
             for param_name in param_names_to_merge:
                 models_to_merge_param_dict[param_name].append(param_dict[param_name])
 
-            model_to_merge_fisher_weights = self.get_fisher_weights(
-                model_name=name,
-                model=model,
-                train_dataset=modelpool.load_train_dataset(name),
-                param_names_to_merge=param_names_to_merge,
+            with (
+                self.profile("merging models"),
+                self.profile("computing fisher weights"),
+            ):
+                model_to_merge_fisher_weights = self.get_fisher_weights(
+                    model_name=name,
+                    model=model,
+                    train_dataset=modelpool.load_train_dataset(name),
+                    param_names_to_merge=param_names_to_merge,
+                )
+
+                models_to_merge_fisher_weights_list.append(model_to_merge_fisher_weights)
+
+        with self.profile("merging models"):
+            merged_params = merging_with_fisher_weights(
+                models_to_merge_param_dict=models_to_merge_param_dict,
+                models_to_merge_fisher_weights_list=models_to_merge_fisher_weights_list,
+                fisher_scaling_coefficients=torch.ones(len(modelpool)) / len(modelpool),
+                normalize_fisher_weight=self.config.get(
+                    "normalize_fisher_weight", True
+                ),
+                minimal_fisher_weight=self.config.get("minimal_fisher_weight", 1e-6),
             )
 
-            models_to_merge_fisher_weights_list.append(model_to_merge_fisher_weights)
+            merged_model = modelpool.load_model("_pretrained_")
+            merged_model.load_state_dict(merged_params, strict=False)
 
-        merged_params = merging_with_fisher_weights(
-            models_to_merge_param_dict=models_to_merge_param_dict,
-            models_to_merge_fisher_weights_list=models_to_merge_fisher_weights_list,
-            fisher_scaling_coefficients=torch.ones(len(modelpool)) / len(modelpool),
-            normalize_fisher_weight=self.config.get("normalize_fisher_weight", True),
-            minimal_fisher_weight=self.config.get("minimal_fisher_weight", 1e-6),
-        )
-
-        merged_model = modelpool.load_model("_pretrained_")
-        merged_model.load_state_dict(merged_params, strict=False)
+        self.print_profile_summary()
         return merged_model
 
     def get_fisher_weights(
