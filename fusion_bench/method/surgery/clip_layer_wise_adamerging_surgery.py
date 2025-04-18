@@ -85,7 +85,14 @@ class CLIPLayerWiseAdaMergingSurgeryAlgorithm(
 
         if self.config.weights is not None:
             # skip the test-time adaptation
+            merge_weight: torch.Tensor = torch.load(self.config.weights)
+            module.merge_weight.data = merge_weight.to(
+                device=module.merge_weight.device
+            )
             merged_model = copy.deepcopy(module.merge_and_unload())
+            # setup the zero-shot classification head
+            self.on_test_time_adaptation_start()
+
         else:
             with self.profile("test-time adaptation"):
                 module = self.test_time_adaptation(module)
