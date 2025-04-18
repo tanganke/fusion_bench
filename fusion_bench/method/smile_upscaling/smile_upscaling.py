@@ -442,16 +442,19 @@ class SmileUpscalingAlgorithm(
             print_parameters(model)
             return model
 
-        with self.profile("load pretrained model"):
-            pretrained_model = modelpool.load_model("_pretrained_")
-        with self.profile("load fine-tuned model"):
-            finetuned_models = [
-                m for m in tqdm(modelpool.models(), total=len(modelpool.model_names))
-            ]
+        with self.profile("loading model"):
+            # load models and move to GPU if available
+            with self.profile("load pretrained model"):
+                pretrained_model = modelpool.load_model("_pretrained_")
+            with self.profile("load fine-tuned model"):
+                finetuned_models = [
+                    m
+                    for m in tqdm(modelpool.models(), total=len(modelpool.model_names))
+                ]
 
-        if self.config.device == "cuda" and torch.cuda.is_available():
-            pretrained_model = pretrained_model.cuda()
-            finetuned_models = [m.cuda() for m in finetuned_models]
+            if self.config.device == "cuda" and torch.cuda.is_available():
+                pretrained_model = pretrained_model.cuda()
+                finetuned_models = [m.cuda() for m in finetuned_models]
 
         with self.profile("merge model"):
             model = self.merge(pretrained_model, finetuned_models)
