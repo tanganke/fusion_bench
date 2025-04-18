@@ -9,3 +9,14 @@ TASK_NAMES_TA8 = [
     "mnist",
     "dtd",
 ]
+
+TASK_NAMES_TA8_CAP = [
+    "SUN397",
+    "Cars",
+    "RESISC45",
+    "EuroSAT",
+    "SVHN",
+    "GTSRB",
+    "MNIST",
+    "DTD",
+]
