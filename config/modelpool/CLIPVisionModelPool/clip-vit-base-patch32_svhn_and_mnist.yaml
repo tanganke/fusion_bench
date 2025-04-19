@@ -1,0 +1,6 @@
+defaults:
+  - CLIPVisionModelPool@: _template
+  - /model/clip-vit@models:
+      - clip-vit-base-patch32
+      - clip-vit-base-patch32_svhn
+      - clip-vit-base-patch32_mnist
