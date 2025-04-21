@@ -1,6 +1,6 @@
-from typing import Iterable
+from typing import Iterable, List
 
-__all__ = ["first", "has_length"]
+__all__ = ["first", "has_length", "join_list"]
 
 
 def first(iterable: Iterable):
@@ -16,3 +16,10 @@ def has_length(dataset):
     except TypeError:
         # TypeError: len() of unsized object
         return False
+
+
+def join_list(list_of_list: List[List]):
+    ans = []
+    for item in list_of_list:
+        ans.extend(item)
+    return ans
