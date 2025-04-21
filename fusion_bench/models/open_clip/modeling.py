@@ -6,6 +6,15 @@ from .variables_and_paths import CACHEDIR, MODELS, OPENCLIP_CACHEDIR
 
 
 class ImageEncoder(torch.nn.Module):
+    R"""
+    Examples:
+
+        load the image encoder for a given model name
+
+        >>> from fusion_bench.models.open_clip import ImageEncoder
+        >>> image_encoder = ImageEncoder(model_name="ViT-B-32")
+    """
+
     def __init__(self, model_name: str, keep_lang=False):
         super().__init__()
         assert (
