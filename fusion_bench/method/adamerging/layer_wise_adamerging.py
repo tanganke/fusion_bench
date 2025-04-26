@@ -52,7 +52,6 @@ class LayerWiseAdaMergingAlgorithm(
         Args:
             algorithm_config (DictConfig): The configuration for the algorithm.
         """
-        self._program = None
         super().__init__(algorithm_config)
 
     @torch.no_grad()
