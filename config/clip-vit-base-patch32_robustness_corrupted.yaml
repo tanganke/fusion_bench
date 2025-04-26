@@ -3,7 +3,7 @@ defaults:
   - fabric: auto
   # --- Model, Method, Task ---
   - modelpool: CLIPVisionModelPool/clip-vit-base-patch32_robustness_corrupted
-  - method: gossip
+  - method: dummy # change this to the method you want to use
   - taskpool: CLIPVisionModelTaskPool/clip-vit-base-patch32_robustness_corrupted
   - _self_
 

@@ -1,4 +1,0 @@
-oxford_flowers102:
-  _target_: datasets.load_dataset
-  path: dpdl-benchmark/oxford_flowers102
-  split: test
