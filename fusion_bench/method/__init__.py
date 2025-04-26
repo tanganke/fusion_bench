@@ -141,6 +141,11 @@ if TYPE_CHECKING:
         WeightedEnsembleAlgorithm,
     )
     from .fisher_merging import FisherMergingForCLIPVisionModel
+    from .gossip import (
+        CLIPLayerWiseGossipAlgorithm,
+        CLIPTaskWiseGossipAlgorithm,
+        FlanT5LayerWiseGossipAlgorithm,
+    )
     from .isotropic_merging import (
         ISO_C_Merge,
         ISO_CTS_Merge,
@@ -195,7 +200,6 @@ if TYPE_CHECKING:
     from .ties_merging import TiesMergingAlgorithm
     from .we_moe import CLIPWeightEnsemblingMoEAlgorithm
     from .weighted_average import WeightedAverageAlgorithm, WeightedAverageForLLama
-    from .gossip import CLIPLayerWiseGossipAlgorithm, CLIPTaskWiseGossipAlgorithm, GPT2LayerWiseGossipAlgorithm
 
 else:
     sys.modules[__name__] = LazyImporter(
