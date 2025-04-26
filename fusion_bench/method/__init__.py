@@ -62,6 +62,11 @@ _import_structure = {
         "IsotropicMergingInCommonSubspace",
     ],
     "opcm": ["OPCMForCLIP"],
+    "gossip": [
+        "CLIPLayerWiseGossipAlgorithm",
+        "CLIPTaskWiseGossipAlgorithm",
+        "FlanT5LayerWiseGossipAlgorithm",
+    ],
     # plug-and-play model merging methods
     "concrete_subspace": [
         "ConcreteTaskArithmeticAlgorithmForCLIP",
@@ -136,6 +141,11 @@ if TYPE_CHECKING:
         WeightedEnsembleAlgorithm,
     )
     from .fisher_merging import FisherMergingForCLIPVisionModel
+    from .gossip import (
+        CLIPLayerWiseGossipAlgorithm,
+        CLIPTaskWiseGossipAlgorithm,
+        FlanT5LayerWiseGossipAlgorithm,
+    )
     from .isotropic_merging import (
         ISO_C_Merge,
         ISO_CTS_Merge,

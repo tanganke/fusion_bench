@@ -444,7 +444,9 @@ class FisherMergingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
                     param_names_to_merge=param_names_to_merge,
                 )
 
-                models_to_merge_fisher_weights_list.append(model_to_merge_fisher_weights)
+                models_to_merge_fisher_weights_list.append(
+                    model_to_merge_fisher_weights
+                )
 
         with self.profile("merging models"):
             merged_params = merging_with_fisher_weights(
