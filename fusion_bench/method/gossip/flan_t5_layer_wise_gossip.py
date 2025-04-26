@@ -195,7 +195,7 @@ class FlanT5LayerWiseGossipAlgorithm(
                     if (step_idx+1) in self.configs.accuracy_test_interval:
                         do_evaluation = True
                 elif isinstance(self.configs.accuracy_test_interval, int):
-                    if ((step_idx+1) % self.configs.accuracy_test_interval == 0):
+                    if (self.configs.accuracy_test_interval != 0 and (step_idx+1) % self.configs.accuracy_test_interval == 0):
                         do_evaluation = True
                 if do_evaluation:
                     self._program.evaluate_merged_model(self._program.taskpool,  model_scheduler.get_final_models())

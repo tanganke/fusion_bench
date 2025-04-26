@@ -61,15 +61,6 @@ class ModelScheduler:
         """
         return models and relevant data in each step
         """
-        # TODO: use a mixing matrix to determine which models to use in step idx
-
-        # # merge three models
-        # pretrained_model = copy.deepcopy(self.finetuned_models[model_id])
-        # finetuned_models = [
-        #     copy.deepcopy(self.finetuned_models[(model_id+1)%self.num_finetuned_models]),
-        #     copy.deepcopy(self.finetuned_models[(model_id-1)%self.num_finetuned_models])
-        # ]
-        # merge four models
         pretrained_model = copy.deepcopy(self.pretrained_model)
         if self.config.topo == 'ring':
             finetuned_models = [
@@ -271,10 +262,6 @@ class LayerWiseGossipAlgorithm(
                             log.info(f'unimproved datasets, the datasets used in this local merging is {modelpool.model_names}')
                         with self.profile("test-time adaptation"):
                             module = self.test_time_adaptation(module, datasets[model_id])
-                        # if self.config.get("save_merging_weights", False):
-                        #     self.save_merging_weights(
-                        #         self.config.save_merging_weights, module.merge_weight
-                        #     )
                         model_scheduler.store_model(module.merge_weights(), model_id)
                         log.info(get_memory_usage(f'after local merging ({modelpool.model_names[model_id]}), the memory usage of GPU is:'))
                         self.free_gpu_memory(module) # simulate distributed GPU memory usage as much as possible
@@ -287,7 +274,7 @@ class LayerWiseGossipAlgorithm(
                         self._program.evaluate_merged_model(self._program.taskpool,  model_scheduler.get_final_models())
                         model_scheduler.move_to('cpu')
                 else:
-                    if ((step_idx+1) % self.config.accuracy_test_interval == 0):
+                    if (self.config.accuracy_test_interval != 0 and (step_idx+1) % self.config.accuracy_test_interval == 0):
                         self._program.evaluate_merged_model(self._program.taskpool,  model_scheduler.get_final_models())
                         model_scheduler.move_to('cpu')
         return model_scheduler.get_final_models()

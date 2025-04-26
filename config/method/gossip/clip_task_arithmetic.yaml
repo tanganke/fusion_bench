@@ -1,7 +1,0 @@
-_target_: fusion_bench.method.gossip.clip_task_arithmetic_gossip.TaskArithmetic_Gossip_Algorithm
-_recursive_: false
-
-# this is the parameter about gossip
-gossip_max_steps: 30
-accuracy_test_interval: 1  #if this value is equal to 1, we will evaluate all models each time after Gossip # [1, 5, 10, 15, 20] it can also be a list #
-scaling_factor: 0.343

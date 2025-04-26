@@ -1,6 +1,8 @@
-_target_: fusion_bench.method.gossip.clip_layer_wise_ada_surgery_gossip.CLIP_LayerWise_Ada_Surgery_GossipAlgorithm
-_recursive_: false
-
+# this option can be "clip_task_wise_gossip"
+name: clip_layer_wise_gossip
+# _target_: fusion_bench.method.CLIPLayerWiseGossipAlgorithm
+# this weights can be a list of float, or a string that points to a *.np, *.pt file containing the weights
+# if weights is specified, skip the test-time adaptation training
 weights: null
 # learning rate
 optimizer: adam
@@ -23,10 +25,6 @@ cache_dir: outputs
 # this is the parameter about gossip
 gossip_max_steps: 20
 gossip_skip_adamerging: false
-# accuracy_test_interval: 1  # if this value is equal to 1, we will evaluate all models each time after Gossip
+accuracy_test_interval: 0  # if this value is equal to 1, we will evaluate all models each time after Gossip
 improve_dataset: true
 topo: ring
-
-# this is the parameter abour surgery
-surgery_steps: 500
-eval_iterations: 500
