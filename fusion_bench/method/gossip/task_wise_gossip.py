@@ -63,7 +63,7 @@ class ModelScheduler:
         ]
         self.num_finetuned_models = len(self.finetuned_models)
         self.new_finetuned_models = copy.deepcopy(self.finetuned_models)
-        self.finetuned_midels_name = [name for name in modelpool.model_names]
+        self.finetuned_model_names = [name for name in modelpool.model_names]
 
         self.config = config
 
@@ -115,7 +115,7 @@ class ModelScheduler:
         # need a check
         final_models = [
             {"name": name, "model": model}
-            for name, model in zip(self.finetuned_midels_name, self.finetuned_models)
+            for name, model in zip(self.finetuned_model_names, self.finetuned_models)
         ]
         num_finetuned_models = len(self.finetuned_models)
 
