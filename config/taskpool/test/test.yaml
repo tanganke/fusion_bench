@@ -1,0 +1,23 @@
+_target_: fusion_bench.taskpool.GPT2TextClassificationTaskPool
+
+_dataset_loader: fusion_bench.taskpool.gpt2_text_classification.load_gpt2_dataset
+test_datasets:
+  mrpc:
+    _target_: ${..._dataset_loader}
+    name: mrpc
+    split: validation
+  qnli:
+    _target_: ${..._dataset_loader}
+    name: qnli
+    split: validation
+  qqp:
+    _target_: ${..._dataset_loader}
+    name: qqp
+    split: validation
+tokenizer:
+  _target_: fusion_bench.modelpool.huggingface_gpt2_classification.load_gpt2_tokenizer
+  pretrained_model_name_or_path: gpt2
+dataloader_kwargs:
+  batch_size: 8
+  num_workers: 8
+fast_dev_run: ${fast_dev_run}

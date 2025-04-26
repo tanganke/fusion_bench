@@ -19,6 +19,7 @@ from fusion_bench.utils import import_object, instantiate, timeit_context
 from fusion_bench.utils.hydra_utils import get_hydra_output_dir
 from fusion_bench.utils.json import print_json
 from fusion_bench.utils.rich_utils import print_bordered, print_config_tree
+from fusion_bench.method.surgery.surgerymodelwrapper import SurgeryModelWrapper
 
 log = logging.getLogger(__name__)
 
@@ -237,6 +238,7 @@ class FabricModelFusionProgram(
                 compat_load_fn="fusion_bench.compat.taskpool.load_taskpool_from_config",
             )
 
+        # merged_model = self.method.run(self.modelpool, evaluate_merged_model=self.evaluate_merged_model, taskpool=self.taskpool)
         merged_model = self.method.run(self.modelpool)
         if merged_model is None:
             log.info(

@@ -45,7 +45,7 @@ class TaskWiseAdaMergingAlgorithm(ModelFusionAlgorithm):
             self._fabric = L.Fabric(devices=self.config.get("devices", 1))
             self._fabric.launch()
 
-    @torch.no_grad()
+    @torch.no_grad()# 这里需要使用吗？
     def construct_task_wise_merged_model(self, modelpool: ModelPool):
         if self.config.weights is None:
             task_wise_weight = get_task_wise_weights(

@@ -62,6 +62,11 @@ _import_structure = {
         "IsotropicMergingInCommonSubspace",
     ],
     "opcm": ["OPCMForCLIP"],
+    "gossip": [
+        "CLIPLayerWiseGossipAlgorithm",
+        "CLIPTaskWiseGossipAlgorithm",
+        "FlanT5LayerWiseGossipAlgorithm",
+    ],
     # plug-and-play model merging methods
     "concrete_subspace": [
         "ConcreteTaskArithmeticAlgorithmForCLIP",
@@ -190,6 +195,7 @@ if TYPE_CHECKING:
     from .ties_merging import TiesMergingAlgorithm
     from .we_moe import CLIPWeightEnsemblingMoEAlgorithm
     from .weighted_average import WeightedAverageAlgorithm, WeightedAverageForLLama
+    from .gossip import CLIPLayerWiseGossipAlgorithm, CLIPTaskWiseGossipAlgorithm, GPT2LayerWiseGossipAlgorithm
 
 else:
     sys.modules[__name__] = LazyImporter(

@@ -26,6 +26,7 @@ from torchmetrics.classification.accuracy import MulticlassAccuracy
 from tqdm.autonotebook import tqdm
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 from transformers.models.clip.modeling_clip import CLIPVisionTransformer
+from fusion_bench.method.gossip.clip_layer_wise_ada_surgery_gossip import SurgeryModelWrapper
 
 from fusion_bench.dataset import CLIPDataset
 from fusion_bench.mixins import LightningFabricMixin
@@ -288,6 +289,8 @@ class CLIPVisionModelTaskPool(
         if not self._is_setup:
             self.setup()
 
+        modeltype = kwargs.get("modeltype", None)
+        extra_module = None
         report = {}
         # CLIPVisionModel works the same with CLIPVisonTransformer, so we can use it directly
         if hasattr(model, "is_surgery_model") and model.is_surgery_model:

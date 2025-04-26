@@ -5,6 +5,7 @@ import torch
 from torch import Tensor, nn
 from transformers import CLIPModel, CLIPProcessor
 from transformers.models.clip.modeling_clip import BaseModelOutputWithPooling
+import logging
 
 from fusion_bench.utils.devices import get_device
 
@@ -17,6 +18,7 @@ default_templates = [
     lambda c: f"a photo of a {c}",
 ]
 
+log = logging.getLogger(__name__)
 
 class HFCLIPClassifier(nn.Module):
     """
