@@ -5,7 +5,6 @@ from typing import cast  # noqa: F401
 import lightning as L
 import lightning.fabric.wrappers
 import torch
-from lightning.pytorch.profilers import SimpleProfiler
 from omegaconf import DictConfig
 from torch import Tensor
 from torch.utils.data import DataLoader
@@ -13,6 +12,7 @@ from tqdm.autonotebook import tqdm
 
 from fusion_bench.compat.method.base_algorithm import ModelFusionAlgorithm
 from fusion_bench.compat.modelpool import ModelPool
+from fusion_bench.mixins import SimpleProfilerMixin
 from fusion_bench.models.we_moe import WeightEnsemblingMoE
 from fusion_bench.utils import timeit_context
 from fusion_bench.utils.parameters import print_parameters
@@ -34,7 +34,10 @@ def entropy_loss(logits: Tensor) -> Tensor:
     return -torch.sum(probs * torch.log(probs + 1e-8), dim=-1).mean()
 
 
-class WeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
+class WeightEnsemblingMoEAlgorithm(
+    ModelFusionAlgorithm,
+    SimpleProfilerMixin,
+):
     """
     Algorithm for fusing models using Weight Ensembling Mixture of Experts (MoE).
 
@@ -44,7 +47,6 @@ class WeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
     Attributes:
         _fabric (L.Fabric): The fabric for distributed training.
         modelpool (ModelPool): The pool of models to be fused.
-        profiler (SimpleProfiler): The profiler for measuring performance.
     """
 
     _fabric: L.Fabric = None
@@ -66,9 +68,6 @@ class WeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
             self._fabric.launch()
         else:
             assert "No CUDA device available."
-        self.profiler = SimpleProfiler(
-            self.config.get("cache_dir", "outputs"), "we_moe_profiler.txt"
-        )
 
     @abstractmethod
     def load_checkpoint(self, model, checkpoint):
@@ -177,9 +176,9 @@ class WeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
         for step_idx in pbar:
             if self.config.use_grad_accumulate:
                 for task in self.modelpool.model_names:
-                    with self.profiler.profile("data time"):
+                    with self.profile("data time"):
                         batch = next(self.get_shuffled_test_loader_iter(task))
-                    with self.profiler.profile("forward pass"):
+                    with self.profile("forward pass"):
                         logits = self.compute_logits(module, batch, task)
                         assert (
                             logits.dim() == 2
@@ -187,23 +186,23 @@ class WeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
                         loss = entropy_loss(logits)
                     # .backward() accumulates when .zero_grad() wasn't called
                     # this can save memory
-                    with self.profiler.profile("backward pass"):
+                    with self.profile("backward pass"):
                         self._fabric.backward(loss, retain_graph=True)
             else:
                 loss = 0
                 for task in self.modelpool.model_names:
-                    with self.profiler.profile("data time"):
+                    with self.profile("data time"):
                         batch = next(self.get_shuffled_test_loader_iter(task))
-                    with self.profiler.profile("forward pass"):
+                    with self.profile("forward pass"):
                         logits = self.compute_logits(module, batch, task)
                         assert (
                             logits.dim() == 2
                         ), f"Expected logits to be 2D, got {logits.dim()}"
                         loss = loss + entropy_loss(logits)
-                with self.profiler.profile("backward pass"):
+                with self.profile("backward pass"):
                     self._fabric.backward(loss, retain_graph=True)
 
-            with self.profiler.profile("optimizer step"):
+            with self.profile("optimizer step"):
                 optimizer.step()
                 optimizer.zero_grad()
 
@@ -232,7 +231,7 @@ class WeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
             )
             self.load_checkpoint(moe_model, self.config.checkpoint)
         else:
-            with self.profiler.profile("test-time adaptation"):
+            with self.profile("test-time adaptation"):
                 moe_model = self.test_time_adaptation(moe_model)
             if self.config.get("save_checkpoint", False):
                 log.info(f"save checkpoint to {self.config.save_checkpoint}")
@@ -243,5 +242,5 @@ class WeightEnsemblingMoEAlgorithm(ModelFusionAlgorithm):
 
         # enable sample-wise adaptation
         moe_model.batch_reduce = False
-        print(self.profiler.summary())
+        self.print_profile_summary()
         return moe_model

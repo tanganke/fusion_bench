@@ -1,0 +1,23 @@
+_target_: fusion_bench.modelpool.CLIPVisionModelPool
+_recursive_: False
+
+models:
+  _pretrained_: openai/clip-vit-base-patch32
+  svhn: ./outputs/logs/ViT-B-32/continual_clip_layer_wise_adamerging_adamerging/4/version_0/merged_model
+  gtsrb: tanganke/clip-vit-base-patch32_gtsrb
+
+test_datasets:
+  svhn:
+    _target_: datasets.load_dataset
+    _args_:
+      - svhn
+      - cropped_digits
+    split: test
+  gtsrb:
+    _target_: datasets.load_dataset
+    path: tanganke/gtsrb
+    split: test
+
+processor:
+  _target_: transformers.CLIPProcessor.from_pretrained
+  pretrained_model_name_or_path: openai/clip-vit-base-patch32

@@ -1,6 +1,6 @@
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
 from torch import Tensor
@@ -8,32 +8,41 @@ from torch.utils.hooks import RemovableHandle
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 from transformers.models.clip.modeling_clip import CLIPVisionTransformer
 
+from fusion_bench.method.smile_upscaling import SmileMoELinear
 from fusion_bench.models.hf_clip import HFCLIPClassifier
-from fusion_bench.models.sparse_we_moe import (
-    SparseWeightEnsemblingMoE,
-    SparseWeightEnsemblingMoE_ShardGate,
-)
 
 from .taskpool import CLIPVisionModelTaskPool
 from .utils.routing_analysis_utils import LayerWiseRoutingWeightSaver
 
 
-class SparseWEMoECLIPVisionModelTaskPool(CLIPVisionModelTaskPool):
+class SmileCLIPVisionModelTaskPool(CLIPVisionModelTaskPool):
 
     # hooks and handles for saving layer-wise routing weights
     _layer_wise_routing_weights_save_hooks: Dict[Any, LayerWiseRoutingWeightSaver] = {}
     _layer_wise_routing_weights_save_hook_handles: Dict[Any, RemovableHandle] = {}
 
-    _config_mapping = CLIPVisionModelTaskPool._config_mapping | {
-        "_layer_wise_routing_weights_save_path": "layer_wise_routing_weights_save_path",
-    }
-
     def __init__(
         self,
+        linear_module_names: Union[List[str], str],
         layer_wise_routing_weights_save_path: Optional[str],
         layer_wise_routing_weights_max_num: Optional[int] = None,
         **kwargs,
     ):
+        """
+        Initialize the SMILECLIPVisionModelTaskPool.
+
+        Args:
+            linear_module_names (Union[List[str], str]): The names of the linear modules to save the layer-wise routing weights for.
+            layer_wise_routing_weights_save_path (Optional[str]): The path to save the layer-wise routing weights.
+            layer_wise_routing_weights_max_num (Optional[int]): The maximum number of layer-wise routing weights to save.
+        """
+        # linear module names
+        assert linear_module_names is not None, "linear_module_names must be provided"
+        self.linear_module_names = (
+            [linear_module_names]
+            if isinstance(linear_module_names, str)
+            else list(linear_module_names)
+        )
         # save path for layer-wise routing weights
         self._layer_wise_routing_weights_save_path = (
             layer_wise_routing_weights_save_path
@@ -58,35 +67,36 @@ class SparseWEMoECLIPVisionModelTaskPool(CLIPVisionModelTaskPool):
             if isinstance(vision_model, CLIPVisionModel):
                 vision_model = vision_model.vision_model
                 # assign forward hooks for each layer
-            shared_gate = None
+
             for i, layer in enumerate(vision_model.encoder.layers):
-                mlp = layer.mlp
-                assert isinstance(
-                    mlp,
-                    (SparseWeightEnsemblingMoE, SparseWeightEnsemblingMoE_ShardGate),
-                ), f"MLP is expected to be a SparseWeightEnsemblingMoE or SparseWeightEnsemblingMoE_ShardGate, but got {type(mlp)}"
-                # layer-wise routing weights
-                hook = LayerWiseRoutingWeightSaver(
-                    self.layer_wise_routing_weights_save_path
-                    / task_name
-                    / f"layer_{i}.pt",
-                    max_num=self.layer_wise_routing_weights_max_num,
-                )
-                self._layer_wise_routing_weights_save_hooks[i] = hook
-                if isinstance(mlp, SparseWeightEnsemblingMoE_ShardGate):
-                    # if use shared gate, copy the gate to all layers to avoid multiple hooks
-                    if shared_gate is None:
-                        shared_gate = mlp.gate
-                    mlp.gate = deepcopy(shared_gate)
-                self._layer_wise_routing_weights_save_hook_handles[i] = (
-                    mlp.gate.register_forward_hook(hook)
-                )
+                for linear_module_name in self.linear_module_names:
+                    linear_module = layer.get_submodule(linear_module_name)
+                    assert isinstance(
+                        linear_module,
+                        (SmileMoELinear),
+                    ), f"Linear module is expected to be a SmileMoELinear, but got {type(linear_module)}"
+                    # layer-wise routing weights
+                    hook = LayerWiseRoutingWeightSaver(
+                        self.layer_wise_routing_weights_save_path
+                        / task_name
+                        / f"layer_{i}_{linear_module_name}.pt",
+                        max_num=self.layer_wise_routing_weights_max_num,
+                    )
+                    self._layer_wise_routing_weights_save_hooks[
+                        (i, linear_module_name)
+                    ] = hook
+                    self._layer_wise_routing_weights_save_hook_handles[
+                        (i, linear_module_name)
+                    ] = linear_module.gate.register_forward_hook(hook)
 
     def on_task_evaluation_end(self):
         super().on_task_evaluation_end()
         if self.layer_wise_routing_weights_save_path is not None:
             # remove hooks for saving layer-wise routing weights
-            for i, handle in self._layer_wise_routing_weights_save_hook_handles.items():
-                self._layer_wise_routing_weights_save_hooks[i].save_routing_weights()
-                self._layer_wise_routing_weights_save_hook_handles.pop(i)
+            for (
+                key,
+                handle,
+            ) in self._layer_wise_routing_weights_save_hook_handles.items():
+                self._layer_wise_routing_weights_save_hooks[key].save_routing_weights()
+                self._layer_wise_routing_weights_save_hook_handles.pop(key)
                 handle.remove()

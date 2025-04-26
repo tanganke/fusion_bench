@@ -20,7 +20,7 @@ from fusion_bench.method.ties_merging.ties_merging_utils import (
     ties_merging,
     vector_to_state_dict,
 )
-from fusion_bench.mixins import LightningFabricMixin
+from fusion_bench.mixins import LightningFabricMixin, SimpleProfilerMixin
 from fusion_bench.taskpool import CLIPVisionModelTaskPool
 from fusion_bench.utils.json import load_from_json, save_to_json
 from fusion_bench.utils.state_dict_arithmetic import state_dict_add, state_dict_sub
@@ -29,7 +29,11 @@ if TYPE_CHECKING:
     from torch.utils.tensorboard import SummaryWriter
 
 
-class ContinualTiesMergingForCLIP(BaseAlgorithm, LightningFabricMixin):
+class ContinualTiesMergingForCLIP(
+    BaseAlgorithm,
+    LightningFabricMixin,
+    SimpleProfilerMixin,
+):
     def __init__(
         self,
         scaling_factor: float,
@@ -84,68 +88,83 @@ class ContinualTiesMergingForCLIP(BaseAlgorithm, LightningFabricMixin):
             )
 
         # get the average model
-        pretrained_model = modelpool.load_pretrained_model()
+        with self.profile("loading model"):
+            pretrained_model = modelpool.load_pretrained_model()
         merged_model = deepcopy(pretrained_model)
 
         for model_idx, model_name in tqdm(
             enumerate(model_names), desc="Processing models"
         ):
-            task_model = modelpool.load_model(model_name)
+            with self.profile("loading model"):
+                task_model = modelpool.load_model(model_name)
 
-            task_vector = state_dict_sub(
-                task_model.state_dict(),
-                pretrained_model.state_dict(),
-            )
-            if model_idx == 0:
-                # if is the first model, the merged task vector is equal to the task vector
-                ties_merging_state_dict = task_vector
-            else:
-                # if is not the first model, we need to merge the task vector with the previous merged task vector
-                merged_tv = state_dict_sub(
-                    merged_model.state_dict(),
+            with self.profile("merging model"):
+                task_vector = state_dict_sub(
+                    task_model.state_dict(),
                     pretrained_model.state_dict(),
                 )
-                tv_flat_checks = torch.vstack(
-                    [
-                        state_dict_to_vector(merged_tv, remove_keys=self.remove_keys),
-                        state_dict_to_vector(task_vector, remove_keys=self.remove_keys),
-                    ]
-                )
-                # perform the TIES merging
-                ties_merging_tv = ties_merging(
-                    tv_flat_checks,
-                    reset_thresh=self.threshold,
-                    merge_func=self.merge_func,
-                )
-                # convert the merged task vector back to a state dict
-                ties_merging_state_dict = vector_to_state_dict(
-                    ties_merging_tv,
-                    merged_model.state_dict(),
-                    remove_keys=self.remove_keys,
-                )
+                if model_idx == 0:
+                    # if is the first model, the merged task vector is equal to the task vector
+                    ties_merging_state_dict = task_vector
+                else:
+                    # if is not the first model, we need to merge the task vector with the previous merged task vector
+                    merged_tv = state_dict_sub(
+                        merged_model.state_dict(),
+                        pretrained_model.state_dict(),
+                    )
+                    tv_flat_checks = torch.vstack(
+                        [
+                            state_dict_to_vector(
+                                merged_tv, remove_keys=self.remove_keys
+                            ),
+                            state_dict_to_vector(
+                                task_vector, remove_keys=self.remove_keys
+                            ),
+                        ]
+                    )
+                    # perform the TIES merging
+                    ties_merging_tv = ties_merging(
+                        tv_flat_checks,
+                        reset_thresh=self.threshold,
+                        merge_func=self.merge_func,
+                    )
+                    # convert the merged task vector back to a state dict
+                    ties_merging_state_dict = vector_to_state_dict(
+                        ties_merging_tv,
+                        merged_model.state_dict(),
+                        remove_keys=self.remove_keys,
+                    )
 
-            for param_name, param in task_model.named_parameters():
-                if not param.requires_grad:
-                    continue
+                for param_name, param in task_model.named_parameters():
+                    if not param.requires_grad:
+                        continue
 
-                merged_param = merged_model.get_parameter(param_name)
-                new_param = (
-                    merged_param
-                    + self.scaling_factor * ties_merging_state_dict[param_name]
-                )
-                merged_model.get_parameter(param_name).data = new_param
+                    merged_param = merged_model.get_parameter(param_name)
+                    new_param = (
+                        merged_param
+                        + self.scaling_factor * ties_merging_state_dict[param_name]
+                    )
+                    merged_model.get_parameter(param_name).data = new_param
 
             if self.save_on_every_step:
-                self.save_merged_model(merged_model, model_idx)
+                with self.profile("saving model"):
+                    self.save_merged_model(merged_model, model_idx)
 
             if self.evaluate_on_every_step:
-                self.taskpool._is_setup = False
-                self.taskpool._test_datasets = DictConfig(
-                    {n: self._test_datasets[n] for n in model_names[: model_idx + 1]}
-                )
-                report = self.taskpool.evaluate(deepcopy(merged_model))
-                save_to_json(report, Path(self.log_dir) / f"report_{model_idx}.json")
+                with self.profile("evaluating model"):
+                    self.taskpool._is_setup = False
+                    self.taskpool._test_datasets = DictConfig(
+                        {
+                            n: self._test_datasets[n]
+                            for n in model_names[: model_idx + 1]
+                        }
+                    )
+                    report = self.taskpool.evaluate(deepcopy(merged_model))
+                    save_to_json(
+                        report, Path(self.log_dir) / f"report_{model_idx}.json"
+                    )
 
+        self.print_profile_summary()
         return merged_model
 
     def save_merged_model(self, merged_model: CLIPVisionModel, step: int):
