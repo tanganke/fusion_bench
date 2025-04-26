@@ -55,10 +55,7 @@ class CLIPClassificationMixin(LightningFabricMixin):
     # a dict of zeroshot weights for each task, each key is the task name
     zeroshot_weights_cache_dir: str = "outputs/cache/clip_zeroshot_weights"
     zeroshot_weights: Dict[str, torch.Tensor] = {}
-
-    def __init__(self, algorithm_config: DictConfig, **kwargs) -> None:
-        super().__init__(algorithm_config, **kwargs)
-        self.whether_setup_zero_shot_classification_head = False # We want to only do this once
+    whether_setup_zero_shot_classification_head = False
 
     @property
     def clip_processor(self):
@@ -253,4 +250,3 @@ class CLIPClassificationMixin(LightningFabricMixin):
         if normalize:
             image_embeds = image_embeds / image_embeds.norm(p=2, dim=-1, keepdim=True)
         return image_embeds
-

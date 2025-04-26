@@ -139,9 +139,19 @@ class GPT2TextClassificationTaskPool(BaseTaskPool, LightningFabricMixin):
         return dataloader
 
     @override
-    def evaluate(self, model: GPT2Model, name=None):
+    def evaluate(self, model: GPT2Model, name: str = None):
+        """Evaluate the model on the test datasets.
+
+        Args:
+            model (GPT2Model): The model to evaluate.
+            name (str, optional): The name of the model. Defaults to None. This is used to identify the model in the report.
+
+        Returns:
+            dict: A dictionary containing the evaluation results for each task.
+        """
         report = {}
-        report["name"] = name
+        if name is not None:
+            report["name"] = name
         for task_name in (pbar := tqdm(self._test_datasets, desc="Evaluating tasks")):
             pbar.set_description(f"Evaluating task {task_name}")
             dataloader = self.get_test_dataloader(task_name)

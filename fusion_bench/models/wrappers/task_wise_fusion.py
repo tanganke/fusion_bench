@@ -210,7 +210,7 @@ class TaskWiseMergedModel(nn.Module, Generic[TorchModelType]):
         else:
             merge_weight = self.merge_weight
 
-        state_dict = self.pretrained_model.state_dict(keep_vars=True) # copy
+        state_dict = self.pretrained_model.state_dict(keep_vars=True)
         for weight, task_vector in zip(merge_weight, self.task_vectors):
             for name, param in task_vector.named_parameters():
                 if task_vector_mask is None:
