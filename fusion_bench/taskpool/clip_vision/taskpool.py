@@ -288,8 +288,6 @@ class CLIPVisionModelTaskPool(
         if not self._is_setup:
             self.setup()
 
-        modeltype = kwargs.get("modeltype", None)
-        extra_module = None
         report = {}
         # CLIPVisionModel works the same with CLIPVisonTransformer, so we can use it directly
         if hasattr(model, "is_surgery_model") and model.is_surgery_model:
