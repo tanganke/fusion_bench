@@ -1,4 +1,4 @@
-# this option can be "clip_task_wise_adamerging"
+# this option can be one of "clip_task_wise_adamerging" or "clip_layer_wise_adamerging"
 name: clip_layer_wise_adamerging
 # this weights can be a list of float, or a string that points to a *.np, *.pt file containing the weights
 # if weights is specified, skip the test-time adaptation training
