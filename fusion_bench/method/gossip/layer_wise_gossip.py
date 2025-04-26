@@ -1,23 +1,25 @@
+import copy
+import gc
 import logging
 import os
 from abc import abstractmethod
-from typing import Any, List, Mapping, Union, cast  # noqa: F401
+from typing import Any, Callable, List, Mapping, Union, cast  # noqa: F401
 
-import copy
 import torch
 from lightning.fabric.utilities.rank_zero import rank_zero_only
 from omegaconf import DictConfig
 from torch import Tensor
 from torch.utils.data import DataLoader
 from tqdm.autonotebook import tqdm
-import gc
-from typing import Callable
 
-from fusion_bench.modelpool import GPT2ForSequenceClassificationPool, CLIPVisionModelPool
 from fusion_bench.compat.method import ModelFusionAlgorithm
 from fusion_bench.compat.modelpool import ModelPool
 from fusion_bench.mixins.lightning_fabric import LightningFabricMixin
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
+from fusion_bench.modelpool import (
+    CLIPVisionModelPool,
+    GPT2ForSequenceClassificationPool,
+)
 from fusion_bench.models.wrappers.layer_wise_fusion import (
     LayerWiseMergedModel,
     get_layer_wise_weights,
@@ -28,17 +30,22 @@ from .entropy_loss import entropy_loss
 
 log = logging.getLogger(__name__)
 
+
 # obtain the current GPU memory usage
 def get_memory_usage(desc):
     allocated = torch.cuda.memory_allocated() / 1024**2  # 转换为 MB
     cached = torch.cuda.memory_reserved() / 1024**2  # 转换为 MB
-    return f"{desc}\nAllocated Memory: {allocated:.2f} MB\nCached Memory: {cached:.2f} MB"
+    return (
+        f"{desc}\nAllocated Memory: {allocated:.2f} MB\nCached Memory: {cached:.2f} MB"
+    )
+
 
 class ModelScheduler:
     """
     Manage the storage of models, schedule the order in which models are loaded to GPU
     transfer data between the CPU and GPu
     """
+
     def __init__(
         self,
         config: DictConfig,
@@ -50,29 +57,37 @@ class ModelScheduler:
         ]
         self.num_finetuned_models = len(self.finetuned_models)
         self.new_finetuned_models = copy.deepcopy(self.finetuned_models)
-        self.finetuned_models_name = [
-            name for name in modelpool.model_names
-        ]
+        self.finetuned_models_name = [name for name in modelpool.model_names]
 
         self.config = config
 
-    @torch.no_grad()# not sure whether to use this
+    @torch.no_grad()  # not sure whether to use this
     def __call__(self, model_id):
         """
         return models and relevant data in each step
         """
         pretrained_model = copy.deepcopy(self.pretrained_model)
-        if self.config.topo == 'ring':
+        if self.config.topo == "ring":
             finetuned_models = [
-                copy.deepcopy(self.finetuned_models[(model_id+1)%self.num_finetuned_models]),
+                copy.deepcopy(
+                    self.finetuned_models[(model_id + 1) % self.num_finetuned_models]
+                ),
                 copy.deepcopy(self.finetuned_models[model_id]),
-                copy.deepcopy(self.finetuned_models[(model_id-1)%self.num_finetuned_models])
+                copy.deepcopy(
+                    self.finetuned_models[(model_id - 1) % self.num_finetuned_models]
+                ),
             ]
-        elif 'rotate' in self.config.topo:
-            number = self.config.topo.split('_')[1]
+        elif "rotate" in self.config.topo:
+            number = self.config.topo.split("_")[1]
             finetuned_models = [copy.deepcopy(self.finetuned_models[model_id])]
             for i in range(0, int(number)):
-                finetuned_models.append(copy.deepcopy(self.finetuned_models[(model_id+i+1)%self.num_finetuned_models]))
+                finetuned_models.append(
+                    copy.deepcopy(
+                        self.finetuned_models[
+                            (model_id + i + 1) % self.num_finetuned_models
+                        ]
+                    )
+                )
         # initialize layer-wise weights using the provided configuration `init_values` or load from file if `weights` is provided
         if self.config.weights is None:
             layer_wise_weight = get_layer_wise_weights(
@@ -90,7 +105,7 @@ class ModelScheduler:
                 layer_wise_weight = load_tensor_from_file(self.config.weights)
             else:
                 raise ValueError(f"Unsupported weights format: {self.config.weights}")
-            
+
         module = LayerWiseMergedModel(
             layer_wise_weight=layer_wise_weight,
             pretrained_model=pretrained_model,
@@ -107,35 +122,39 @@ class ModelScheduler:
         store new finetuned model after every turn of adamerging
         """
         self.new_finetuned_models[model_id].load_state_dict(new_finetuned_model_dict)
-    
+
     def update_models(self):
         self.finetuned_models = copy.deepcopy(self.new_finetuned_models)
 
-    def get_final_models(self, idx = None):
+    def get_final_models(self, idx=None):
         # need a check
         if idx is not None:
             return copy.deepcopy(self.finetuned_models[idx])
 
-        final_models = [{'name': name, 'model': model} for name, model in zip(self.finetuned_models_name, self.finetuned_models)]
+        final_models = [
+            {"name": name, "model": model}
+            for name, model in zip(self.finetuned_models_name, self.finetuned_models)
+        ]
         num_finetuned_models = len(self.finetuned_models)
-    
+
         average_model = copy.deepcopy(self.pretrained_model)
         state_dict = average_model.state_dict(keep_vars=True)
         for name, _ in self.finetuned_models[0].named_parameters():
             state_dict[name].data.zero_()
         for model in self.finetuned_models:
             for name, param in model.named_parameters():
-                state_dict[name] = state_dict[name] + 1/num_finetuned_models * param
-            
+                state_dict[name] = state_dict[name] + 1 / num_finetuned_models * param
+
         average_model.load_state_dict(state_dict)
-        final_models += [{'name': 'average model', 'model': average_model}]
-        
+        final_models += [{"name": "average model", "model": average_model}]
+
         return final_models
-    
+
     def move_to(self, device):
         self.pretrained_model.to(device=device)
         for model in self.finetuned_models:
             model.to(device=device)
+
 
 class LayerWiseGossipAlgorithm(
     ModelFusionAlgorithm,
@@ -158,7 +177,6 @@ class LayerWiseGossipAlgorithm(
         """
         super().__init__(algorithm_config)
         self._program = None
-
 
     @rank_zero_only
     def save_merging_weights(self, file_path: str, merging_weights: torch.Tensor):
@@ -183,29 +201,35 @@ class LayerWiseGossipAlgorithm(
             torch.save(merging_weights.detach().cpu(), save_path)
 
     def free_gpu_memory(self, module: LayerWiseMergedModel):
-        module.pretrained_model.to('cpu')
+        module.pretrained_model.to("cpu")
         for model in module.task_vectors:
-            model.to('cpu')
+            model.to("cpu")
         del module
         gc.collect()
         torch.cuda.empty_cache()
-        log.info(get_memory_usage('after freeing memory, the memory usage of GPU is:'))
-    
+        log.info(get_memory_usage("after freeing memory, the memory usage of GPU is:"))
+
     def update_datasets(self, datasets):
         """
         for evary epoch of local adamerging, we only use the data set corresponding to the model involved in the fusion
         """
         num_datasets = len(datasets)
         datasets_copy = datasets.copy()
-        if self.config.topo == 'ring':
+        if self.config.topo == "ring":
             for i in range(num_datasets):
-                datasets[i] = datasets_copy[i].union(datasets_copy[(i+1)%num_datasets]).union(datasets_copy[(i-1)%num_datasets])
-        elif 'rotate' in self.config.topo:
-            number = self.config.topo.split('_')[1]
+                datasets[i] = (
+                    datasets_copy[i]
+                    .union(datasets_copy[(i + 1) % num_datasets])
+                    .union(datasets_copy[(i - 1) % num_datasets])
+                )
+        elif "rotate" in self.config.topo:
+            number = self.config.topo.split("_")[1]
             for i in range(num_datasets):
                 datasets[i] = datasets_copy[i]
                 for j in range(0, int(number)):
-                    datasets[i] = datasets[i].union(datasets_copy[(i+j+1)%num_datasets])
+                    datasets[i] = datasets[i].union(
+                        datasets_copy[(i + j + 1) % num_datasets]
+                    )
         return datasets
 
     def run(self, modelpool: ModelPool):
@@ -227,7 +251,9 @@ class LayerWiseGossipAlgorithm(
         datasets = [{dataset} for dataset in modelpool.model_names]
 
         with self.profile("construct the wrapped model"):
-            model_scheduler = ModelScheduler(modelpool=self.modelpool, config=self.config)
+            model_scheduler = ModelScheduler(
+                modelpool=self.modelpool, config=self.config
+            )
 
         if self.config.weights is not None:
             # skip the test-time adaptation
@@ -236,20 +262,22 @@ class LayerWiseGossipAlgorithm(
             for step_idx in tqdm(
                 range(self.config.gossip_max_steps),
                 "Gossip merging",
-                dynamic_ncols=True
+                dynamic_ncols=True,
             ):
                 datasets = self.update_datasets(datasets)
-                log.info(f'Gossip merging step:, {step_idx}')
+                log.info(f"Gossip merging step:, {step_idx}")
                 for model_id in tqdm(
                     range(self.num_finetuned_models),
                     "local admerging",
-                    dynamic_ncols=True
+                    dynamic_ncols=True,
                 ):
                     if self.config.gossip_skip_adamerging == True:
                         # skip adamerging, only merge
                         with self.profile("construct the local wrapped model"):
                             module = model_scheduler(model_id)
-                        log.info(f'skip adamerging, only merge ({modelpool.model_names[model_id]})')
+                        log.info(
+                            f"skip adamerging, only merge ({modelpool.model_names[model_id]})"
+                        )
                         model_scheduler.store_model(module.merge_weights(), model_id)
                         self.free_gpu_memory(module)
                     else:
@@ -257,26 +285,45 @@ class LayerWiseGossipAlgorithm(
                             module = model_scheduler(model_id)
 
                         if self.config.improve_dataset == True:
-                            log.info(f'improved datasets, the datasets used in this local merging is {datasets[model_id]}')
+                            log.info(
+                                f"improved datasets, the datasets used in this local merging is {datasets[model_id]}"
+                            )
                         else:
-                            log.info(f'unimproved datasets, the datasets used in this local merging is {modelpool.model_names}')
+                            log.info(
+                                f"unimproved datasets, the datasets used in this local merging is {modelpool.model_names}"
+                            )
                         with self.profile("test-time adaptation"):
-                            module = self.test_time_adaptation(module, datasets[model_id])
+                            module = self.test_time_adaptation(
+                                module, datasets[model_id]
+                            )
                         model_scheduler.store_model(module.merge_weights(), model_id)
-                        log.info(get_memory_usage(f'after local merging ({modelpool.model_names[model_id]}), the memory usage of GPU is:'))
-                        self.free_gpu_memory(module) # simulate distributed GPU memory usage as much as possible
+                        log.info(
+                            get_memory_usage(
+                                f"after local merging ({modelpool.model_names[model_id]}), the memory usage of GPU is:"
+                            )
+                        )
+                        self.free_gpu_memory(
+                            module
+                        )  # simulate distributed GPU memory usage as much as possible
 
                 model_scheduler.update_models()
 
-                if 'rotate' in self.config.topo:
-                    number = self.config.topo.split('_')[1]
+                if "rotate" in self.config.topo:
+                    number = self.config.topo.split("_")[1]
                     if int(number) == 1 and step_idx >= 20:
-                        self._program.evaluate_merged_model(self._program.taskpool,  model_scheduler.get_final_models())
-                        model_scheduler.move_to('cpu')
+                        self._program.evaluate_merged_model(
+                            self._program.taskpool, model_scheduler.get_final_models()
+                        )
+                        model_scheduler.move_to("cpu")
                 else:
-                    if (self.config.accuracy_test_interval != 0 and (step_idx+1) % self.config.accuracy_test_interval == 0):
-                        self._program.evaluate_merged_model(self._program.taskpool,  model_scheduler.get_final_models())
-                        model_scheduler.move_to('cpu')
+                    if (
+                        self.config.accuracy_test_interval != 0
+                        and (step_idx + 1) % self.config.accuracy_test_interval == 0
+                    ):
+                        self._program.evaluate_merged_model(
+                            self._program.taskpool, model_scheduler.get_final_models()
+                        )
+                        model_scheduler.move_to("cpu")
         return model_scheduler.get_final_models()
 
     def on_test_time_adaptation_start(self):
@@ -332,7 +379,11 @@ class LayerWiseGossipAlgorithm(
             optimizer = torch.optim.Adam([module.merge_weight], lr=self.config.lr)
             print(f"{optimizer=}")
             module, optimizer = self.fabric.setup(module, optimizer)
-            log.info(get_memory_usage('after loading models and optimizer, the memory usage of GPU is:'))
+            log.info(
+                get_memory_usage(
+                    "after loading models and optimizer, the memory usage of GPU is:"
+                )
+            )
         else:
             raise ValueError(f"Unsupported optimizer: {self.config.optimizer}")
 

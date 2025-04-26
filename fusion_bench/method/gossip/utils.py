@@ -1,9 +1,9 @@
-import torch
-
 import copy
 from collections import OrderedDict
 
+import torch
 from torch import nn
+
 
 def get_memory_usage(desc):
     """

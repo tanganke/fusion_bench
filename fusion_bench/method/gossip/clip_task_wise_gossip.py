@@ -116,7 +116,7 @@ class CLIPTaskWiseGossipAlgorithm(TaskWiseGossipAlgorithm):
         classification head for each task.
         """
         if self._clip_processor is not None and self.zeroshot_weights is not None:
-            return # this can be reused in Gossip
+            return  # this can be reused in Gossip
 
         clip_model_config = self.modelpool.get_model_config("_pretrained_")
         pretrained_path = (

@@ -4,11 +4,12 @@ The efficiency of the algorithm is not guaranteed, and it may not work as expect
 """
 
 import functools
+import gc
 import logging
 import os
-import gc
 from abc import abstractmethod
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Dict, List, Mapping, Optional, Union, cast  # noqa: F401
 
 import torch
@@ -34,13 +35,12 @@ from fusion_bench.utils.data import InfiniteDataLoader, load_tensor_from_file
 from fusion_bench.utils.instantiate import instantiate
 
 from .entropy_loss import entropy_loss
+from .layer_wise_gossip import ModelScheduler
 from .min_norm_solvers import MinNormSolver
 from .utils import get_memory_usage
-from .layer_wise_gossip import ModelScheduler
-
-from types import SimpleNamespace
 
 log = logging.getLogger(__name__)
+
 
 class FlanT5LayerWiseGossipAlgorithm(
     BaseAlgorithm,
@@ -81,11 +81,15 @@ class FlanT5LayerWiseGossipAlgorithm(
         self.configs.tie_weights = tie_weights
         self.configs.strict = strict
         if isinstance(self.configs.accuracy_test_interval, ListConfig):
-                self.configs.accuracy_test_interval = list(self.configs.accuracy_test_interval)
+            self.configs.accuracy_test_interval = list(
+                self.configs.accuracy_test_interval
+            )
         elif isinstance(self.configs.accuracy_test_interval, int):
-                pass
+            pass
         else:
-            log.warning(f'Unexpected type of accuracy_test_interval: {type(self.configs.accuracy_test_interval)}')
+            log.warning(
+                f"Unexpected type of accuracy_test_interval: {type(self.configs.accuracy_test_interval)}"
+            )
         super().__init__(**kwargs)
 
     @rank_zero_only
@@ -109,14 +113,14 @@ class FlanT5LayerWiseGossipAlgorithm(
             torch.save(merging_weights.detach().cpu(), save_path)
 
     def free_gpu_memory(self, module: LayerWiseMergedModel):
-        module.pretrained_model.to('cpu')
+        module.pretrained_model.to("cpu")
         for model in module.task_vectors:
-            model.to('cpu')
+            model.to("cpu")
         del module
         gc.collect()
         torch.cuda.empty_cache()
-        log.info(get_memory_usage('after freeing memory, the memory usage of GPU is:'))
-    
+        log.info(get_memory_usage("after freeing memory, the memory usage of GPU is:"))
+
     def update_datasets(self, datasets):
         """
         for evary epoch of local adamerging, we only use the data set corresponding to the model involved in the fusion
@@ -124,7 +128,11 @@ class FlanT5LayerWiseGossipAlgorithm(
         num_datasets = len(datasets)
         datasets_copy = datasets.copy()
         for i in range(num_datasets):
-            datasets[i] = datasets_copy[i].union(datasets_copy[(i+1)%num_datasets]).union(datasets_copy[(i-1)%num_datasets])
+            datasets[i] = (
+                datasets_copy[i]
+                .union(datasets_copy[(i + 1) % num_datasets])
+                .union(datasets_copy[(i - 1) % num_datasets])
+            )
         return datasets
 
     def run(self, modelpool: Seq2SeqLMPool, **kwargs):
@@ -144,7 +152,6 @@ class FlanT5LayerWiseGossipAlgorithm(
         self.num_finetuned_models = len(modelpool.model_names)
         datasets = [{dataset} for dataset in modelpool.model_names]
 
-
         with self.profile("construct the wrapped model"):
             model_scheduler = ModelScheduler(self.configs, self.modelpool)
 
@@ -155,20 +162,22 @@ class FlanT5LayerWiseGossipAlgorithm(
             for step_idx in tqdm(
                 range(self.configs.gossip_max_steps),
                 "Gossip merging",
-                dynamic_ncols=True
+                dynamic_ncols=True,
             ):
                 datasets = self.update_datasets(datasets)
-                log.info(f'Gossip merging step:, {step_idx}')
+                log.info(f"Gossip merging step:, {step_idx}")
                 for model_id in tqdm(
                     range(self.num_finetuned_models),
                     "local admerging",
-                    dynamic_ncols=True
+                    dynamic_ncols=True,
                 ):
                     if self.configs.gossip_skip_adamerging == True:
                         # skip adamerging, only merge
                         with self.profile("construct the local wrapped model"):
                             module = model_scheduler(model_id)
-                        log.info(f'skip adamerging, only merge ({modelpool.model_names[model_id]})')
+                        log.info(
+                            f"skip adamerging, only merge ({modelpool.model_names[model_id]})"
+                        )
                         model_scheduler.store_model(module.merge_weights(), model_id)
                         self.free_gpu_memory(module)
                     else:
@@ -176,30 +185,47 @@ class FlanT5LayerWiseGossipAlgorithm(
                             module = model_scheduler(model_id)
 
                         if self.configs.improve_dataset == True:
-                            log.info(f'improved datasets, the datasets used in this local merging is {datasets[model_id]}')
+                            log.info(
+                                f"improved datasets, the datasets used in this local merging is {datasets[model_id]}"
+                            )
                         else:
-                            log.info(f'unimproved datasets, the datasets used in this local merging is {modelpool.model_names}')
+                            log.info(
+                                f"unimproved datasets, the datasets used in this local merging is {modelpool.model_names}"
+                            )
                         with self.profile("test-time adaptation"):
-                            module = self.test_time_adaptation(module, datasets[model_id])
+                            module = self.test_time_adaptation(
+                                module, datasets[model_id]
+                            )
                         # if self.configs.get("save_merging_weights", False):
                         #     self.save_merging_weights(
                         #         self.configs.save_merging_weights, module.merge_weight
                         #     )
                         model_scheduler.store_model(module.merge_weights(), model_id)
-                        log.info(get_memory_usage(f'after local merging ({modelpool.model_names[model_id]}), the memory usage of GPU is:'))
-                        self.free_gpu_memory(module) # simulate distributed GPU memory usage as much as possible
+                        log.info(
+                            get_memory_usage(
+                                f"after local merging ({modelpool.model_names[model_id]}), the memory usage of GPU is:"
+                            )
+                        )
+                        self.free_gpu_memory(
+                            module
+                        )  # simulate distributed GPU memory usage as much as possible
 
                 model_scheduler.update_models()
-                do_evaluation = False # whether to do evaluation after each Gossip step
+                do_evaluation = False  # whether to do evaluation after each Gossip step
                 if isinstance(self.configs.accuracy_test_interval, list):
-                    if (step_idx+1) in self.configs.accuracy_test_interval:
+                    if (step_idx + 1) in self.configs.accuracy_test_interval:
                         do_evaluation = True
                 elif isinstance(self.configs.accuracy_test_interval, int):
-                    if (self.configs.accuracy_test_interval != 0 and (step_idx+1) % self.configs.accuracy_test_interval == 0):
+                    if (
+                        self.configs.accuracy_test_interval != 0
+                        and (step_idx + 1) % self.configs.accuracy_test_interval == 0
+                    ):
                         do_evaluation = True
                 if do_evaluation:
-                    self._program.evaluate_merged_model(self._program.taskpool,  model_scheduler.get_final_models())
-                    model_scheduler.move_to('cpu')
+                    self._program.evaluate_merged_model(
+                        self._program.taskpool, model_scheduler.get_final_models()
+                    )
+                    model_scheduler.move_to("cpu")
 
         return model_scheduler.get_final_models()
 

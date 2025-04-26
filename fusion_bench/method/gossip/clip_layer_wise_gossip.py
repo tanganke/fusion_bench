@@ -13,8 +13,9 @@ fusion_bench \
 ```
 """
 
-import logging
 import functools
+import logging
+
 from fusion_bench.mixins import CLIPClassificationMixin
 
 from .layer_wise_gossip import LayerWiseGossipAlgorithm
