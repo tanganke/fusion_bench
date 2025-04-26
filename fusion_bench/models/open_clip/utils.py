@@ -212,7 +212,7 @@ def vector_to_state_dict(vector, state_dict, remove_keys=[]):
             del reference_dict[key]
     sorted_reference_dict = OrderedDict(sorted(reference_dict.items()))
 
-    # create a shared state dict using the refence dict
+    # create a shared state dict using the reference dict
     torch.nn.utils.vector_to_parameters(vector, sorted_reference_dict.values())
 
     # add back the encoder and decoder embedding weights.
