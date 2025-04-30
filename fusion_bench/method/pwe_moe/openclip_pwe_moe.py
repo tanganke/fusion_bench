@@ -22,7 +22,7 @@ from fusion_bench.modelpool import OpenCLIPVisionModelPool
 from fusion_bench.models.open_clip import ClassificationHead, ImageEncoder
 from fusion_bench.utils import print_parameters, timeit_context
 from fusion_bench.utils.data import InfiniteDataLoader
-
+import lightning.fabric
 from .module import ParetoWeightEnsemblingModule
 from .phn.solvers import EPOSolver
 from .utils import generate_simplex_grid
@@ -272,6 +272,9 @@ class PWEMoEAlgorithmForOpenCLIP(
                 drop_last=True,
                 **self._dataloader_kwargs,
             )
+            train_loaders[dataset_name] = self.fabric.setup_dataloaders(
+                train_loaders[dataset_name]
+            )
             train_loaders[dataset_name] = InfiniteDataLoader(
                 train_loaders[dataset_name]
             )
@@ -296,6 +299,10 @@ class PWEMoEAlgorithmForOpenCLIP(
                 shuffle=False,
                 **self._dataloader_kwargs,
             )
+            test_loaders[dataset_name] = self.fabric.setup_dataloaders(
+                test_loaders[dataset_name]
+            )
+
         self.test_datasets = test_datasets
         self.test_loaders = test_loaders
 
@@ -359,7 +366,7 @@ class PWEMoEAlgorithmForOpenCLIP(
 
             self.fabric.log("loss", loss.item(), step=step_idx)
 
-            if step_idx % self.save_interval == 0:
+            if step_idx % self.save_interval == 0 or step_idx == self.num_steps:
                 ckpt_dir = Path(self.log_dir) / "checkpoints"
                 ckpt_dir.mkdir(exist_ok=True, parents=True)
                 self.fabric.save(
@@ -377,7 +384,8 @@ class PWEMoEAlgorithmForOpenCLIP(
             t: h.to(self.fabric.device) for t, h in self.classification_heads.items()
         }
 
-        model = self.fabric.setup_module(model)
+        if not lightning.fabric.is_wrapped(model):
+            model = self.fabric.setup_module(model)
         model.eval()
 
         if self.num_evaluation_samples == "equal_weight":
@@ -436,7 +444,7 @@ class PWEMoEAlgorithmForOpenCLIP(
                 results["average"].append(np.mean(accs))
 
             (df := pd.DataFrame(results)).to_csv(
-                self.log_dir / "result.csv", index=False
+                Path(self.log_dir) / "result.csv", index=False
             )
             log.info(df)
 
