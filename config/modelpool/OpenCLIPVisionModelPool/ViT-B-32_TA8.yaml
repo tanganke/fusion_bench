@@ -2,12 +2,9 @@ defaults:
   - /dataset/image_classification/train@train_datasets: the_eight_tasks
   - /dataset/image_classification/test@test_datasets: the_eight_tasks
   - _self_
-
 _target_: fusion_bench.modelpool.OpenCLIPVisionModelPool
 _recursive_: false
-
 model_dir: ./.cache/task_vectors_checkpoints/
-
 models:
   _pretrained_: ${..model_dir}/ViT-B-32/zeroshot.pt
   sun397: ${..model_dir}/ViT-B-32/SUN397/finetuned.pt
@@ -18,7 +15,6 @@ models:
   gtsrb: ${..model_dir}/ViT-B-32/GTSRB/finetuned.pt
   mnist: ${..model_dir}/ViT-B-32/MNIST/finetuned.pt
   dtd: ${..model_dir}/ViT-B-32/DTD/finetuned.pt
-
 classification_heads:
   sun397: ${..model_dir}/ViT-B-32/head_SUN397.pt
   stanford-cars: ${..model_dir}/ViT-B-32/head_Cars.pt

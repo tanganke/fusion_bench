@@ -10,12 +10,10 @@ save_interval: 2000
 alpha: 1 # alpha for dirichlet, if alpha=1, then it is uniform
 # load model from this checkpoint
 checkpoint_path: null
-
 # evaluation grid
 eval_grid: true
 eval_grid_n: 8
 eval_grid_m: 2
-
 dataloader_kwargs:
   # per-device batch size
   batch_size: 16

@@ -1,10 +1,8 @@
 _target_: fusion_bench.method.dare.DareTiesMerging
-
 # === DARE parameters ===
 sparsity_ratio: 0.5
 only_on_linear_weights: false
 rescale: true
-
 # === Ties merging parameters ===
 # Scaling factor $\lambda$
 scaling_factor: 0.5

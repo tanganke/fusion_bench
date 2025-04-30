@@ -1,5 +1,4 @@
 _target_: fusion_bench.modelpool.CLIPVisionModelPool
-
 models:
   _pretrained_:
     _target_: fusion_bench.models.linearized.vision_model.load_fft_vision_model_hf
@@ -44,10 +43,8 @@ models:
     base_model_name: openai/clip-vit-base-patch16
     peft_name: tanganke/clip-vit-base-patch16_dtd_lora-16
     merge_and_unload: true
-
 processor:
   _target_: transformers.CLIPProcessor.from_pretrained
   pretrained_model_name_or_path: openai/clip-vit-base-patch16
-
 train_datasets: null
 test_datasets: null

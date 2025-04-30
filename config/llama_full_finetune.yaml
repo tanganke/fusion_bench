@@ -6,10 +6,8 @@ defaults:
   - modelpool: CausalLMPool/llama_alpaca_cleaned.yaml
   - taskpool: dummy
   - _self_
-
 _target_: fusion_bench.programs.FabricModelFusionProgram
 _recursive_: false
-
 fast_dev_run: false # Run a single batch of data to test the model or method
 # Run the script without actually running the experiment, use with `print_config=true`.
 # You can also use `--cfg` or `-c` to show the configuration instead of running.

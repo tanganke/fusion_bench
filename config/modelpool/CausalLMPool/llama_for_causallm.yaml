@@ -12,7 +12,6 @@ models:
   expert_2:
     _target_: transformers.LlamaForCausalLM.from_pretrained
     pretrained_model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
-
 model_kwargs:
   torch_dtype: float16
 tokenizer:
