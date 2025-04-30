@@ -1,5 +1,5 @@
 R"""
-This script is used to train a multi-task learning (MTL) model on the NYUv2 dataset. 
+This script is used to train a multi-task learning (MTL) model on the NYUv2 dataset.
 """
 
 import importlib

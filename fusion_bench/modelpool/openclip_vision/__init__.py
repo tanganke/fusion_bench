@@ -1,0 +1,1 @@
+from .modelpool import OpenCLIPVisionModelPool

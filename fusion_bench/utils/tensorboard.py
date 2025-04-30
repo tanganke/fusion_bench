@@ -1,5 +1,5 @@
 """
-functions deal with tensorboard logs.    
+functions deal with tensorboard logs.
 """
 
 from typing import Dict, Iterable, List
