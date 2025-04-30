@@ -11,14 +11,41 @@ from torch import nn
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.models.open_clip import ClassificationHead, ImageEncoder
 from fusion_bench.utils.expr import is_expr_match
+from fusion_bench.utils.packages import compare_versions, _get_package_version
 
 log = logging.getLogger(__name__)
 
 
 def _check_and_redirect_open_clip_modeling():
+    if compare_versions(_get_package_version("open-clip-torch").__str__(), "2.0.2") > 0:
+        log.warning(
+            "OpenCLIP version is greater than 2.0.2. This may cause issues with the modelpool."
+        )
+        import open_clip.model
+        import open_clip.transformer
+
+        if not hasattr(open_clip.model, "VisualTransformer"):
+            open_clip.model.VisualTransformer = open_clip.model.VisionTransformer
+        if not hasattr(open_clip.model, "Transformer"):
+            open_clip.model.Transformer = open_clip.transformer.Transformer
+        if not hasattr(open_clip.model, "ResidualAttentionBlock"):
+            open_clip.model.ResidualAttentionBlock = (
+                open_clip.transformer.ResidualAttentionBlock
+            )
+
     try:
+        import src
         import src.modeling
     except ImportError:
+        if "src" not in sys.modules:
+            # redirect the import of `src` to `fusion_bench.models.open_clip`
+            import fusion_bench.models.open_clip as open_clip
+
+            sys.modules["src"] = open_clip
+            log.warning(
+                "`src` is not imported."
+                "Redirecting the import to `fusion_bench.models.open_clip`"
+            )
         if "src.modeling" not in sys.modules:
             # redirect the import of `src.modeling` to `fusion_bench.models.open_clip.modeling`
             import fusion_bench.models.open_clip.modeling as open_clip_modeling
