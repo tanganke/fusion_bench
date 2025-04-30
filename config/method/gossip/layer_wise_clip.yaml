@@ -25,6 +25,6 @@ cache_dir: outputs
 # this is the parameter about gossip
 gossip_max_steps: 20
 gossip_skip_adamerging: false
-accuracy_test_interval: 0  # if this value is equal to 1, we will evaluate all models each time after Gossip
+accuracy_test_interval: 0 # if this value is equal to 1, we will evaluate all models each time after Gossip
 improve_dataset: true
 topo: ring

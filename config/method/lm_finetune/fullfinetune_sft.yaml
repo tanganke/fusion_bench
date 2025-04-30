@@ -1,12 +1,10 @@
 _target_: fusion_bench.method.FullFinetuneSFT
 _recursive_: False
-
 optimizer:
   _target_: torch.optim.AdamW
   lr: 1e-5
   weight_decay: 0.01
   fused: null
-
 lr_scheduler:
   _target_: fusion_bench.optim.lr_scheduler.CosineDecayWithWarmup
   T_max: _T_max_ # this will be replaced by the expected number of training steps
@@ -14,13 +12,11 @@ lr_scheduler:
   warmup_steps: 100
   max_lr: ${..optimizer.lr}
   min_lr: 1e-6
-
 dataloader_kwargs:
   # per-gpu batch size
   batch_size: 1
   num_workers: 0
   pin_memory: True
-
 # Training hyperparameters
 # if max_epochs=-1, max_steps will be used to determine the number of training steps
 max_epochs: 3

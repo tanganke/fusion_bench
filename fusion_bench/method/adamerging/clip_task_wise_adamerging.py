@@ -20,7 +20,6 @@ from .task_wise_adamerging import TaskWiseAdaMergingAlgorithm
 log = logging.getLogger(__name__)
 
 
-
 class CLIPTaskWiseAdaMergingAlgorithm(TaskWiseAdaMergingAlgorithm):
     """
     A class for task-wise adaptive merging of CLIP models.

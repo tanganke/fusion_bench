@@ -1,5 +1,4 @@
 _target_: fusion_bench.method.ContinualImageClassificationFineTuningForCLIP
-
 seed: 42
 # shuffle the order of the tasks
 shuffle_order: true

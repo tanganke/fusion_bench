@@ -3,7 +3,7 @@ This module contains the implementation of the Isotropic Merging in Common Subsp
 Modified from the original implementation: https://github.com/danielm1405/iso-merging
 
 Reference:
-- Daniel Marczak, et al. No Task Left Behind: Isotropic Model Merging with Common and Task-Specific Subspaces. 2025. 
+- Daniel Marczak, et al. No Task Left Behind: Isotropic Model Merging with Common and Task-Specific Subspaces. 2025.
     https://arxiv.org/abs/2502.04959
 """
 

@@ -1,23 +1,19 @@
 _target_: fusion_bench.method.PeftFinetuneSFT
 _recursive_: False
-
 optimizer:
   _target_: torch.optim.AdamW
   lr: 1e-4
   weight_decay: 0.01
   fused: null
-
 lr_scheduler:
   _target_: torch.optim.lr_scheduler.CosineAnnealingLR
   T_max: _T_max_ # this will be replaced by the expected number of training steps
   eta_min: 1e-6
-
 dataloader_kwargs:
   # per-gpu batch size
   batch_size: 1
   num_workers: 0
   pin_memory: True
-
 peft_config:
   _target_: peft.LoraConfig
   task_type: peft.TaskType.CAUSAL_LM
@@ -33,11 +29,9 @@ peft_config:
   lora_alpha: 16
   lora_dropout: 0
   bias: none
-
 adapter_name: default
 # whether to merge and unload the adapter after training
 merge_and_unload: false
-
 # Training hyperparameters
 # if max_epochs=-1, max_steps will be used to determine the number of training steps
 max_epochs: 3

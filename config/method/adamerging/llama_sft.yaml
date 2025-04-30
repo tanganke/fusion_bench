@@ -1,5 +1,4 @@
 _target_: fusion_bench.method.adamerging.llama_adamerging.LayerWiseAdaMergingForLlamaSFT
-
 seed: 0
 output_dir: null
 # path to initialize the merging weights
@@ -26,7 +25,6 @@ fast_dev_run: ${fast_dev_run}
 # the path for saving the merging weights
 save_interval: 100
 save_merged_model: true
-
 dataloader_kwargs:
   batch_size: 24
   num_workers: 0

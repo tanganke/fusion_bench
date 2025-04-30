@@ -12,13 +12,10 @@ defaults:
       - clip-vit-base-patch32_dtd
   - /dataset/image_classification/train@train_datasets:
       - tiny-imagenet
-
 _target_: fusion_bench.modelpool.CLIPVisionModelPool
 _recursive_: false
-
 models: ???
 train_datasets: ???
-
 processor:
   _target_: transformers.CLIPProcessor.from_pretrained
   pretrained_model_name_or_path: openai/clip-vit-base-patch32

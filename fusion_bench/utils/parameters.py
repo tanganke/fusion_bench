@@ -252,7 +252,7 @@ def print_parameters(
 
 
 def check_parameters_all_equal(
-    list_of_param_names: List[Union[StateDictType, nn.Module, List[str]]]
+    list_of_param_names: List[Union[StateDictType, nn.Module, List[str]]],
 ) -> None:
     """
     Checks if all models have the same parameters.

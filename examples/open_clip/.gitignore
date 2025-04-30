@@ -1,2 +1,4 @@
 ./outputs/
 ./.cache/
+./checkpoints/
+./tall_masks/

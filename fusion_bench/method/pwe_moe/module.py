@@ -1,5 +1,5 @@
 R"""
-this is adapted from 
+this is adapted from
 https://github.com/tanganke/weight-ensembling_MoE/blob/3cbd327cb28c499065f83387472a79829a2e5fee/src/module/dict_moe.py
 but with some modifications
 """

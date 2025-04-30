@@ -11,7 +11,6 @@ defaults:
       - flan-t5-base_glue-stsb_lora-16
 _target_: fusion_bench.modelpool.Seq2SeqLMPool
 _recursive_: false
-
 _dataset_loader: fusion_bench.tasks.flan_t5_text_generation.glue_load_dataset.load_glue_dataset
 test_datasets:
   glue-cola:
@@ -62,7 +61,6 @@ test_datasets:
     name: stsb
     tokenizer: ${...tokenizer}
     split: validation
-
 tokenizer:
   _target_: transformers.AutoTokenizer.from_pretrained
   pretrained_model_name_or_path: google/flan-t5-base
