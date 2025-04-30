@@ -4,7 +4,6 @@ merge_mode: task_wise
 init_lambda: 0.3
 batch_reduce: true
 eval_batch_reduce: false
-
 _dict_feature_extractor_path: microsoft/resnet-18
 dict_processor:
   _target_: fusion_bench.method.dawe.dawe_for_clip.load_resnet_processor
@@ -18,14 +17,12 @@ gate_hidden_layers: 1
 # if task_vector_dtype is null, the task vector will have the same dtype as pretrained model
 task_vector_dtype: null
 task_vector_sparsity: 0
-
 # training & logging args
 max_steps: 1000
 save_interval: 200
 learning_rate: 1e-5
 resume_checkpoint_path: null
 skip_training: false
-
 # dataloader args
 batch_size: 1
 num_workers: 0

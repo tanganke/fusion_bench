@@ -1,0 +1,26 @@
+defaults:
+  - /dataset/image_classification/train@train_datasets: the_eight_tasks
+  - /dataset/image_classification/test@test_datasets: the_eight_tasks
+  - _self_
+_target_: fusion_bench.modelpool.OpenCLIPVisionModelPool
+_recursive_: false
+model_dir: ./.cache/task_vectors_checkpoints/
+models:
+  _pretrained_: ${..model_dir}/ViT-L-14/zeroshot.pt
+  sun397: ${..model_dir}/ViT-L-14/SUN397/finetuned.pt
+  stanford-cars: ${..model_dir}/ViT-L-14/Cars/finetuned.pt
+  resisc45: ${..model_dir}/ViT-L-14/RESISC45/finetuned.pt
+  eurosat: ${..model_dir}/ViT-L-14/EuroSAT/finetuned.pt
+  svhn: ${..model_dir}/ViT-L-14/SVHN/finetuned.pt
+  gtsrb: ${..model_dir}/ViT-L-14/GTSRB/finetuned.pt
+  mnist: ${..model_dir}/ViT-L-14/MNIST/finetuned.pt
+  dtd: ${..model_dir}/ViT-L-14/DTD/finetuned.pt
+classification_heads:
+  sun397: ${..model_dir}/ViT-L-14/head_SUN397.pt
+  stanford-cars: ${..model_dir}/ViT-L-14/head_Cars.pt
+  resisc45: ${..model_dir}/ViT-L-14/head_RESISC45.pt
+  eurosat: ${..model_dir}/ViT-L-14/head_EuroSAT.pt
+  svhn: ${..model_dir}/ViT-L-14/head_SVHN.pt
+  gtsrb: ${..model_dir}/ViT-L-14/head_GTSRB.pt
+  mnist: ${..model_dir}/ViT-L-14/head_MNIST.pt
+  dtd: ${..model_dir}/ViT-L-14/head_DTD.pt

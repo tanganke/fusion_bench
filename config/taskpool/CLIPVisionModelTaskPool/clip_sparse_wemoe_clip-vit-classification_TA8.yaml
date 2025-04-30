@@ -10,9 +10,7 @@ defaults:
       - mnist
       - dtd
   - _self_
-
 _target_: fusion_bench.taskpool.SparseWEMoECLIPVisionModelTaskPool
-
 # === layer-wise routing weights saving ===
 layer_wise_routing_weights_save_path: null
 layer_wise_routing_weights_max_num: 1000

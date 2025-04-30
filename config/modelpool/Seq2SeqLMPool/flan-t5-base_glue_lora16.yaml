@@ -1,6 +1,5 @@
 defaults:
   - Seq2SeqLMPool@: _template
-
 models:
   _pretrained_:
     _target_: transformers.AutoModelForSeq2SeqLM.from_pretrained
@@ -37,5 +36,4 @@ models:
     _target_: fusion_bench.modelpool.seq2seq_lm.modelpool.load_lora_model
     base_model_path: ${...base_model}
     peft_model_path: tanganke/flan-t5-base_glue-stsb_lora-16
-
 base_model: google/flan-t5-base

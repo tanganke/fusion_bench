@@ -6,12 +6,10 @@ save_checkpoint: False
 router_hidden_layers: 1
 init_lambda: 0.3
 batch_reduce: true
-
 # device to compute svd
 svd_accelerator: cuda
 rank_k: 32 # How many experts are added to the pool per task?
-select_k: -1  # How many experts are selected from the pool to merge? Range is (1, rank_k*task_num). In particular -1: All the experts in the pool
-
+select_k: -1 # How many experts are selected from the pool to merge? Range is (1, rank_k*task_num). In particular -1: All the experts in the pool
 # learning rate
 lr: 1e-4
 optimizer: adam

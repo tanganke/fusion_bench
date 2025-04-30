@@ -6,7 +6,7 @@ http://arxiv.org/abs/2212.04089
 
 import logging
 from copy import deepcopy
-from typing import Dict, List, Mapping, TypeVar, Union  # noqa: F401
+from typing import Dict, List, Mapping, Optional, TypeVar, Union  # noqa: F401
 
 import torch
 from torch import nn
@@ -19,18 +19,18 @@ from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_mul,
     state_dict_sub,
 )
-from fusion_bench.utils.type import StateDictType
+from fusion_bench.utils.type import StateDictType, TorchModelType
 
 log = logging.getLogger(__name__)
 
 
 @torch.no_grad()
 def task_arithmetic_merge(
-    pretrained_model: nn.Module,
-    finetuned_models: List[nn.Module],
+    pretrained_model: TorchModelType,
+    finetuned_models: List[TorchModelType],
     scaling_factor: float,
     inplace: bool = True,
-) -> nn.Module:
+) -> TorchModelType:
     """
     Merges the task vectors from multiple fine-tuned models into a single pre-trained model.
 
@@ -46,15 +46,17 @@ def task_arithmetic_merge(
     """
     if not inplace:
         pretrained_model = deepcopy(pretrained_model)
-    task_vector: StateDictType = None
+    task_vector: Optional[StateDictType] = None
     # Calculate the total task vector
     for model in finetuned_models:
         if task_vector is None:
+            # calculate the task vector for the first model
             task_vector = state_dict_sub(
                 model.state_dict(keep_vars=True),
                 pretrained_model.state_dict(keep_vars=True),
             )
         else:
+            # calculate the task vector for the remaining models
             task_vector = state_dict_add(
                 task_vector,
                 state_dict_sub(

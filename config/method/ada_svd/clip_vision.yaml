@@ -1,5 +1,4 @@
 _target_: fusion_bench.method.AdaSVDMergingForCLIPVisionModel
-
 scaling_factor: null
 num_samples: 256
 gate_k: 16

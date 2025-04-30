@@ -1,5 +1,4 @@
 _target_: fusion_bench.method.opcm.weight_average.ContinualWeightAverageForCLIP
-
 # shuffle the order of the models
 shuffle_order: true
 # the random seed to use

@@ -10,4 +10,3 @@ defaults:
       - flan-t5-base_glue-rte
       - flan-t5-base_glue-sst2
       - flan-t5-base_glue-stsb
-
