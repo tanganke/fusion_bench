@@ -1,4 +1,4 @@
-_target_: fusion_bench.method.pwe_moe.openclip_pwe_moe.PWEMoEAlgorithmForOpenCLIP
+_target_: fusion_bench.method.pwe_moe.openclip_pwe_moe.PWEMoELinearScalarizationForOpenCLIP
 #! === Model Architecture Arguments ===
 # if true, then we only apply the weight ensembling MoE to MLPs, else, we apply it to all layers
 partial: true
