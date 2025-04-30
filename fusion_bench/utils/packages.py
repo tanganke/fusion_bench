@@ -82,3 +82,17 @@ def import_object(abs_obj_name: str):
     module_name, obj_name = abs_obj_name.rsplit(".", 1)
     module = importlib.import_module(module_name)
     return getattr(module, obj_name)
+
+
+def compare_versions(v1, v2):
+    """Compare two version strings.
+    Returns -1 if v1 < v2, 0 if v1 == v2, 1 if v1 > v2"""
+
+    v1 = version.parse(v1)
+    v2 = version.parse(v2)
+    if v1 < v2:
+        return -1
+    elif v1 > v2:
+        return 1
+    else:
+        return 0

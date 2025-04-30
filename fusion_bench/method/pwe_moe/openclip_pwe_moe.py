@@ -5,6 +5,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union, cast
 
+import lightning.fabric
 import numpy as np
 import pandas as pd
 import torch
@@ -22,7 +23,7 @@ from fusion_bench.modelpool import OpenCLIPVisionModelPool
 from fusion_bench.models.open_clip import ClassificationHead, ImageEncoder
 from fusion_bench.utils import print_parameters, timeit_context
 from fusion_bench.utils.data import InfiniteDataLoader
-import lightning.fabric
+
 from .module import ParetoWeightEnsemblingModule
 from .phn.solvers import EPOSolver
 from .utils import generate_simplex_grid
@@ -88,7 +89,7 @@ class PWEMoEAlgorithmForOpenCLIP(
         # setup the MoE model
         model = self.load_model()
         if self.checkpoint_path is not None:
-            model.load_state_dict(torch.load(self.checkpoint_path, map_location="cpu"))
+            self.fabric.load(self.checkpoint_path, {"model": model})
 
         # setup dataloaders
         self.load_datasets()
