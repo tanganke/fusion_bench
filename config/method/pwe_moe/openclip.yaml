@@ -1,0 +1,10 @@
+_target_: fusion_bench.method.PWEMoEAlgorithmForOpenCLIP
+#! === Model Architecture Arguments ===
+# if true, then we only apply the weight ensembling MoE to MLPs, else, we apply it to all layers
+partial: true
+#! === Training Arguments ===
+# initial outputs for the routing gates
+init_lambda: 0.3
+#! === Evaluation Arguments ===
+# if true, then we only evaluate the model on the first 20 batches of the test dataset
+quick_evaluation: false

@@ -15,15 +15,18 @@ log = logging.getLogger(__name__)
 
 
 def _check_and_redirect_open_clip_modeling():
-    if "src.modeling" not in sys.modules:
-        # redirect the import of `src.modeling` to `fusion_bench.models.open_clip.modeling`
-        import fusion_bench.models.open_clip.modeling as open_clip_modeling
+    try:
+        import src.modeling
+    except ImportError:
+        if "src.modeling" not in sys.modules:
+            # redirect the import of `src.modeling` to `fusion_bench.models.open_clip.modeling`
+            import fusion_bench.models.open_clip.modeling as open_clip_modeling
 
-        sys.modules["src.modeling"] = open_clip_modeling
-        log.warning(
-            "`src.modeling` is not imported."
-            "Redirecting the import to `fusion_bench.models.open_clip.modeling`"
-        )
+            sys.modules["src.modeling"] = open_clip_modeling
+            log.warning(
+                "`src.modeling` is not imported."
+                "Redirecting the import to `fusion_bench.models.open_clip.modeling`"
+            )
 
 
 class OpenCLIPVisionModelPool(BaseModelPool):
@@ -88,8 +91,6 @@ class OpenCLIPVisionModelPool(BaseModelPool):
                 )
             except RuntimeError as e:
                 encoder = pickle.load(open(model_config, "rb"))
-            finally:
-                raise RuntimeError(f"Failed to load ImageEncoder from {model_config}")
         elif isinstance(model_config, nn.Module):
             log.info(f"Returning existing model: {model_config}")
             encoder = model_config

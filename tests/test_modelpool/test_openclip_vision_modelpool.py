@@ -41,8 +41,11 @@ class TestOpenCLIPVisionModelPool(unittest.TestCase):
         self.vit_b_16_ta8_modelpool = vit_b_16_ta8_modelpool
         self.vit_l_14_ta8_modelpool = vit_l_14_ta8_modelpool
 
-    def _test_load_model(self, modelpool):
+    def _test_load_model(self, modelpool: OpenCLIPVisionModelPool):
         # try to load all models
+        model = modelpool.load_pretrained_model()
+        self.assertIsNotNone(model)
+
         for model_name in modelpool.model_names:
             model = modelpool.load_model(model_name)
             self.assertIsNotNone(model)
@@ -52,7 +55,7 @@ class TestOpenCLIPVisionModelPool(unittest.TestCase):
         self._test_load_model(self.vit_b_16_ta8_modelpool)
         self._test_load_model(self.vit_l_14_ta8_modelpool)
 
-    def _test_load_classification_head(self, modelpool):
+    def _test_load_classification_head(self, modelpool: OpenCLIPVisionModelPool):
         for model_name in modelpool.model_names:
             head = modelpool.load_classification_head(model_name)
             self.assertIsNotNone(head)
