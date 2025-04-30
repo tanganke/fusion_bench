@@ -5,11 +5,12 @@ from typing import Callable, Optional, Union, cast
 
 import torch
 from datasets import load_dataset
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 from torch import nn
 
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.models.open_clip import ClassificationHead, ImageEncoder
+from fusion_bench.utils.expr import is_expr_match
 
 log = logging.getLogger(__name__)
 
@@ -71,6 +72,8 @@ class OpenCLIPVisionModelPool(BaseModelPool):
         The model config can be:
 
         - A string, which is the path to the model checkpoint in pickle format. Load directly using `torch.load`.
+        - {"model_name": str, "pickle_path": str}, load the model from the binary file (pickle format). This will first construct the model using `ImageEncoder(model_name)`, and then load the state dict from model located in the pickle file.
+        - {"model_name": str, "state_dict_path": str}, load the model from the state dict file. This will first construct the model using `ImageEncoder(model_name)`, and then load the state dict from the file.
         - Default, load the model using `instantiate` from hydra.
         """
         if (
@@ -80,8 +83,13 @@ class OpenCLIPVisionModelPool(BaseModelPool):
             model_config = self._models[model_name_or_config]
         else:
             model_config = model_name_or_config
+        if isinstance(model_config, DictConfig):
+            model_config = OmegaConf.to_container(model_config, resolve=True)
 
         if isinstance(model_config, str):
+            # the model config is a string, which is the path to the model checkpoint in pickle format
+            # load the model using `torch.load`
+            # this is the original usage in the task arithmetic codebase
             _check_and_redirect_open_clip_modeling()
             log.info(f"loading ImageEncoder from {model_config}")
             weights_only = kwargs["weights_only"] if "weights_only" in kwargs else False
@@ -91,7 +99,45 @@ class OpenCLIPVisionModelPool(BaseModelPool):
                 )
             except RuntimeError as e:
                 encoder = pickle.load(open(model_config, "rb"))
+        elif is_expr_match({"model_name": str, "pickle_path": str}, model_config):
+            # the model config is a dictionary with the following keys:
+            # - model_name: str, the name of the model
+            # - pickle_path: str, the path to the binary file (pickle format)
+            # load the model from the binary file (pickle format)
+            # this is useful when you use a newer version of torchvision
+            _check_and_redirect_open_clip_modeling()
+            log.info(
+                f"loading ImageEncoder of {model_config['model_name']} from {model_config['pickle_path']}"
+            )
+            weights_only = kwargs["weights_only"] if "weights_only" in kwargs else False
+            try:
+                encoder = torch.load(
+                    model_config["pickle_path"],
+                    weights_only=weights_only,
+                    *args,
+                    **kwargs,
+                )
+            except RuntimeError as e:
+                encoder = pickle.load(open(model_config["pickle_path"], "rb"))
+            _encoder = ImageEncoder(model_config["model_name"])
+            _encoder.load_state_dict(encoder.state_dict())
+            encoder = _encoder
+        elif is_expr_match({"model_name": str, "state_dict_path": str}, model_config):
+            # the model config is a dictionary with the following keys:
+            # - model_name: str, the name of the model
+            # - state_dict_path: str, the path to the state dict file
+            # load the model from the state dict file
+            log.info(
+                f"loading ImageEncoder of {model_config['model_name']} from {model_config['state_dict_path']}"
+            )
+            encoder = ImageEncoder(model_config["model_name"])
+            encoder.load_state_dict(
+                torch.load(
+                    model_config["state_dict_path"], weights_only=True, *args, **kwargs
+                )
+            )
         elif isinstance(model_config, nn.Module):
+            # the model config is an existing model
             log.info(f"Returning existing model: {model_config}")
             encoder = model_config
         else:
