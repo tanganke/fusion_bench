@@ -4,6 +4,7 @@ defaults:
   - _self_
 _target_: fusion_bench.modelpool.OpenCLIPVisionModelPool
 _recursive_: false
+# path of the checkpoint directory
 model_dir: ./.cache/task_vectors_checkpoints/
 models:
   _pretrained_: ${..model_dir}/ViT-B-16/zeroshot.pt

@@ -10,12 +10,13 @@ _import_structure = {
     "clip_vision": [
         "CLIPVisionModelTaskPool",
         "SparseWEMoECLIPVisionModelTaskPool",
-        "RankoneWEMoECLIPVisionModelTaskPool",
+        "RankoneMoECLIPVisionModelTaskPool",
     ],
     "dummy": ["DummyTaskPool"],
     "gpt2_text_classification": ["GPT2TextClassificationTaskPool"],
-    "nyuv2_taskpool": ["NYUv2TaskPool"],
     "llama": ["LlamaTestGenerationTaskPool"],
+    "nyuv2_taskpool": ["NYUv2TaskPool"],
+    "openclip_vision": ["OpenCLIPVisionModelTaskPool"],
 }
 
 
@@ -23,13 +24,14 @@ if TYPE_CHECKING:
     from .base_pool import BaseTaskPool
     from .clip_vision import (
         CLIPVisionModelTaskPool,
-        RankoneWEMoECLIPVisionModelTaskPool,
+        RankoneMoECLIPVisionModelTaskPool,
         SparseWEMoECLIPVisionModelTaskPool,
     )
     from .dummy import DummyTaskPool
     from .gpt2_text_classification import GPT2TextClassificationTaskPool
     from .llama import LlamaTestGenerationTaskPool
     from .nyuv2_taskpool import NYUv2TaskPool
+    from .openclip_vision import OpenCLIPVisionModelTaskPool
 
 else:
     sys.modules[__name__] = LazyImporter(
