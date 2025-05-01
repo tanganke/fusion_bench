@@ -10,17 +10,24 @@ from torch import nn
 
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.models.open_clip import ClassificationHead, ImageEncoder
+from fusion_bench.utils import instantiate
 from fusion_bench.utils.expr import is_expr_match
-from fusion_bench.utils.packages import compare_versions, _get_package_version
+from fusion_bench.utils.packages import _get_package_version, compare_versions
 
 log = logging.getLogger(__name__)
 
+# Add flag to track if warning has been shown
+_openclip_version_warning_shown = False
+
 
 def _check_and_redirect_open_clip_modeling():
+    global _openclip_version_warning_shown
     if compare_versions(_get_package_version("open-clip-torch").__str__(), "2.0.2") > 0:
-        log.warning(
-            "OpenCLIP version is greater than 2.0.2. This may cause issues with the modelpool."
-        )
+        if not _openclip_version_warning_shown:
+            log.warning(
+                "OpenCLIP version is greater than 2.0.2. This may cause issues with the modelpool."
+            )
+            _openclip_version_warning_shown = True
         import open_clip.model
         import open_clip.transformer
 
@@ -57,6 +64,21 @@ def _check_and_redirect_open_clip_modeling():
             )
 
 
+def load_classifier_head(model_config: Union[str, DictConfig], *args, **kwargs):
+    if isinstance(model_config, str):
+        _check_and_redirect_open_clip_modeling()
+        log.info(f"Loading `ClassificationHead` from {model_config}")
+        weights_only = kwargs["weights_only"] if "weights_only" in kwargs else False
+        head = torch.load(model_config, weights_only=weights_only, *args, **kwargs)
+    elif isinstance(model_config, nn.Module):
+        log.info(f"Returning existing model: {model_config}")
+        head = model_config
+    else:
+        head = instantiate(model_config, *args, **kwargs)
+    head = cast(ClassificationHead, head)
+    return head
+
+
 class OpenCLIPVisionModelPool(BaseModelPool):
     """
     A model pool for managing OpenCLIP Vision models (models from task vector paper).
@@ -68,7 +90,7 @@ class OpenCLIPVisionModelPool(BaseModelPool):
     def __init__(
         self,
         models: DictConfig,
-        classification_heads: DictConfig,
+        classification_heads: Optional[DictConfig] = None,
         **kwargs,
     ):
         super().__init__(models, **kwargs)
@@ -196,18 +218,7 @@ class OpenCLIPVisionModelPool(BaseModelPool):
         else:
             model_config = model_name_or_config
 
-        if isinstance(model_config, str):
-            _check_and_redirect_open_clip_modeling()
-            log.info(f"Loading `ClassificationHead` from {model_config}")
-            weights_only = kwargs["weights_only"] if "weights_only" in kwargs else False
-            head = torch.load(model_config, weights_only=weights_only, *args, **kwargs)
-        elif isinstance(model_config, nn.Module):
-            log.info(f"Returning existing model: {model_config}")
-            head = model_config
-        else:
-            head = super().load_model(model_name_or_config, *args, **kwargs)
-        head = cast(ClassificationHead, head)
-
+        head = load_classifier_head(model_config, *args, **kwargs)
         return head
 
     def load_train_dataset(self, dataset_name: str, *args, **kwargs):

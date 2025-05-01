@@ -1,0 +1,7 @@
+_target_: fusion_bench.modelpool.OpenCLIPVisionModelPool
+_recursive_: false
+model_dir: ./.cache/task_vectors_checkpoints/
+models:
+  _pretrained_:
+    model_name: ViT-B-32
+    pickle_path: ${...model_dir}/ViT-B-32/zeroshot.pt

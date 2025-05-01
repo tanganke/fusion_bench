@@ -1,5 +1,8 @@
+from typing import Callable, List
+
 import open_clip
 import torch
+from torch import Tensor
 
 from . import utils
 from .variables_and_paths import CACHEDIR, MODELS, OPENCLIP_CACHEDIR
@@ -65,7 +68,12 @@ class ImageEncoder(torch.nn.Module):
 
 
 class ClassificationHead(torch.nn.Linear):
-    def __init__(self, normalize, weights, biases=None):
+    def __init__(
+        self,
+        normalize: bool,
+        weights: Tensor,
+        biases: Tensor = None,
+    ):
         output_size, input_size = weights.shape
         super().__init__(input_size, output_size)
         self.normalize = normalize
@@ -76,12 +84,12 @@ class ClassificationHead(torch.nn.Linear):
         else:
             self.bias = torch.nn.Parameter(torch.zeros_like(self.bias))
 
-    def forward(self, inputs):
+    def forward(self, inputs: Tensor):
         if self.normalize:
             inputs = inputs / inputs.norm(dim=-1, keepdim=True)
         return super().forward(inputs)
 
-    def __call__(self, inputs):
+    def __call__(self, inputs: Tensor):
         return self.forward(inputs)
 
     def save(self, filename):
@@ -95,7 +103,14 @@ class ClassificationHead(torch.nn.Linear):
 
 
 class ImageClassifier(torch.nn.Module):
-    def __init__(self, image_encoder, classification_head):
+    train_preprocess: Callable
+    val_preprocess: Callable
+
+    def __init__(
+        self,
+        image_encoder: ImageEncoder,
+        classification_head: ClassificationHead,
+    ):
         super().__init__()
         self.image_encoder = image_encoder
         self.classification_head = classification_head
@@ -107,7 +122,7 @@ class ImageClassifier(torch.nn.Module):
         self.classification_head.weight.requires_grad_(False)
         self.classification_head.bias.requires_grad_(False)
 
-    def forward(self, inputs):
+    def forward(self, inputs: Tensor):
         features = self.image_encoder(inputs)
         outputs = self.classification_head(features)
         return outputs
@@ -126,7 +141,11 @@ class ImageClassifier(torch.nn.Module):
 
 
 class MultiHeadImageClassifier(torch.nn.Module):
-    def __init__(self, image_encoder, classification_heads):
+    def __init__(
+        self,
+        image_encoder: ImageEncoder,
+        classification_heads: List[ClassificationHead],
+    ):
         super().__init__()
         self.image_encoder = image_encoder
         self.classification_heads = torch.nn.ModuleList(classification_heads)

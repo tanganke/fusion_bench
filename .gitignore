@@ -5,6 +5,8 @@
 /lm-evaluation-harness/
 outputs/
 lightning_logs/
+# VSCode files
+*.code-workspace
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
