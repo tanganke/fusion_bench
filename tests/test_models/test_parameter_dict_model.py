@@ -3,7 +3,7 @@ import unittest
 import torch
 from torch import nn
 
-from fusion_bench.models.parameter_dict import ParameterDictModel, set_attr
+from fusion_bench.models.parameter_dict import ParameterDictModel
 
 
 class TestParameterDictModel(unittest.TestCase):

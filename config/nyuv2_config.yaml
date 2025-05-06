@@ -5,10 +5,8 @@ defaults:
   - method: simple_average
   - taskpool: nyuv2_taskpool
   - _self_
-
 _target_: fusion_bench.programs.FabricModelFusionProgram
 _recursive_: false
-
 fast_dev_run: false # Run a single batch of data to test the model or method
 use_lightning: true # Use the fabric to run the experiment
 print_config: true # Print the configuration to the console

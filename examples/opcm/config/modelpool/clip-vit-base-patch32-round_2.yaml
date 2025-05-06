@@ -1,0 +1,21 @@
+_target_: fusion_bench.modelpool.CLIPVisionModelPool
+_recursive_: False
+
+models:
+  _pretrained_: openai/clip-vit-base-patch32
+  stanford-cars: ./outputs/logs/ViT-B-32/continual_clip_layer_wise_adamerging_adamerging/1/version_0/merged_model
+  resisc45: tanganke/clip-vit-base-patch32_resisc45
+
+test_datasets:
+  stanford-cars:
+    _target_: datasets.load_dataset
+    path: tanganke/stanford_cars
+    split: test
+  resisc45:
+    _target_: datasets.load_dataset
+    path: tanganke/resisc45
+    split: test
+
+processor:
+  _target_: transformers.CLIPProcessor.from_pretrained
+  pretrained_model_name_or_path: openai/clip-vit-base-patch32

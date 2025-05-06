@@ -1,5 +1,4 @@
 _target_: fusion_bench.method.RegMeanAlgorithmForGPT2
-
 # list, regular expression of names of parameters that need to be excluded
 exclude_param_names_regex: []
 # numbers of examples to compute regmean weights

@@ -6,12 +6,13 @@ from fusion_bench.utils.lazy_imports import LazyImporter
 
 _import_structure = {
     "base_pool": ["BaseModelPool"],
+    "causal_lm": ["CausalLMPool", "CausalLMBackbonePool"],
     "clip_vision": ["CLIPVisionModelPool"],
     "nyuv2_modelpool": ["NYUv2ModelPool"],
     "huggingface_automodel": ["AutoModelPool"],
-    "causal_lm": ["CausalLMPool", "CausalLMBackbonePool"],
     "seq2seq_lm": ["Seq2SeqLMPool"],
     "PeftModelForSeq2SeqLM": ["PeftModelForSeq2SeqLMPool"],
+    "openclip_vision": ["OpenCLIPVisionModelPool"],
     "huggingface_gpt2_classification": [
         "HuggingFaceGPT2ClassificationPool",
         "GPT2ForSequenceClassificationPool",
@@ -30,6 +31,7 @@ if TYPE_CHECKING:
         HuggingFaceGPT2ClassificationPool,
     )
     from .nyuv2_modelpool import NYUv2ModelPool
+    from .openclip_vision import OpenCLIPVisionModelPool
     from .PeftModelForSeq2SeqLM import PeftModelForSeq2SeqLMPool
     from .seq2seq_lm import Seq2SeqLMPool
     from .seq_classification_lm import SeqenceClassificationModelPool

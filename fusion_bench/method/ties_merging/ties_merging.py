@@ -16,6 +16,7 @@ from torch import Tensor, nn
 
 from fusion_bench.compat.modelpool import to_modelpool
 from fusion_bench.method import BaseAlgorithm
+from fusion_bench.mixins import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.utils.type import StateDictType
 
@@ -24,7 +25,7 @@ from .ties_merging_utils import state_dict_to_vector, ties_merging, vector_to_st
 log = logging.getLogger(__name__)
 
 
-class TiesMergingAlgorithm(BaseAlgorithm):
+class TiesMergingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
     """
     TiesMergingAlgorithm is a class for fusing multiple models using the TIES merging technique.
 
@@ -84,34 +85,38 @@ class TiesMergingAlgorithm(BaseAlgorithm):
         scaling_factor = self.scaling_factor
         threshold = self.threshold
 
-        # Load the pretrained model
-        pretrained_model = modelpool.load_model("_pretrained_")
+        with self.profile("loading models"):
+            # Load the pretrained model
+            pretrained_model = modelpool.load_model("_pretrained_")
 
-        # Load the state dicts of the models
-        ft_checks: List[StateDictType] = [
-            modelpool.load_model(model_name).state_dict(keep_vars=True)
-            for model_name in modelpool.model_names
-        ]
-        ptm_check: StateDictType = pretrained_model.state_dict(keep_vars=True)
+            # Load the state dicts of the models
+            ft_checks: List[StateDictType] = [
+                modelpool.load_model(model_name).state_dict(keep_vars=True)
+                for model_name in modelpool.model_names
+            ]
+            ptm_check: StateDictType = pretrained_model.state_dict(keep_vars=True)
 
-        # Compute the task vectors
-        flat_ft: Tensor = torch.vstack(
-            [state_dict_to_vector(check, remove_keys) for check in ft_checks]
-        )
-        flat_ptm: Tensor = state_dict_to_vector(ptm_check, remove_keys)
-        tv_flat_checks = flat_ft - flat_ptm
+        with self.profile("merging models"):
+            # Compute the task vectors
+            flat_ft: Tensor = torch.vstack(
+                [state_dict_to_vector(check, remove_keys) for check in ft_checks]
+            )
+            flat_ptm: Tensor = state_dict_to_vector(ptm_check, remove_keys)
+            tv_flat_checks = flat_ft - flat_ptm
 
-        # Perform TIES Merging
-        merged_tv = ties_merging(
-            tv_flat_checks,
-            reset_thresh=threshold,
-            merge_func=merge_func,
-        )
-        merged_check = flat_ptm + scaling_factor * merged_tv
-        merged_state_dict = vector_to_state_dict(
-            merged_check, ptm_check, remove_keys=remove_keys
-        )
+            # Perform TIES Merging
+            merged_tv = ties_merging(
+                tv_flat_checks,
+                reset_thresh=threshold,
+                merge_func=merge_func,
+            )
+            merged_check = flat_ptm + scaling_factor * merged_tv
+            merged_state_dict = vector_to_state_dict(
+                merged_check, ptm_check, remove_keys=remove_keys
+            )
 
-        # Load the merged state dict into the pretrained model
-        pretrained_model.load_state_dict(merged_state_dict)
+            # Load the merged state dict into the pretrained model
+            pretrained_model.load_state_dict(merged_state_dict)
+
+        self.print_profile_summary()
         return pretrained_model

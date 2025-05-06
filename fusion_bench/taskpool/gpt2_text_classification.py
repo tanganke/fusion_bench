@@ -139,11 +139,40 @@ class GPT2TextClassificationTaskPool(BaseTaskPool, LightningFabricMixin):
         return dataloader
 
     @override
-    def evaluate(self, model: GPT2Model):
+    def evaluate(self, model: GPT2Model, name: str = None):
+        """Evaluate the model on the test datasets.
+
+        Args:
+            model (GPT2Model): The model to evaluate.
+            name (str, optional): The name of the model. Defaults to None. This is used to identify the model in the report.
+
+        Returns:
+            dict: A dictionary containing the evaluation results for each task.
+        """
         report = {}
+        if name is not None:
+            report["name"] = name
         for task_name in (pbar := tqdm(self._test_datasets, desc="Evaluating tasks")):
             pbar.set_description(f"Evaluating task {task_name}")
             dataloader = self.get_test_dataloader(task_name)
             result = self.evaluate_single_task(task_name, model, dataloader)
             report[task_name] = result
+
+        # calculate the average accuracy and loss
+        if "average" not in report:
+            report["average"] = {}
+            accuracies = [
+                value["accuracy"]
+                for key, value in report.items()
+                if isinstance(value, dict) and "accuracy" in value
+            ]
+            if len(accuracies) > 0:
+                average_accuracy = sum(accuracies) / len(accuracies)
+                report["average"]["accuracy"] = average_accuracy
+            losses = [value["loss"] for key, value in report.items() if "loss" in value]
+            if len(losses) > 0:
+                average_loss = sum(losses) / len(losses)
+                report["average"]["loss"] = average_loss
+
+        log.info(f"Evaluation Result: {report}")
         return report

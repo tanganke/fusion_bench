@@ -112,6 +112,19 @@ tasks:
 ...
 ```
 
+## Scope
+
+### Multi-Task Model Merging using CLIP-ViT Models
+
+Use Task Arithmetic to merge 8 CLIP-ViT-B-32 models from different image classification tasks and evaluate the performance of the merged model.
+
+```bash
+fusion_bench \
+  method=task_arithmetic \
+  modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8_model_only \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
+```
+
 
 ## References
 

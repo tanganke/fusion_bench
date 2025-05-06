@@ -1,0 +1,21 @@
+_target_: fusion_bench.modelpool.CLIPVisionModelPool
+_recursive_: False
+
+models:
+  _pretrained_: openai/clip-vit-base-patch32
+  resisc45: ./outputs/logs/ViT-B-32/continual_clip_layer_wise_adamerging_adamerging/2/version_0/merged_model
+  eurosat: tanganke/clip-vit-base-patch32_eurosat
+
+test_datasets:
+  resisc45:
+    _target_: datasets.load_dataset
+    path: tanganke/resisc45
+    split: test
+  eurosat:
+    _target_: datasets.load_dataset
+    path: tanganke/eurosat
+    split: test
+
+processor:
+  _target_: transformers.CLIPProcessor.from_pretrained
+  pretrained_model_name_or_path: openai/clip-vit-base-patch32

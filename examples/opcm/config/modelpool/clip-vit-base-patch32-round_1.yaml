@@ -1,0 +1,21 @@
+_target_: fusion_bench.modelpool.CLIPVisionModelPool
+_recursive_: False
+
+models:
+  _pretrained_: openai/clip-vit-base-patch32
+  sun397: tanganke/clip-vit-base-patch32_sun397
+  stanford-cars: tanganke/clip-vit-base-patch32_stanford-cars
+
+test_datasets:
+  sun397:
+    _target_: datasets.load_dataset
+    path: tanganke/sun397
+    split: test
+  stanford-cars:
+    _target_: datasets.load_dataset
+    path: tanganke/stanford_cars
+    split: test
+
+processor:
+  _target_: transformers.CLIPProcessor.from_pretrained
+  pretrained_model_name_or_path: openai/clip-vit-base-patch32

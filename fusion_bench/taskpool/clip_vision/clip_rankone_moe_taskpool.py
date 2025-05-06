@@ -12,36 +12,7 @@ from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.models.rankone_moe import RankOneMoE
 
 from .taskpool import CLIPVisionModelTaskPool
-
-
-class LayerWiseRoutingWeightSaver:
-    def __init__(self, save_path: Path, max_num: Optional[int] = None):
-        self.save_path = save_path
-        self.max_num = max_num
-        self.routing_weights = []
-
-    def __call__(self, module, input: Tuple[Tensor], output: Tensor):
-        assert isinstance(output, Tensor), "Output is expected to be a Tensor"
-        # (batch_size, num_tokens, num_experts)
-        routing_weights = output.detach().cpu()
-        if self.max_num is not None and self.max_num > 0:
-            if len(self.routing_weights) > self.max_num:
-                return
-            elif routing_weights.size(0) + len(self.routing_weights) > self.max_num:
-                self.routing_weights.append(
-                    routing_weights[: self.max_num - len(self.routing_weights)]
-                )
-            else:
-                self.routing_weights.append(routing_weights)
-        else:
-            self.routing_weights.append(routing_weights)
-
-    def save_routing_weights(self):
-        routing_weights = torch.cat(self.routing_weights, dim=0)
-        if self.save_path is not None:
-            self.save_path.parent.mkdir(parents=True, exist_ok=True)
-            print(f"Saving routing weights to {self.save_path}")
-            torch.save(routing_weights, self.save_path)
+from .utils.routing_analysis_utils import LayerWiseRoutingWeightSaver
 
 
 class RankoneMoECLIPVisionModelTaskPool(CLIPVisionModelTaskPool):
@@ -109,4 +80,5 @@ class RankoneMoECLIPVisionModelTaskPool(CLIPVisionModelTaskPool):
             # remove hooks for saving layer-wise routing weights
             for i, handle in self._layer_wise_routing_weights_save_hook_handles.items():
                 self._layer_wise_routing_weights_save_hooks[i].save_routing_weights()
+                self._layer_wise_routing_weights_save_hook_handles.pop(i)
                 handle.remove()
