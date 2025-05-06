@@ -1,0 +1,5 @@
+_target_: fusion_bench.method.TaskVectorViolinPlot
+trainable_only: true
+max_points_per_model: 1000
+fig_kwargs: null
+output_path: null
