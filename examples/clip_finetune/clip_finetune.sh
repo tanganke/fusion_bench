@@ -16,8 +16,7 @@ function full_finetune() {
         modelpool=clip-finetune_${TASK} \
         modelpool.base_model=${MODEL} \
         fabric.loggers.root_dir=outputs/${MODEL_SHORT_NAME}/full_finetune \
-        fabric.loggers.name=${TASK} \
-        taskpool=clip-vit-classification_TA8
+        fabric.loggers.name=${TASK}
 }
 
 function lora_finetune() {
