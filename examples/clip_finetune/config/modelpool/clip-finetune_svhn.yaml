@@ -1,17 +1,20 @@
-type: huggingface_clip_vision
-models:
-  - name: _pretrained_
-    path: openai/clip-vit-base-patch32
+_target_: fusion_bench.modelpool.CLIPVisionModelPool
 
-dataset_type: huggingface_image_classification
+base_model: openai/clip-vit-base-patch32
+
+models:
+  _pretrained_:
+    _target_: transformers.CLIPVisionModel.from_pretrained
+    pretrained_model_name_or_path: ${...base_model}
+
 train_datasets:
-  - name: svhn
-    dataset:
-      type: instantiate
-      name: svhn
-      object:
-        _target_: datasets.load_dataset
-        _args_:
-          - svhn
-          - cropped_digits
-        split: train
+  svhn:
+    _target_: datasets.load_dataset
+    _args_:
+      - svhn
+      - cropped_digits
+    split: train
+
+processor:
+  _target_: transformers.CLIPProcessor.from_pretrained
+  pretrained_model_name_or_path: ${..base_model}
