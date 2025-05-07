@@ -12,11 +12,10 @@ import torch
 from omegaconf import DictConfig
 from torch import Tensor, nn
 from tqdm.auto import tqdm
-from transformers import CLIPVisionModel
 
 from fusion_bench import BaseAlgorithm, BaseModelPool
 from fusion_bench.mixins import LightningFabricMixin, SimpleProfilerMixin
-from fusion_bench.taskpool import CLIPVisionModelTaskPool
+from fusion_bench.taskpool import FlanT5GLUETextGenerationTaskPool
 from fusion_bench.utils import instantiate
 from fusion_bench.utils.json import load_from_json, save_to_json
 from fusion_bench.utils.parameters import state_dict_to_vector
@@ -28,7 +27,7 @@ if TYPE_CHECKING:
     from torch.utils.tensorboard import SummaryWriter
 
 
-class OPCMForCLIP(
+class OPCMForFlanT5(
     BaseAlgorithm,
     LightningFabricMixin,
     SimpleProfilerMixin,
@@ -72,8 +71,8 @@ class OPCMForCLIP(
         if self.shuffle_order:
             random.shuffle(model_names)
 
-        self.taskpool = cast(CLIPVisionModelTaskPool, self._program.taskpool)
-        self._test_datasets = deepcopy(self.taskpool._test_datasets)
+        self.taskpool = cast(FlanT5GLUETextGenerationTaskPool, self._program.taskpool)
+        self._tasks = deepcopy(self.taskpool._tasks)
         """Configuration for the test datasets"""
 
         # log the model names
@@ -91,8 +90,8 @@ class OPCMForCLIP(
         if self.evaluate_on_every_step:
             with self.profile("evaluating model"):
                 self.taskpool._is_setup = False
-                self.taskpool._test_datasets = DictConfig(
-                    {model_names[0]: self._test_datasets[model_names[0]]}
+                self.taskpool._tasks = DictConfig(
+                    {model_names[0]: self._tasks[model_names[0]]}
                 )
                 report = self.taskpool.evaluate(deepcopy(merged_model))
                 save_to_json(report, Path(self.log_dir) / "report_0.json")
@@ -202,11 +201,8 @@ class OPCMForCLIP(
             if self.evaluate_on_every_step:
                 with self.profile("evaluating model"):
                     self.taskpool._is_setup = False
-                    self.taskpool._test_datasets = DictConfig(
-                        {
-                            n: self._test_datasets[n]
-                            for n in model_names[: model_idx + 1]
-                        }
+                    self.taskpool._tasks = DictConfig(
+                        {n: self._tasks[n] for n in model_names[: model_idx + 1]}
                     )
                     report = self.taskpool.evaluate(deepcopy(merged_model))
                     save_to_json(
@@ -216,7 +212,7 @@ class OPCMForCLIP(
         self.print_profile_summary()
         return merged_model
 
-    def save_merged_model(self, merged_model: CLIPVisionModel, step: int):
+    def save_merged_model(self, merged_model, step: int):
         os.makedirs(Path(self.log_dir) / "checkpoints", exist_ok=True)
         merged_model.save_pretrained(
             Path(self.log_dir) / "checkpoints" / f"merged_model_{step}"

@@ -13,6 +13,7 @@ _import_structure = {
         "RankoneMoECLIPVisionModelTaskPool",
     ],
     "dummy": ["DummyTaskPool"],
+    "flan_t5": ["FlanT5GLUETextGenerationTaskPool"],
     "gpt2_text_classification": ["GPT2TextClassificationTaskPool"],
     "llama": ["LlamaTestGenerationTaskPool"],
     "nyuv2_taskpool": ["NYUv2TaskPool"],
@@ -28,11 +29,11 @@ if TYPE_CHECKING:
         SparseWEMoECLIPVisionModelTaskPool,
     )
     from .dummy import DummyTaskPool
+    from .flan_t5 import FlanT5GLUETextGenerationTaskPool
     from .gpt2_text_classification import GPT2TextClassificationTaskPool
     from .llama import LlamaTestGenerationTaskPool
     from .nyuv2_taskpool import NYUv2TaskPool
     from .openclip_vision import OpenCLIPVisionModelTaskPool
-
 else:
     sys.modules[__name__] = LazyImporter(
         __name__,
