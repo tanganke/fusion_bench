@@ -95,6 +95,29 @@ It can be used to improve the performance and robustness of model or to combine 
 For a more detailed introduction to deep model fusion, you can refer to [W. Li, 2023, 'Deep Model Fusion: A Survey'](https://arxiv.org/abs/2309.15698). We also provide a brief overview of deep model fusion in [our documentation](https://tanganke.github.io/fusion_bench/).
 In this benchmark, we evaluate the performance of different fusion methods on a variety of datasets and tasks.
 
+## Implemented Methods
+
+We have implemented the following fusion methods:
+
+### Model Merging Methods
+
+- [Simple Average](fusion_bench/method/simple_average.py)
+  - architecture agnostic
+- [Task Arithmetic](fusion_bench/method/task_arithmetic)
+  - architecture agnostic
+- [Ties-Merging](fusion_bench/method/ties_merging)
+  - architecture agnostic
+- [Fisher Merging](fusion_bench/method/fisher_merging)
+  - [CLIP-ViT](fusion_bench/method/fisher_merging/clip_fisher_merging.py)
+  - [GPT-2](fusion_bench/method/fisher_merging/gpt2_fisher_merging.py)
+- [RegMean](fusion_bench/method/regmean)
+  - [CLIP-ViT](fusion_bench/method/regmean/clip_regmean.py)
+  - [GPT-2](fusion_bench/method/regmean/gpt2_regmean.py)
+- [AdaMerging](fusion_bench/method/adamerging)
+  - CLIP-ViT: [task-wise](fusion_bench/method/adamerging/clip_task_wise_adamerging.py) and [layer-wise](fusion_bench/method/adamerging/clip_layer_wise_adamerging.py)
+  - GPT-2: [layer-wise](fusion_bench/method/adamerging/gpt2_layer_wise_adamerging.py)
+  - Flan-T5: [layer-wise](fusion_bench/method/adamerging/flan_t5_layer_wise_adamerging.py)
+
 ## Project Structure
 
 The project is structured as follows:
