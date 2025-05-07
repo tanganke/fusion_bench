@@ -13,39 +13,11 @@ from fusion_bench.modelpool import CLIPVisionModelPool
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.utils import timeit_context
+from fusion_bench.utils.data import InfiniteDataLoader
 
 from .task_wise_adamerging import TaskWiseAdaMergingAlgorithm
 
 log = logging.getLogger(__name__)
-
-
-class InfiniteDataLoader:
-    """
-    A wrapper class for DataLoader to create an infinite data loader.
-    This is useful in case we are only interested in the number of steps and not the number of epochs.
-
-    This class wraps a DataLoader and provides an iterator that resets
-    when the end of the dataset is reached, creating an infinite loop.
-
-    Attributes:
-        data_loader (DataLoader): The DataLoader to wrap.
-        data_iter (iterator): An iterator over the DataLoader.
-    """
-
-    def __init__(self, data_loader):
-        self.data_loader = data_loader
-        self.data_iter = iter(data_loader)
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        try:
-            data = next(self.data_iter)
-        except StopIteration:
-            self.data_iter = iter(self.data_loader)  # Reset the data loader
-            data = next(self.data_iter)
-        return data
 
 
 class CLIPTaskWiseAdaMergingAlgorithm(TaskWiseAdaMergingAlgorithm):

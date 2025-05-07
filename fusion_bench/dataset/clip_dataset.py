@@ -2,10 +2,12 @@
 This module provides a class to convert a dataset whose object is a list of dictionaries with keys "image" and "label" to a dataset whose object is a tuple of tensors (inputs, label) for CLIP models.
 """
 
-from typing import Optional
+from typing import Optional, Tuple
 
 import torch
 from transformers import CLIPProcessor, ProcessorMixin
+
+__all__ = ["CLIPDataset"]
 
 
 class CLIPDataset(torch.utils.data.Dataset):
@@ -34,7 +36,7 @@ class CLIPDataset(torch.utils.data.Dataset):
         """Returns the number of items in the dataset."""
         return len(self.dataset)
 
-    def __getitem__(self, idx: int):
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, int]:
         """
         Retrieves and processes an item from the dataset.
 
@@ -62,6 +64,12 @@ class CLIPDataset(torch.utils.data.Dataset):
                 inputs = self.processor(images=[image], return_tensors="pt")[
                     "pixel_values"
                 ][0]
+            elif callable(self.processor):
+                inputs = self.processor(image)
+            else:
+                raise ValueError(
+                    "The processor should be a CLIPProcessor or a callable function"
+                )
         else:
             # if processor is None, return the raw image directly
             inputs = image

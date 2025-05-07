@@ -126,10 +126,14 @@ class OPCMForCLIP(
                 )
                 self.avg_task_vector_norm = np.mean(self.all_task_vector_norm)
                 self.fabric.log(
-                    "model/task_vector_norm", self.all_task_vector_norm[-1], step=model_idx
+                    "model/task_vector_norm",
+                    self.all_task_vector_norm[-1],
+                    step=model_idx,
                 )
                 self.fabric.log(
-                    "model/avg_task_vector_norm", self.avg_task_vector_norm, step=model_idx
+                    "model/avg_task_vector_norm",
+                    self.avg_task_vector_norm,
+                    step=model_idx,
                 )
 
                 self.lambda_t = 1  # temporary value
@@ -166,9 +170,9 @@ class OPCMForCLIP(
                                 pretrained_W=pretrained_model.get_submodule(
                                     module_name
                                 ).get_parameter(param_name),
-                                task_W=task_model.get_submodule(module_name).get_parameter(
-                                    param_name
-                                ),
+                                task_W=task_model.get_submodule(
+                                    module_name
+                                ).get_parameter(param_name),
                                 param_name=".".join([module_name, param_name]),
                                 accelerator=accelerator,
                             )
@@ -200,10 +204,15 @@ class OPCMForCLIP(
                 with self.profile("evaluating model"):
                     self.taskpool._is_setup = False
                     self.taskpool._test_datasets = DictConfig(
-                        {n: self._test_datasets[n] for n in model_names[: model_idx + 1]}
+                        {
+                            n: self._test_datasets[n]
+                            for n in model_names[: model_idx + 1]
+                        }
                     )
                     report = self.taskpool.evaluate(deepcopy(merged_model))
-                    save_to_json(report, Path(self.log_dir) / f"report_{model_idx}.json")
+                    save_to_json(
+                        report, Path(self.log_dir) / f"report_{model_idx}.json"
+                    )
 
         self.print_profile_summary()
         return merged_model

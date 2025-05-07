@@ -32,8 +32,7 @@ from fusion_bench.mixins import LightningFabricMixin
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.taskpool import BaseTaskPool
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
-from fusion_bench.utils import instantiate
-from fusion_bench.utils.parameters import count_parameters
+from fusion_bench.utils import count_parameters, instantiate
 
 if TYPE_CHECKING:
     from fusion_bench.models.surgery.surgerymodelwrapper import SurgeryModelWrapper

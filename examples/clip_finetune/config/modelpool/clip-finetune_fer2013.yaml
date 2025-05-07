@@ -1,17 +1,13 @@
 _target_: fusion_bench.modelpool.CLIPVisionModelPool
-
 base_model: openai/clip-vit-base-patch32
-
 models:
   _pretrained_:
     _target_: transformers.CLIPVisionModel.from_pretrained
     pretrained_model_name_or_path: ${...base_model}
-
 train_datasets:
   fer2013:
     _target_: fusion_bench.dataset.fer2013.load_fer2013
     split: train
-
 processor:
   _target_: transformers.CLIPProcessor.from_pretrained
   pretrained_model_name_or_path: ${..base_model}

@@ -9,10 +9,8 @@ defaults:
       - gtsrb
       - mnist
       - dtd
-
 _target_: fusion_bench.taskpool.CLIPVisionModelTaskPool
 _recursive_: false
-
 test_datasets: ???
 base_model: openai/clip-vit-base-patch16
 clip_model:

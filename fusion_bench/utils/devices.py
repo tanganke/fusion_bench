@@ -229,3 +229,17 @@ def cleanup_cuda():
     gc.collect()
     torch.cuda.empty_cache()
     torch.cuda.reset_peak_memory_stats()
+
+
+def print_memory_usage(print_fn=print):
+    """
+    Print the current GPU memory usage.
+
+    Returns:
+        str: A string containing the allocated and cached memory in MB.
+    """
+    allocated = torch.cuda.memory_allocated() / 1024**2  # 转换为 MB
+    cached = torch.cuda.memory_reserved() / 1024**2  # 转换为 MB
+    print_str = f"Allocated Memory: {allocated:.2f} MB\nCached Memory: {cached:.2f} MB"
+    print_fn(print_str)
+    return print_str

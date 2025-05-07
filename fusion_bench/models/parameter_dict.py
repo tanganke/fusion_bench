@@ -1,4 +1,4 @@
-from typing import List, Mapping
+from typing import List, Mapping, Optional, Tuple
 
 import torch
 from torch import nn
@@ -6,7 +6,13 @@ from torch import nn
 __all__ = "ParamterDictModel"
 
 
-def set_attr(obj, names: List[str], val, check_parent: bool = False):
+def _set_attr(
+    obj,
+    names: List[str],
+    val,
+    check_parent: bool = False,
+    parent_builder=nn.Module,
+):
     """
     Sets an attribute of an object recursively.
 
@@ -20,8 +26,14 @@ def set_attr(obj, names: List[str], val, check_parent: bool = False):
         setattr(obj, names[0], val)
     else:
         if check_parent and not hasattr(obj, names[0]):
-            setattr(obj, names[0], nn.Module())
-        set_attr(getattr(obj, names[0]), names[1:], val, check_parent=check_parent)
+            setattr(obj, names[0], parent_builder())
+        _set_attr(
+            getattr(obj, names[0]),
+            names[1:],
+            val,
+            check_parent=check_parent,
+            parent_builder=parent_builder,
+        )
 
 
 def has_attr(obj, names: List[str]):
@@ -49,17 +61,19 @@ class ParameterDictModel(nn.Module):
 
     def __init__(
         self,
-        parameters: Mapping[str, nn.Parameter],
+        parameters: Optional[Mapping[str, nn.Parameter]] = None,
     ):
         super().__init__()
-        for name, param in parameters.items():
-            assert isinstance(param, nn.Parameter), f"{name} is not a nn.Parameter"
-            set_attr(
-                self,
-                name.split("."),
-                param,
-                check_parent=True,
-            )
+        if parameters is not None:
+            for name, param in parameters.items():
+                assert isinstance(param, nn.Parameter), f"{name} is not a nn.Parameter"
+                _set_attr(
+                    self,
+                    name.split("."),
+                    param,
+                    check_parent=True,
+                    parent_builder=self.__class__,
+                )
 
     def __repr__(self):
         """
@@ -73,3 +87,30 @@ class ParameterDictModel(nn.Module):
             param_repr = f"{name}: {param.size()}"
             param_reprs.append(param_repr)
         return f"{self.__class__.__name__}({', '.join(param_reprs)})"
+
+    def __getitem__(self, key: str):
+        if not has_attr(self, key.split(".")):
+            raise KeyError(f"Key {key} not found in {self}")
+        key = key.split(".")
+        obj = self
+        for k in key:
+            obj = getattr(obj, k)
+        return obj
+
+    def __setitem__(self, key: str, value: nn.Parameter):
+        if not has_attr(self, key.split(".")):
+            _set_attr(self, key.split("."), value, check_parent=True)
+        else:
+            _set_attr(self, key.split("."), value, check_parent=False)
+
+    def __contains__(self, key: str):
+        return has_attr(self, key.split("."))
+
+    def keys(self):
+        return [name for name, _ in self.named_parameters()]
+
+    def items(self) -> List[Tuple[str, nn.Parameter]]:
+        return [(name, self[name]) for name in self.keys()]
+
+    def values(self) -> List[nn.Parameter]:
+        return [self[name] for name in self.keys()]

@@ -21,7 +21,6 @@ fast_dev_run: ${fast_dev_run}
 # the path for saving the merging weights
 save_merging_weights: 'merging_weights.pt'
 cache_dir: outputs
-
 # parameters of Surgery
 eval_iterations: 200
 surgery_steps: 1000

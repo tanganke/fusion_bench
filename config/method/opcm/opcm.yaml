@@ -1,5 +1,4 @@
 _target_: fusion_bench.method.opcm.opcm.OPCMForCLIP
-
 # shuffle the order of the models
 shuffle_order: true
 # the scaling factor for the SVD projection

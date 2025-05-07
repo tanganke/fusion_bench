@@ -6,4 +6,3 @@ auto_wrap_policy:
   _target_: fusion_bench.mixins.lightning_fabric.get_size_based_auto_wrap_policy
 activation_checkpointing_policy: ${.auto_wrap_policy}
 # limit_all_gathers: true
-

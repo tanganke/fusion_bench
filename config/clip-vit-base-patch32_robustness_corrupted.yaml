@@ -3,10 +3,9 @@ defaults:
   - fabric: auto
   # --- Model, Method, Task ---
   - modelpool: CLIPVisionModelPool/clip-vit-base-patch32_robustness_corrupted
-  - method: dummy
+  - method: dummy # change this to the method you want to use
   - taskpool: CLIPVisionModelTaskPool/clip-vit-base-patch32_robustness_corrupted
   - _self_
-
 _target_: fusion_bench.programs.FabricModelFusionProgram
 _recursive_: false
 fast_dev_run: false # Run a single batch of data to test the model or method
