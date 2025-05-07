@@ -103,6 +103,10 @@ We have implemented the following fusion methods:
 
 - [Simple Average](fusion_bench/method/simple_average.py)
   - architecture agnostic
+- [Weighted Average](fusion_bench/method/weighted_average)
+  - [architecture agnostic](fusion_bench/method/weighted_average/weighted_average.py)
+  - [LlaMa](fusion_bench/method/weighted_average/llama.py):
+    Add additional options, such as `backbone_only` which decides whether only merge the backbone parameters.
 - [Task Arithmetic](fusion_bench/method/task_arithmetic)
   - architecture agnostic
 - [Ties-Merging](fusion_bench/method/ties_merging)
