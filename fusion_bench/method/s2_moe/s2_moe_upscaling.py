@@ -21,8 +21,6 @@ from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.models.smile_moe.linear_from_module import (
     ExpertNotTrainedError,
     SmileCompressedLinear,
-    SmileGate,
-    SmileMoELinear,
 )
 from fusion_bench.models.smile_moe.utils import _is_all_zeros, svd
 from fusion_bench.models.utils import get_attr, set_attr
@@ -31,7 +29,7 @@ from fusion_bench.utils.parameters import print_parameters
 log = logging.getLogger(__name__)
 
 
-class SmileMoELinear(nn.Module):
+class S2MoELinear(nn.Module):
     @torch.no_grad()
     def __init__(
         self,
@@ -377,7 +375,7 @@ class S2MoEUpscalingAlgorithm(
         # module_orig = get_attr(pretrained_model_orig, name_list)
         experts = [get_attr(m, name_list) for m in finetuned_models]
         try:
-            moe_linear = SmileMoELinear(
+            moe_linear = S2MoELinear(
                 module,
                 experts,
                 gate_k=config.gate_k,
