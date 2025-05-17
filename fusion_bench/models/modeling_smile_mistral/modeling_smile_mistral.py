@@ -85,7 +85,7 @@ class SmileGate(nn.Module):
     in_features: int
     num_experts: int
     k: int
-    weight: Tensor
+    weight: nn.Parameter
 
     def __init__(
         self,
