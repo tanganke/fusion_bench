@@ -14,8 +14,8 @@ from torch import Tensor, nn
 from tqdm.auto import tqdm
 
 from fusion_bench.method import BaseAlgorithm
-from fusion_bench.method.simple_average import simple_average
 from fusion_bench.method.s2_moe.utils import TSVC_utils, TSVM_utils
+from fusion_bench.method.simple_average import simple_average
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.models.smile_moe.linear_from_module import (
@@ -313,6 +313,7 @@ class S2MoEUpscalingAlgorithm(
             if self.config.device == "cuda" and torch.cuda.is_available():
                 pretrained_model = pretrained_model.cuda()
                 finetuned_models = [m.cuda() for m in finetuned_models]
+
         # pretrained_model_orig = copy.deepcopy(pretrained_model)
         pretrained_model, orig_v = self.tsv_m(pretrained_model, finetuned_models)
 

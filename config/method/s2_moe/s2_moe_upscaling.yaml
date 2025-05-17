@@ -1,7 +1,7 @@
 _target_: fusion_bench.method.s2_moe.s2_moe_upscaling.S2MoEUpscalingAlgorithm
-# merge device on cuda can accelerate the SVD computation
+# the device where we put the models on, merge device on cuda can accelerate the SVD computation
 device: cpu
-# device to compute svd
+# the device to compute svd
 upscaling_accelerator: cuda
 full_matrices: true # set to false if you are sure k < rank
 gate_k: 1
