@@ -12,8 +12,8 @@ from tqdm.auto import tqdm
 from transformers import AutoConfig, AutoTokenizer, MistralForCausalLM
 from transformers.models.mistral.modeling_mistral import MistralDecoderLayer
 
-from fusion_bench.compat.method import ModelFusionAlgorithm
 from fusion_bench.compat.modelpool import to_modelpool
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.method.simple_average import simple_average
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
@@ -25,6 +25,10 @@ from fusion_bench.models.modeling_smile_mistral.modeling_smile_mistral import (
     SmileLinear,
     SmileMistralDecoderLayer,
 )
+from fusion_bench.models.smile_moe.linear_from_hf_config import (
+    ExpertNotTrainedError,
+    upscale_to_smile_linear,
+)
 from fusion_bench.models.smile_moe.utils import _is_all_zeros
 from fusion_bench.models.utils import get_attr, set_attr
 from fusion_bench.utils.dtype import parse_dtype
@@ -34,133 +38,12 @@ from fusion_bench.utils.state_dict_arithmetic import state_dict_sub
 log = logging.getLogger(__name__)
 
 
-class ExpertNotTrainedError(Exception):
-    pass
-
-
-def _svd(w: Tensor, full_matrices=False) -> Tuple[Tensor, Tensor, Tensor]:
-    """
-    Perform Singular Value Decomposition (SVD) on a tensor.
-
-    Args:
-        w (Tensor): The input tensor.
-        full_matrices (bool, optional): Whether to compute the full-sized U and V matrices. Defaults to False.
-
-    Returns:
-        Tuple[Tensor, Tensor, Tensor]: The U, S, and V matrices from SVD.
-    """
-    dtype = w.dtype
-    if w.dtype != torch.float32 or w.dtype != torch.float64:
-        w = w.float()
-
-    u, s, vh = torch.linalg.svd(
-        w,
-        full_matrices=full_matrices,
-        # driver="gesvd" if w.is_cuda else None
-    )
-    v = vh.T
-
-    u = u.to(dtype=dtype)
-    s = s.to(dtype=dtype)
-    v = v.to(dtype=dtype)
-    return u, s, v
-
-
-def svd(
-    w: Tensor, full_matrices=True, accelerator=None
-) -> Tuple[Tensor, Tensor, Tensor]:
-    """
-    Perform SVD on a tensor with optional acceleration.
-
-    Args:
-        w (Tensor): The input tensor.
-        full_matrices (bool, optional): Whether to compute the full-sized U and V matrices. Defaults to True.
-        accelerator (optional): The device to perform the computation on. Defaults to None.
-
-    Returns:
-        Tuple[Tensor, Tensor, Tensor]: The U, S, and V matrices from SVD.
-    """
-    if accelerator is None:
-        return _svd(w, full_matrices=full_matrices)
-    original_device = w.device
-    w = w.to(accelerator)
-    u, s, v = _svd(w)
-    return u, s, v
-
-
-@torch.no_grad()
-def upscale_to_smile_linear(
-    base: nn.Linear, experts: List[nn.Linear], target: SmileLinear, accelerator=None
-):
-    """
-    Upscale a base linear layer to a SmileLinear layer using expert models.
-
-    Args:
-        base (nn.Linear): The base linear layer.
-        experts (List[nn.Linear]): A list of expert linear layers.
-        target (SmileLinear): The target SmileLinear layer.
-        accelerator (optional): The device to perform the computation on. Defaults to None.
-
-    Returns:
-        SmileLinear: The upscaled SmileLinear layer.
-    """
-    w = base.weight
-    w_ft_list = [e.weight for e in experts]
-    dw_list = [w_ft - w for w_ft in w_ft_list]
-
-    if _is_all_zeros(dw_list):
-        raise ExpertNotTrainedError("Expert models are not trained")
-
-    rank_of_router = target.rank_of_router
-    rank_of_expert = target.rank_of_expert
-    num_local_experts = target.num_local_experts
-    svd_list = [svd(dw, accelerator=accelerator) for dw in dw_list]
-
-    # gate
-    gate_weight = []
-    for u, s, v in svd_list:
-        gate_weight.append(v[:, :rank_of_router].T)
-    gate_weight = (
-        torch.stack(gate_weight, dim=0)
-        .reshape(num_local_experts * rank_of_router, -1)
-        .contiguous()
-    )
-
-    target.gate.load_state_dict({"weight": gate_weight})
-
-    # shared linear
-    target.shared_linear.load_state_dict(base.state_dict())
-
-    # experts
-    if rank_of_expert > 0:
-        for expert_idx, target_expert in enumerate(target.experts):
-            u, s, v = svd_list[expert_idx]
-            u = u[:, :rank_of_expert]
-            s = s[:rank_of_expert]
-            v = v[:, :rank_of_expert]
-            state_dict = {"u": u, "svh": (s * v).T}
-            if experts[expert_idx].bias is not None:
-                state_dict["bias"] = experts[expert_idx].bias.data
-            target_expert.load_state_dict(state_dict)
-    else:
-        for expert_idx, target_expert in enumerate(target.experts):
-            target_expert.load_state_dict(
-                state_dict_sub(experts[expert_idx].state_dict(), base.state_dict())
-            )
-
-    return target
-
-
-class SmileMistralUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
+class SmileMistralUpscalingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
     R"""
     SmileMistralUpscalingAlgorithm is a model fusion algorithm designed to upscale
     a pretrained Mistral model using a set of fine-tuned expert models. The algorithm
     leverages Singular Value Decomposition (SVD) to merge the weights of the pretrained
     model and the expert models into a new upscaled model.
-
-    Attributes:
-        modelpool (BaseModelPool): The pool of models to be used for upscaling.
-        config (dict): Configuration parameters for the upscaling process.
 
     Methods:
         run(modelpool: BaseModelPool) -> SmileMistralForCausalLM:
@@ -169,6 +52,37 @@ class SmileMistralUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
         merge(pretrained_model: MistralForCausalLM, finetuned_models: List[MistralForCausalLM]) -> SmileMistralForCausalLM:
             Merges the pretrained model with the fine-tuned models to create an upscaled model.
     """
+
+    _config_mapping = BaseAlgorithm._config_mapping | {
+        "device": "device",
+        "accelerator": "accelerator",
+        "model_path": "model_path",
+        "model_dtype": "model_dtype",
+        "num_experts_per_tok": "num_experts_per_tok",
+        "rank_of_router": "rank_of_router",
+        "rank_of_expert": "rank_of_expert",
+    }
+
+    def __init__(
+        self,
+        device,
+        accelerator,
+        model_path,
+        model_dtype,
+        num_experts_per_tok,
+        rank_of_router,
+        rank_of_expert,
+        **kwargs,
+    ):
+        self.device = device
+        self.accelerator = accelerator
+        self.model_path = model_path
+        self.model_dtype = model_dtype
+        # SmileMoE parameters, except `num_local_experts` which is set later according to the number of finetuned models
+        self.num_experts_per_tok = num_experts_per_tok
+        self.rank_of_router = rank_of_router
+        self.rank_of_expert = rank_of_expert
+        super().__init__(**kwargs)
 
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool) -> SmileMistralForCausalLM:
@@ -184,15 +98,19 @@ class SmileMistralUpscalingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMixin):
         self.modelpool = modelpool = to_modelpool(modelpool)
         config = self.config
 
-        print(config)
-        if config.model_path is not None and os.path.exists(config.model_path):
+        # load model from path if provided and return directly
+        if config.model_path is not None:
+            if not os.path.exists(config.model_path):
+                raise FileNotFoundError(
+                    f"Try to load model from {config.model_path} but it does not exist"
+                )
             log.info(f"Loading model from {config.model_path}")
             model = torch.load(config.model_path)
             print_parameters(model)
             return model
 
         with self.profile("load pretrained model"):
-            pretrained_model = modelpool.load_model("_pretrained_")
+            pretrained_model = modelpool.load_pretrained_model()
         with self.profile("load fine-tuned model"):
             finetuned_models = [
                 m for m in tqdm(modelpool.models(), total=len(modelpool.model_names))
