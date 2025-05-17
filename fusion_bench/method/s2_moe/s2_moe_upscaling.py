@@ -25,6 +25,7 @@ from fusion_bench.models.smile_moe.linear_from_module import (
 from fusion_bench.models.smile_moe.utils import _is_all_zeros, svd
 from fusion_bench.models.utils import get_attr, set_attr
 from fusion_bench.utils.parameters import print_parameters
+from fusion_bench.models.s2_moe.sparse_linear import SparseLinear
 
 log = logging.getLogger(__name__)
 
@@ -109,6 +110,7 @@ class S2MoELinear(nn.Module):
             m.weight.data = w_diff
         if k > 0:
             experts = [
+                #! use SparseLinear instead of SmileCompressedLinear
                 SmileCompressedLinear(m, k, svd_cache=svd_cache)
                 for m, svd_cache in zip(finetuned_models, svd_cache_list)
             ]
