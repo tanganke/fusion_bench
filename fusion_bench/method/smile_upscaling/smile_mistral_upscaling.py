@@ -101,11 +101,7 @@ class SmileMistralUpscalingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
         config = self.config
 
         # load model from path if provided and return directly
-        if config.model_path is not None:
-            if not os.path.exists(config.model_path):
-                raise FileNotFoundError(
-                    f"Try to load model from {config.model_path} but it does not exist"
-                )
+        if config.model_path is not None and os.path.exists(config.model_path):
             log.info(f"Loading model from {config.model_path}")
             model = AutoModelForCausalLM.from_pretrained(config.model_path)
             print_parameters(model)
