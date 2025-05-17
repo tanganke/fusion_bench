@@ -1,0 +1,17 @@
+_target_: fusion_bench.modelpool.CausalLMPool
+_recursive_: false
+models:
+  _pretrained_:
+    _target_: transformers.AutoModelForCausalLM.from_pretrained
+    pretrained_model_name_or_path: Qwen/Qwen2.5-1.5B
+  expert_1:
+    _target_: transformers.AutoModelForCausalLM.from_pretrained
+    pretrained_model_name_or_path: Qwen/Qwen2.5-Math-1.5B
+  expert_2:
+    _target_: transformers.AutoModelForCausalLM.from_pretrained
+    pretrained_model_name_or_path: deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B
+model_kwargs:
+  torch_dtype: bfloat16
+tokenizer:
+  _target_: transformers.AutoTokenizer.from_pretrained
+  pretrained_model_name_or_path: Qwen/Qwen2.5-1.5B
