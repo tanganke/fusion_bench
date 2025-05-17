@@ -247,3 +247,7 @@ If you find this benchmark useful, please consider citing our work:
   keywords = {Computer Science - Artificial Intelligence,Computer Science - Computation and Language,Computer Science - Machine Learning}
 }
 ```
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=tanganke/fusion_bench&type=Date)](https://www.star-history.com/#tanganke/fusion_bench&Date)
