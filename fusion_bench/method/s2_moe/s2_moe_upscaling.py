@@ -15,7 +15,7 @@ from tqdm.auto import tqdm
 
 from fusion_bench.method import BaseAlgorithm
 from fusion_bench.method.simple_average import simple_average
-from fusion_bench.method.task_singular_vector.utils import TSVC_utils, TSVM_utils
+from fusion_bench.method.s2_moe.utils import TSVC_utils, TSVM_utils
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.models.smile_moe.linear_from_module import (
