@@ -9,7 +9,12 @@ import torch.nn.functional as F
 from accelerate import init_empty_weights
 from torch import Tensor, nn
 from tqdm.auto import tqdm
-from transformers import AutoConfig, AutoTokenizer, MistralForCausalLM
+from transformers import (
+    AutoConfig,
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    MistralForCausalLM,
+)
 from transformers.models.mistral.modeling_mistral import MistralDecoderLayer
 
 from fusion_bench.compat.modelpool import to_modelpool
@@ -29,11 +34,8 @@ from fusion_bench.models.smile_moe.linear_from_hf_config import (
     ExpertNotTrainedError,
     upscale_to_smile_linear,
 )
-from fusion_bench.models.smile_moe.utils import _is_all_zeros
-from fusion_bench.models.utils import get_attr, set_attr
 from fusion_bench.utils.dtype import parse_dtype
 from fusion_bench.utils.parameters import print_parameters
-from fusion_bench.utils.state_dict_arithmetic import state_dict_sub
 
 log = logging.getLogger(__name__)
 
@@ -105,7 +107,7 @@ class SmileMistralUpscalingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
                     f"Try to load model from {config.model_path} but it does not exist"
                 )
             log.info(f"Loading model from {config.model_path}")
-            model = torch.load(config.model_path)
+            model = AutoModelForCausalLM.from_pretrained(config.model_path)
             print_parameters(model)
             return model
 

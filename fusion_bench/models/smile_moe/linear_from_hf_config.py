@@ -138,6 +138,16 @@ class SmileLinearExpert(nn.Module):
         self.in_features = in_features
         self.out_features = out_features
         self.k = k
+        if k > 0:
+            # check k < in_features and out_features
+            if k > in_features:
+                raise ValueError(
+                    f"k ({k}) must not be greater than in_features ({in_features})"
+                )
+            if k > out_features:
+                raise ValueError(
+                    f"k ({k}) must not be greater than out_features ({out_features})"
+                )
 
         self.u = nn.Parameter(torch.empty(out_features, k, **factory_kwargs))
         self.svh = nn.Parameter(torch.empty(k, in_features, **factory_kwargs))
