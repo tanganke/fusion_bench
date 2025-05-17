@@ -1,6 +1,6 @@
 <div align='center'>
 
-# FusionBench: A Comprehensive Benchmark/ToolKit of Deep Model Fusion
+# FusionBench: A Comprehensive Benchmark/Toolkit of Deep Model Fusion
 
 [![arXiv](https://img.shields.io/badge/arXiv-2406.03280-b31b1b.svg)](http://arxiv.org/abs/2406.03280)
 [![GitHub License](https://img.shields.io/github/license/tanganke/fusion_bench)](https://github.com/tanganke/fusion_bench/blob/main/LICENSE)
@@ -73,13 +73,13 @@ Merging multiple expert models offers a promising approach for performing multi-
 
 ## Installation
 
-install from PyPI:
+Install from PyPI:
 
 ```bash
 pip install fusion-bench
 ```
 
-or install the latest version in development from github repository
+or install the latest version in development from the GitHub repository
 
 ```bash
 git clone https://github.com/tanganke/fusion_bench.git
@@ -105,7 +105,7 @@ We have implemented the following fusion methods:
   - architecture agnostic
 - [Weighted Average](fusion_bench/method/weighted_average)
   - [architecture agnostic](fusion_bench/method/weighted_average/weighted_average.py)
-  - [LlaMa](fusion_bench/method/weighted_average/llama.py):
+  - [Llama/Mistral](fusion_bench/method/weighted_average/llama.py):
     Add additional options, such as `backbone_only` which decides whether only merge the backbone parameters.
 - [Task Arithmetic](fusion_bench/method/task_arithmetic)
   - architecture agnostic

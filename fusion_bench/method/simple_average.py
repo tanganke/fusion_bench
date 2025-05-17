@@ -39,11 +39,11 @@ def simple_average(
         >>> import torch.nn as nn
         >>> model1 = nn.Linear(10, 10)
         >>> model2 = nn.Linear(10, 10)
-        >>> averaged_model = simple_averageing([model1, model2])
+        >>> averaged_model = simple_average([model1, model2])
 
         >>> state_dict1 = model1.state_dict()
         >>> state_dict2 = model2.state_dict()
-        >>> averaged_state_dict = simple_averageing([state_dict1, state_dict2])
+        >>> averaged_state_dict = simple_average([state_dict1, state_dict2])
     """
     if isinstance(modules[0], nn.Module):
         if base_module is None:
@@ -82,7 +82,7 @@ class SimpleAverageAlgorithm(
             f"Fusing models using simple average on {len(modelpool.model_names)} models."
             f"models: {modelpool.model_names}"
         )
-        sd: Optional[StateDictType] = None
+        state_dict: Optional[StateDictType] = None
         forward_model = None
         merged_model_names = []
 
@@ -92,18 +92,18 @@ class SimpleAverageAlgorithm(
                 merged_model_names.append(model_name)
                 print(f"load model of type: {type(model).__name__}")
             with self.profile("merge weights"):
-                if sd is None:
+                if state_dict is None:
                     # Initialize the state dictionary with the first model's state dictionary
-                    sd = model.state_dict(keep_vars=True)
+                    state_dict = model.state_dict(keep_vars=True)
                     forward_model = model
                 else:
                     # Add the current model's state dictionary to the accumulated state dictionary
-                    sd = state_dict_add(sd, model.state_dict(keep_vars=True))
+                    state_dict = state_dict_add(state_dict, model.state_dict(keep_vars=True))
         with self.profile("merge weights"):
             # Divide the accumulated state dictionary by the number of models to get the average
-            sd = state_dict_div(sd, len(modelpool.model_names))
+            state_dict = state_dict_div(state_dict, len(modelpool.model_names))
 
-        forward_model.load_state_dict(sd)
+        forward_model.load_state_dict(state_dict)
         # print profile report and log the merged models
         self.print_profile_summary()
         log.info(f"merged {len(merged_model_names)} models:")
