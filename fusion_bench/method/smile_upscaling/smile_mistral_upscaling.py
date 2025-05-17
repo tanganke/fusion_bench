@@ -25,6 +25,7 @@ from fusion_bench.models.modeling_smile_mistral.modeling_smile_mistral import (
     SmileLinear,
     SmileMistralDecoderLayer,
 )
+from fusion_bench.models.smile_moe.utils import _is_all_zeros
 from fusion_bench.models.utils import get_attr, set_attr
 from fusion_bench.utils.dtype import parse_dtype
 from fusion_bench.utils.parameters import print_parameters
@@ -35,22 +36,6 @@ log = logging.getLogger(__name__)
 
 class ExpertNotTrainedError(Exception):
     pass
-
-
-def _is_all_zeros(tensor: Tensor | List[Tensor]) -> bool:
-    """
-    Check if a tensor or a list of tensors are all zeros.
-
-    Args:
-        tensor (Tensor | List[Tensor]): The tensor or list of tensors to check.
-
-    Returns:
-        bool: True if all elements are zeros, False otherwise.
-    """
-    if isinstance(tensor, Tensor):
-        return torch.allclose(tensor, torch.zeros_like(tensor))
-    else:
-        return all(_is_all_zeros(t) for t in tensor)
 
 
 def _svd(w: Tensor, full_matrices=False) -> Tuple[Tensor, Tensor, Tensor]:
@@ -64,8 +49,8 @@ def _svd(w: Tensor, full_matrices=False) -> Tuple[Tensor, Tensor, Tensor]:
     Returns:
         Tuple[Tensor, Tensor, Tensor]: The U, S, and V matrices from SVD.
     """
-    device = w.device
-    if w.device != torch.float32 or w.device != torch.float64:
+    dtype = w.dtype
+    if w.dtype != torch.float32 or w.dtype != torch.float64:
         w = w.float()
 
     u, s, vh = torch.linalg.svd(
@@ -75,9 +60,9 @@ def _svd(w: Tensor, full_matrices=False) -> Tuple[Tensor, Tensor, Tensor]:
     )
     v = vh.T
 
-    u = u.to(device)
-    s = s.to(device)
-    v = v.to(device)
+    u = u.to(dtype=dtype)
+    s = s.to(dtype=dtype)
+    v = v.to(dtype=dtype)
     return u, s, v
 
 
