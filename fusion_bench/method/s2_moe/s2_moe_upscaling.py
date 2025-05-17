@@ -502,7 +502,7 @@ class S2MoEUpscalingAlgorithm(
                     device = self.upscaling_accelerator or diff.device
                     diff = diff.to(device)
                     # 使用TSVC_utils中的函数计算SVD并压缩
-                    _, u, s, v, U, S, V = compute_svd_and_compress(
+                    _, u, s, v, U, S, V = TSVC_utils.compute_svd_and_compress(
                         None, diff, sv_reduction
                     )
                     # 将结果存储在列表中
