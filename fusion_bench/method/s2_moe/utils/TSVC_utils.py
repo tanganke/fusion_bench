@@ -18,13 +18,21 @@ def compute_svd_and_compress(key, matrix, sv_reduction):
             - v (torch.Tensor): The right singular vectors of the reduced SVD.
     """
     u, s, v = torch.linalg.svd(matrix, full_matrices=False)
-    #print("svd", key, matrix.shape, u.shape, s.shape, v.shape)
+    # print("svd", key, matrix.shape, u.shape, s.shape, v.shape)
     reduced_index_s = int(s.shape[0] * sv_reduction)
-    #reduced_index_s = 32
-    return key, u[:, :reduced_index_s], s[:reduced_index_s], v.T[:, :reduced_index_s], u, s, v.T
+    # reduced_index_s = 32
+    return (
+        key,
+        u[:, :reduced_index_s],
+        s[:reduced_index_s],
+        v.T[:, :reduced_index_s],
+        u,
+        s,
+        v.T,
+    )
 
 
-def compress_tv(task_vectors, sv_reduction): 
+def compress_tv(task_vectors, sv_reduction):
     """
     Compress task vectors using Singular Value Decomposition (SVD).
 

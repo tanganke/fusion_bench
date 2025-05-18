@@ -18,15 +18,11 @@ from fusion_bench.method.s2_moe.utils import TSVC_utils, TSVM_utils
 from fusion_bench.method.simple_average import simple_average
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
-from fusion_bench.models.smile_moe.linear_from_module import (
-    ExpertNotTrainedError,
-    SmileCompressedLinear,
-)
-from fusion_bench.models.s2_moe import sparse_linear
+from fusion_bench.models.s2_moe.sparse_linear import SparseLinear
+from fusion_bench.models.smile_moe.linear_from_module import ExpertNotTrainedError
 from fusion_bench.models.smile_moe.utils import _is_all_zeros, svd
 from fusion_bench.models.utils import get_attr, set_attr
 from fusion_bench.utils.parameters import print_parameters
-from fusion_bench.models.s2_moe.sparse_linear import SparseLinear
 
 log = logging.getLogger(__name__)
 
@@ -110,11 +106,7 @@ class S2MoELinear(nn.Module):
         for m, w_diff in zip(finetuned_models, w_diff_list):
             m.weight.data = w_diff
         if k > 0:
-            experts = [
-                #! use SparseLinear instead of SmileCompressedLinear
-                SparseLinear(m, sparsity_ratio=0.5)
-                for m in finetuned_models
-            ]
+            experts = [SparseLinear(m, sparsity_ratio=0.5) for m in finetuned_models]
         else:
             # 如果k未设置（<0），我们使用完整的微调模型
             experts = finetuned_models
@@ -399,7 +391,12 @@ class S2MoEUpscalingAlgorithm(
         for m in finetuned_models:
             set_attr(m, name_list, None)
 
-    def _average_experts(self, pretarined_model, finetuned_models, name: str):
+    def _average_experts(
+        self,
+        pretarined_model: nn.Module,
+        finetuned_models: List[nn.Module],
+        name: str,
+    ):
         """
         Average the experts for a given layer.
 
@@ -448,7 +445,7 @@ class S2MoEUpscalingAlgorithm(
                 # if the module is a leaf module, we perform a parameter average
                 self._average_experts(pretrained_model, finetuned_models, name)
 
-    def tsv_m(self, pretrained_model, finetuned_models):
+    def tsv_m(self, pretrained_model: nn.Module, finetuned_models: List[nn.Module]):
         """
         使用任务奇异向量合并(Task Singular Vector Merge)方法创建合并模型
 
