@@ -106,6 +106,22 @@ class S2MoELinear(nn.Module):
         for m, w_diff in zip(finetuned_models, w_diff_list):
             m.weight.data = w_diff
         if k > 0:
+            # TODO: 改成用 config 初始化 SparseLinear 或者 SparseLinear 加一个 static method `SparseLinear.from_module(m: nn.Linear, sparsity_ratio: float) -> SparseLinear` 来初始化
+            if False:  # Example
+                experts = []
+                for m in finetuned_models:
+                    experts.append(
+                        SparseLinear(
+                            in_features=m.in_features,
+                            out_features=m.out_features,
+                            sparsity_ratio=0.5,
+                            bias=True if m.bias is not None else False,
+                        )
+                    )
+                    experts[-1].weight.data = m.weight.data
+                    if m.bias is not None:
+                        experts[-1].bias.data = m.bias.data
+                    experts[-1].apply_pruning_()
             experts = [SparseLinear(m, sparsity_ratio=0.5) for m in finetuned_models]
         else:
             # 如果k未设置（<0），我们使用完整的微调模型
