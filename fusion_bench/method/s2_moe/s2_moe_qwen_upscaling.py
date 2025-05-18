@@ -18,15 +18,11 @@ from fusion_bench.method.s2_moe.utils import TSVC_utils, TSVM_utils
 from fusion_bench.method.simple_average import simple_average
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
-from fusion_bench.models.smile_moe.linear_from_module import (
-    ExpertNotTrainedError,
-    SmileCompressedLinear,
-)
-from fusion_bench.models.s2_moe import sparse_linear
+from fusion_bench.models.s2_moe.sparse_linear import SparseLinear
+from fusion_bench.models.smile_moe.linear_from_module import ExpertNotTrainedError
 from fusion_bench.models.smile_moe.utils import _is_all_zeros, svd
 from fusion_bench.models.utils import get_attr, set_attr
 from fusion_bench.utils.parameters import print_parameters
-from fusion_bench.models.s2_moe.sparse_linear import SparseLinear
 
 log = logging.getLogger(__name__)
 
@@ -110,11 +106,7 @@ class S2MoELinear(nn.Module):
         for m, w_diff in zip(finetuned_models, w_diff_list):
             m.weight.data = w_diff
         if k > 0:
-            experts = [
-                #! use SparseLinear instead of SmileCompressedLinear
-                SparseLinear(m, sparsity_ratio=0.5)
-                for m in finetuned_models
-            ]
+            experts = [SparseLinear(m, sparsity_ratio=0.5) for m in finetuned_models]
         else:
             # 如果k未设置（<0），我们使用完整的微调模型
             experts = finetuned_models
