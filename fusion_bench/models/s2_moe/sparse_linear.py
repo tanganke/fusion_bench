@@ -26,17 +26,15 @@ class SparseLinear(nn.Linear):
     >>> print(output)
     """
 
-    __constants__ = ["in_features", "out_features", "sparsity_ratio"]
+    # __constants__ = ["in_features", "out_features", "sparsity_ratio"]
 
-    in_features: int
-    out_features: int
-    sparsity_ratio: float
+    # in_features: int
+    # out_features: int
+    # sparsity_ratio: float
 
     def __init__(
         self,
-        in_features,
-        out_features,
-        bias=True,
+        model: nn.Linear,
         sparsity_ratio=0.5,
         device=None,
         dtype=None,
@@ -49,35 +47,26 @@ class SparseLinear(nn.Linear):
             bias (bool): If set to False, the layer will not learn an additive bias
         """
         factory_kwargs = {"device": device, "dtype": dtype}
-        super().__init__()
-        self.in_features = in_features
-        self.out_features = out_features
+        super().__init__(model.in_features, model.out_features, bias=model.bias is not None, **factory_kwargs)
+        self.in_features = model.in_features
+        self.out_features = model.out_features
         self.sparsity_ratio = sparsity_ratio
-        self.weight = nn.Parameter(
-            torch.empty((out_features, in_features), **factory_kwargs)
-        )
-        if bias:
-            self.bias = nn.Parameter(torch.empty(out_features, **factory_kwargs))
+
+        
+        self.weight = nn.Parameter(model.weight.clone())
+        if model.bias is not None:
+            self.bias = nn.Parameter(model.bias.clone())
         else:
             self.register_parameter("bias", None)
-        self.reset_parameters()
+        self.apply_pruning_()
 
-    def reset_parameters(self) -> None:
-        # Setting a=sqrt(5) in kaiming_uniform is the same as initializing with
-        # uniform(-1/sqrt(in_features), 1/sqrt(in_features)). For details, see
-        # https://github.com/pytorch/pytorch/issues/57109
-        init.kaiming_uniform_(self.weight, a=math.sqrt(5))
-        if self.bias is not None:
-            fan_in, _ = init._calculate_fan_in_and_fan_out(self.weight)
-            bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
-            init.uniform_(self.bias, -bound, bound)
 
     @torch.no_grad()
     def apply_pruning_(self):
         """
         Apply unstructured pruning to the weight matrix and convert the weight matrix to a sparse matrix
         """
-        unstructured_magnitude_prune_(
+        self.weight = unstructured_magnitude_prune_(
             self.weight,
             torch.abs,
             sparsity_ratio=self.sparsity_ratio,
