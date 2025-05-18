@@ -97,6 +97,11 @@ _import_structure = {
         "SmileUpscalingAlgorithm",
         "SingularProjectionMergingAlgorithm",
     ],
+    "s2_meo": [
+        "S2MoEMergingAlgorithm",
+        "S2MoEUpscalingAlgorithm",
+        "S2MoEWeightEnsemblingMoEAlgorithm",
+    ],
     # pruning methods
     "pruning": [
         "MagnitudeDiffPruningAlgorithm",

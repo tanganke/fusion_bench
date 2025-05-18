@@ -1,0 +1,1 @@
+from .s2_moe_upscaling import S2MoEUpscalingAlgorithm
