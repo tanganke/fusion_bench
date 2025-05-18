@@ -38,7 +38,6 @@ class S2MoELinear(nn.Module):
         top_k: int = 2,
         threshold: float = 0.1,
         full_matrices=True,
-        orig_v=None,
         upscaling_accelerator=None,
         routing_use_diff=True,
     ):
@@ -80,13 +79,11 @@ class S2MoELinear(nn.Module):
                 svd(w, full_matrices=full_matrices, accelerator=upscaling_accelerator)
                 for w in w_diff_list
             ]  # SVD缓存列表，避免重复计算
-        self.orig_v = orig_v
         # 构建门控网络
         if routing_use_diff:
             self.gate = ProjectionBasedGate(
                 input_features=self.in_features,
                 w_diff_list=w_diff_list,
-                orig_v=orig_v,
                 k=gate_k,
                 threshold=threshold,
                 top_k=top_k,
@@ -113,7 +110,6 @@ class S2MoELinear(nn.Module):
             ]
             for m, expert in zip(finetuned_models, experts):
                 expert.set_parameters(m)
-                expert.SparseLinear()
         else:
             # 如果k未设置（<0），我们使用完整的微调模型
             experts = finetuned_models
@@ -210,7 +206,7 @@ class S2MoELinear(nn.Module):
         )
 
 
-class S2MoEUpscalingAlgorithm(
+class S2MoEUpscalingSubMergedAlgorithm(
     SimpleProfilerMixin,
     BaseAlgorithm,
 ):
@@ -317,10 +313,10 @@ class S2MoEUpscalingAlgorithm(
                 finetuned_models = [m.cuda() for m in finetuned_models]
 
         # pretrained_model_orig = copy.deepcopy(pretrained_model)
-        pretrained_model, orig_v = self.tsv_m(pretrained_model, finetuned_models)
+        pretrained_model = self.tsv_m(pretrained_model, finetuned_models)
 
         with self.profile("merge model"):
-            model = self.merge(pretrained_model, finetuned_models, orig_v)
+            model = self.merge(pretrained_model, finetuned_models)
 
         self.print_profile_summary()
         if self.config.model_path is not None:
@@ -334,7 +330,6 @@ class S2MoEUpscalingAlgorithm(
         self,
         pretrained_model: nn.Module,
         finetuned_models: List[nn.Module],
-        orig_v,
         in_place: bool = True,
     ):
         """
@@ -353,14 +348,13 @@ class S2MoEUpscalingAlgorithm(
         else:
             model = deepcopy(pretrained_model)
 
-        self._upscale_submodules(model, finetuned_models, orig_v)
+        self._upscale_submodules(model, finetuned_models)
         return model
 
     def _upscale_linear_layer(
         self,
         pretrained_model,
         finetuned_models,
-        orig_v,
         name: str,
     ):
         """
@@ -387,7 +381,6 @@ class S2MoEUpscalingAlgorithm(
                 threshold=config.threshold,  # 新增参数
                 routing_use_diff=self.routing_use_diff,
                 full_matrices=self.full_matrices,
-                orig_v=orig_v,
                 upscaling_accelerator=self.upscaling_accelerator,
             )
         except ExpertNotTrainedError:
@@ -421,7 +414,6 @@ class S2MoEUpscalingAlgorithm(
         self,
         pretrained_model: nn.Module,
         finetuned_models: List[nn.Module],
-        orig_v,
         tqdm_desc: str = "Upscaling Linear Modules",
     ):
         """
@@ -443,7 +435,6 @@ class S2MoEUpscalingAlgorithm(
             if isinstance(module, self._linear_layer_cls):
                 self._upscale_linear_layer(
                     pretrained_model=pretrained_model,
-                    orig_v=orig_v[i],
                     finetuned_models=finetuned_models,
                     name=name,
                 )
@@ -484,7 +475,6 @@ class S2MoEUpscalingAlgorithm(
             self._average_experts(pretrained_model, finetuned_models, name)
 
         # 使用tqdm显示进度
-        orig_v = []
         for name, module in tqdm(linear_modules, desc="使用TSV合并线性层"):
             name_list = name.split(".")
             pretrained_module = get_attr(pretrained_model, name_list)
@@ -519,8 +509,6 @@ class S2MoEUpscalingAlgorithm(
                 all_u = [result[0] for result in svd_results]
                 all_s = [result[1] for result in svd_results]
                 all_v = [result[2] for result in svd_results]
-                # orig_v.append(all_u)
-                orig_v.append(all_v)
                 # svd_results = [all_u,all_s,all_v]
                 # 创建一个与第一个专家的U矩阵形状相同的全零张量
                 concat_u = torch.zeros_like(U, device=all_u[0].device)
@@ -589,7 +577,7 @@ class S2MoEUpscalingAlgorithm(
 
             for name, _ in tqdm(non_linear_modules, desc="处理非线性层"):
                 self._average_experts(pretrained_model, finetuned_models, name)
-        return pretrained_model, orig_v
+        return pretrained_model
 
 
 class ProjectionBasedGate(nn.Module):
@@ -597,7 +585,6 @@ class ProjectionBasedGate(nn.Module):
         self,
         input_features: int,
         w_diff_list: List[Tensor],
-        orig_v,
         k: int,
         threshold: float = 0.1,
         top_k: int = 2,
@@ -621,25 +608,16 @@ class ProjectionBasedGate(nn.Module):
         # self.threshold = threshold
         self.threshold = 1 / self.num_experts
         self.top_k = min(top_k, self.num_experts)
-        # # 构建任务子空间
-        # self.task_subspaces_V = nn.ParameterList()
-        # self.task_subspaces_U = nn.ParameterList()
-        # self.task_subspaces_S = nn.ParameterList()
+        
+        self.orig_v = []
+        
 
-        self.orig_v = orig_v
-        # for i, w_diff in enumerate(w_diff_orig):
-        #     u, s, v = svd(w_diff.T, accelerator=upscaling_accelerator)
-        #     split_k = int(1/self.num_experts * s.shape[0])
-
-        # for i, w_diff in enumerate(w_diff_list):
-        #     u, s, v = svd(w_diff, accelerator=upscaling_accelerator)
-
-        #     # 截断到秩k
-        #     #v_truncated = v[:, :k]
-        #     # 存储右奇异向量作为子空间的基
-        #     self.task_subspaces_U.append(nn.Parameter(u, requires_grad=False))
-        #     self.task_subspaces_S.append(nn.Parameter(s, requires_grad=False))
-        #     self.task_subspaces_V.append(nn.Parameter(v, requires_grad=False))
+        for i, w_diff in enumerate(w_diff_list):
+            _, _, vh = svd(w_diff, accelerator=upscaling_accelerator)
+            split_k = int(1/self.num_experts * vh.shape[1])
+            self.orig_v.append(vh[:, :16])
+        
+        
 
     def forward(self, x: Tensor, x_l: Tensor):
         """
@@ -659,24 +637,19 @@ class ProjectionBasedGate(nn.Module):
         residuals = []
 
         for i in range(self.num_experts):
-            # U = self.task_subspaces_U[i]
-            # S = self.task_subspaces_S[i]
-            # V = self.task_subspaces_V[i]
-
             v_0 = self.orig_v[i]
-
             # 判断x_l的维度为3则进行视图变换
-            if len(x.shape) == 3:
+            if len(x_l.shape) == 3:
                 # 将三维张量重塑为二维张量，合并前两个维度
-                x = x.view(x.shape[0] * x.shape[1], -1)
+                x_l = x_l.view(x_l.shape[0] * x_l.shape[1], -1)
 
             projection = torch.matmul(
-                v_0, torch.matmul(v_0.T, x.T)
+                v_0, torch.matmul(v_0.T, x_l.T)
             ).T  # 768 96 96 768 768 6400  ——》 6400 768
             # 计算残差: r = ||x - proj_V(x)||_2
             # projection = torch.nn.functional.normalize(projection, p=2, dim=-1)
             # x_l = torch.nn.functional.normalize(x_l, p=2, dim=-1)
-            residual = torch.norm(x - projection, p=2, dim=-1)
+            residual = torch.norm(x_l - projection, p=2, dim=-1)
             residuals.append(residual)
         # 将残差堆叠为形状 [batch_size, num_experts] 的张量
         residuals = torch.stack(residuals, dim=1)

@@ -71,6 +71,8 @@ class SparseLinear(nn.Linear):
         self.weight.data = model.weight
         if model.bias is not None:
             self.bias.data = model.bias
+        else:
+            self.register_parameter("bias", None)
 
     @torch.no_grad()
     def apply_pruning_(self):
