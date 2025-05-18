@@ -56,8 +56,9 @@ class SparseLinear(nn.Linear):
         self.out_features = out_features
         self.sparsity_ratio = sparsity_ratio
 
-        
-        self.weight = nn.Parameter(torch.empty((out_features, in_features), **factory_kwargs))
+        self.weight = nn.Parameter(
+            torch.empty((out_features, in_features), **factory_kwargs)
+        )
         if bias is not None:
             self.bias = nn.Parameter(torch.empty(out_features, **factory_kwargs))
         else:
@@ -67,8 +68,9 @@ class SparseLinear(nn.Linear):
         """
         Set the weight and bias of the sparse linear layer
         """
-        self.weight = nn.Parameter(model.weight)
-        self.bias = nn.Parameter(model.bias)    
+        self.weight.data = model.weight
+        if model.bias is not None:
+            self.bias.data = model.bias
 
     @torch.no_grad()
     def apply_pruning_(self):
