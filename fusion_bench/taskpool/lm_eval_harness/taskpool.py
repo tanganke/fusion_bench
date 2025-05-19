@@ -74,7 +74,7 @@ class LMEvalHarnessTaskPool(BaseTaskPool, LightningFabricMixin):
         if self.log_samples:
             command_line_args.extend(["--log_samples"])
         for key, value in kwargs.items():
-            command_line_args.extend([f"--{key}", value])
+            command_line_args.extend([f"--{key}", str(value)])
 
         parser = setup_parser()
         check_argument_types(parser)
