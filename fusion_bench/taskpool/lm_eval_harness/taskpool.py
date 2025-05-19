@@ -54,14 +54,14 @@ class LMEvalHarnessTaskPool(BaseTaskPool, LightningFabricMixin):
             command_line_args.extend(["--tasks", self.tasks])
         if self.apply_chat_template:
             command_line_args.extend(
-                ["--apply_chat_template", self.apply_chat_template]
+                ["--apply_chat_template", str(self.apply_chat_template)]
             )
         if self.batch_size is not None:
-            command_line_args.extend(["--batch_size", self.batch_size])
+            command_line_args.extend(["--batch_size", str(self.batch_size)])
         if self.verbosity is not None:
-            command_line_args.extend(["--verbosity", self.verbosity])
+            command_line_args.extend(["--verbosity", str(self.verbosity)])
         if self.metadata is not None:
-            command_line_args.extend(["--metadata", self.metadata])
+            command_line_args.extend(["--metadata", str(self.metadata)])
         if self.output_path is None:
             command_line_args.extend(
                 [
