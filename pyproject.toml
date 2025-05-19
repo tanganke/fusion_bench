@@ -45,3 +45,6 @@ fusion_bench = ['../fusion_bench_config/**/*']
 
 [tool.isort]
 profile = "black"
+
+[project.optional-dependencies]
+lm-eval-harness = ["lm-eval"]

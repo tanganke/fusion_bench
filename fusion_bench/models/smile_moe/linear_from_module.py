@@ -1,9 +1,11 @@
 import logging
-from typing import Dict, List, Tuple  # noqa: F401
+from typing import Dict, List, Optional, Tuple, Union  # noqa: F401
 
 import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
+
+from .utils import _is_all_zeros, svd
 
 log = logging.getLogger(__name__)
 
@@ -12,50 +14,42 @@ class ExpertNotTrainedError(Exception):
     pass
 
 
-def _is_all_zeros(tensor: Tensor | List[Tensor]) -> bool:
-    if isinstance(tensor, Tensor):
-        return torch.allclose(tensor, torch.zeros_like(tensor))
-    else:
-        return all(_is_all_zeros(t) for t in tensor)
-
-
-def _svd(w: Tensor, full_matrices=True) -> Tuple[Tensor, Tensor, Tensor]:
-    u, s, vh = torch.linalg.svd(
-        w, full_matrices=full_matrices, driver="gesvd" if w.is_cuda else None
-    )
-    v = vh.T
-    return u, s, v
-
-
-def svd(
-    w: Tensor, full_matrices=True, accelerator=None
-) -> Tuple[Tensor, Tensor, Tensor]:
-    if accelerator is None:
-        return _svd(w, full_matrices=full_matrices)
-    original_device = w.device
-    w = w.to(accelerator)
-    u, s, v = _svd(w)
-    return u.to(original_device), s.to(original_device), v.to(original_device)
-
-
 class SmileGate(nn.Module):
+    __constants__ = ["in_features", "num_experts", "k"]
+    in_features: int
+    num_experts: int
+    k: int
+    weight: nn.Parameter
+
     def __init__(
         self,
         input_features: int,
         w_diff_list: List[Tensor],
         k: int,
-        svd_list=None,  # cached `svd_list`, pass it to avoid recomputing
+        svd_cache: List[
+            Tuple[Tensor, Tensor, Tensor]
+        ] = None,  # cached `svd_cache`, pass it to avoid recomputing
         upscaling_accelerator=None,
     ):
+        R"""
+        This constructs weights through SVD decomposition.
+
+        Args:
+            input_features: The dimension of input features.
+            w_diff_list: The list of weight matrices to be decomposed.
+            k: The number of singular values to keep.
+            svd_cache: The cached SVD decomposition results. If not provided, the SVD decomposition will be computed on the fly.
+            upscaling_accelerator: The accelerator to use for SVD decomposition.
+        """
         super().__init__()
         self.input_features = input_features
         self.num_experts = len(w_diff_list)
         weights = []
         for i, w_diff in enumerate(w_diff_list):
-            if svd_list is None:
+            if svd_cache is None:
                 u, s, v = svd(w_diff, accelerator=upscaling_accelerator)
             else:
-                u, s, v = svd_list[i]
+                u, s, v = svd_cache[i]
             u = u[:, :k]
             s = s[:k]
             v = v[:, :k]
@@ -86,8 +80,38 @@ class SmileGate(nn.Module):
 
 
 class SmileCompressedLinear(nn.Module):
-    def __init__(self, model: nn.Linear, k: int, svd_cache=None):
+    """
+    This module is used to compress a linear layer using SVD decomposition.
+    """
+
+    __constants__ = ["in_features", "out_features", "k"]
+    in_features: int
+    out_features: int
+    k: int
+
+    u: nn.Parameter
+    svh: nn.Parameter
+    bias: Optional[nn.Parameter]
+
+    def __init__(
+        self,
+        model: nn.Linear,
+        k: int,
+        svd_cache: Optional[Tuple[Tensor, Tensor, Tensor]] = None,
+    ):
+        """
+        Initialize the SmileCompressedLinear module.
+
+        Args:
+            model (nn.Linear): The linear model to compress.
+            k (int): The number of singular values to keep.
+            svd_cache (Tuple[Tensor, Tensor, Tensor]): Cached SVD results.
+        """
         super().__init__()
+        self.in_features = model.in_features
+        self.out_features = model.out_features
+        self.k = k
+
         if svd_cache is None:
             u, s, v = svd(model.weight)
         else:
@@ -106,12 +130,36 @@ class SmileCompressedLinear(nn.Module):
             self.register_parameter("bias", None)
 
     def forward(self, x):
+        """
+        Forward pass of the SmileCompressedLinear module.
+
+        Args:
+            x (Tensor): The input tensor.
+
+        Returns:
+            Tensor: The output tensor.
+        """
         x = F.linear(x, self.svh)
         x = F.linear(x, self.u, self.bias)
         return x
 
 
 class SmileMoELinear(nn.Module):
+    __constants__ = [
+        "in_features",
+        "out_features",
+        "num_experts",
+        "top_k",
+        "gate_k",
+        "k",
+    ]
+    in_features: int
+    out_features: int
+    num_experts: int
+    top_k: int
+    gate_k: int
+    k: int
+
     @torch.no_grad()
     def __init__(
         self,
@@ -124,6 +172,19 @@ class SmileMoELinear(nn.Module):
         upscaling_accelerator=None,
         routing_use_diff=True,
     ):
+        """
+        Initialize the SmileMoELinear module.
+
+        Args:
+            pretrained_model (nn.Linear): The pretrained linear model.
+            finetuned_models (List[nn.Linear]): A list of fine-tuned linear models.
+            gate_k (int): The number of singular values to keep for the gate.
+            k (int): The number of singular values to keep for the experts.
+            top_k (int): The number of top experts to select.
+            full_matrices (bool): Whether to compute the full-sized U and V matrices.
+            upscaling_accelerator (str): The device to perform the computation on.
+            routing_use_diff (bool): Whether to use weight differences for routing.
+        """
         super().__init__()
         self.num_experts = len(finetuned_models)
         self.top_k = top_k
@@ -149,7 +210,7 @@ class SmileMoELinear(nn.Module):
                 input_features=self.in_features,
                 w_diff_list=w_diff_list,
                 k=gate_k,
-                svd_list=svd_cache_list,
+                svd_cache=svd_cache_list,
                 upscaling_accelerator=upscaling_accelerator,
             )
         else:
@@ -157,7 +218,7 @@ class SmileMoELinear(nn.Module):
                 input_features=self.in_features,
                 w_diff_list=[m.weight for m in finetuned_models],
                 k=gate_k,
-                svd_list=None,
+                svd_cache=None,
                 upscaling_accelerator=upscaling_accelerator,
             )
 
@@ -181,6 +242,15 @@ class SmileMoELinear(nn.Module):
         self.pretrained_model = pretrained_model
 
     def forward(self, hidden_states: Tensor):
+        """
+        Forward pass of the SmileMoELinear module.
+
+        Args:
+            hidden_states (Tensor): The input tensor.
+
+        Returns:
+            Tensor: The output tensor.
+        """
         pretrained_out = self.pretrained_model(hidden_states)
 
         input_shape = hidden_states.size()
