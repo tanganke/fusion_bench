@@ -1,0 +1,3 @@
+multilingual:
+  _target_: datasets.load_dataset
+  path: MergeBench/multilingual_val

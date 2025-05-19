@@ -1,0 +1,9 @@
+defaults:
+  - Seq2SeqLMPool@: _template
+  - /model/llama32_3b@models:
+      -  llama-32-3B-Instruct
+      -  llama-32-3B-Instruct_coding
+      -  llama-32-3B-Instruct_instruction
+      -  llama-32-3B-Instruct_math
+      -  llama-32-3B-Instruct_multilingual
+      -  llama-32-3B-Instruct_safety

@@ -1,0 +1,8 @@
+_target_: fusion_bench.modelpool.llama32_3b
+_recursive_: false
+_version_: "0.2"
+models: ???
+tokenizer:
+  _target_: transformers.AutoTokenizer.from_pretrained
+  pretrained_model_name_or_path: MergeBench/Llama-3.2-3B_instruction
+model_kwargs: null

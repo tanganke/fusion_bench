@@ -1,0 +1,32 @@
+name: llama_TA5 # whatever you want to name your task pool
+type: llamaTaskPool
+tasks:
+  - name: coding
+    dataset:
+      name: coding
+      split: validation
+  - name: instruction
+    dataset:
+      name: instruction
+      split: validation
+  - name: math
+    dataset:
+      name: math
+      split: validation
+  - name: multilingual
+    dataset:
+      name: multilingual
+      split: validation
+  - name: safety
+    dataset:
+      name: safety
+      split: validation
+# all flan-t5 models share the same tokenizer,
+# so it is not necessary to change it when you evaluate other models,
+# such as flan-t5-large, flan-t5-xxl
+tokenizer: MergeBench/Llama-3.2-3B_instruction
+# cache directory for storing the preprocessed data
+cache_dir: outputs/cache
+batch_size: 32
+num_workers: 4
+fast_dev_run: ${fast_dev_run}
