@@ -3,7 +3,8 @@
 /datasets/
 /datasets
 /lm-evaluation-harness/
-outputs/
+/outputs/
+/results/
 lightning_logs/
 # VSCode files
 *.code-workspace
