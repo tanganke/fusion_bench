@@ -1,3 +1,7 @@
+"""
+Online documentation for this module: https://tanganke.github.io/fusion_bench/modelpool/causal_lm
+"""
+
 import logging
 import os
 from copy import deepcopy
@@ -60,7 +64,7 @@ class CausalLMPool(BaseModelPool):
 
         ```yaml
         models:
-          _pretrained_: path_to_pretrained_model
+          _pretrained_: path_to_pretrained_model # if a plain string, it will be passed to AutoModelForCausalLM.from_pretrained
           model_a: path_to_model_a
           model_b: path_to_model_b
         ```
@@ -70,7 +74,7 @@ class CausalLMPool(BaseModelPool):
         ```yaml
         models:
           _pretrained_:
-            _target_: transformers.AutoModelForCausalLM
+            _target_: transformers.AutoModelForCausalLM # any callable that returns a model
             pretrained_model_name_or_path: path_to_pretrained_model
           model_a:
             _target_: transformers.AutoModelForCausalLM
@@ -106,14 +110,14 @@ class CausalLMPool(BaseModelPool):
         Example of YAML config:
 
         ```yaml
-        tokenizer: google/gemma-2-2b-it
+        tokenizer: google/gemma-2-2b-it # if a plain string, it will be passed to AutoTokenizer.from_pretrained
         ```
 
         or equivalently,
 
         ```yaml
         tokenizer:
-          _target_: transformers.AutoTokenizer
+          _target_: transformers.AutoTokenizer # any callable that returns a tokenizer
           pretrained_model_name_or_path: google/gemma-2-2b-it
         ```
 
