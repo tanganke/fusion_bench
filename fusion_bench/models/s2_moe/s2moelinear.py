@@ -86,7 +86,7 @@ class S2MoELinear(nn.Module):
         if k > 0:
             experts = [
                 #! use SparseLinear instead of SmileCompressedLinear
-                SparseLinear(m.in_features, m.out_features, bias=m.bias is not None, sparsity_ratio=0.9) 
+                SparseLinear(m.in_features, m.out_features, bias=m.bias is not None, sparsity_ratio=0.8) 
                 for m in finetuned_models
             ]
             for m, expert in zip(finetuned_models, experts):
