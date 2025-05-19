@@ -15,6 +15,7 @@ _import_structure = {
     "dummy": ["DummyTaskPool"],
     "gpt2_text_classification": ["GPT2TextClassificationTaskPool"],
     "llama": ["LlamaTestGenerationTaskPool"],
+    "lm_eval_harness": ["LMEvalHarnessTaskPool"],
     "nyuv2_taskpool": ["NYUv2TaskPool"],
     "openclip_vision": ["OpenCLIPVisionModelTaskPool"],
 }
@@ -30,6 +31,7 @@ if TYPE_CHECKING:
     from .dummy import DummyTaskPool
     from .gpt2_text_classification import GPT2TextClassificationTaskPool
     from .llama import LlamaTestGenerationTaskPool
+    from .lm_eval_harness import LMEvalHarnessTaskPool
     from .nyuv2_taskpool import NYUv2TaskPool
     from .openclip_vision import OpenCLIPVisionModelTaskPool
 
