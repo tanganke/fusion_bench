@@ -1,15 +1,15 @@
 import logging
 import os
 from copy import deepcopy
-from typing import Any, Optional, TypeAlias, Union, cast  # noqa: F401
+from typing import Any, Dict, Optional, TypeAlias, Union, cast  # noqa: F401
 
 import peft
 from omegaconf import DictConfig, flag_override
 from torch import nn
 from torch.nn.modules import Module
 from transformers import (
-    LlamaForCausalLM,
-    MistralForCausalLM,
+    AutoModelForCausalLM,
+    AutoTokenizer,
     PreTrainedModel,
     PreTrainedTokenizer,
 )
@@ -20,8 +20,6 @@ from fusion_bench.utils import instantiate
 from fusion_bench.utils.dtype import parse_dtype
 
 log = logging.getLogger(__name__)
-
-CausalLM: TypeAlias = Union[LlamaForCausalLM, MistralForCausalLM, Any]
 
 
 class CausalLMPool(BaseModelPool):
@@ -56,17 +54,78 @@ class CausalLMPool(BaseModelPool):
         model_name_or_config: str | DictConfig,
         *args,
         **kwargs,
-    ) -> LlamaForCausalLM | MistralForCausalLM | nn.Module:
+    ) -> PreTrainedModel:
+        """
+        Example of YAML config:
+
+        ```yaml
+        models:
+          _pretrained_: path_to_pretrained_model
+          model_a: path_to_model_a
+          model_b: path_to_model_b
+        ```
+
+        or equivalently,
+
+        ```yaml
+        models:
+          _pretrained_:
+            _target_: transformers.AutoModelForCausalLM
+            pretrained_model_name_or_path: path_to_pretrained_model
+          model_a:
+            _target_: transformers.AutoModelForCausalLM
+            pretrained_model_name_or_path: path_to_model_a
+          model_b:
+            _target_: transformers.AutoModelForCausalLM
+            pretrained_model_name_or_path: path_to_model_b
+        ```
+        """
         model_kwargs = deepcopy(self._model_kwargs)
         model_kwargs.update(kwargs)
+
         if isinstance(model_name_or_config, str):
             log.info(f"Loading model: {model_name_or_config}", stacklevel=2)
-        return super().load_model(model_name_or_config, *args, **model_kwargs)
+            if model_name_or_config in self._models.keys():
+                model_config = self._models[model_name_or_config]
+                if isinstance(model_config, str):
+                    # model_config is a string
+                    model = AutoModelForCausalLM.from_pretrained(
+                        model_config,
+                        *args,
+                        **model_kwargs,
+                    )
+                    return model
+        elif isinstance(model_name_or_config, (DictConfig, Dict)):
+            model_config = model_name_or_config
+
+        model = instantiate(model_config, *args, **model_kwargs)
+        return model
 
     def load_tokenizer(self, *args, **kwargs) -> PreTrainedTokenizer:
+        """
+        Example of YAML config:
+
+        ```yaml
+        tokenizer: google/gemma-2-2b-it
+        ```
+
+        or equivalently,
+
+        ```yaml
+        tokenizer:
+          _target_: transformers.AutoTokenizer
+          pretrained_model_name_or_path: google/gemma-2-2b-it
+        ```
+
+        Returns:
+            PreTrainedTokenizer: The tokenizer.
+        """
         assert self._tokenizer is not None, "Tokenizer is not defined in the config"
         log.info("Loading tokenizer.", stacklevel=2)
-        tokenizer = instantiate(self._tokenizer, *args, **kwargs)
+        if isinstance(self._tokenizer, str):
+            tokenizer = AutoTokenizer.from_pretrained(self._tokenizer, *args, **kwargs)
+        else:
+            tokenizer = instantiate(self._tokenizer, *args, **kwargs)
         return tokenizer
 
     @override
@@ -113,7 +172,7 @@ class CausalLMBackbonePool(CausalLMPool):
     def load_model(
         self, model_name_or_config: str | DictConfig, *args, **kwargs
     ) -> Module:
-        model: Union[MistralForCausalLM, LlamaForCausalLM, Any] = super().load_model(
+        model: AutoModelForCausalLM = super().load_model(
             model_name_or_config, *args, **kwargs
         )
         return model.model.layers
@@ -126,7 +185,7 @@ def load_peft_causal_lm(
     is_trainable: bool = True,
     merge_and_unload: bool = False,
 ):
-    base_model = LlamaForCausalLM.from_pretrained(
+    base_model = AutoModelForCausalLM.from_pretrained(
         base_model_path, torch_dtype=torch_dtype
     )
     model = peft.PeftModel.from_pretrained(
