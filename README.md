@@ -73,7 +73,7 @@ Merging multiple expert models offers a promising approach for performing multi-
 
 ## Installation
 
-install from PyPI:
+Install from PyPI:
 
 ```bash
 pip install fusion-bench
@@ -87,6 +87,24 @@ cd fusion_bench
 
 pip install -e . # install the package in editable mode
 ```
+
+### Install with [Language Model Evaluation Harness](https://github.com/EleutherAI/lm-evaluation-harness)
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10256836.svg)](https://doi.org/10.5281/zenodo.10256836)
+
+
+```bash
+pip install "fusion-bench[lm-eval-harness]"
+```
+
+or install from local directory
+
+```bash
+pip install -e ".[lm-eval-harness]"
+```
+
+This will install the latest version of fusion-bench and the dependencies required for LM-Eval Harness.
+Documentation for using LM-Eval Harness within FusionBench framework can be found at [this online documentation](https://tanganke.github.io/fusion_bench/taskpool/lm_eval_harness) or in the [`docs/taskpool/lm_eval_harness.md`](docs/taskpool/lm_eval_harness.md) markdown file.
 
 ## Introduction to Deep Model Fusion
 
