@@ -1,3 +1,7 @@
+"""
+SVD 分解 finetuned - merged 来初始化 router 的权重
+"""
+
 import copy
 import logging
 import os
@@ -430,16 +434,13 @@ class ProjectionBasedGate(nn.Module):
         # self.threshold = threshold
         self.threshold = 1 / self.num_experts
         self.top_k = min(top_k, self.num_experts)
-        
+
         self.orig_v = []
-        
 
         for i, w_diff in enumerate(w_diff_list):
             _, _, vh = svd(w_diff, accelerator=upscaling_accelerator)
-            split_k = int(1/self.num_experts * vh.shape[1])
+            split_k = int(1 / self.num_experts * vh.shape[1])
             self.orig_v.append(vh[:, :16])
-        
-        
 
     def forward(self, x: Tensor, x_l: Tensor):
         """
