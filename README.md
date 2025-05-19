@@ -106,6 +106,8 @@ pip install -e ".[lm-eval-harness]"
 This will install the latest version of fusion-bench and the dependencies required for LM-Eval Harness.
 Documentation for using LM-Eval Harness within FusionBench framework can be found at [this online documentation](https://tanganke.github.io/fusion_bench/taskpool/lm_eval_harness) or in the [`docs/taskpool/lm_eval_harness.md`](docs/taskpool/lm_eval_harness.md) markdown file.
 
+Documentation for merging large language models using FusionBench can be found at [this online documentation](https://tanganke.github.io/fusion_bench/modelpool/causal_lm) or in the [`docs/modelpool/causal_lm.md`](docs/modelpool/causal_lm.md) markdown file.
+
 ## Introduction to Deep Model Fusion
 
 Deep model fusion is a technique that merges, ensemble, or fuse multiple deep neural networks to obtain a unified model.
