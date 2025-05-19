@@ -18,12 +18,12 @@ from fusion_bench.method.s2_moe.utils import TSVC_utils, TSVM_utils
 from fusion_bench.method.simple_average import simple_average
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
+from fusion_bench.models.s2_moe.s2moelinear import S2MoELinear
 from fusion_bench.models.s2_moe.sparse_linear import SparseLinear
 from fusion_bench.models.smile_moe.linear_from_module import ExpertNotTrainedError
 from fusion_bench.models.smile_moe.utils import _is_all_zeros, svd
 from fusion_bench.models.utils import get_attr, set_attr
 from fusion_bench.utils.parameters import print_parameters
-from fusion_bench.models.s2_moe.s2moelinear import S2MoELinear
 
 log = logging.getLogger(__name__)
 
