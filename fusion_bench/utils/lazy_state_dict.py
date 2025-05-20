@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Tuple
 import torch
 from accelerate.utils.constants import SAFE_WEIGHTS_NAME, WEIGHTS_NAME
 from huggingface_hub import snapshot_download
+from safetensors import safe_open
 from safetensors.torch import load_file
 from transformers import AutoConfig
 
@@ -157,8 +158,6 @@ class LazyStateDict:
         self, checkpoint_file: str, key: str, update_cache: bool = True
     ) -> torch.Tensor:
         if checkpoint_file.endswith(".safetensors"):
-            from safetensors import safe_open
-
             with safe_open(checkpoint_file, framework="pt", device=self._device) as f:
                 tensor = f.get_tensor(key)
                 if self._torch_dtype is not None:
@@ -236,9 +235,12 @@ class LazyStateDict:
         ):
             checkpoint_file = self._checkpoint_files[0]
             if checkpoint_file.endswith(".safetensors"):
-                return load_file(checkpoint_file).keys()
+                with safe_open(checkpoint_file, framework="pt", device="cpu") as f:
+                    return len(tuple(f.keys()))
             else:
-                return torch.load(checkpoint_file, map_location="cpu").keys()
+                return len(
+                    tuple(torch.load(checkpoint_file, map_location="cpu").keys())
+                )
         raise RuntimeError(
             "Unexpected error: cannot determine the number of keys in the state dict."
         )
