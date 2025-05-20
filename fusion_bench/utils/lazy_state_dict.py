@@ -1,14 +1,18 @@
 import json
 import logging
 import os
-from typing import Dict, Iterator, List, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Tuple
 
 import torch
 from accelerate.utils.constants import SAFE_WEIGHTS_NAME, WEIGHTS_NAME
 from huggingface_hub import snapshot_download
 from safetensors.torch import load_file
+from transformers import AutoConfig
 
 from fusion_bench.utils.dtype import parse_dtype
+
+if TYPE_CHECKING:
+    from transformers import PretrainedConfig
 
 log = logging.getLogger(__name__)
 
@@ -80,6 +84,17 @@ class LazyStateDict:
 
         self._torch_dtype = parse_dtype(torch_dtype)
         self._device = device
+
+    @property
+    def checkpoint(self) -> str:
+        return self._checkpoint
+
+    @property
+    def config(self) -> "PretrainedConfig":
+        return AutoConfig.from_pretrained(self._checkpoint)
+
+    def state_dict(self) -> "LazyStateDict":
+        return self
 
     def _resolve_checkpoint_files(self, checkpoint: str):
         # reference: https://huggingface.co/docs/accelerate/v0.17.1/en/usage_guides/big_modeling
