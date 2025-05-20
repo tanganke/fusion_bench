@@ -1,6 +1,6 @@
 _target_: fusion_bench.modelpool.CausalLMPool
 models:
-  _pretrained_: meta-llama/Llama-3.2-3B-Instruct
+  _pretrained_: MergeBench/Llama-3.2-3B_instruction
   instruction: MergeBench/Llama-3.2-3B-Instruct_instruction
   math: MergeBench/Llama-3.2-3B-Instruct_math
   coding: MergeBench/Llama-3.2-3B-Instruct_coding
