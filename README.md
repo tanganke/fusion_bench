@@ -19,7 +19,7 @@
 
 FusionBench is a benchmark suite designed to evaluate the performance of various deep model fusion techniques. It aims to provide a comprehensive comparison of different methods on a variety of datasets and tasks.
 
-Projects based on FusionBench and news from the community (descending order of date):
+Projects based on FusionBench and news from the community (descending order of date. If you have any work based on FusionBench, please feel free to let us know, we are willing to add it to the list. :partying_face:):
 
 <details>
   <summary>Hao Mark Chen, et al. FW-Merging: Scaling Model Merging with Frank-Wolfe Optimization. Mar 2025. https://arxiv.org/abs/2503.12649</summary>
@@ -87,6 +87,10 @@ cd fusion_bench
 
 pip install -e . # install the package in editable mode
 ```
+
+> [!TIP]
+> FusionBench is highly dependent on the use of [Hydra](https://hydra.cc/) for configuration management and command line argument parsing, and [Lightning Fabric](https://lightning.ai/) for device management.
+> If you are not familiar with these tools, it is strongly recommended to read the [Hydra](https://hydra.cc/docs/intro/) and [Lightning Fabric](https://lightning.ai/docs/fabric/stable/) documentation.
 
 ### Install with [Language Model Evaluation Harness](https://github.com/EleutherAI/lm-evaluation-harness)
 
