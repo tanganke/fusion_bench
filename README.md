@@ -88,6 +88,10 @@ cd fusion_bench
 pip install -e . # install the package in editable mode
 ```
 
+> [!TIP]
+> FusionBench is highly dependent on the use of [Hydra](https://hydra.cc/) for configuration management and command line argument parsing, and [Lightning Fabric](https://lightning.ai/) for device management.
+> If you are not familiar with these tools, it is strongly recommended to read the [Hydra](https://hydra.cc/docs/intro/) and [Lightning Fabric](https://lightning.ai/docs/fabric/stable/) documentation.
+
 ### Install with [Language Model Evaluation Harness](https://github.com/EleutherAI/lm-evaluation-harness)
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10256836.svg)](https://doi.org/10.5281/zenodo.10256836)
