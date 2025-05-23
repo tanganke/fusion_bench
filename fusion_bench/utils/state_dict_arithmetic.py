@@ -1,12 +1,12 @@
 from collections import OrderedDict
 from numbers import Number
-from typing import Dict, List, Union, cast
+from typing import Callable, Dict, List, Literal, Union, cast
 
 import torch
 from torch import Tensor
 
 from .parameters import check_parameters_all_equal
-from .type import StateDictType
+from .type import BoolStateDictType, StateDictType
 
 
 def to_device(
@@ -295,3 +295,75 @@ def state_dict_weighted_sum(
                 device, non_blocking=True
             )
     return weighted_sum_state_dict
+
+
+def state_dict_diff_abs(a: StateDictType, b: StateDictType):
+    """
+    Returns the per-layer abs of the difference between two state dicts.
+
+    Args:
+        a (StateDictType): The first state dict.
+        b (StateDictType): The second state dict.
+
+    Returns:
+        StateDictType: The absolute difference between the two state dicts.
+    """
+    diff = state_dict_sub(a, b)
+    abs_diff = {key: diff[key].abs() for key in diff}
+    return abs_diff
+
+
+def state_dict_binary_mask(
+    a: StateDictType,
+    b: StateDictType,
+    compare_fn: Union[
+        Literal["greater", "less", "equal", "not_equal"],
+        Callable[[Tensor, Tensor], torch.BoolTensor],
+    ] = "greater",
+) -> BoolStateDictType:
+    """
+    Returns the binary mask of elements in a compared to elements in b using the provided comparison function.
+
+    Args:
+        a (StateDictType): The first state dict.
+        b (StateDictType): The second state dict.
+        compare_fn (Union[Literal["greater", "less", "equal", "not_equal"], Callable[[Tensor, Tensor], Tensor]]): A function that takes two tensors and returns a boolean tensor.
+            Defaults to greater than comparison (x > y).
+
+    Returns:
+        StateDictType: A dictionary containing binary masks (0 or 1) based on the comparison.
+    """
+    compare_fn_dict = {
+        "greater": lambda x, y: x > y,
+        "less": lambda x, y: x < y,
+        "equal": lambda x, y: x == y,
+        "not_equal": lambda x, y: x != y,
+    }
+    if isinstance(compare_fn, str):
+        compare_fn = compare_fn_dict[compare_fn]
+    elif not callable(compare_fn):
+        raise ValueError(
+            f"compare_fn must be a string or a callable, but got {type(compare_fn)}"
+        )
+
+    mask = OrderedDict()
+    for key in a:
+        mask[key] = compare_fn(a[key], b[key])
+    return mask
+
+
+def state_dict_hadmard_product(a: StateDictType, b: StateDictType) -> StateDictType:
+    """
+    Returns the Hadamard product of two state dicts, i.e. element-wise product.
+
+    Args:
+        a (StateDictType): The first state dict.
+        b (StateDictType): The second state dict.
+
+    Returns:
+        StateDictType: The Hadamard product of the two state dicts.
+    """
+    ans = OrderedDict()
+    for key in a:
+        ans[key] = a[key] * b[key]
+    return ans
