@@ -196,6 +196,11 @@ class FabricModelFusionProgram(
             for key, item in merged_model.items():
                 if isinstance(item, nn.Module):
                     report[key] = taskpool.evaluate(item, *args, **kwargs)
+                elif key == "models":
+                    # for multi-model evaluation
+                    report[key] = self.evaluate_merged_model(
+                        taskpool, item, *args, **kwargs
+                    )
                 else:
                     # metadata
                     report[key] = item
