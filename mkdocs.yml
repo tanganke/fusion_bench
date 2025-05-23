@@ -41,6 +41,7 @@ nav:
       - ResNet Models for Sence Understanding: modelpool/nyuv2.md
       - GPT-2 Models for Text Classification: modelpool/gpt2_classification.md
       - Flan-T5 Models for Text Generation: modelpool/flan-t5_generation.md
+      - Large Language Models: modelpool/causal_lm.md
   - Task Pool (Evaluation):
       - taskpool/README.md
       - taskpool/dummy.md
@@ -49,6 +50,7 @@ nav:
       - Classification Tasks for CLIP: taskpool/clip_vit_classification.md
       - GPT-2 Sequence Classification Tasks: taskpool/gpt2_classification.md
       - Flan-T5 Models for Text Generation: taskpool/flan-t5_generation.md
+      - Task Pool for Language Model Evaluation Harness: taskpool/lm_eval_harness.md
   # - Command Line Interface:
     # - fusion_bench: cli/fusion_bench.md
   - Additional Guides:

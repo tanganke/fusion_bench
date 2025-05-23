@@ -6,7 +6,7 @@ from datasets import load_dataset
 
 
 def load_gsm8k_question_label_data(
-    dataset_name: Literal["train", "test", "train_socratic", "test_socratic"]
+    dataset_name: Literal["train", "test", "train_socratic", "test_socratic"],
 ):
     R"""
     Load the GSM8K dataset and extract questions and labels.
@@ -45,7 +45,7 @@ def load_gsm8k_question_label_data(
 
 
 def load_gsm8k_question_label_dataset(
-    dataset_name: Literal["train", "test", "train_socratic", "test_socratic"]
+    dataset_name: Literal["train", "test", "train_socratic", "test_socratic"],
 ):
     """
     Load the GSM8K dataset and return it as a Hugging Face Dataset object.

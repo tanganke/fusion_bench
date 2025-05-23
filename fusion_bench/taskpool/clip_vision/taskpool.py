@@ -32,8 +32,7 @@ from fusion_bench.mixins import LightningFabricMixin
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.taskpool import BaseTaskPool
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
-from fusion_bench.utils import instantiate
-from fusion_bench.utils.parameters import count_parameters
+from fusion_bench.utils import count_parameters, instantiate
 
 if TYPE_CHECKING:
     from fusion_bench.models.surgery.surgerymodelwrapper import SurgeryModelWrapper
@@ -349,8 +348,15 @@ class CLIPVisionModelTaskPool(
 
         log.info(f"Evaluation Result: {report}")
         if self.fabric.is_global_zero and len(self.fabric._loggers) > 0:
-            with open(os.path.join(self.log_dir, "report.json"), "w") as fp:
+            save_path = os.path.join(self.log_dir, "report.json")
+            for version in itertools.count(1):
+                if not os.path.exists(save_path):
+                    break
+                # if the file already exists, increment the version to avoid overwriting
+                save_path = os.path.join(self.log_dir, f"report_{version}.json")
+            with open(save_path, "w") as fp:
                 json.dump(report, fp)
+            log.info(f"Evaluation report saved to {save_path}")
         return report
 
     def on_task_evaluation_begin(self, classifier: HFCLIPClassifier, task_name: str):

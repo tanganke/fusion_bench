@@ -9,6 +9,18 @@ from torch.utils.data import DataLoader, Dataset
 
 
 class InfiniteDataLoader:
+    """
+    A wrapper class for DataLoader to create an infinite data loader.
+    This is useful in case we are only interested in the number of steps and not the number of epochs.
+
+    This class wraps a DataLoader and provides an iterator that resets
+    when the end of the dataset is reached, creating an infinite loop.
+
+    Attributes:
+        data_loader (DataLoader): The DataLoader to wrap.
+        data_iter (iterator): An iterator over the DataLoader.
+    """
+
     def __init__(self, data_loader: DataLoader):
         self.data_loader = data_loader
         self.data_iter = iter(data_loader)
@@ -84,7 +96,7 @@ def train_validation_split(
 
     # Compute the number of samples for training and validation
     num_samples = len(dataset)
-    if validation_size is not None:
+    if validation_size is None:
         assert (
             0 < validation_fraction < 1
         ), "Validation fraction must be between 0 and 1"

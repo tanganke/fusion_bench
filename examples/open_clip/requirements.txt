@@ -1,0 +1,1 @@
+open-clip-torch==2.0.2

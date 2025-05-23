@@ -1,6 +1,5 @@
 _target_: fusion_bench.method.TaskSingularVectorMerging
 remove_keys: null
-
 # alpha is a float or a list of floats
 # example:
 # alpha: 1

@@ -6,11 +6,11 @@ from fusion_bench import BaseAlgorithm, BaseModelPool
 from fusion_bench.mixins import LightningFabricMixin
 from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_add,
-    state_dict_sub,
     state_dict_mul,
+    state_dict_sub,
 )
 
-from .iso_utils import iso_c, iso_cts, check_parameterNamesMatch
+from .iso_utils import check_parameterNamesMatch, iso_c, iso_cts
 
 
 class IsotropicMergingInCommonSubspace(BaseAlgorithm, LightningFabricMixin):

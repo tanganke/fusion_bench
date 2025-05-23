@@ -2,6 +2,7 @@
 # Modified from Hydra
 import copy
 import functools
+from contextlib import contextmanager
 from enum import Enum
 from textwrap import dedent
 from typing import Any, Callable, Dict, List, Sequence, Tuple, Union
@@ -28,6 +29,17 @@ Function to be used for printing function calls.
 """
 
 CATCH_EXCEPTION = True
+
+
+@contextmanager
+def set_print_function_call(value: bool):
+    global PRINT_FUNCTION_CALL
+    old_value = PRINT_FUNCTION_CALL
+    PRINT_FUNCTION_CALL = value
+    try:
+        yield
+    finally:
+        PRINT_FUNCTION_CALL = old_value
 
 
 def is_instantiable(config: Union[DictConfig, Any]) -> bool:

@@ -1,12 +1,10 @@
 _target_: fusion_bench.taskpool.CLIPVisionModelTaskPool
 _recursive_: false
-
 test_datasets:
   fashion_mnist:
     _target_: datasets.load_dataset
     path: zalando-datasets/fashion_mnist
     split: test
-
 base_model: openai/clip-vit-base-patch32
 clip_model:
   _target_: transformers.CLIPModel.from_pretrained
@@ -21,7 +19,6 @@ dataloader_kwargs:
   pin_memory: True # Whether to pin memory in data loader
   drop_last: False # Whether to drop the last incomplete batch
   shuffle: False # Whether to shuffle the data
-
 # === layer-wise feature saving ===
 # The path to save the features to, if none then the features are not saved
 # This is the path to a directory, the features of task `task_name` will be saved in `feature_save_path/task_name.csv`

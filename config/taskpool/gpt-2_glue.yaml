@@ -1,5 +1,4 @@
 _target_: fusion_bench.taskpool.GPT2TextClassificationTaskPool
-
 _dataset_loader: fusion_bench.taskpool.gpt2_text_classification.load_gpt2_dataset
 test_datasets:
   cola:

@@ -1,11 +1,14 @@
-type: huggingface_clip_vision
+_target_: fusion_bench.modelpool.CLIPVisionModelPool
+base_model: openai/clip-vit-base-patch32
 models:
-  - name: _pretrained_
-    path: openai/clip-vit-base-patch32
-
-dataset_type: huggingface_image_classification
+  _pretrained_:
+    _target_: transformers.CLIPVisionModel.from_pretrained
+    pretrained_model_name_or_path: ${...base_model}
 train_datasets:
-  - name: gtsrb
-    dataset:
-      name: tanganke/gtsrb
-      split: train
+  gtsrb:
+    _target_: datasets.load_dataset
+    path: tanganke/gtsrb
+    split: train
+processor:
+  _target_: transformers.CLIPProcessor.from_pretrained
+  pretrained_model_name_or_path: ${..base_model}

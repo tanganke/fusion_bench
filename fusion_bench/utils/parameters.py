@@ -222,6 +222,39 @@ def count_parameters(module: nn.Module, non_zero_only: bool = False) -> tuple[in
     return trainable_params, all_param
 
 
+@torch.no_grad()
+def get_parameter_summary(
+    module_or_state_dict: Union[nn.Module, StateDictType], non_zero_only: bool = False
+) -> dict:
+    """
+    Get a summary of the parameters in a PyTorch model.
+    """
+    if isinstance(module_or_state_dict, nn.Module):
+        state_dict = module_or_state_dict.state_dict(keep_vars=True)
+    else:
+        state_dict = module_or_state_dict
+
+    trainable_params = 0
+    all_param = 0
+    bytes = 0
+
+    for name, param in state_dict.items():
+        # count the number of parameters
+        num_params = _numel(param, non_zero_only)
+        bytes += _numel(param, non_zero_only=False) * param.element_size()
+
+        # accumulate the number of trainable and total parameters
+        all_param += num_params
+        if param.requires_grad:
+            trainable_params += num_params
+
+    return {
+        "trainable_params": trainable_params,
+        "all_param": all_param,
+        "bytes": bytes,
+    }
+
+
 def print_parameters(
     module: nn.Module,
     is_human_readable: bool = True,
@@ -252,7 +285,7 @@ def print_parameters(
 
 
 def check_parameters_all_equal(
-    list_of_param_names: List[Union[StateDictType, nn.Module, List[str]]]
+    list_of_param_names: List[Union[StateDictType, nn.Module, List[str]]],
 ) -> None:
     """
     Checks if all models have the same parameters.
