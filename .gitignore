@@ -1,10 +1,23 @@
 !*.template
-/temp/
+# ignore datasets
 /datasets/
 /datasets
+
+# ignore third party packages
 /lm-evaluation-harness/
+
+# ignore all output files
+/temp/
 outputs/
 lightning_logs/
+
+# MacOS ignore
+.DS_Store
+
+# Windows ignore
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

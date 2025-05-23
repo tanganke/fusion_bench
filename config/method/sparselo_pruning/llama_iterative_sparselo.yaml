@@ -5,6 +5,7 @@ seed: 0
 rank: 128
 num_iterations: 10
 variant: wanda
+use_reference_model: false
 # `prune_type` can be either `unstructured` or `semistructured`
 prune_type: unstructured
 # device and dtype to compute the pruning mask
