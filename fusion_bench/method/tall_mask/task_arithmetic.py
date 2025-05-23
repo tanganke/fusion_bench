@@ -1,9 +1,15 @@
+"""
+Modified from https://github.com/Zhou-Hangyu/randes/tree/main/benchmark/fusion_bench
+"""
+
 import logging
 from collections import OrderedDict
 from copy import deepcopy
 
 import torch
 
+from fusion_bench import BaseAlgorithm
+from fusion_bench.mixins import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_add,
@@ -14,8 +20,6 @@ from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_sub,
     state_dict_sum,
 )
-
-from .base_algorithm import SuperposedAlgorithmBase
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +44,6 @@ def generate_task_masks(
     """
 
     print(f"Generating TALL masks.")
-    theta_mt = state_dict_add(pretrained_task_vector, multi_task_vector)
 
     # generate masks by comparing the l1 distance between |theta_0 - theta_t| and |theta_mt - theta_t|
     diff_pt_ft = state_dict_diff_abs(pretrained_task_vector, ft_task_vector)
@@ -56,8 +59,27 @@ def generate_task_masks(
 
 
 class TallMaskTaskArithmeticAlgorithm(
-    SuperposedAlgorithmBase,
+    BaseAlgorithm,
+    SimpleProfilerMixin,
 ):
+    _config_mapping = BaseAlgorithm._config_mapping | {
+        "tall_mask_lambda": "tall_mask_lambda",
+        "debug": "debug",
+        "verbose": "verbose",
+    }
+
+    def __init__(
+        self,
+        tall_mask_lambda: float,
+        debug: int = 0,
+        verbose: int = 0,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.tall_mask_lambda = tall_mask_lambda
+        self.debug = debug
+        self.verbose = verbose
+
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool):
         if not isinstance(modelpool, BaseModelPool):
@@ -74,7 +96,7 @@ class TallMaskTaskArithmeticAlgorithm(
             with self.profile("load model"):
                 model = modelpool.load_model(model_name)
             for layer_name, layer in model.state_dict(keep_vars=True).items():
-                if self.config.verbose >= 1:
+                if self.verbose >= 1:
                     log.info(f"{layer_name} | {layer.shape}")
             task_vector = state_dict_sub(
                 model.state_dict(keep_vars=True),
@@ -91,7 +113,7 @@ class TallMaskTaskArithmeticAlgorithm(
                 multi_task_vector,
                 task_vectors[model_name],
                 pretrained_model.state_dict(keep_vars=True),
-                tall_mask_lambda=self.config.tall_mask_lambda,
+                tall_mask_lambda=self.tall_mask_lambda,
             )
             tall_masks[model_name] = tall_mask
 

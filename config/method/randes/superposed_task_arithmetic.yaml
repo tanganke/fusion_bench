@@ -1,7 +1,10 @@
 name: superposed_task_arithmetic
 #* === base randes options ===
 mode: random_binary_diagonal_matrix
-target_layer: mlp_w^attn_w # weights for all mlp and attn layers
+# weights for all mlp and attn layers
+target_layer: 
+  - mlp_w
+  - attn_w
 random_seed: 42 # for random_binary_diagonal_matrix
 different_across_layers: True
 joint_matrix_mode: flatten_hstack

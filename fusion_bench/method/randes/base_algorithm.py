@@ -12,6 +12,7 @@ from torch import Tensor, nn
 from fusion_bench.method.base_algorithm import BaseAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
+from fusion_bench.utils.parameters import get_parameter_summary, human_readable
 from fusion_bench.utils.state_dict_arithmetic import state_dict_avg
 from fusion_bench.utils.type import StateDictType
 
@@ -200,7 +201,7 @@ class SuperposedAlgorithmBase(
         debug: int,
         ms_mode: str,
         verbose: int,
-        dropout_rate: float,
+        dropout_rate: int,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -391,7 +392,15 @@ class SuperposedAlgorithmBase(
 
     def _target_layer_flag(self, layer: str):
         """
+        The method takes a layer name as input and returns a boolean indicating whether this layer should be targeted.
+
         Current implementation assume Transformer architecture and layer number is the first number in the layer name.
+
+        Args:
+            layer (str): The name of the layer.
+
+        Returns:
+            bool: True if the layer should be targeted, False otherwise.
         """
         target_layers = self.target_layer  # e.g. ["mlp_w", "attn_w"]
         # TODO: figure out what wo is in flan-t5
@@ -436,10 +445,13 @@ class SuperposedAlgorithmBase(
         retrieval_models = deepcopy(state_dicts)
         # target_layer_flags = [self._target_layer_flag(layer) for layer in layers]
         # implement target_layer_flags with dropout
-        target_layer_flags = []
+        target_layer_flags: List[bool] = []
         count = 0
         for layer in layers:
             if self._target_layer_flag(layer):
+                # take the target layer per `self.dropout_rate` target layers.
+                # e.g. if self.dropout_rate = 2, then take the 2nd and 4th target layers, skip the first and third target layers.
+                # if self.dropout_rate = 1, then take all target layers.
                 count += 1
                 if count == self.dropout_rate:
                     target_layer_flags.append(True)
@@ -452,6 +464,9 @@ class SuperposedAlgorithmBase(
         target_layers = [
             layer for layer, flag in zip(layers, target_layer_flags) if flag
         ]
+        log.info(
+            f"filtered {len(target_layers)} target layers out of {len(layers)} layers"
+        )
 
         metadata = {
             "nonzero_parameter_count": 0,
@@ -474,16 +489,14 @@ class SuperposedAlgorithmBase(
         else:
             absorber = None
 
-        count = 0
-        bytes = 0
-        for layer in layers:
-            param_count = torch.numel(state_dicts[models[0]][layer])
-            bytes += param_count * state_dicts[models[0]][layer].element_size()
-            count += param_count
-        gbs = bytes / 1e9
-        print(f"Total parameters: {count}")
-        print(f"Total gigabytes: {gbs}")
-        metadata["total_param_count_original"] = count
+        # get the total number of parameters and bytes (in GB) of the original model
+        original_param_summary = get_parameter_summary(state_dicts[models[0]])
+        gbs = original_param_summary["bytes"] / 1e9
+        log.info(
+            f"Total parameters: {human_readable(original_param_summary['all_param'])}"
+        )
+        log.info(f"Total gigabytes: {gbs}")
+        metadata["total_param_count_original"] = original_param_summary["all_param"]
         metadata["total_gb_original"] = gbs
 
         # for analysis purposes
@@ -646,7 +659,7 @@ class SuperposedAlgorithmBase(
             shape = state_dicts[models[0]][layer].shape
             compressed_layer = None
             target_flag = target_layer_flags[layer_idx]
-            # self.config.verbose = 1
+            # self.verbose = 1
             if self.verbose >= 1:
                 log.info(f"{layer} | {shape} | {target_flag}")
             if not target_flag:
@@ -654,20 +667,11 @@ class SuperposedAlgorithmBase(
                     compressed_layer = absorber[layer]
                 else:
                     for model in models:
-                        # if self.config.debug >= 2:
-                        #     layers_old[model][layer] = deepcopy(state_dicts[model][layer])
                         if compressed_layer is None:
                             compressed_layer = deepcopy(state_dicts[model][layer])
                         else:
                             compressed_layer += deepcopy(state_dicts[model][layer])
-                    # if self.config.debug >= 2:
-                    #     for retrieval_model in test_models:
-                    #         for model in models:
-                    #             layers_new[retrieval_model][model][layer] = deepcopy(state_dicts[model][layer])
             else:
-                # if self.config.debug >= 2:
-                #     for model in models:
-                #         layers_old[model][layer] = deepcopy(state_dicts[model][layer])
                 if self.mode == "random_binary_diagonal_matrix":
                     for model_idx, model in enumerate(models):
                         if self.different_across_layers:
@@ -699,10 +703,6 @@ class SuperposedAlgorithmBase(
                             unmerged_task_vectors[model][layer] = (
                                 unmerged_task_vectors[model][layer] @ context_diag
                             )
-                    # if self.config.debug >= 2:
-                    #     for retrieval_model in test_models:
-                    #         for model in models:
-                    #             layers_new[retrieval_model][model][layer] = state_dicts[model][layer] * compression_context[model][layer] * retrieval_context[retrieval_model][layer]
                 elif self.mode == "random_rotation_matrix":
                     for model_idx, model in enumerate(models):
                         if self.different_across_layers:
@@ -726,10 +726,6 @@ class SuperposedAlgorithmBase(
                             unmerged_task_vectors[model][layer] = (
                                 unmerged_task_vectors[model][layer] @ context
                             )
-                    # if self.config.debug >= 2:
-                    #     for retrieval_model in test_models:
-                    #         for model in models:
-                    #             layers_new[retrieval_model][model][layer] = state_dicts[model][layer] @ compression_context[model][layer] @ retrieval_context[retrieval_model][layer]
                 elif self.mode == "random_dense_matrix":
                     for model_idx, model in enumerate(models):
                         if self.different_across_layers:
@@ -756,10 +752,6 @@ class SuperposedAlgorithmBase(
                             unmerged_task_vectors[model][layer] = (
                                 unmerged_task_vectors[model][layer] @ context
                             )
-                    # if self.config.debug >= 2:
-                    #     for retrieval_model in test_models:
-                    #         for model in models:
-                    #             layers_new[retrieval_model][model][layer] = state_dicts[model][layer] @ compression_context[model][layer] @ retrieval_context[retrieval_model][layer]
                 elif self.mode == "random_diagonal_matrix":
                     for model_idx, model in enumerate(models):
                         if self.different_across_layers:
@@ -784,10 +776,6 @@ class SuperposedAlgorithmBase(
                             unmerged_task_vectors[model][layer] = (
                                 unmerged_task_vectors[model][layer] * context
                             )
-                    # if self.config.debug >= 2:
-                    #     for retrieval_model in test_models:
-                    #         for model in models:
-                    #             layers_new[retrieval_model][model][layer] = state_dicts[model][layer] * compression_context[model][layer] * retrieval_context[retrieval_model][layer]
                 elif self.mode == "identity_matrix":
                     for model_idx, model in enumerate(models):
                         context = torch.eye(shape[-1])
@@ -803,10 +791,6 @@ class SuperposedAlgorithmBase(
                             unmerged_task_vectors[model][layer] = (
                                 unmerged_task_vectors[model][layer] @ context
                             )
-                    # if self.config.debug >= 2:
-                    #     for retrieval_model in test_models:
-                    #         for model in models:
-                    #             layers_new[retrieval_model][model][layer] = state_dicts[model][layer] @ compression_context[model][layer] @ retrieval_context[retrieval_model][layer]
                 else:
                     raise ValueError(f"Unsupported mode: {self.mode}")
 

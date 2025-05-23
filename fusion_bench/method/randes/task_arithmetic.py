@@ -2,6 +2,7 @@ import logging
 import os
 from collections import OrderedDict
 from copy import deepcopy
+from typing import Optional
 
 import torch
 
@@ -21,6 +22,21 @@ log = logging.getLogger(__name__)
 class SuperposedTaskArithmeticAlgorithm(
     SuperposedAlgorithmBase,
 ):
+    _config_mapping = SuperposedAlgorithmBase._config_mapping | {
+        "scaling_factor": "scaling_factor",
+        "model_path": "model_path",
+    }
+
+    def __init__(
+        self,
+        scaling_factor: float,
+        model_path: Optional[str] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.scaling_factor = scaling_factor
+        self.model_path = model_path
+
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool):
         if not isinstance(modelpool, BaseModelPool):
@@ -38,7 +54,7 @@ class SuperposedTaskArithmeticAlgorithm(
             with self.profile("load model"):
                 model = modelpool.load_model(model_name)
             for layer_name, layer in model.state_dict(keep_vars=True).items():
-                if self.config.verbose >= 1:
+                if self.verbose >= 1:
                     log.info(f"{layer_name} | {layer.shape}")
             task_vector = state_dict_sub(
                 model.state_dict(keep_vars=True),
@@ -53,7 +69,7 @@ class SuperposedTaskArithmeticAlgorithm(
         with self.profile("retrieve models"):
             for model_name in modelpool.model_names:
                 retrieved_task_vector = state_dict_mul(
-                    retrieved_task_vectors[model_name], self.config.scaling_factor
+                    retrieved_task_vectors[model_name], self.scaling_factor
                 )
                 retrieved_state_dict = state_dict_add(
                     pretrained_model.state_dict(keep_vars=True), retrieved_task_vector
@@ -66,7 +82,7 @@ class SuperposedTaskArithmeticAlgorithm(
                 retrieved_model.load_state_dict(retrieved_state_dict)
                 models[model_name] = retrieved_model
 
-                if self.config.debug >= 1:
+                if self.debug >= 1:
                     with self.profile("metadata"):
                         model = modelpool.load_model(model_name)
                         if torch.cuda.is_available():
@@ -114,7 +130,7 @@ class SuperposedTaskArithmeticAlgorithm(
                         )
 
         with self.profile("metadata"):
-            if self.config.debug >= 0:
+            if self.debug >= 0:
                 (
                     metadata["trainable_param_count_pretrained_model"],
                     metadata["active_param_count_pretrained_model"],
@@ -131,9 +147,9 @@ class SuperposedTaskArithmeticAlgorithm(
                     f"Total storage (Gbs) for retrieval and original: {metadata['total_gb_retrieved']} | {metadata['total_gb_original']}"
                 )
 
-        if self.config.model_path is not None:
-            os.makedirs(os.path.dirname(self.config.model_path), exist_ok=True)
-            torch.save(models, self.config.model_path)
+        if self.model_path is not None:
+            os.makedirs(os.path.dirname(self.model_path), exist_ok=True)
+            torch.save(models, self.model_path)
 
         self.print_profile_summary()
         return {"models": models, "metadata": metadata}
@@ -142,6 +158,21 @@ class SuperposedTaskArithmeticAlgorithm(
 class SuperposedTaskArithmeticLoRAAlgorithm(
     SuperposedAlgorithmBase,
 ):
+    _config_mapping = SuperposedAlgorithmBase._config_mapping | {
+        "scaling_factor": "scaling_factor",
+        "model_path": "model_path",
+    }
+
+    def __init__(
+        self,
+        scaling_factor: float,
+        model_path: Optional[str] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.scaling_factor = scaling_factor
+        self.model_path = model_path
+
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool):
         if not isinstance(modelpool, BaseModelPool):
@@ -159,7 +190,7 @@ class SuperposedTaskArithmeticLoRAAlgorithm(
             with self.profile("load model"):
                 model = modelpool.load_model(model_name)
             for layer_name, layer in model.items():
-                if self.config.verbose >= 1:
+                if self.verbose >= 1:
                     log.info(f"{layer_name} | {layer.shape}")
             # task_vector = state_dict_sub(
             #     model.state_dict(keep_vars=True),
@@ -210,7 +241,7 @@ class SuperposedTaskArithmeticLoRAAlgorithm(
                 # retrieved_model.load_state_dict(sd)
                 # models[model_name] = retrieved_model
 
-                if self.config.debug >= 1:
+                if self.debug >= 1:
                     with self.profile("metadata"):
                         model = modelpool.load_model(model_name)
                         if torch.cuda.is_available():
@@ -262,7 +293,7 @@ class SuperposedTaskArithmeticLoRAAlgorithm(
                         )
 
         with self.profile("metadata"):
-            if self.config.debug >= 0:
+            if self.debug >= 0:
                 (
                     metadata["trainable_param_count_pretrained_model"],
                     metadata["active_param_count_pretrained_model"],
@@ -279,9 +310,9 @@ class SuperposedTaskArithmeticLoRAAlgorithm(
                     f"Total storage (Gbs) for retrieval and original: {metadata['total_gb_retrieved']} | {metadata['total_gb_original']}"
                 )
 
-        if self.config.model_path is not None:
-            os.makedirs(os.path.dirname(self.config.model_path), exist_ok=True)
-            torch.save(models, self.config.model_path)
+        if self.model_path is not None:
+            os.makedirs(os.path.dirname(self.model_path), exist_ok=True)
+            torch.save(models, self.model_path)
 
         self.print_profile_summary()
         return {"models": models, "metadata": metadata}
