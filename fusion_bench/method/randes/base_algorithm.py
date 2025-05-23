@@ -2,19 +2,17 @@ import logging
 import random
 from collections import OrderedDict
 from copy import deepcopy
-from typing import List, Tuple
+from typing import Dict, List, Literal, Optional, Tuple
 
 import numpy as np
 import torch
 from scipy.stats import ortho_group
-from torch import Tensor
+from torch import Tensor, nn
 
 from fusion_bench.method.base_algorithm import BaseAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
-from fusion_bench.utils.state_dict_arithmetic import (
-    state_dict_avg,
-)
+from fusion_bench.utils.state_dict_arithmetic import state_dict_avg
 from fusion_bench.utils.type import StateDictType
 
 log = logging.getLogger(__name__)
@@ -198,7 +196,7 @@ class SuperposedAlgorithmBase(
         rank: int,
         random_components: bool,
         shift_layers: int,
-        absorber: str,
+        absorber: Literal["average", "pretrained", "None"],
         debug: int,
         ms_mode: str,
         verbose: int,
@@ -221,7 +219,10 @@ class SuperposedAlgorithmBase(
         self.dropout_rate = dropout_rate
 
     def _compute_svd_subspace_similarities(
-        self, original_state_dict: dict, retrieved_state_dict: dict, target_layers=None
+        self,
+        original_state_dict: StateDictType,
+        retrieved_state_dict: StateDictType,
+        target_layers: Optional[List[str]] = None,
     ) -> dict:
         svd_similarities = {}
         for layer_name, original_param in original_state_dict.items():
@@ -236,7 +237,16 @@ class SuperposedAlgorithmBase(
                 )
         return svd_similarities
 
-    def _load_state_dicts(self, modelpool: BaseModelPool):
+    def _load_state_dicts(self, modelpool: BaseModelPool) -> Dict[str, StateDictType]:
+        """
+        Load the state dicts of the models in the modelpool.
+
+        Args:
+            modelpool (BaseModelPool): The modelpool to load the state dicts from.
+
+        Returns:
+            Dict[str, StateDictType]: A dictionary of state dicts, keyed by model name.
+        """
         state_dicts = {}
         for model_name in modelpool.model_names:
             with self.profile("load model"):
@@ -244,15 +254,31 @@ class SuperposedAlgorithmBase(
             state_dicts[model_name] = model.state_dict(keep_vars=True)
         return state_dicts
 
-    def _compute_absorber(self, state_dicts: dict, pretrained_model=None):
-        if self.config.absorber == "average":
+    def _compute_absorber(
+        self,
+        state_dicts: Dict[str, StateDictType],
+        pretrained_model: Optional[nn.Module] = None,
+    ) -> Optional[StateDictType]:
+        """
+        Compute the absorber state dict.
+
+        Args:
+            state_dicts (Dict[str, StateDictType]): The state dicts of the models, keyed by model name, i.e. `{model_name: state_dict}`.
+            pretrained_model (Optional[nn.Module]): The pretrained model.
+
+        Returns:
+            Optional[StateDictType]: The absorber state dict.
+        """
+        if self.absorber == "average":
             return state_dict_avg(list(state_dicts.values()))
-        elif self.config.absorber == "pretrained":
+        elif self.absorber == "pretrained":
             return pretrained_model.state_dict(keep_vars=True)
-        elif self.config.absorber == "None":
+        elif self.absorber == "None":
             return None
         else:
-            raise ValueError(f"Unsupported absorber type: {self.config.absorber}")
+            raise ValueError(
+                f"Unsupported absorber type: {self.absorber}. Must be one of 'average', 'pretrained', or 'None'."
+            )
 
     @staticmethod
     def svd_decomposition(A, r):
@@ -364,8 +390,10 @@ class SuperposedAlgorithmBase(
             return int(rank * min(A.shape))
 
     def _target_layer_flag(self, layer: str):
-        """Current implementation assume Transformer architecture and layer number is the first number in the layer name."""
-        target_layers = self.config.target_layer  # e.g. ["mlp_w", "attn_w"]
+        """
+        Current implementation assume Transformer architecture and layer number is the first number in the layer name.
+        """
+        target_layers = self.target_layer  # e.g. ["mlp_w", "attn_w"]
         # TODO: figure out what wo is in flan-t5
         mlp_flag = "mlp" in layer or "Dense" in layer
         attn_flag = "attn" in layer or "Attention" in layer
@@ -388,14 +416,23 @@ class SuperposedAlgorithmBase(
         target_flag = any(target_flags)
         return target_flag
 
-    def _compress_and_retrieve(self, state_dicts: dict, mode):
+    def _compress_and_retrieve(self, state_dicts: Dict[str, StateDictType], mode: str):
+        """
+        Compress and retrieve the state dicts.
+
+        Args:
+            state_dicts (Dict[str, StateDictType]): The state dicts of the models, keyed by model name, i.e. `{model_name: state_dict}`.
+            mode (str): The mode of the compression and retrieval.
+
+        Returns:
+            Dict[str, StateDictType]: The compressed and retrieved state dicts, keyed by model name, i.e. `{model_name: state_dict}`.
+        """
         # Assume the state_dicts have the same layers.
         layers = state_dicts[list(state_dicts.keys())[0]].keys()
         models = list(state_dicts.keys())
         compressed_layers = {}
         compression_context = {model: {} for model in models}
         retrieval_context = {model: {} for model in models}
-        retrieval_context_svd = {}
         retrieval_models = deepcopy(state_dicts)
         # target_layer_flags = [self._target_layer_flag(layer) for layer in layers]
         # implement target_layer_flags with dropout
@@ -404,7 +441,7 @@ class SuperposedAlgorithmBase(
         for layer in layers:
             if self._target_layer_flag(layer):
                 count += 1
-                if count == self.config.dropout_rate:
+                if count == self.dropout_rate:
                     target_layer_flags.append(True)
                     count = 0
                 else:
@@ -450,7 +487,7 @@ class SuperposedAlgorithmBase(
         metadata["total_gb_original"] = gbs
 
         # for analysis purposes
-        if self.config.debug >= 2:
+        if self.debug >= 2:
             test_models = models
             # test_models = models[:2]
             # layers_old = {model: OrderedDict() for model in models}
@@ -463,10 +500,10 @@ class SuperposedAlgorithmBase(
 
         # Shift the layers
         # TODO: make this more robust to other models.
-        if self.config.shift_layers != 0:
+        if self.shift_layers != 0:
             # random shuffling. Do not shuffle layers with no number in their name.
             # because they are likely to be special layers like text embeddings.
-            if self.config.shift_layers == -1:
+            if self.shift_layers == -1:
                 layer_mappings = {model: {} for model in models}
                 temp_state_dicts = deepcopy(state_dicts)
 
@@ -600,7 +637,7 @@ class SuperposedAlgorithmBase(
                         temp_state_dicts[model][new_layer] = state_dicts[model][layer]
                 state_dicts = temp_state_dicts
 
-        if self.config.debug >= 2:
+        if self.debug >= 2:
             # for evaluating pairwise cosine similarity
             unmerged_task_vectors = deepcopy(state_dicts)
 
@@ -610,7 +647,7 @@ class SuperposedAlgorithmBase(
             compressed_layer = None
             target_flag = target_layer_flags[layer_idx]
             # self.config.verbose = 1
-            if self.config.verbose >= 1:
+            if self.verbose >= 1:
                 log.info(f"{layer} | {shape} | {target_flag}")
             if not target_flag:
                 if absorber is not None:
@@ -631,14 +668,12 @@ class SuperposedAlgorithmBase(
                 # if self.config.debug >= 2:
                 #     for model in models:
                 #         layers_old[model][layer] = deepcopy(state_dicts[model][layer])
-                if self.config.mode == "random_binary_diagonal_matrix":
+                if self.mode == "random_binary_diagonal_matrix":
                     for model_idx, model in enumerate(models):
-                        if self.config.different_across_layers:
-                            seed = (
-                                self.config.random_seed + model_idx + hash(layer) % 1e6
-                            )
+                        if self.different_across_layers:
+                            seed = self.random_seed + model_idx + hash(layer) % 1e6
                         else:
-                            seed = self.config.random_seed + model_idx
+                            seed = self.random_seed + model_idx
                         numpy_state = np.random.get_state()
                         np.random.seed(int(seed))
                         context = (
@@ -658,7 +693,7 @@ class SuperposedAlgorithmBase(
                             compressed_layer = state_dicts[model][layer] * context
                         else:
                             compressed_layer += state_dicts[model][layer] * context
-                        if self.config.debug >= 2:
+                        if self.debug >= 2:
                             # hadamard product is not linear, convert it back to diagonal matrix and apply matrix multiplication
                             context_diag = torch.diag(context.squeeze())
                             unmerged_task_vectors[model][layer] = (
@@ -668,14 +703,12 @@ class SuperposedAlgorithmBase(
                     #     for retrieval_model in test_models:
                     #         for model in models:
                     #             layers_new[retrieval_model][model][layer] = state_dicts[model][layer] * compression_context[model][layer] * retrieval_context[retrieval_model][layer]
-                elif self.config.mode == "random_rotation_matrix":
+                elif self.mode == "random_rotation_matrix":
                     for model_idx, model in enumerate(models):
-                        if self.config.different_across_layers:
-                            seed = (
-                                self.config.random_seed + model_idx + hash(layer) % 1e6
-                            )
+                        if self.different_across_layers:
+                            seed = self.random_seed + model_idx + hash(layer) % 1e6
                         else:
-                            seed = self.config.random_seed + model_idx
+                            seed = self.random_seed + model_idx
                         context = torch.from_numpy(
                             ortho_group.rvs(shape[-1], random_state=seed).astype(
                                 "float32"
@@ -689,7 +722,7 @@ class SuperposedAlgorithmBase(
                             compressed_layer = state_dicts[model][layer] @ context
                         else:
                             compressed_layer += state_dicts[model][layer] @ context
-                        if self.config.debug >= 2:
+                        if self.debug >= 2:
                             unmerged_task_vectors[model][layer] = (
                                 unmerged_task_vectors[model][layer] @ context
                             )
@@ -697,14 +730,12 @@ class SuperposedAlgorithmBase(
                     #     for retrieval_model in test_models:
                     #         for model in models:
                     #             layers_new[retrieval_model][model][layer] = state_dicts[model][layer] @ compression_context[model][layer] @ retrieval_context[retrieval_model][layer]
-                elif self.config.mode == "random_dense_matrix":
+                elif self.mode == "random_dense_matrix":
                     for model_idx, model in enumerate(models):
-                        if self.config.different_across_layers:
-                            seed = (
-                                self.config.random_seed + model_idx + hash(layer) % 1e6
-                            )
+                        if self.different_across_layers:
+                            seed = self.random_seed + model_idx + hash(layer) % 1e6
                         else:
-                            seed = self.config.random_seed + model_idx
+                            seed = self.random_seed + model_idx
                         numpy_state = np.random.get_state()
                         np.random.seed(int(seed))
                         context = torch.from_numpy(
@@ -721,7 +752,7 @@ class SuperposedAlgorithmBase(
                             compressed_layer = state_dicts[model][layer] @ context
                         else:
                             compressed_layer += state_dicts[model][layer] @ context
-                        if self.config.debug >= 2:
+                        if self.debug >= 2:
                             unmerged_task_vectors[model][layer] = (
                                 unmerged_task_vectors[model][layer] @ context
                             )
@@ -729,14 +760,12 @@ class SuperposedAlgorithmBase(
                     #     for retrieval_model in test_models:
                     #         for model in models:
                     #             layers_new[retrieval_model][model][layer] = state_dicts[model][layer] @ compression_context[model][layer] @ retrieval_context[retrieval_model][layer]
-                elif self.config.mode == "random_diagonal_matrix":
+                elif self.mode == "random_diagonal_matrix":
                     for model_idx, model in enumerate(models):
-                        if self.config.different_across_layers:
-                            seed = (
-                                self.config.random_seed + model_idx + hash(layer) % 1e6
-                            )
+                        if self.different_across_layers:
+                            seed = self.random_seed + model_idx + hash(layer) % 1e6
                         else:
-                            seed = self.config.random_seed + model_idx
+                            seed = self.random_seed + model_idx
                         numpy_state = np.random.get_state()
                         np.random.seed(int(seed))
                         context = torch.from_numpy(
@@ -751,7 +780,7 @@ class SuperposedAlgorithmBase(
                             compressed_layer = state_dicts[model][layer] * context
                         else:
                             compressed_layer += state_dicts[model][layer] * context
-                        if self.config.debug >= 2:
+                        if self.debug >= 2:
                             unmerged_task_vectors[model][layer] = (
                                 unmerged_task_vectors[model][layer] * context
                             )
@@ -759,7 +788,7 @@ class SuperposedAlgorithmBase(
                     #     for retrieval_model in test_models:
                     #         for model in models:
                     #             layers_new[retrieval_model][model][layer] = state_dicts[model][layer] * compression_context[model][layer] * retrieval_context[retrieval_model][layer]
-                elif self.config.mode == "identity_matrix":
+                elif self.mode == "identity_matrix":
                     for model_idx, model in enumerate(models):
                         context = torch.eye(shape[-1])
                         compression_context[model][
@@ -770,7 +799,7 @@ class SuperposedAlgorithmBase(
                             compressed_layer = state_dicts[model][layer] @ context
                         else:
                             compressed_layer += state_dicts[model][layer] @ context
-                        if self.config.debug >= 2:
+                        if self.debug >= 2:
                             unmerged_task_vectors[model][layer] = (
                                 unmerged_task_vectors[model][layer] @ context
                             )
@@ -779,7 +808,7 @@ class SuperposedAlgorithmBase(
                     #         for model in models:
                     #             layers_new[retrieval_model][model][layer] = state_dicts[model][layer] @ compression_context[model][layer] @ retrieval_context[retrieval_model][layer]
                 else:
-                    raise ValueError(f"Unsupported mode: {self.config.mode}")
+                    raise ValueError(f"Unsupported mode: {self.mode}")
 
             compressed_layers[layer] = compressed_layer
 
@@ -788,7 +817,7 @@ class SuperposedAlgorithmBase(
         nonzero_param_count_context = 0
         total_bytes_retrieved = 0
 
-        if self.config.debug >= 2:
+        if self.debug >= 2:
             for model in test_models:
                 tv_new[model] = deepcopy(unmerged_task_vectors)
 
@@ -809,8 +838,8 @@ class SuperposedAlgorithmBase(
             else:
                 if (
                     mode == "superposed_task_arithmetic"
-                    and self.config.mode == "identity_matrix"
-                    and self.config.shift_layers == 0
+                    and self.mode == "identity_matrix"
+                    and self.shift_layers == 0
                 ):
                     # we don't count target layers for task arithmetic
                     # because they can be absorbed into the pretrained weights
@@ -822,7 +851,7 @@ class SuperposedAlgorithmBase(
                     )
                     nonzero_param_count += torch.numel(compressed_layers[layer])
 
-                if self.config.mode in [
+                if self.mode in [
                     "random_binary_diagonal_matrix",
                     "random_rotation_matrix",
                     "random_dense_matrix",
@@ -830,9 +859,9 @@ class SuperposedAlgorithmBase(
                     "identity_matrix",
                 ]:
                     for model in models:
-                        if self.config.mode not in ["identity_matrix"]:
+                        if self.mode not in ["identity_matrix"]:
                             nonzero_count = torch.numel(retrieval_context[model][layer])
-                            if self.config.mode == "random_binary_diagonal_matrix":
+                            if self.mode == "random_binary_diagonal_matrix":
                                 total_bytes_retrieved += (
                                     nonzero_count * 1
                                 )  # 1 byte per element for binary
@@ -853,7 +882,7 @@ class SuperposedAlgorithmBase(
                                 compressed_layers[layer]
                                 @ retrieval_context[model][layer]
                             )
-                        if self.config.debug >= 2 and model in test_models:
+                        if self.debug >= 2 and model in test_models:
                             if retrieval_context[model][layer].shape[0] == 1:
                                 retrieval_context_diag = torch.diag(
                                     retrieval_context[model][layer].squeeze()
@@ -869,16 +898,16 @@ class SuperposedAlgorithmBase(
                                         @ retrieval_context[model][layer]
                                     )
                 else:
-                    raise ValueError(f"Unsupported mode: {self.config.mode}")
+                    raise ValueError(f"Unsupported mode: {self.mode}")
         # for model in test_models:
         #     # print(retrieval_context[model]['vision_model.encoder.layers.4.self_attn.q_proj.weight'])
         # #     print('a')
         #     print(tv_new[model][models[3]]['vision_model.encoder.layers.4.self_attn.q_proj.weight'])
 
         # Shift the layers back
-        if self.config.shift_layers != 0:
-            if self.config.shift_layers == -1:  # random shuffling
-                if self.config.debug >= 2:
+        if self.shift_layers != 0:
+            if self.shift_layers == -1:  # random shuffling
+                if self.debug >= 2:
                     temp_tv_new = deepcopy(tv_new)
                 temp_retrieval_models = deepcopy(retrieval_models)
                 for model_idx, model in enumerate(models):
@@ -887,17 +916,17 @@ class SuperposedAlgorithmBase(
                         temp_retrieval_models[model][original_layer] = retrieval_models[
                             model
                         ][shuffled_layer]
-                        if self.config.debug >= 2 and model in test_models:
+                        if self.debug >= 2 and model in test_models:
                             for m in models:
                                 temp_tv_new[model][m][original_layer] = tv_new[model][
                                     m
                                 ][shuffled_layer]
                 retrieval_models = temp_retrieval_models
-                if self.config.debug >= 2:
+                if self.debug >= 2:
                     tv_new = temp_tv_new
             else:  # TODO: check the correctness of this mode
                 # raise NotImplementedError("Shift back mode not implemented yet. No tv_new support yet.")
-                if self.config.debug >= 2:
+                if self.debug >= 2:
                     temp_tv_new = deepcopy(tv_new)
                 temp_retrieval_models = deepcopy(retrieval_models)
                 for model_idx, model in enumerate(models):
@@ -914,7 +943,7 @@ class SuperposedAlgorithmBase(
                         if layer_number is None:
                             continue
                         new_layer_number = (
-                            layer_number - model_idx * self.config.shift_layers
+                            layer_number - model_idx * self.shift_layers
                         ) % (max_layer_number + 1)
                         new_layer_parts = []
                         replaced = False
@@ -928,13 +957,13 @@ class SuperposedAlgorithmBase(
                         temp_retrieval_models[model][new_layer] = retrieval_models[
                             model
                         ][layer]
-                        if self.config.debug >= 2 and model in test_models:
+                        if self.debug >= 2 and model in test_models:
                             for m in models:
                                 temp_tv_new[model][m][new_layer] = tv_new[model][m][
                                     layer
                                 ]
                 retrieval_models = temp_retrieval_models
-                if self.config.debug >= 2:
+                if self.debug >= 2:
                     tv_new = temp_tv_new
 
         # for model in test_models:
@@ -943,8 +972,8 @@ class SuperposedAlgorithmBase(
         #     print(tv_new[model][models[3]]['vision_model.encoder.layers.4.self_attn.q_proj.weight'])
 
         # metadata
-        if self.config.debug >= 2:
-            if self.config.mode in [
+        if self.debug >= 2:
+            if self.mode in [
                 "random_binary_diagonal_matrix",
                 "random_rotation_matrix",
                 "random_dense_matrix",
@@ -983,7 +1012,7 @@ class SuperposedAlgorithmBase(
                     metadata[
                         f"pairwise_cosine_similarity_matrix_after_{retrieval_model}"
                     ] = pcsm
-        if self.config.debug >= 0:
+        if self.debug >= 0:
             metadata["nonzero_parameter_count"] = (
                 nonzero_param_count.item()
                 if isinstance(nonzero_param_count, torch.Tensor)

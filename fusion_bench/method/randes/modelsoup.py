@@ -29,6 +29,7 @@ class SuperposedModelSoupAlgorithm(
         )
         models = {}
 
+        # load state dicts
         state_dicts = self._load_state_dicts(modelpool)
         with self.profile("load model"):
             pretrained_model = modelpool.load_model("_pretrained_")
@@ -40,17 +41,18 @@ class SuperposedModelSoupAlgorithm(
             retrieved_state_dicts, metadata = self._compress_and_retrieve(
                 deepcopy(state_dicts), mode="superposed_model_soup"
             )
+
         with self.profile("retrieve models"):
             for model_idx, model_name in enumerate(modelpool.model_names):
-                if self.config.ms_mode == "average":
+                if self.ms_mode == "average":
                     coefficient = 1 / len(modelpool.model_names)
                     retrieved_state_dict = state_dict_mul(
                         retrieved_state_dicts[model_name], coefficient
                     )
-                elif self.config.ms_mode == "original":
+                elif self.ms_mode == "original":
                     retrieved_state_dict = retrieved_state_dicts[model_name]
                 else:
-                    raise ValueError(f"Unsupported ms_mode: {self.config.ms_mode}")
+                    raise ValueError(f"Unsupported ms_mode: {self.ms_mode}")
                 retrieved_model = modelpool.load_model(
                     model_name
                 )  # TODO: avoid repeated loading
@@ -60,7 +62,7 @@ class SuperposedModelSoupAlgorithm(
                         retrieved_state_dict[k] = v.squeeze(0)
                 retrieved_model.load_state_dict(retrieved_state_dict)
                 models[model_name] = retrieved_model
-                if self.config.debug >= 1:
+                if self.debug >= 1:
                     with self.profile("metadata"):
                         if torch.cuda.is_available():
                             retrieved_state_dicts[model_name] = {
@@ -108,7 +110,7 @@ class SuperposedModelSoupAlgorithm(
                             retrieved_state_dict,
                         )
         with self.profile("metadata"):
-            if self.config.debug >= 0:
+            if self.debug >= 0:
                 (
                     metadata["trainable_param_count_pretrained_model"],
                     metadata["active_param_count_pretrained_model"],
