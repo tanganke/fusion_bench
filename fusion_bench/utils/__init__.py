@@ -12,3 +12,4 @@ from .misc import *
 from .packages import import_object
 from .parameters import *
 from .timer import timeit_context
+from .lazy_state_dict import LazyStateDict

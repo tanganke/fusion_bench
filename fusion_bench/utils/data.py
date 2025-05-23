@@ -96,7 +96,7 @@ def train_validation_split(
 
     # Compute the number of samples for training and validation
     num_samples = len(dataset)
-    if validation_size is not None:
+    if validation_size is None:
         assert (
             0 < validation_fraction < 1
         ), "Validation fraction must be between 0 and 1"
