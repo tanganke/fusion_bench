@@ -32,6 +32,7 @@ from fusion_bench.models.modeling_losparse_llama.losparse_linear import LoSparse
 from fusion_bench.models.modeling_losparse_llama.utils import convert_to_losparse_llama
 from fusion_bench.utils import cache_to_disk, print_parameters, timeit_context
 from fusion_bench.utils.devices import get_device
+from fusion_bench.utils.dtype import get_dtype
 
 log = logging.getLogger(__name__)
 
@@ -141,6 +142,7 @@ class SparseLoForLlama(BaseAlgorithm, SimpleProfilerMixin):
 
     @override
     def run(self, modelpool: CausalLMPool):
+        self.modelpool = modelpool
         if self.seed is not None:
             L.seed_everything(self.seed)
 
@@ -691,12 +693,16 @@ class IterativeSparseLoForLlama(SparseLoForLlama):
         "num_iterations": "num_iterations",
     }
 
-    def __init__(self, num_iterations: int, **kwargs):
+    def __init__(
+        self, num_iterations: int, use_reference_model: bool = False, **kwargs
+    ):
         super().__init__(**kwargs)
         self.num_iterations = num_iterations
+        self.use_reference_model = use_reference_model
 
     @override
     def run(self, modelpool):
+        self.modelpool = modelpool
         if self.seed is not None:
             L.seed_everything(self.seed)
 
@@ -802,13 +808,25 @@ class IterativeSparseLoForLlama(SparseLoForLlama):
     @torch.no_grad()
     def iterative_magnitude_prune_(self, model):
         layers: nn.ModuleList = model.model.layers
+        if self.use_reference_model:
+            reference_model = self.modelpool.load_model(
+                "reference_model", torch_dtype="float16"
+            )
+            reference_layers: nn.ModuleList = reference_model.model.layers
         for layer_idx, layer in tqdm(
             enumerate(layers), "Pruning Layers", total=len(layers), dynamic_ncols=True
         ):
             for name, linear in layer.named_modules():
                 if isinstance(linear, LoSparseLinear):
                     log.info(f"Magnitude Pruning {name}")
-                    W = linear.weight.data.clone()
+                    W = (
+                        linear.weight.data.clone()
+                        if not self.use_reference_model
+                        else reference_layers[layer_idx]
+                        .get_submodule(name)
+                        .weight.data.clone()
+                        .to(linear.weight.data.device)
+                    )
                     if self.prune_type == PruningType.UNSTRUCTURED:
                         unstructured_magnitude_prune_(
                             linear.weight.data,
