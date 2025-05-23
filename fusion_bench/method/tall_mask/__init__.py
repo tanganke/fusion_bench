@@ -1,0 +1,1 @@
+from .task_arithmetic import TallMaskTaskArithmeticAlgorithm

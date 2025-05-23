@@ -19,7 +19,7 @@
 
 FusionBench is a benchmark suite designed to evaluate the performance of various deep model fusion techniques. It aims to provide a comprehensive comparison of different methods on a variety of datasets and tasks.
 
-Projects based on FusionBench and news from the community (descending order of date. If you have any work based on FusionBench, please feel free to let use know, we are willing to add it to the list. :partying_face:):
+Projects based on FusionBench and news from the community (descending order of date. If you have any work based on FusionBench, please feel free to let us know, we are willing to add it to the list. :partying_face:):
 
 <details>
   <summary>Hao Mark Chen, et al. FW-Merging: Scaling Model Merging with Frank-Wolfe Optimization. Mar 2025. https://arxiv.org/abs/2503.12649</summary>
