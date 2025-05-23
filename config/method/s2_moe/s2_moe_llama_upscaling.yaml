@@ -1,4 +1,4 @@
-_target_: fusion_bench.method.s2_moe.s2_moe_upscaling.S2MoEUpscalingAlgorithm
+_target_: fusion_bench.method.s2_moe.s2_moe_llama_upscaling.S2MoEUpscalingAlgorithm
 # the device where we put the models on, merge device on cuda can accelerate the SVD computation
 device: cpu
 # the device to compute svd

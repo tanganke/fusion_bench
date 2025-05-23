@@ -290,7 +290,7 @@ class S2MoEUpscalingAlgorithm(
             if isinstance(module, self._linear_layer_cls)
         ]
 
-        # 如果需要平均专家，处理非线性层
+        #如果需要平均专家，处理非线性层
         non_linear_modules = [
             (name, module)
             for name, module in pretrained_model.named_modules()
@@ -324,6 +324,8 @@ class S2MoEUpscalingAlgorithm(
                     # 将差异矩阵移至指定设备以加速计算
                     device = self.upscaling_accelerator or diff.device
                     diff = diff.to(device)
+
+                        
                     # 使用TSVC_utils中的函数计算SVD并压缩
                     _, u, s, v, U, S, V = TSVC_utils.compute_svd_and_compress(
                         None, diff, sv_reduction
@@ -385,6 +387,7 @@ class S2MoEUpscalingAlgorithm(
                         v_v,
                     )
                 )
+
 
                 # 更新预训练模型权重
                 pretrained_module.weight.data.add_(reconstructed_weight)

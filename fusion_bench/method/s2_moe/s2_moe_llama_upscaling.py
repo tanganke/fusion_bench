@@ -248,11 +248,12 @@ class S2MoEUpscalingAlgorithm(
         config = self.config
         i = 0
         for name, module in tqdm(
-            tuple(pretrained_model.named_modules()),
+            list(tuple(pretrained_model.named_modules()))[1:-1],
             tqdm_desc,
             leave=False,
             dynamic_ncols=True,
         ):
+            
             if isinstance(module, self._linear_layer_cls):
                 self._upscale_linear_layer(
                     pretrained_model=pretrained_model,
@@ -282,18 +283,20 @@ class S2MoEUpscalingAlgorithm(
         # 预先获取所有线性层模块，避免重复遍历
         linear_modules = [
             (name, module)
-            for name, module in pretrained_model.named_modules()
+            for name, module in list(pretrained_model.named_modules())[1:-1]
             if isinstance(module, self._linear_layer_cls)
         ]
 
         # 如果需要平均专家，处理非线性层
         non_linear_modules = [
             (name, module)
-            for name, module in pretrained_model.named_modules()
+            for name, module in list(pretrained_model.named_modules())
             if not isinstance(module, self._linear_layer_cls)
             and len(tuple(module.named_modules())) == 1
         ]
         for name, _ in tqdm(non_linear_modules, desc="处理非线性层"):
+            if name == "model.embed_tokens":
+                continue
             self._average_experts(pretrained_model, finetuned_models, name)
 
         # 使用tqdm显示进度
@@ -383,6 +386,7 @@ class S2MoEUpscalingAlgorithm(
                 )
 
                 # 更新预训练模型权重
+                reconstructed_weight = reconstructed_weight.to(pretrained_module.weight.device)
                 pretrained_module.weight.data.add_(reconstructed_weight)
 
                 # 打印日志信息

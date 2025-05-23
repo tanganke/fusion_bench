@@ -17,15 +17,37 @@ def compute_svd_and_compress(key, matrix, sv_reduction):
             - s (torch.Tensor): The reduced singular values.
             - v (torch.Tensor): The right singular vectors of the reduced SVD.
     """
+    # 保存原始数据类型
+    original_dtype = matrix.dtype
+    
+    # 如果是BFloat16类型，转换为float32
+    if matrix.dtype == torch.bfloat16:
+        matrix = matrix.to(torch.float32)
+    
+    # 执行SVD操作
     u, s, v = torch.linalg.svd(matrix, full_matrices=False)
-    # print("svd", key, matrix.shape, u.shape, s.shape, v.shape)
+    
+    # 计算压缩后的索引
     reduced_index_s = int(s.shape[0] * sv_reduction)
-    # reduced_index_s = 32
+    
+    # 获取压缩后的结果
+    u_reduced = u[:, :reduced_index_s]
+    s_reduced = s[:reduced_index_s]
+    v_reduced = v.T[:, :reduced_index_s]
+    
+    # 如果原始数据是BFloat16，将结果转换回BFloat16
+    if original_dtype == torch.bfloat16:
+        u_reduced = u_reduced.to(torch.bfloat16)
+        s_reduced = s_reduced.to(torch.bfloat16)
+        v_reduced = v_reduced.to(torch.bfloat16)
+        # 注意：保持原始的u, s, v为float32类型，因为这些可能用于后续计算
+    
+    # 返回结果
     return (
         key,
-        u[:, :reduced_index_s],
-        s[:reduced_index_s],
-        v.T[:, :reduced_index_s],
+        u_reduced,
+        s_reduced,
+        v_reduced,
         u,
         s,
         v.T,

@@ -54,10 +54,26 @@ class S2MoELinear(nn.Module):
             raise ExpertNotTrainedError()
 
         if routing_use_diff or k > 0:
-            svd_cache_list = [
-                svd(w, full_matrices=full_matrices, accelerator=upscaling_accelerator)
-                for w in w_diff_list
-            ]  # SVD缓存列表，避免重复计算
+            svd_cache_list = []
+            for w in w_diff_list:
+                # 保存原始数据类型
+                original_dtype = w.dtype
+                
+                # 如果是BFloat16类型，转换为float32
+                if w.dtype == torch.bfloat16:
+                    w = w.to(torch.float32)
+                
+                # 执行SVD操作
+                u, s, v = svd(w, full_matrices=full_matrices, accelerator=upscaling_accelerator)
+                
+                # 如果原始数据是BFloat16，将结果转换回BFloat16
+                if original_dtype == torch.bfloat16:
+                    u = u.to(torch.bfloat16)
+                    s = s.to(torch.bfloat16)
+                    v = v.to(torch.bfloat16)
+                
+                svd_cache_list.append((u, s, v))
+            # SVD缓存列表，避免重复计算
         self.orig_v = orig_v
         # 构建门控网络
         if routing_use_diff:
