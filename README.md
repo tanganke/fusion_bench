@@ -15,42 +15,6 @@
 > [!TIP]
 > Documentation is available at [tanganke.github.io/fusion_bench/](https://tanganke.github.io/fusion_bench/).
 
-## Frank Wolfe Merging 
-
-This is a fork from the original FusionBench repo. It implements [Frank-Wolfe Merging](https://arxiv.org/abs/2503.12649) **(FW-Merging)** under FusionBench. 
-
-### ViT benchmark results
-
-For FW soft, run
-
-```
-fusion_bench \
-    method=fw_merging/fw_soft \
-        method.max_iters=5 method.ada_iters=500 method.ada_coeff=1e-2 \
-        method.init_weight=base method.granularity=task  \
-    method.tasks=[sun397,stanford-cars,gtsrb,dtd] \
-    modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TALL20.yaml \
-    taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA4 \
-    fabric.loggers.root_dir=outputs/logs/ViT-B-32 \
-    fabric.loggers.name=fw_merging_TA4
-```
-
-For FW hard, run 
-
-```
-fusion_bench \
-    method=fw_merging/fw_hard \
-        method.max_iters=3 \
-        method.step_size=0.01 \
-        method.init_weight=merged-model-starting-point \
-        method.granularity=layer \
-    method.tasks=[sun397,stanford-cars,gtsrb,dtd] \
-    modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TALL20.yaml \
-    taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA4 
-```
-
-Replace merged-model-starting-point with the merged model weights from Adamerging.
-
 ## Overview
 
 FusionBench is a benchmark suite designed to evaluate the performance of various deep model fusion techniques. It aims to provide a comprehensive comparison of different methods on a variety of datasets and tasks.

@@ -1,9 +1,0 @@
-defaults:
-  - sun397
-  - stanford-cars
-  # - resisc45
-  # - eurosat
-  # - svhn
-  - gtsrb
-  # - mnist
-  - dtd
