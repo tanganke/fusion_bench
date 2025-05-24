@@ -1,5 +1,0 @@
-defaults:
-  - CLIPVisionModelPool@: _template
-  - /model/clip-vit@models: clip-vit-base-patch32_four_tasks
-  - /dataset/image_classification/train@train_datasets: the_four_tasks
-  - /dataset/image_classification/test@test_datasets: the_four_tasks
