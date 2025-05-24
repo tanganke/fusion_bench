@@ -67,6 +67,7 @@ _import_structure = {
         "CLIPTaskWiseGossipAlgorithm",
         "FlanT5LayerWiseGossipAlgorithm",
     ],
+    "fw_merging": ["FrankWolfeHardAlgorithm", "FrankWolfeSoftAlgorithm"],
     # plug-and-play model merging methods
     "concrete_subspace": [
         "ConcreteTaskArithmeticAlgorithmForCLIP",
@@ -103,6 +104,7 @@ _import_structure = {
         "RandomPruningForLlama",
         "MagnitudePruningForLlama",
         "WandaPruningForLlama",
+        "SparseGPTPruningForLlama",
     ],
     "sparselo": [
         "IterativeSparseLoForLlama",
@@ -141,6 +143,7 @@ if TYPE_CHECKING:
         WeightedEnsembleAlgorithm,
     )
     from .fisher_merging import FisherMergingForCLIPVisionModel
+    from .fw_merging import FrankWolfeHardAlgorithm, FrankWolfeSoftAlgorithm
     from .gossip import (
         CLIPLayerWiseGossipAlgorithm,
         CLIPTaskWiseGossipAlgorithm,
@@ -172,6 +175,7 @@ if TYPE_CHECKING:
         MagnitudeDiffPruningAlgorithm,
         MagnitudePruningForLlama,
         RandomPruningForLlama,
+        SparseGPTPruningForLlama,
         WandaPruningForLlama,
     )
     from .pwe_moe import (

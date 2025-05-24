@@ -1,0 +1,4 @@
+_target_: fusion_bench.method.tall_mask.TallMaskTaskArithmeticAlgorithm
+tall_mask_lambda: 0.6
+debug: 0
+verbose: 0

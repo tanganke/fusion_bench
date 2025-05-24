@@ -1,12 +1,14 @@
 # Code adapted from https://github.com/IST-DASLab/sparsegpt/blob/master/datautils.py
 
+import os
 import random
 from typing import List, Optional, Tuple, cast  # noqa: F401
 
-from datasets import load_dataset
 from torch import Tensor
 from tqdm.auto import tqdm
 from transformers import PreTrainedTokenizer
+
+from datasets import load_dataset
 
 
 # Wrapper for tokenized input IDs
@@ -61,6 +63,7 @@ def get_c4(
     seqlen: int,
     tokenizer,
     data_path: str = "allenai/c4",
+    cache_dir: str = ".cache/allenai--c4",
 ) -> Tuple[List[Tuple[Tensor, Tensor]], TokenizerWrapper]:
     """
     Load and process the c4 dataset.
@@ -76,19 +79,35 @@ def get_c4(
         tuple (Tuple[List[Tuple[Tensor, Tensor]], TokenizerWrapper]): Tuple containing the training samples and the validation dataset.
     """
     # Load train and validation datasets
-    traindata = load_dataset(
-        data_path,
-        # "allenai--c4", # https://github.com/huggingface/datasets/issues/6559
-        data_files={"train": "en/c4-train.00000-of-01024.json.gz"},
-        split="train",
-    )
-    valdata = load_dataset(
-        data_path,
-        # "allenai--c4",
-        data_files={"validation": "en/c4-validation.00000-of-00008.json.gz"},
-        split="validation",
-    )
+    if os.path.exists(f"{cache_dir}/en/c4-train.00000-of-01024.json.gz"):
+        traindata = load_dataset(
+            "json",
+            data_files={"train": f"{cache_dir}/en/c4-train.00000-of-01024.json.gz"},
+            split="train",
+        )
+    else:
+        traindata = load_dataset(
+            data_path,
+            # "allenai--c4", # https://github.com/huggingface/datasets/issues/6559
+            data_files={"train": "en/c4-train.00000-of-01024.json.gz"},
+            split="train",
+        )
 
+    if os.path.exists(f"{cache_dir}/en/c4-validation.00000-of-00008.json.gz"):
+        valdata = load_dataset(
+            "json",
+            data_files={
+                "validation": f"{cache_dir}/en/c4-validation.00000-of-00008.json.gz",
+            },
+            split="validation",
+        )
+    else:
+        valdata = load_dataset(
+            data_path,
+            # "allenai--c4",
+            data_files={"validation": "en/c4-validation.00000-of-00008.json.gz"},
+            split="validation",
+        )
     # Generate samples from training set
     if seed is not None:
         random.seed(seed)
