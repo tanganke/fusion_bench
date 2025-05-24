@@ -67,6 +67,7 @@ _import_structure = {
         "CLIPTaskWiseGossipAlgorithm",
         "FlanT5LayerWiseGossipAlgorithm",
     ],
+    "fw_merging": ["FrankWolfeHardAlgorithm", "FrankWolfeSoftAlgorithm"],
     # plug-and-play model merging methods
     "concrete_subspace": [
         "ConcreteTaskArithmeticAlgorithmForCLIP",
@@ -142,6 +143,7 @@ if TYPE_CHECKING:
         WeightedEnsembleAlgorithm,
     )
     from .fisher_merging import FisherMergingForCLIPVisionModel
+    from .fw_merging import FrankWolfeHardAlgorithm, FrankWolfeSoftAlgorithm
     from .gossip import (
         CLIPLayerWiseGossipAlgorithm,
         CLIPTaskWiseGossipAlgorithm,
