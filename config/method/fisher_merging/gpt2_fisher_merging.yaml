@@ -1,0 +1,12 @@
+_target_: fusion_bench.method.FisherMergingAlgorithmForGPT2
+# this should be a list of strings, regular expressions that match the names of the parameters that should be excluded from the fisher merging
+exclude_param_names_regex: []
+# boolean, whether to normalize fisher weights (L2 norm) or not
+normalize_fisher_weight: true
+# float, the minimal value in fisher weights, used for tackling the potential numerical issues
+minimal_fisher_weight: 1e-6
+# common choices: 256, 512, 1024, 2048
+num_fisher_examples: 256
+cache_dir: outputs
+batch_size: 32
+num_workers: 0

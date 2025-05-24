@@ -1,0 +1,4 @@
+fashion_mnist:
+  _target_: datasets.load_dataset
+  path: zalando-datasets/fashion_mnist
+  split: train
