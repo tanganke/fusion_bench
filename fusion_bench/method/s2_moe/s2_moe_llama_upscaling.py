@@ -4,7 +4,7 @@ import os
 import time
 from copy import deepcopy
 from re import U
-from typing import Dict, List, Tuple  # noqa: F401
+from typing import Dict, List, Tuple, TYPE_CHECKING  # noqa: F401
 
 import numpy as np
 import torch
@@ -24,6 +24,9 @@ from fusion_bench.models.smile_moe.linear_from_module import ExpertNotTrainedErr
 from fusion_bench.models.smile_moe.utils import _is_all_zeros, svd
 from fusion_bench.models.utils import get_attr, set_attr
 from fusion_bench.utils.parameters import print_parameters
+
+if TYPE_CHECKING:
+    from transformers.models.llama.modeling_llama import LlamaForCausalLM
 
 log = logging.getLogger(__name__)
 
@@ -253,7 +256,6 @@ class S2MoEUpscalingAlgorithm(
             leave=False,
             dynamic_ncols=True,
         ):
-            
             if isinstance(module, self._linear_layer_cls):
                 self._upscale_linear_layer(
                     pretrained_model=pretrained_model,
