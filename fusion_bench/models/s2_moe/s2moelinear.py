@@ -5,6 +5,11 @@ from fusion_bench.models.smile_moe.utils import _is_all_zeros, svd
 from fusion_bench.models.s2_moe.sparse_linear import SparseLinear
 import torch.nn.functional as F
 
+
+class ExpertNotTrainedError(Exception):
+    pass
+
+
 class S2MoELinear(nn.Module):
     @torch.no_grad()
     def __init__(
@@ -58,20 +63,22 @@ class S2MoELinear(nn.Module):
             for w in w_diff_list:
                 # 保存原始数据类型
                 original_dtype = w.dtype
-                
+
                 # 如果是BFloat16类型，转换为float32
                 if w.dtype == torch.bfloat16:
                     w = w.to(torch.float32)
-                
+
                 # 执行SVD操作
-                u, s, v = svd(w, full_matrices=full_matrices, accelerator=upscaling_accelerator)
-                
+                u, s, v = svd(
+                    w, full_matrices=full_matrices, accelerator=upscaling_accelerator
+                )
+
                 # 如果原始数据是BFloat16，将结果转换回BFloat16
                 if original_dtype == torch.bfloat16:
                     u = u.to(torch.bfloat16)
                     s = s.to(torch.bfloat16)
                     v = v.to(torch.bfloat16)
-                
+
                 svd_cache_list.append((u, s, v))
             # SVD缓存列表，避免重复计算
         self.orig_v = orig_v
@@ -102,7 +109,12 @@ class S2MoELinear(nn.Module):
         if k > 0:
             experts = [
                 #! use SparseLinear instead of SmileCompressedLinear
-                SparseLinear(m.in_features, m.out_features, bias=m.bias is not None, sparsity_ratio=0.8) 
+                SparseLinear(
+                    m.in_features,
+                    m.out_features,
+                    bias=m.bias is not None,
+                    sparsity_ratio=0.8,
+                )
                 for m in finetuned_models
             ]
             for m, expert in zip(finetuned_models, experts):
@@ -209,7 +221,7 @@ class ProjectionBasedGate(nn.Module):
         self,
         input_features: int,
         w_diff_list: List[Tensor],
-        orig_v,
+        orig_v: List[Tensor],
         k: int,
         threshold: float = 0.1,
         top_k: int = 2,
@@ -238,7 +250,10 @@ class ProjectionBasedGate(nn.Module):
         # self.task_subspaces_U = nn.ParameterList()
         # self.task_subspaces_S = nn.ParameterList()
 
-        self.orig_v = orig_v
+        # TODO: use torch.stack to convet the parameter list into a single parameter
+        self.orig_v = nn.ParameterList(
+            [nn.Parameter(v, requires_grad=False) for v in orig_v]
+        )
         # for i, w_diff in enumerate(w_diff_orig):
         #     u, s, v = svd(w_diff.T, accelerator=upscaling_accelerator)
         #     split_k = int(1/self.num_experts * s.shape[0])
