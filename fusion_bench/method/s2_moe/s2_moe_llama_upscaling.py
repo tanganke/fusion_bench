@@ -4,37 +4,46 @@ import os
 import time
 from copy import deepcopy
 from re import U
-from typing import Dict, List, Tuple, TYPE_CHECKING  # noqa: F401
+from typing import TYPE_CHECKING, Dict, List, Tuple  # noqa: F401
 
-from fusion_bench.compat.modelpool.base_pool import DictModelPool
-from fusion_bench.models.modeling_s2_moe_llama.modeling_s2_moe_llama import S2MoELlamaDecoderLayer
 import numpy as np
 import torch
 import torch.nn.functional as F
+from joblib import Memory
 from omegaconf import OmegaConf
 from torch import Tensor, nn
 from tqdm.auto import tqdm
-from transformers import AutoConfig
+from transformers import AutoConfig, AutoModelForCausalLM
 
+from fusion_bench.compat.modelpool.base_pool import DictModelPool
 from fusion_bench.method import BaseAlgorithm
 from fusion_bench.method.s2_moe.utils import TSVC_utils, TSVM_utils
 from fusion_bench.method.simple_average import simple_average
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
-from fusion_bench.modelpool import BaseModelPool
-from fusion_bench.models.s2_moe.s2moelinear_from_hf_config import S2MoELinear
+from fusion_bench.modelpool import BaseModelPool, CausalLMPool
+from fusion_bench.models.modeling_s2_moe_llama import (
+    S2MoELlamaConfig,
+    S2MoELlamaForCausalLM,
+)
+from fusion_bench.models.modeling_s2_moe_llama.modeling_s2_moe_llama import (
+    S2MoELlamaDecoderLayer,
+)
+from fusion_bench.models.s2_moe.s2moelinear_from_hf_config import (
+    S2MoELinear,
+    upscale_to_s2moe_linear,
+)
 from fusion_bench.models.s2_moe.sparse_linear import SparseLinear
 from fusion_bench.models.smile_moe.linear_from_module import ExpertNotTrainedError
 from fusion_bench.models.smile_moe.utils import _is_all_zeros, svd
 from fusion_bench.models.utils import get_attr, set_attr
 from fusion_bench.utils.parameters import print_parameters
-from fusion_bench.models.modeling_s2_moe_llama import S2MoELlamaForCausalLM, S2MoELlamaConfig
-from fusion_bench.models.s2_moe.s2moelinear_from_hf_config import upscale_to_s2moe_linear
-from fusion_bench.compat.modelpool import to_modelpool
 
 if TYPE_CHECKING:
     from transformers.models.llama.modeling_llama import LlamaForCausalLM
 
 log = logging.getLogger(__name__)
+
+memory = Memory("outputs/cache", verbose=0)
 
 
 class S2MoEUpscalingAlgorithmForLlama(
@@ -112,7 +121,7 @@ class S2MoEUpscalingAlgorithmForLlama(
         print(f"=== Config for `{type(self).__name__}` ===")
 
     @torch.no_grad()
-    def run(self, modelpool: BaseModelPool):
+    def run(self, modelpool: CausalLMPool):
         """
         Executes the upscaling process.
 
@@ -126,14 +135,11 @@ class S2MoEUpscalingAlgorithmForLlama(
         if not isinstance(modelpool, BaseModelPool):
             modelpool = BaseModelPool(modelpool)
 
-        self.modelpool = modelpool = to_modelpool(modelpool)
-        
-        
-        if self.config.model_path is not None and os.path.exists(
-            self.config.model_path
-        ):
-            log.info(f"Loading model from {self.config.model_path}")
-            model = torch.load(self.config.model_path)
+        self.modelpool = modelpool
+
+        if self.model_path is not None and os.path.exists(self.model_path):
+            log.info(f"Loading model from {self.model_path}")
+            model = AutoModelForCausalLM.from_pretrained(self.model_path)
             print_parameters(model)
             return model
 
@@ -152,8 +158,10 @@ class S2MoEUpscalingAlgorithmForLlama(
                 finetuned_models = [m.cuda() for m in finetuned_models]
 
         # pretrained_model_orig = copy.deepcopy(pretrained_model)
-        pretrained_model, orig_v = self.tsv_m(pretrained_model, finetuned_models)
-        
+        pretrained_model, orig_v = memory.cache(
+            lambda: self.tsv_m(pretrained_model, finetuned_models)
+        )()
+
         with self.profile("merge model"):
             model = self.merge(pretrained_model, finetuned_models, orig_v)
 
@@ -192,7 +200,9 @@ class S2MoEUpscalingAlgorithmForLlama(
             model = pretrained_model
         else:
             model = deepcopy(pretrained_model)
-        print("#############################create model with S2MoELlamaForCausalLM############################")
+        print(
+            "#############################create model with S2MoELlamaForCausalLM############################"
+        )
 
         pretrained_model_config = self.modelpool.get_model_config("_pretrained_")
         if isinstance(pretrained_model_config, str):
@@ -215,7 +225,7 @@ class S2MoEUpscalingAlgorithmForLlama(
         )
         model = S2MoELlamaForCausalLM(model_config)
         model.to(dtype=pretrained_model.dtype).to_empty(device="cpu")
-        
+
         # copy pretrained model weights
         state_dict = model.state_dict()
         pretrained_state_dict = dict(pretrained_model.state_dict())
@@ -223,7 +233,7 @@ class S2MoEUpscalingAlgorithmForLlama(
             if key not in state_dict:
                 pretrained_state_dict.pop(key)
         model.load_state_dict(pretrained_state_dict, strict=False)
-        
+
         pretrained_model_linears = [
             (name, module)
             for name, module in list(pretrained_model.named_modules())[1:-1]
@@ -231,7 +241,8 @@ class S2MoEUpscalingAlgorithmForLlama(
         ]
 
         # upscale model
-        for layer_idx, (name, module) in tqdm(enumerate(pretrained_model_linears),
+        for layer_idx, (name, module) in tqdm(
+            enumerate(pretrained_model_linears),
             "Upscaling Modules (layer)",
             dynamic_ncols=True,
         ):
@@ -239,25 +250,27 @@ class S2MoEUpscalingAlgorithmForLlama(
             pretrained_layer = get_attr(pretrained_model, name_list)
             finetuned_layers = [get_attr(m, name_list) for m in finetuned_models]
             target_layer = get_attr(model, name_list)
-            
+
             try:
                 upscale_to_s2moe_linear(
                     base=pretrained_layer,
                     experts=finetuned_layers,
                     target=target_layer,
                     orig_v=orig_v[layer_idx],
-                    use_sparse_expert = self.use_aparse_expert,
-                    sparsity_ratio = self.sparsity_ratio
+                    use_sparse_expert=self.use_aparse_expert,
+                    sparsity_ratio=self.sparsity_ratio,
                 )
             except ExpertNotTrainedError:
-                print("ExpertNotTrainedError!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                print(
+                    "ExpertNotTrainedError!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+                )
                 setattr(
                     target_layer.self_attn,
                     n,
                     getattr(pretrained_layer.self_attn, n),
                 )
 
-        #self._upscale_submodules(model, finetuned_models, orig_v)
+        # self._upscale_submodules(model, finetuned_models, orig_v)
         return model
 
     def _upscale_linear_layer(
@@ -416,14 +429,14 @@ class S2MoEUpscalingAlgorithmForLlama(
                     svd_orig.append((U, S, V))
 
                 # 参考TSVM_utils中的方法合并SVD结果
-                
+
                 # svd_results -> num_experts x 3 x rank_of_router x in_features
                 all_u = [result[0] for result in svd_results]
                 all_s = [result[1] for result in svd_results]
                 all_v = [result[2] for result in svd_results]
-                
-                #orig_v -> num of layers x num_experts x 3 x rank_of_router x in_features?????????
-                orig_v.append(torch.stack(all_v,dim=0))
+
+                # orig_v -> num of layers x num_experts x 3 x rank_of_router x in_features?????????
+                orig_v.append(torch.stack(all_v, dim=0))
                 # svd_results = [all_u,all_s,all_v]
                 # 创建一个与第一个专家的U矩阵形状相同的全零张量
                 concat_u = torch.zeros_like(U, device=all_u[0].device)
@@ -473,7 +486,9 @@ class S2MoEUpscalingAlgorithmForLlama(
                 )
 
                 # 更新预训练模型权重
-                reconstructed_weight = reconstructed_weight.to(pretrained_module.weight.device)
+                reconstructed_weight = reconstructed_weight.to(
+                    pretrained_module.weight.device
+                )
                 pretrained_module.weight.data.add_(reconstructed_weight)
 
                 # 打印日志信息
