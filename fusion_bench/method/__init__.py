@@ -100,6 +100,7 @@ _import_structure = {
     "s2_meo": [
         "S2MoEMergingAlgorithm",
         "S2MoEUpscalingAlgorithm",
+        "S2MoEUpscalingAlgorithmForLlama",
         "S2MoEWeightEnsemblingMoEAlgorithm",
     ],
     # pruning methods

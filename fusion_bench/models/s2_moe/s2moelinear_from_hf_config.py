@@ -287,9 +287,9 @@ def upscale_to_s2moe_linear(
             state_dict_sub(experts[expert_idx].state_dict(), base.state_dict()),
             strict=False  
         )
-    if use_sparse_expert:
-        for expert_idx, target_expert in enumerate(target.experts):
-            target_expert.sparsity_ratio = sparsity_ratio
-            target_expert.apply_pruning_()
+    # if use_sparse_expert:
+    #     for expert_idx, target_expert in enumerate(target.experts):
+    #         target_expert.sparsity_ratio = sparsity_ratio
+    #         target_expert.apply_pruning_()
 
     return target

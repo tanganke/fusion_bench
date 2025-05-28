@@ -1,4 +1,4 @@
-_target_: fusion_bench.method.s2_moe.s2_moe_llama_upscaling.S2MoEUpscalingAlgorithm
+_target_: fusion_bench.method.s2_moe.s2_moe_llama_upscaling.S2MoEUpscalingAlgorithmForLlama
 # the device where we put the models on, merge device on cuda can accelerate the SVD computation
 device: cpu
 # the device to compute svd
@@ -10,6 +10,7 @@ routing_use_diff: true
 average_experts: false
 # path to save/load the model
 model_path: null
+model_save_path: ./save_models/llama3.2-3B_S2MoE
 threshold: 0.1
 use_aparse_expert: true
 sparsity_ratio: 0.8

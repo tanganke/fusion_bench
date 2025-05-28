@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-class S2MoEUpscalingAlgorithm(
+class S2MoEUpscalingAlgorithmForLlama(
     SimpleProfilerMixin,
     BaseAlgorithm,
 ):
@@ -50,6 +50,7 @@ class S2MoEUpscalingAlgorithm(
         "routing_use_diff": "routing_use_diff",
         "average_experts": "average_experts",
         "model_path": "model_path",
+        "model_save_path": "model_save_path",
         "threshold": "threshold",  # 新增参数
         "use_aparse_expert": "use_aparse_expert",
         "sparsity_ratio": "sparsity_ratio",
@@ -66,6 +67,7 @@ class S2MoEUpscalingAlgorithm(
         routing_use_diff: bool = True,
         average_experts: bool = False,
         model_path: str = None,
+        model_save_path: str = None,
         use_aparse_expert: bool = True,
         sparsity_ratio: float = 0.8,
         **kwargs,
@@ -98,6 +100,7 @@ class S2MoEUpscalingAlgorithm(
         self.rout_svd_cache = None
         self.use_aparse_expert = use_aparse_expert
         self.sparsity_ratio = sparsity_ratio
+        self.model_save_path = model_save_path
         
         for key, value in kwargs.items():
             log.warning(f"Unrecognized argument: {key}")
@@ -119,6 +122,7 @@ class S2MoEUpscalingAlgorithm(
         Returns:
             nn.Module: The upscaled model.
         """
+
         if not isinstance(modelpool, BaseModelPool):
             modelpool = BaseModelPool(modelpool)
 
@@ -154,10 +158,14 @@ class S2MoEUpscalingAlgorithm(
             model = self.merge(pretrained_model, finetuned_models, orig_v)
 
         self.print_profile_summary()
-        if self.config.model_path is not None:
-            os.makedirs(os.path.dirname(self.config.model_path), exist_ok=True)
-            log.info(f"Saving model to {self.config.model_path}")
-            torch.save(model, self.config.model_path)
+        if self.config.model_save_path is not None:
+            os.makedirs(os.path.dirname(self.config.model_save_path), exist_ok=True)
+            log.info(f"Saving model to {self.config.model_save_path}")
+            model.save_pretrained(self.config.model_save_path)
+        
+        for name, module in model.named_modules():
+            if isinstance(module, SparseLinear):
+                module.apply_pruning_()
         print_parameters(model)
         return model
 
