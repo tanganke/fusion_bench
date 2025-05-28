@@ -128,6 +128,8 @@ class S2MoEUpscalingAlgorithm(
         if not isinstance(modelpool, BaseModelPool):
             modelpool = BaseModelPool(modelpool)
 
+        self.modelpool = modelpool
+
         if self.model_path is not None and os.path.exists(self.model_path):
             log.info(f"Loading model from {self.model_path}")
             model = AutoModelForCausalLM.from_pretrained(self.model_path)
