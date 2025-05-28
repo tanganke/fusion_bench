@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Dict, List, Tuple  # noqa: F401
 import numpy as np
 import torch
 import torch.nn.functional as F
+from joblib import Memory
 from omegaconf import OmegaConf
 from torch import Tensor, nn
 from tqdm.auto import tqdm
@@ -41,6 +42,8 @@ if TYPE_CHECKING:
     from transformers.models.llama.modeling_llama import LlamaForCausalLM
 
 log = logging.getLogger(__name__)
+
+memory = Memory("outputs/cache", verbose=0)
 
 
 class S2MoEUpscalingAlgorithm(
@@ -151,7 +154,9 @@ class S2MoEUpscalingAlgorithm(
                 finetuned_models = [m.cuda() for m in finetuned_models]
 
         # pretrained_model_orig = copy.deepcopy(pretrained_model)
-        pretrained_model, orig_v = self.tsv_m(pretrained_model, finetuned_models)
+        pretrained_model, orig_v = memory.cache(
+            lambda: self.tsv_m(pretrained_model, finetuned_models)
+        )()
 
         with self.profile("merge model"):
             model = self.merge(pretrained_model, finetuned_models, orig_v)
