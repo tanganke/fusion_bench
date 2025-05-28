@@ -129,7 +129,7 @@ class S2MoELinear(nn.Module):
             for m in experts:
                 m.bias.data = m.bias.data - pretrained_model.bias
         # 分配预训练模型（共享部分）
-        self.pretrained_model = pretrained_model
+        self.shared_linear = pretrained_model
 
     def forward(self, hidden_states: Tensor):
         """
@@ -141,7 +141,7 @@ class S2MoELinear(nn.Module):
         Returns:
             Tensor: 输出张量。
         """
-        pretrained_out = self.pretrained_model(hidden_states)
+        pretrained_out = self.shared_linear(hidden_states)
         input_shape = hidden_states.size()
         hidden_states = hidden_states.view(-1, self.in_features)
 
@@ -197,17 +197,17 @@ class S2MoELinear(nn.Module):
         """
         Mimic linear layer. Bacause in some cases, user might indicate the device (or dtype of parameters) of the linear layer using `linear_layer.weight.device`
         """
-        return self.pretrained_model.weight
+        return self.shared_linear.weight
 
     @property
     def bias(self):
-        return self.pretrained_model.bias
+        return self.shared_linear.bias
 
     def __repr__(self):
         return (
             f"SingularMoELinear("
-            f"in_features={self.pretrained_model.in_features}, "
-            f"out_features={self.pretrained_model.out_features}, "
+            f"in_features={self.shared_linear.in_features}, "
+            f"out_features={self.shared_linear.out_features}, "
             f"num_experts={self.num_experts}, "
             f"top_k={self.top_k}, "
             f"gate_k={self.gate_k}, "
@@ -286,10 +286,6 @@ class ProjectionBasedGate(nn.Module):
         residuals = []
 
         for i in range(self.num_experts):
-            # U = self.task_subspaces_U[i]
-            # S = self.task_subspaces_S[i]
-            # V = self.task_subspaces_V[i]
-
             v_0 = self.orig_v[i]
 
             # 判断x_l的维度为3则进行视图变换

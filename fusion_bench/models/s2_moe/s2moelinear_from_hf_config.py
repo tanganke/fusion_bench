@@ -6,6 +6,7 @@ from torch import Tensor, nn
 
 from fusion_bench.models.s2_moe.sparse_linear import SparseLinear
 from fusion_bench.models.smile_moe.utils import _is_all_zeros, svd
+from fusion_bench.utils.state_dict_arithmetic import state_dict_sub
 
 
 class ExpertNotTrainedError(Exception):
@@ -39,11 +40,12 @@ class ProjectionBasedGate(nn.Module):
 
         factory_kwargs = {"device": device, "dtype": dtype}
 
+        
         self.weight = nn.Parameter(
             torch.empty(
                 self.num_local_experts,
-                self.rank_of_router,
                 self.in_features,
+                self.rank_of_router,
                 **factory_kwargs,
             ),
         )
@@ -66,9 +68,7 @@ class ProjectionBasedGate(nn.Module):
         residuals = []
 
         for i in range(self.num_local_experts):
-            # U = self.task_subspaces_U[i]
-            # S = self.task_subspaces_S[i]
-            # V = self.task_subspaces_V[i]
+
 
             v_0 = self.weight[i]
 
@@ -80,16 +80,10 @@ class ProjectionBasedGate(nn.Module):
             projection = torch.matmul(
                 v_0, torch.matmul(v_0.T, x.T)
             ).T  # 768 96 96 768 768 6400  ——》 6400 768
-            # 计算残差: r = ||x - proj_V(x)||_2
-            # projection = torch.nn.functional.normalize(projection, p=2, dim=-1)
-            # x_l = torch.nn.functional.normalize(x_l, p=2, dim=-1)
             residual = torch.norm(x - projection, p=2, dim=-1)
             residuals.append(residual)
         # 将残差堆叠为形状 [batch_size, num_experts] 的张量
         residuals = torch.stack(residuals, dim=1)
-
-        # 计算残差的加性逆（取负数并加上最大值，确保非负）
-        # inverse_residuals = -residuals + torch.max(residuals, dim=1, keepdim=True)[0]
 
         # 通过softmax归一化得到路由权重
         routing_weights = F.softmax(-residuals, dim=1)
@@ -134,7 +128,7 @@ class S2MoELinear(nn.Module):
     ):
         super().__init__()
         self.num_experts_per_tok = config.num_experts_per_tok
-        self.rank_of_router = config.rank_of_router
+        self.rank_of_router = min(in_features, out_features)//config.num_local_experts
         self.num_local_experts = config.num_local_experts
         self.use_sparse_expert = config.use_sparse_expert
         self.in_features = in_features
@@ -253,3 +247,49 @@ class S2MoELinear(nn.Module):
             f"rank_of_router={self.rank_of_router}, "
             f")"
         )
+
+
+@torch.no_grad()
+def upscale_to_s2moe_linear(
+    base: nn.Linear, experts: List[nn.Linear], target: S2MoELinear, orig_v, use_sparse_expert, sparsity_ratio
+):
+    """
+    Upscale a base linear layer to a SmileLinear layer using expert models.
+
+    Args:
+        base (nn.Linear): The base linear layer.
+        experts (List[nn.Linear]): A list of expert linear layers.
+        target (SmileLinear): The target SmileLinear layer.
+        orig_v: The original v of the gate network.
+        use_sparse_expert: Whether to use sparse expert.
+        sparsity_ratio: The sparsity ratio of the sparse expert.
+    Returns:
+        SmileLinear: The upscaled SmileLinear layer.
+    """
+    w = base.weight
+    w_ft_list = [e.weight for e in experts]
+    dw_list = [w_ft - w for w_ft in w_ft_list]
+
+    if _is_all_zeros(dw_list):
+        raise ExpertNotTrainedError("Expert models are not trained")
+
+    num_local_experts = target.num_local_experts
+    gate_weight=torch.stack([v for v in orig_v], dim=0 )
+
+    target.gate.load_state_dict({"weight": gate_weight})
+
+    # shared linear
+    target.pretrained_model.load_state_dict(base.state_dict())
+
+    # experts
+    for expert_idx, target_expert in enumerate(target.experts):
+        target_expert.load_state_dict(
+            state_dict_sub(experts[expert_idx].state_dict(), base.state_dict()),
+            strict=False  
+        )
+    if use_sparse_expert:
+        for expert_idx, target_expert in enumerate(target.experts):
+            target_expert.sparsity_ratio = sparsity_ratio
+            target_expert.apply_pruning_()
+
+    return target
