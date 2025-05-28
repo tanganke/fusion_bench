@@ -13,7 +13,7 @@ from joblib import Memory
 from omegaconf import OmegaConf
 from torch import Tensor, nn
 from tqdm.auto import tqdm
-from transformers import AutoConfig, AutoModelForCausalLM
+from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 
 from fusion_bench.compat.modelpool.base_pool import DictModelPool
 from fusion_bench.method import BaseAlgorithm
@@ -169,6 +169,9 @@ class S2MoEUpscalingAlgorithmForLlama(
         if self.config.model_save_path is not None:
             os.makedirs(os.path.dirname(self.config.model_save_path), exist_ok=True)
             log.info(f"Saving model to {self.config.model_save_path}")
+            # copy the tokenizer
+            tokenizer = modelpool.load_tokenizer()
+            tokenizer.save_pretrained(self.config.model_save_path)
             model.save_pretrained(self.config.model_save_path)
         
         for name, module in model.named_modules():
