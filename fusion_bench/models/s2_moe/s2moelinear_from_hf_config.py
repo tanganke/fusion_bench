@@ -106,7 +106,7 @@ class ProjectionBasedGate(nn.Module):
             mask = mask & top_k_mask
 
         # 将未选中的权重置为0，并重新归一化
-        filtered_weights = routing_weights * mask.float()
+        filtered_weights = routing_weights * mask.to(dtype=routing_weights.dtype)
         sum_weights = filtered_weights.sum(dim=1, keepdim=True)
         sum_weights = torch.where(
             sum_weights == 0, torch.ones_like(sum_weights), sum_weights
@@ -154,7 +154,7 @@ class S2MoELinear(nn.Module):
                     bias=bias,
                     sparsity_ratio=config.sparsity_ratio,
                     **factory_kwargs,
-                )
+                ) for _ in range(self.num_local_experts)
             ]
         )
 

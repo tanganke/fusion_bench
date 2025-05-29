@@ -5,7 +5,7 @@ from typing import List, Mapping, Optional, Union
 import torch
 from torch import nn
 
-from .type import StateDictType
+from fusion_bench.utils.type import StateDictType
 
 __all__ = [
     "count_parameters",
@@ -165,7 +165,12 @@ def _numel(param: torch.Tensor, non_zero_only: bool = False) -> int:
     """
 
     if non_zero_only:
-        return torch.sum(param != 0).item()
+        if param.is_sparse:
+            # sparse tensor
+            return param._nnz()
+        else:
+            # dense tensor
+            return torch.sum(param != 0).item()
     else:
         num_params = param.numel()
 

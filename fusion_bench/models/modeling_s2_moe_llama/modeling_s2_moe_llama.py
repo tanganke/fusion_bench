@@ -19,7 +19,7 @@ from transformers.modeling_outputs import (
 from transformers.modeling_rope_utils import ROPE_INIT_FUNCTIONS, dynamic_rope_update
 from transformers.modeling_utils import ALL_ATTENTION_FUNCTIONS, PreTrainedModel
 from transformers.models.llama.modeling_llama import (
-    LLAMA_INPUTS_DOCSTRING,
+    # LLAMA_INPUTS_DOCSTRING,
     LlamaRMSNorm,
     LlamaRotaryEmbedding,
     apply_rotary_pos_emb,
@@ -39,7 +39,7 @@ from transformers.utils import (
 )
 from transformers.utils.deprecation import deprecate_kwarg
 
-from fusion_bench.models.s2_moe.s2moelinear_from_hf_config import S2MoELinear
+from fusion_bench.models.s2_moe.s2moelinear_from_hf_config import S2MoELinear, SparseLinear
 
 from .configuration_s2_moe_llama import S2MoELlamaConfig
 
@@ -308,7 +308,7 @@ class S2MoELlamaModel(S2MoELlamaPreTrainedModel):
         self.embed_tokens = value
 
     @can_return_tuple
-    @add_start_docstrings_to_model_forward(LLAMA_INPUTS_DOCSTRING)
+    # @add_start_docstrings_to_model_forward(LLAMA_INPUTS_DOCSTRING)
     def forward(
         self,
         input_ids: Optional[torch.LongTensor] = None,
@@ -615,7 +615,7 @@ class S2MoELlamaForCausalLM(S2MoELlamaPreTrainedModel, GenerationMixin):
 
     @can_return_tuple
     @deprecate_kwarg("num_logits_to_keep", version="4.50", new_name="logits_to_keep")
-    @add_start_docstrings_to_model_forward(LLAMA_INPUTS_DOCSTRING)
+    # @add_start_docstrings_to_model_forward(LLAMA_INPUTS_DOCSTRING)
     @replace_return_docstrings(
         output_type=CausalLMOutputWithPast, config_class=_CONFIG_FOR_DOC
     )

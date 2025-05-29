@@ -161,6 +161,7 @@ class S2MoEUpscalingAlgorithmForLlama(
         pretrained_model, orig_v = memory.cache(
             lambda: self.tsv_m(pretrained_model, finetuned_models)
         )()
+        #pretrained_model, orig_v = self.tsv_m(pretrained_model, finetuned_models)
 
         with self.profile("merge model"):
             model = self.merge(pretrained_model, finetuned_models, orig_v)

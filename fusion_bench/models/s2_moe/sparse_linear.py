@@ -91,7 +91,10 @@ class SparseLinear(nn.Linear):
 
     def forward(self, input: torch.Tensor):
         if self.weight.is_sparse:
-            y = torch.sparse.mm(input, self.weight.t())
+            if self.weight.dtype == torch.float32:
+                y = torch.sparse.mm(input, self.weight.t())
+            else:
+                y = torch.mm(input, self.weight.to_dense().t())
             y = y + self.bias
             return y
         else:
