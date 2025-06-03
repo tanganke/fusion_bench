@@ -1,0 +1,11 @@
+_target_: fusion_bench.modelpool.CausalLMPool
+models:
+  _pretrained_: google/gemma-2-2b
+  instruction: MergeBench/gemma-2-2b_instruction
+  math: MergeBench/gemma-2-2b_math
+  coding: MergeBench/gemma-2-2b_coding
+  multilingual: MergeBench/gemma-2-2b_multilingual
+  safety: MergeBench/gemma-2-2b_safety
+model_kwargs:
+  torch_dtype: bfloat16
+tokenizer: google/gemma-2-2b

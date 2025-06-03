@@ -1,0 +1,5 @@
+_target_: fusion_bench.method.WeightedAverageAlgorithm
+normalize: true # if true, the weights will be normalized before merging
+weights: # List of weights for each model
+  - 0.5
+  - 0.5

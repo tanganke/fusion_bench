@@ -1,0 +1,43 @@
+_target_: fusion_bench.method.FullFinetuneSFT
+_recursive_: False
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 1e-5
+  weight_decay: 0.01
+  fused: null
+lr_scheduler:
+  _target_: fusion_bench.optim.lr_scheduler.CosineDecayWithWarmup
+  T_max: _T_max_ # this will be replaced by the expected number of training steps
+  init_lr: 0
+  warmup_steps: 100
+  max_lr: ${..optimizer.lr}
+  min_lr: 1e-6
+dataloader_kwargs:
+  # per-gpu batch size
+  batch_size: 1
+  num_workers: 0
+  pin_memory: True
+# Training hyperparameters
+# if max_epochs=-1, max_steps will be used to determine the number of training steps
+max_epochs: 3
+max_steps: -1
+max_steps_per_epoch: -1
+accumulate_grad_batches: 1
+lr_scheduler_interval: step
+lr_scheduler_frequency: 1
+# Checkpointing may be done by epoch or step, and at the end of training
+# `checkpoint_save_interval` can be 'epoch' or 'step'
+checkpoint_save_interval: epoch
+checkpoint_save_frequency: 1
+# Whether to use gradient clipping, and if so, the value and algorithm
+gradient_clip_val: null
+gradient_clip_algorithm: norm
+save_optimizer_state: false
+# save_full_model must be true when using shared FSDP
+save_full_model: true
+# save_ckpt_type can be 'hf' or 'lightning'
+save_ckpt_type: lightning
+# Path to checkpoint to load from, used for resuming training
+ckpt_path: null
+max_length: 4096
+fix_token_embedding: true

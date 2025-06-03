@@ -1,0 +1,4 @@
+glue-mrpc:
+  _target_: fusion_bench.modelpool.seq2seq_lm.modelpool.load_lora_model
+  base_model_path: google/flan-t5-large
+  peft_model_path: tanganke/flan-t5-large_glue-mrpc_lora-16

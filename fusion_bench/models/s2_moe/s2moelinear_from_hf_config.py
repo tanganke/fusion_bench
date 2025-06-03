@@ -36,7 +36,7 @@ class ProjectionBasedGate(nn.Module):
         self.rank_of_router = rank_of_router
         self.in_features = in_features
         self.num_experts_per_tok = num_experts_per_tok  # top_k
-        self.threshold = 1 / num_local_experts
+        self.threshold = 1 / 4*num_local_experts
 
         factory_kwargs = {"device": device, "dtype": dtype}
 
@@ -72,6 +72,8 @@ class ProjectionBasedGate(nn.Module):
 
             v_0 = self.weight[i]
 
+            v_0 = v_0[:,:32]
+            
             # 判断x_l的维度为3则进行视图变换
             if len(x.shape) == 3:
                 # 将三维张量重塑为二维张量，合并前两个维度
@@ -104,7 +106,10 @@ class ProjectionBasedGate(nn.Module):
             top_k_mask = torch.zeros_like(routing_weights, dtype=torch.bool)
             top_k_mask.scatter_(1, top_indices, True)
             mask = mask & top_k_mask
-
+        # print("self.threshold: ", self.threshold)
+        # print("top_values: ", top_values)
+        # print("top_indices: ", top_indices)
+        # print("#######################################################")
         # 将未选中的权重置为0，并重新归一化
         filtered_weights = routing_weights * mask.to(dtype=routing_weights.dtype)
         sum_weights = filtered_weights.sum(dim=1, keepdim=True)
@@ -112,7 +117,6 @@ class ProjectionBasedGate(nn.Module):
             sum_weights == 0, torch.ones_like(sum_weights), sum_weights
         )
         normalized_weights = filtered_weights / sum_weights
-
         return normalized_weights
 
 
@@ -128,7 +132,7 @@ class S2MoELinear(nn.Module):
     ):
         super().__init__()
         self.num_experts_per_tok = config.num_experts_per_tok
-        self.rank_of_router = min(in_features, out_features)//config.num_local_experts
+        self.rank_of_router = min(in_features, out_features)//(4*config.num_local_experts)
         self.num_local_experts = config.num_local_experts
         self.use_sparse_expert = config.use_sparse_expert
         self.in_features = in_features
@@ -213,9 +217,10 @@ class S2MoELinear(nn.Module):
 
             # 批量计算该专家的输出
             expert_inputs = hidden_states[batch_indices]
+
             expert_weights = routing_weights[batch_indices, expert_idx].unsqueeze(1)
             expert_outputs = expert(expert_inputs) * expert_weights
-
+            # print("expert_outputs: ",torch.isnan(expert_outputs).any())
             # 将结果添加到最终输出
             final_hidden_states.index_add_(0, batch_indices, expert_outputs)
 

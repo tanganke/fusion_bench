@@ -1,0 +1,4 @@
+emnist_mnist:
+  _target_: datasets.load_dataset
+  path: tanganke/emnist_mnist
+  split: test

@@ -78,7 +78,7 @@ class S2MoEUpscalingAlgorithmForLlama(
         model_path: str = None,
         model_save_path: str = None,
         use_aparse_expert: bool = True,
-        sparsity_ratio: float = 0.8,
+        sparsity_ratio: float = 0.0,
         **kwargs,
     ):
         """
@@ -119,6 +119,7 @@ class S2MoEUpscalingAlgorithmForLlama(
         print(f"=== Config for `{type(self).__name__}` ===")
         print(OmegaConf.to_yaml(self.config))
         print(f"=== Config for `{type(self).__name__}` ===")
+        #print("config sparse ratio: ", self.config.sparsity_ratio)
 
     @torch.no_grad()
     def run(self, modelpool: CausalLMPool):
@@ -162,7 +163,7 @@ class S2MoEUpscalingAlgorithmForLlama(
             lambda: self.tsv_m(pretrained_model, finetuned_models)
         )()
         #pretrained_model, orig_v = self.tsv_m(pretrained_model, finetuned_models)
-
+        
         with self.profile("merge model"):
             model = self.merge(pretrained_model, finetuned_models, orig_v)
 
@@ -200,10 +201,10 @@ class S2MoEUpscalingAlgorithmForLlama(
             nn.Module: The merged model.
         """
 
-        if in_place:
-            model = pretrained_model
-        else:
-            model = deepcopy(pretrained_model)
+        # if in_place:
+        #     pre_model = pretrained_model
+        # else:
+        #     pre_model = deepcopy(pretrained_model)
         print(
             "#############################create model with S2MoELlamaForCausalLM############################"
         )
@@ -379,7 +380,7 @@ class S2MoEUpscalingAlgorithmForLlama(
         """
 
         ft_model_length = len(finetuned_models)
-        sv_reduction = 1.0 / ft_model_length  # 根据模型数量确定压缩比例
+        sv_reduction = 1.0 / (4*ft_model_length)  # 根据模型数量确定压缩比例
 
         # 预先获取所有线性层模块，避免重复遍历
         linear_modules = [
@@ -430,7 +431,7 @@ class S2MoEUpscalingAlgorithmForLlama(
                     )
                     # 将结果存储在列表中
                     svd_results.append((u, s, v))
-                    svd_orig.append((U, S, V))
+                    svd_orig.append((U,S,V))
 
                 # 参考TSVM_utils中的方法合并SVD结果
 
@@ -440,6 +441,7 @@ class S2MoEUpscalingAlgorithmForLlama(
                 all_v = [result[2] for result in svd_results]
 
                 # orig_v -> num of layers x num_experts x 3 x rank_of_router x in_features?????????
+                #orig_v.append(torch.stack(all_v, dim=0))
                 orig_v.append(torch.stack(all_v, dim=0))
                 # svd_results = [all_u,all_s,all_v]
                 # 创建一个与第一个专家的U矩阵形状相同的全零张量

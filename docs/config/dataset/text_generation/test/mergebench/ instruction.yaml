@@ -1,0 +1,3 @@
+instruction:
+  _target_: datasets.load_dataset
+  path: MergeBench/instruction_val

@@ -1,0 +1,17 @@
+_target_: fusion_bench.modelpool.CausalLMPool
+pretrained_model_name_or_path: meta-llama/Llama-3.2-1B-Instruct
+models:
+  _pretrained_:
+    _target_: transformers.AutoModelForCausalLM.from_pretrained
+    pretrained_model_name_or_path: ${...pretrained_model_name_or_path}
+    torch_dtype: bfloat16
+tokenizer:
+  _target_: transformers.AutoTokenizer.from_pretrained
+  pretrained_model_name_or_path: ${..pretrained_model_name_or_path}
+train_datasets:
+  alpaca-cleaned:
+    _target_: fusion_bench.dataset.llama.alpaca.load_tokenized_alpaca_dataset
+    tokenizer: ${...tokenizer}
+    path: "yahma/alpaca-cleaned"
+    split: train
+    cache_path: null

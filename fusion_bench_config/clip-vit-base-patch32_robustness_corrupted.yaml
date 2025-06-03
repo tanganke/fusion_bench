@@ -1,0 +1,22 @@
+defaults:
+  - hydra: default
+  - fabric: auto
+  # --- Model, Method, Task ---
+  - modelpool: CLIPVisionModelPool/clip-vit-base-patch32_robustness_corrupted
+  - method: dummy # change this to the method you want to use
+  - taskpool: CLIPVisionModelTaskPool/clip-vit-base-patch32_robustness_corrupted
+  - _self_
+_target_: fusion_bench.programs.FabricModelFusionProgram
+_recursive_: false
+fast_dev_run: false # Run a single batch of data to test the model or method
+# Run the script without actually running the experiment, use with `print_config=true`. 
+# You can also use `--cfg` or `-c` to show the configuration instead of running.
+dry_run: false
+print_config: true # Print the configuration to the console
+merged_model_save_path: null # path to save the merged model, use "{log_dir}" to refer to the logger directory, for example `merged_model_save_path=\{log_dir\}/merged_model`
+merged_model_save_kwargs: null
+report_save_path: null # path to save the result report
+print_function_call: true # set to false if you don't want to print the details of instantiate calls
+# `corrption` can be one of:
+# contrast, gaussian_noise, impulse_noise, jpeg_compression, motion_blur, pixelate, spatter
+corruption: ???

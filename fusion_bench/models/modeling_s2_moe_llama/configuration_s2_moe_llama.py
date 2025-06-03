@@ -9,7 +9,7 @@ class S2MoELlamaConfig(LlamaConfig):
         num_experts_per_tok: int = 1,
         num_local_experts: int = None,
         use_sparse_expert: bool = True,
-        sparsity_ratio: float = 0.8,
+        sparsity_ratio: float = 0.0,
         **kwargs,
     ):
         self.num_experts_per_tok = num_experts_per_tok

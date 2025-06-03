@@ -1,0 +1,29 @@
+defaults:
+  - _self_
+  - /dataset/image_classification/test@test_datasets:
+      - sun397
+      - stanford-cars
+      - resisc45
+      - eurosat
+      - svhn
+      - gtsrb
+      - mnist
+      - dtd
+_target_: fusion_bench.taskpool.CLIPVisionModelTaskPool
+_recursive_: false
+test_datasets: ???
+base_model: openai/clip-vit-base-patch16
+clip_model:
+  _target_: transformers.CLIPModel.from_pretrained
+  pretrained_model_name_or_path: ${..base_model} # The base model to use
+processor:
+  _target_: transformers.CLIPProcessor.from_pretrained
+  pretrained_model_name_or_path: ${..base_model} # The base model to use
+data_processor: ${.processor}
+dataloader_kwargs:
+  batch_size: 128
+  num_workers: 8
+  pin_memory: True
+  drop_last: False
+  shuffle: False
+layer_wise_feature_save_path: null

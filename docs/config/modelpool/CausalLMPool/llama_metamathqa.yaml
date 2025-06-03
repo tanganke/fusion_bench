@@ -1,0 +1,15 @@
+_target_: fusion_bench.modelpool.CausalLMPool
+pretrained_model_name_or_path: meta-llama/Llama-3.2-1B-Instruct
+models:
+  _pretrained_:
+    _target_: transformers.AutoModelForCausalLM.from_pretrained
+    pretrained_model_name_or_path: ${...pretrained_model_name_or_path}
+    torch_dtype: bfloat16
+tokenizer:
+  _target_: transformers.AutoTokenizer.from_pretrained
+  pretrained_model_name_or_path: ${..pretrained_model_name_or_path}
+train_datasets:
+  metamathqa:
+    _target_: fusion_bench.dataset.llama.metamathqa.load_tokenized_metamathqa
+    tokenizer: ${...tokenizer}
+    cache_path: null

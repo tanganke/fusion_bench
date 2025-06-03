@@ -1,0 +1,4 @@
+rendered-sst2:
+  _target_: datasets.load_dataset
+  path: nateraw/rendered-sst2
+  split: test

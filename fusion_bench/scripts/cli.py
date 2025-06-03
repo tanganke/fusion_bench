@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 
 
 def _get_default_config_path():
-    for config_dir in ["fusion_bench_config", "config"]:
+    for config_dir in ["config"]:
         config_path = os.path.join(
             importlib.import_module("fusion_bench").__path__[0], "..", config_dir
         )

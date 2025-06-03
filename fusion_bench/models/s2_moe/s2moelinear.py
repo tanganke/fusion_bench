@@ -324,7 +324,9 @@ class ProjectionBasedGate(nn.Module):
             top_k_mask = torch.zeros_like(routing_weights, dtype=torch.bool)
             top_k_mask.scatter_(1, top_indices, True)
             mask = mask & top_k_mask
-
+        # print("top_values: ", top_values)
+        # print("top_indices: ", top_indices)
+        # print("#######################################################")
         # 将未选中的权重置为0，并重新归一化
         filtered_weights = routing_weights * mask.float()
         sum_weights = filtered_weights.sum(dim=1, keepdim=True)

@@ -1,0 +1,4 @@
+_target_: ???
+num_regmean_examples: 256
+reduce_non_diagonal_ratio: 0.1
+exclude_param_names_regex: []

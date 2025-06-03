@@ -1,0 +1,11 @@
+_target_: fusion_bench.method.RegMeanAlgorithmForGPT2
+# list, regular expression of names of parameters that need to be excluded
+exclude_param_names_regex: []
+# numbers of examples to compute regmean weights
+num_regmean_examples: 256
+# float, reduce non-diagonal elements in regmean weights by multiplying this scalar
+reduce_non_diagonal_ratio: 0.6
+weight_transpose: false
+cache_dir: outputs
+batch_size: 32
+num_workers: 0
