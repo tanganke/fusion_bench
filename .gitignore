@@ -6,6 +6,7 @@
 /outputs/
 /results/
 /save_models/
+/third_party/
 lightning_logs/
 # VSCode files
 *.code-workspace
