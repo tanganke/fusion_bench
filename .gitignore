@@ -2,7 +2,7 @@
 /temp/
 /datasets/
 /datasets
-/lm-evaluation-harness/
+#/lm-evaluation-harness/
 /outputs/
 /results/
 /save_models/
