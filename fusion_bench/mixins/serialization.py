@@ -4,13 +4,14 @@ from typing import Dict, Optional, Union
 
 from omegaconf import OmegaConf
 
-from fusion_bench.utils import instantiate
+from fusion_bench.utils import import_object, instantiate
 
 log = logging.getLogger(__name__)
 
 
 class YAMLSerializationMixin:
     _recursive_: bool = False
+    _config_key: Optional[str] = None
     _config_mapping: Dict[str, str] = {
         "_recursive_": "_recursive_",
     }
@@ -99,7 +100,22 @@ class YAMLSerializationMixin:
             BaseModelPool: The loaded model pool.
         """
         config = OmegaConf.load(path)
-        return instantiate(config, _recursive_=cls._recursive_)
+        if cls._config_key is not None and cls._config_key in config:
+            config = config[cls._config_key]
+        target_cls = import_object(config["_target_"])
+        if target_cls != cls:
+            log.warning(
+                f"The class {target_cls.__name__} is not the same as the class {cls.__name__}. "
+                f"Instantiating the class {target_cls.__name__} instead."
+            )
+        return instantiate(
+            config,
+            _recursive_=(
+                cls._recursive_
+                if config.get("_recursive_") is None
+                else config.get("_recursive_")
+            ),
+        )
 
     def to_config(self):
         """

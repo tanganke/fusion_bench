@@ -53,3 +53,31 @@ class RankedLogger(logging.LoggerAdapter):
                     self.logger.log(level, msg, *args, **kwargs)
                 elif current_rank == rank:
                     self.logger.log(level, msg, *args, **kwargs)
+
+
+class RankZeroLogger(logging.Logger):
+    """A logger that logs only on rank zero and works just like logging.Logger"""
+
+    @rank_zero_only
+    def _log(self, *args, **kwargs):
+        if "stacklevel" in kwargs:
+            kwargs["stacklevel"] += 1
+        return super()._log(*args, **kwargs)
+
+    def is_global_zero(self):
+        return rank_zero_only.rank == 0
+
+
+RankZeroLogger.manager = logging.Manager(RankZeroLogger.root)
+RankZeroLogger.manager.setLoggerClass(RankZeroLogger)
+
+
+def getRankZeroLogger(name=None):
+    """
+    Return a logger with the specified name, creating it if necessary.
+
+    If no name is specified, return the root logger.
+    """
+    if not name or isinstance(name, str) and name == logging.root.name:
+        return logging.root
+    return RankZeroLogger.manager.getLogger(name)
