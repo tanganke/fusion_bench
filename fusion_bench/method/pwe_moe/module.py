@@ -13,14 +13,9 @@ import torch.func
 from torch import Tensor, nn
 from torch.nn import functional as F
 
+from fusion_bench.utils import join_list
+
 log = logging.getLogger(__name__)
-
-
-def join_list(list_of_list: List[List]):
-    ans = []
-    for item in list_of_list:
-        ans.extend(item)
-    return ans
 
 
 class PWEMoEGate(nn.Module):

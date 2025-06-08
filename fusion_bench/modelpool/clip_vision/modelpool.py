@@ -3,6 +3,7 @@ from copy import deepcopy
 from typing import Optional, Union
 
 from datasets import load_dataset
+from lightning.fabric.utilities import rank_zero_only
 from omegaconf import DictConfig, open_dict
 from torch import nn
 from torch.utils.data import Dataset
@@ -40,7 +41,8 @@ class CLIPVisionModelPool(BaseModelPool):
     def load_processor(self, *args, **kwargs) -> CLIPProcessor:
         assert self._processor is not None, "Processor is not defined in the config"
         if isinstance(self._processor, str):
-            log.info(f"Loading `transformers.CLIPProcessor`: {self._processor}")
+            if rank_zero_only.rank == 0:
+                log.info(f"Loading `transformers.CLIPProcessor`: {self._processor}")
             processor = CLIPProcessor.from_pretrained(self._processor)
         else:
             processor = instantiate(self._processor, *args, **kwargs)
@@ -50,7 +52,8 @@ class CLIPVisionModelPool(BaseModelPool):
         model_config = self._models[model_name]
 
         if isinstance(model_config, str):
-            log.info(f"Loading `transformers.CLIPModel`: {model_config}")
+            if rank_zero_only.rank == 0:
+                log.info(f"Loading `transformers.CLIPModel`: {model_config}")
             clip_model = CLIPModel.from_pretrained(model_config, *args, **kwargs)
             return clip_model
         else:
@@ -102,10 +105,12 @@ class CLIPVisionModelPool(BaseModelPool):
         ):
             model = self._models[model_name_or_config]
             if isinstance(model, str):
-                log.info(f"Loading `transformers.CLIPVisionModel`: {model}")
+                if rank_zero_only.rank == 0:
+                    log.info(f"Loading `transformers.CLIPVisionModel`: {model}")
                 return CLIPVisionModel.from_pretrained(model, *args, **kwargs)
             if isinstance(model, nn.Module):
-                log.info(f"Returning existing model: {model}")
+                if rank_zero_only.rank == 0:
+                    log.info(f"Returning existing model: {model}")
                 return model
 
         # If the model is not a string, we use the default load_model method
@@ -114,9 +119,10 @@ class CLIPVisionModelPool(BaseModelPool):
     def load_train_dataset(self, dataset_name: str, *args, **kwargs):
         dataset_config = self._train_datasets[dataset_name]
         if isinstance(dataset_config, str):
-            log.info(
-                f"Loading train dataset using `datasets.load_dataset`: {dataset_config}"
-            )
+            if rank_zero_only.rank == 0:
+                log.info(
+                    f"Loading train dataset using `datasets.load_dataset`: {dataset_config}"
+                )
             dataset = load_dataset(dataset_config, split="train")
         else:
             dataset = super().load_train_dataset(dataset_name, *args, **kwargs)
@@ -125,9 +131,10 @@ class CLIPVisionModelPool(BaseModelPool):
     def load_val_dataset(self, dataset_name: str, *args, **kwargs):
         dataset_config = self._val_datasets[dataset_name]
         if isinstance(dataset_config, str):
-            log.info(
-                f"Loading validation dataset using `datasets.load_dataset`: {dataset_config}"
-            )
+            if rank_zero_only.rank == 0:
+                log.info(
+                    f"Loading validation dataset using `datasets.load_dataset`: {dataset_config}"
+                )
             dataset = load_dataset(dataset_config, split="validation")
         else:
             dataset = super().load_val_dataset(dataset_name, *args, **kwargs)
@@ -136,9 +143,10 @@ class CLIPVisionModelPool(BaseModelPool):
     def load_test_dataset(self, dataset_name: str, *args, **kwargs):
         dataset_config = self._test_datasets[dataset_name]
         if isinstance(dataset_config, str):
-            log.info(
-                f"Loading test dataset using `datasets.load_dataset`: {dataset_config}"
-            )
+            if rank_zero_only.rank == 0:
+                log.info(
+                    f"Loading test dataset using `datasets.load_dataset`: {dataset_config}"
+                )
             dataset = load_dataset(dataset_config, split="test")
         else:
             dataset = super().load_test_dataset(dataset_name, *args, **kwargs)

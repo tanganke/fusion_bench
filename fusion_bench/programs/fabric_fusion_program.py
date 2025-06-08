@@ -9,7 +9,7 @@ from omegaconf import DictConfig, OmegaConf
 from torch import nn
 from tqdm.auto import tqdm
 
-import fusion_bench.utils.instantiate
+import fusion_bench.utils.instantiate_utils
 from fusion_bench.method import BaseAlgorithm
 from fusion_bench.mixins import LightningFabricMixin
 from fusion_bench.modelpool import BaseModelPool
@@ -19,8 +19,9 @@ from fusion_bench.utils import import_object, instantiate, timeit_context
 from fusion_bench.utils.hydra_utils import get_hydra_output_dir
 from fusion_bench.utils.json import print_json
 from fusion_bench.utils.rich_utils import print_bordered, print_config_tree
+from fusion_bench.utils.pylogger import getRankZeroLogger
 
-log = logging.getLogger(__name__)
+log = getRankZeroLogger(__name__)
 
 
 class FabricModelFusionProgram(
@@ -66,8 +67,8 @@ class FabricModelFusionProgram(
         self.merged_model_save_kwargs = merged_model_save_kwargs
         self.fast_dev_run = fast_dev_run
         self.seed = seed
+        fusion_bench.utils.instantiate_utils.PRINT_FUNCTION_CALL = print_function_call
         super().__init__(**kwargs)
-        fusion_bench.utils.instantiate.PRINT_FUNCTION_CALL = print_function_call
 
         if print_config:
             print_config_tree(
@@ -252,10 +253,11 @@ class FabricModelFusionProgram(
             if self.taskpool is not None:
                 report = self.evaluate_merged_model(self.taskpool, merged_model)
                 try:
-                    print_json(report, print_type=False)
+                    if rank_zero_only.rank == 0:
+                        print_json(report, print_type=False)
                 except Exception as e:
                     log.warning(f"Failed to pretty print the report: {e}")
-                    print(report)
+                    log.info(report)
                 if self.report_save_path is not None:
                     # save report (Dict) to a file
                     # if the directory of `save_report` does not exists, create it
