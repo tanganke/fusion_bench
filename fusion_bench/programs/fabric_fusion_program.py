@@ -261,6 +261,8 @@ class FabricModelFusionProgram(
                 if self.report_save_path is not None:
                     # save report (Dict) to a file
                     # if the directory of `save_report` does not exists, create it
+                    if "{log_dir}" in self.report_save_path and self.log_dir is not None:
+                        self.report_save_path = self.report_save_path.format(log_dir=self.log_dir)
                     os.makedirs(os.path.dirname(self.report_save_path), exist_ok=True)
                     json.dump(report, open(self.report_save_path, "w"))
             else:
