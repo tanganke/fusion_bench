@@ -1,0 +1,16 @@
+defaults:
+  - /model/clip-vit@models:
+      - clip-vit-base-patch32
+      - clip-vit-base-patch32_stanford-cars
+      - clip-vit-base-patch32_dtd
+  - /dataset/image_classification/train@train_datasets:
+      - stanford-cars
+      - dtd
+  - /dataset/image_classification/test@test_datasets:
+      - stanford-cars
+      - dtd
+_target_: fusion_bench.modelpool.CLIPVisionModelPool
+_recursive_: False
+processor:
+  _target_: transformers.CLIPProcessor.from_pretrained
+  pretrained_model_name_or_path: openai/clip-vit-base-patch32

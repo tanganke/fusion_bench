@@ -29,6 +29,7 @@ class BaseModelPool(BaseYAMLSerializableModel, HydraConfigMixin):
     """
 
     _program = None
+    _config_key = "modelpool"
     _models: Union[DictConfig, Dict[str, nn.Module]]
     _config_mapping = BaseYAMLSerializableModel._config_mapping | {
         "_models": "models",
