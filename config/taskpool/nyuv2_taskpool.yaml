@@ -1,0 +1,9 @@
+type: NYUv2TaskPool
+data_dir: .cache
+tasks:
+  - segmentation
+  - depth
+  - normal
+# per-GPU batch size
+batch_size: 16
+num_workers: 4
