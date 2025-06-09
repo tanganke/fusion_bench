@@ -5,3 +5,4 @@ from fusion_bench.method.ties_merging.ties_merging_utils import (
 from fusion_bench.utils import state_dict_to_vector, vector_to_state_dict
 
 from . import TSVC_utils, TSVM_utils
+from .task_singular_interference import compute_task_singular_interference
