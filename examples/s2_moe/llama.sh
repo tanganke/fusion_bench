@@ -15,3 +15,7 @@ HYDRA_FULL_ERROR=1 fusion_bench \
 
 #eval 
 lm_eval --model_args pretrained="save_models/llama3.2-3B_S2MoE",dtype='bfloat16',parallelize=True --tasks gsm8k_cot --batch_size 8
+
+
+#bigcode
+accelerate launch  main.py   --model /home/hfh/fusionbench_0517/save_models/llama3.2-3B_S2MoE --modeltype S2MoE   --max_length_generation 512   --precision bf16   --tasks humanevalplus,mbppplus   --temperature 0.2   --n_samples 10   --batch_size 10   --allow_code_execution   --metric_output_path outputs/code_eval.json   --use_auth_token

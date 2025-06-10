@@ -13,5 +13,5 @@ model_path: null
 model_save_path: ./save_models/llama3.2-3B_S2MoE
 threshold: 0.1
 use_aparse_expert: true
-sparsity_ratio: 0.95
+sparsity_ratio: 0.80
 
