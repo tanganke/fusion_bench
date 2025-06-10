@@ -62,6 +62,8 @@ class RankZeroLogger(logging.Logger):
     def _log(self, *args, **kwargs):
         if "stacklevel" in kwargs:
             kwargs["stacklevel"] += 1
+        else:
+            kwargs["stacklevel"] = 2
         return super()._log(*args, **kwargs)
 
     def is_global_zero(self):
