@@ -1,16 +1,18 @@
 import json
 import logging
 import os
+from copy import deepcopy
 from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Tuple, Type
 
 import torch
+from accelerate import init_empty_weights
 from accelerate.utils.constants import SAFE_WEIGHTS_NAME, WEIGHTS_NAME
 from huggingface_hub import snapshot_download
 from safetensors import safe_open
 from safetensors.torch import load_file
 from torch import nn
 from transformers import AutoConfig
-from accelerate import init_empty_weights
+
 from fusion_bench.utils.dtype import parse_dtype
 
 if TYPE_CHECKING:
@@ -61,6 +63,7 @@ class LazyStateDict:
         self,
         checkpoint: str,
         meta_module_class: Optional[Type[nn.Module]] = None,
+        meta_module: Optional[nn.Module] = None,
         cache_state_dict: bool = False,
         torch_dtype: Optional[torch.dtype] = None,
         device: str = "cpu",
@@ -69,7 +72,12 @@ class LazyStateDict:
         hf_proxies: Optional[Dict] = None,
     ):
         self.meta_module_class = meta_module_class
+        self.meta_module = meta_module
         if self.meta_module_class is not None:
+            if self.meta_module is not None:
+                raise ValueError(
+                    "Cannot provide both meta_module_class and meta_module, please provide only one."
+                )
             with init_empty_weights():
                 self.meta_module = self.meta_module_class.from_pretrained(
                     checkpoint,
@@ -314,3 +322,17 @@ class LazyStateDict:
 
     def get_parameter(self, target: str) -> torch.Tensor:
         return self[target]
+
+    def get_submodule(self, target: str) -> nn.Module:
+        if self.meta_module is not None:
+            module: nn.Module = deepcopy(self.meta_module.get_submodule(target))
+            module.to_empty(device=self._device)
+            state_dict = {}
+            for name, _ in module.named_parameters():
+                state_dict[name] = self[f"{target}.{name}"]
+            module.load_state_dict(state_dict)
+            return module
+        else:
+            raise RuntimeError(
+                "Cannot get submodule because meta_module is not provided."
+            )
