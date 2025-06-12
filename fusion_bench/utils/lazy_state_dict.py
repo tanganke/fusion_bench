@@ -1,16 +1,16 @@
 import json
 import logging
 import os
-from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Tuple, Type
 
 import torch
-from torch import nn
 from accelerate.utils.constants import SAFE_WEIGHTS_NAME, WEIGHTS_NAME
 from huggingface_hub import snapshot_download
 from safetensors import safe_open
 from safetensors.torch import load_file
+from torch import nn
 from transformers import AutoConfig
-
+from accelerate import init_empty_weights
 from fusion_bench.utils.dtype import parse_dtype
 
 if TYPE_CHECKING:
@@ -60,6 +60,7 @@ class LazyStateDict:
     def __init__(
         self,
         checkpoint: str,
+        meta_module_class: Optional[Type[nn.Module]] = None,
         cache_state_dict: bool = False,
         torch_dtype: Optional[torch.dtype] = None,
         device: str = "cpu",
@@ -67,6 +68,17 @@ class LazyStateDict:
         hf_cache_dir: Optional[str] = None,
         hf_proxies: Optional[Dict] = None,
     ):
+        self.meta_module_class = meta_module_class
+        if self.meta_module_class is not None:
+            with init_empty_weights():
+                self.meta_module = self.meta_module_class.from_pretrained(
+                    checkpoint,
+                    torch_dtype=torch_dtype,
+                    revision=hf_revision,
+                    cache_dir=hf_cache_dir,
+                    proxies=hf_proxies,
+                )
+
         self._checkpoint = checkpoint
         self._local_path = resolve_checkpoint_path(
             checkpoint,
@@ -79,10 +91,32 @@ class LazyStateDict:
             self._resolve_checkpoint_files(self._local_path)
         )
 
-        if cache_state_dict:
-            self._state_dict_cache = {}
+        if self._index is not None:
+            # if meta_module is provided, remove the keys that are not in the meta_module
+            if self.meta_module is not None:
+                meta_module_state_dict = self.meta_module.state_dict()
+                for key in tuple(self._index.keys()):
+                    if key not in meta_module_state_dict:
+                        self._index.pop(key)
+            if cache_state_dict:
+                self._state_dict_cache = {}
+            else:
+                self._state_dict_cache = None
+        elif len(self._checkpoint_files) == 1 and self._checkpoint_files[0].endswith(
+            WEIGHTS_NAME
+        ):
+            log.info(f"Loading full state dict from {WEIGHTS_NAME}")
+            self._state_dict_cache = torch.load(self._checkpoint_files[0])
+            # if meta_module is provided, remove the keys that are not in the meta_module
+            if self.meta_module is not None:
+                meta_module_state_dict = self.meta_module.state_dict()
+                for key in tuple(self._state_dict_cache.keys()):
+                    if key not in meta_module_state_dict:
+                        self._state_dict_cache.pop(key)
         else:
-            self._state_dict_cache = None
+            raise ValueError(
+                f"Cannot determine the type of checkpoint, please provide a checkpoint path to a file containing a whole state dict with file name {WEIGHTS_NAME} or {SAFE_WEIGHTS_NAME}, or the index of a sharded checkpoint ending with `.index.json`."
+            )
 
         self._torch_dtype = parse_dtype(torch_dtype)
         self._device = device
@@ -153,6 +187,8 @@ class LazyStateDict:
             checkpoint_files = [
                 os.path.join(checkpoint_folder, f) for f in checkpoint_files
             ]
+        else:
+            index = None
         return index, index_filename, checkpoint_files
 
     def _load_tensor_from_checkpoint_file(
@@ -249,7 +285,12 @@ class LazyStateDict:
     def __iter__(self) -> Iterator[str]:
         if self._index is not None:
             return iter(self._index)
-        return iter(self._checkpoint_files)
+        elif self._state_dict_cache is not None:
+            return iter(self._state_dict_cache)
+        else:
+            raise RuntimeError(
+                "Unexpected error: cannot determine the keys in the state dict."
+            )
 
     def keys(self) -> Iterator[str]:
         for key in self:
@@ -272,7 +313,4 @@ class LazyStateDict:
             )
 
     def get_parameter(self, target: str) -> torch.Tensor:
-        if target in self._index:
-            return self[target]
-        else:
-            raise KeyError(f"Target {target} not found.")
+        return self[target]
