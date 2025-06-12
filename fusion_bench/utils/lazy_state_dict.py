@@ -4,6 +4,7 @@ import os
 from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Tuple
 
 import torch
+from torch import nn
 from accelerate.utils.constants import SAFE_WEIGHTS_NAME, WEIGHTS_NAME
 from huggingface_hub import snapshot_download
 from safetensors import safe_open
@@ -250,14 +251,17 @@ class LazyStateDict:
             return iter(self._index)
         return iter(self._checkpoint_files)
 
-    def keys(self) -> List[str]:
-        return list(self)
+    def keys(self) -> Iterator[str]:
+        for key in self:
+            yield key
 
-    def values(self) -> List[torch.Tensor]:
-        return [self[key] for key in self]
+    def values(self) -> Iterator[torch.Tensor]:
+        for key in self:
+            yield self[key]
 
     def items(self) -> Iterator[Tuple[str, torch.Tensor]]:
-        return ((key, self[key]) for key in self)
+        for key in self:
+            yield key, self[key]
 
     def __repr__(self) -> str:
         if self._index is not None:
@@ -266,3 +270,9 @@ class LazyStateDict:
             return (
                 f"{self.__class__.__name__}(checkpoint_files={self._checkpoint_files})"
             )
+
+    def get_parameter(self, target: str) -> torch.Tensor:
+        if target in self._index:
+            return self[target]
+        else:
+            raise KeyError(f"Target {target} not found.")
