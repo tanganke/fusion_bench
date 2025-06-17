@@ -1,4 +1,0 @@
-open-clip-torch
-black
-isort
-jupyter

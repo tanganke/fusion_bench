@@ -120,6 +120,8 @@ It can be used to improve the performance and robustness of model or to combine 
 For a more detailed introduction to deep model fusion, you can refer to [W. Li, 2023, 'Deep Model Fusion: A Survey'](https://arxiv.org/abs/2309.15698). We also provide a brief overview of deep model fusion in [our documentation](https://tanganke.github.io/fusion_bench/).
 In this benchmark, we evaluate the performance of different fusion methods on a variety of datasets and tasks.
 
+A comprehensive list of papers about model merging can be found at [this repository](https://github.com/EnnengYang/Awesome-Model-Merging-Methods-Theories-Applications), and [the arXiv paper](https://arxiv.org/abs/2408.07666) is also available.
+
 ## Project Structure
 
 The project is structured as follows:

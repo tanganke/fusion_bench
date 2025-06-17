@@ -1,4 +1,4 @@
-_target_: fusion_bench.method.losparse.sparselo.PCPSparseLoForLlama
+_target_: fusion_bench.method.sparselo.sparselo.PCPSparseLoForLlama
 _recursive_: false
 nsamples: 128
 seed: 0

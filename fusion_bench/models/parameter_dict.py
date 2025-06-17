@@ -66,7 +66,9 @@ class ParameterDictModel(nn.Module):
         super().__init__()
         if parameters is not None:
             for name, param in parameters.items():
-                assert isinstance(param, nn.Parameter), f"{name} is not a nn.Parameter"
+                assert isinstance(
+                    param, (nn.Parameter, nn.Buffer)
+                ), f"{name} is not a nn.Parameter or nn.Buffer"
                 _set_attr(
                     self,
                     name.split("."),
@@ -114,3 +116,6 @@ class ParameterDictModel(nn.Module):
 
     def values(self) -> List[nn.Parameter]:
         return [self[name] for name in self.keys()]
+
+    def __len__(self):
+        return len(self.keys())
