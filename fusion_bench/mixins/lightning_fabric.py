@@ -11,7 +11,7 @@ from lightning.fabric.utilities.rank_zero import rank_zero_only
 from omegaconf import DictConfig, OmegaConf
 
 from fusion_bench.utils import import_object
-from fusion_bench.utils.instantiate import instantiate
+from fusion_bench.utils.instantiate_utils import instantiate
 
 if TYPE_CHECKING:
     import lightning.fabric.loggers.tensorboard
@@ -172,3 +172,27 @@ class LightningFabricMixin:
             return True
         else:
             return False
+
+    def log(self, name: str, value: Any, step: Optional[int] = None):
+        """
+        Logs the metric to the fabric's logger.
+        """
+        self.fabric.log(name, value, step=step)
+
+    def log_dict(self, metrics: dict, step: Optional[int] = None):
+        """
+        Logs the metrics to the fabric's logger.
+        """
+        self.fabric.log_dict(metrics, step=step)
+
+    def log_optimizer_lr(
+        self,
+        optimizer: torch.optim.Optimizer,
+        step: Optional[int] = None,
+        name_template: str = "train/lr_group_{0}",
+    ):
+        """
+        Logs the learning rate of the optimizer to the fabric's logger.
+        """
+        for i, param_group in enumerate(optimizer.param_groups):
+            self.fabric.log(name_template.format(i), param_group["lr"], step=step)

@@ -23,6 +23,7 @@ nav:
         - AdaMerging: algorithms/adamerging.md
         - RegMean: algorithms/regmean.md
         - Concrete Subspace: algorithms/concrete_subspace.md
+        - Task Singular Vector: algorithms/task_singular_vector.md
         - Isotropic Merging: algorithms/isotropic_merging.md
       - Model Mixing:
         - Depth Upscaling: algorithms/depth_upscaling.md
@@ -121,7 +122,7 @@ markdown_extensions:
 
 extra_javascript:
   - javascripts/mathjax.js
-  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - javascripts/polyfill.min.js
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 
 extra_css:

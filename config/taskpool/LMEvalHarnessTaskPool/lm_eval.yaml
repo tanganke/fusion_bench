@@ -1,5 +1,4 @@
 _target_: fusion_bench.taskpool.LMEvalHarnessTaskPool
-
 tasks:
   - truthfulqa
 batch_size: 1

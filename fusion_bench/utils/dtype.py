@@ -13,6 +13,7 @@ from transformers.utils import (
 PRECISION_STR_TO_DTYPE: Dict[str, torch.dtype] = {
     "fp16": torch.float16,
     "float16": torch.float16,
+    "half": torch.float16,
     "bf16": torch.bfloat16,
     "bfloat16": torch.bfloat16,
     "float": torch.float32,
@@ -50,7 +51,7 @@ def parse_dtype(dtype: Optional[str]):
 
     dtype = dtype.strip('"')
     if dtype not in PRECISION_STR_TO_DTYPE:
-        raise ValueError(f"Unsupported dtype: {type(dtype)}")
+        raise ValueError(f"Unsupported dtype string: {dtype}")
 
     dtype = PRECISION_STR_TO_DTYPE[dtype]
     return dtype

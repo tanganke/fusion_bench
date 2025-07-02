@@ -39,12 +39,13 @@ def simple_average(
         >>> import torch.nn as nn
         >>> model1 = nn.Linear(10, 10)
         >>> model2 = nn.Linear(10, 10)
-        >>> averaged_model = simple_averageing([model1, model2])
+        >>> averaged_model = simple_average([model1, model2])
 
         >>> state_dict1 = model1.state_dict()
         >>> state_dict2 = model2.state_dict()
-        >>> averaged_state_dict = simple_averageing([state_dict1, state_dict2])
+        >>> averaged_state_dict = simple_average([state_dict1, state_dict2])
     """
+    assert len(modules) > 0, "modules must be a non-empty list"
     if isinstance(modules[0], nn.Module):
         if base_module is None:
             new_module = deepcopy(modules[0])
