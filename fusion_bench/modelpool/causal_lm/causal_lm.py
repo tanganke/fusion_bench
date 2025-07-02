@@ -141,6 +141,7 @@ class CausalLMPool(BaseModelPool):
         model_dtype: Optional[str] = None,
         save_tokenizer: bool = False,
         tokenizer_kwargs=None,
+        tokenizer: Optional[PreTrainedTokenizer] = None,
         **kwargs,
     ):
         """
@@ -154,11 +155,13 @@ class CausalLMPool(BaseModelPool):
             **kwargs: Additional keyword arguments passed to the `save_pretrained` method.
         """
         path = os.path.expanduser(path)
-        if save_tokenizer:
-            if tokenizer_kwargs is None:
-                tokenizer_kwargs = {}
-            # load the tokenizer
-            tokenizer = self.load_tokenizer(**tokenizer_kwargs)
+        # NOTE: if tokenizer is provided, it will be saved regardless of `save_tokenizer`
+        if save_tokenizer or tokenizer is not None:
+            if tokenizer is None:
+                if tokenizer_kwargs is None:
+                    tokenizer_kwargs = {}
+                # load the tokenizer
+                tokenizer = self.load_tokenizer(**tokenizer_kwargs)
             tokenizer.save_pretrained(
                 path,
                 push_to_hub=push_to_hub,

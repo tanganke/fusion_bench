@@ -111,6 +111,8 @@ _import_structure = {
         "SparseLoForLlama",
         "PCPSparseLoForLlama",
     ],
+    # MoE expert pruning
+    "expert_sparsity": ["LayerWisePruningForMixtral"],
 }
 
 
@@ -142,6 +144,7 @@ if TYPE_CHECKING:
         SimpleEnsembleAlgorithm,
         WeightedEnsembleAlgorithm,
     )
+    from .expert_sparsity import LayerWisePruningForMixtral
     from .fisher_merging import FisherMergingForCLIPVisionModel
     from .fw_merging import FrankWolfeHardAlgorithm, FrankWolfeSoftAlgorithm
     from .gossip import (
