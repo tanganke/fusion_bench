@@ -3,9 +3,9 @@ import torch
 
 class CacheDataset(torch.utils.data.Dataset):
     def __init__(self):
-        self.alphas = []
-        self.Xs = []
-        self.Zs = []
+        self.alphas = []  # logits
+        self.Xs = []  # input hidden states
+        self.Zs = []  # output hidden states
         self.prepared = False
 
     def __len__(self):

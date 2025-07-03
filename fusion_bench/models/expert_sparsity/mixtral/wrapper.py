@@ -6,17 +6,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from transformers.models.mixtral.modeling_mixtral import (
+    MixtralBlockSparseTop2MLP,
     MixtralForCausalLM,
     MixtralSparseMoeBlock,
 )
 
 from .dataset import CacheDataset
-
-
-from transformers.models.mixtral.modeling_mixtral import (
-    MixtralBlockSparseTop2MLP,
-    MixtralSparseMoeBlock,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -97,8 +92,9 @@ class PrunableMixtralSparseMoeBlockWrapper(torch.nn.Module):
             # the current expert. We need to make sure to multiply the output hidden
             # states by `routing_weights` on the corresponding tokens (top-1 and top-2)
             current_state = hidden_states[None, top_x_list].reshape(-1, hidden_dim)
-            current_hidden_states = expert_layer(
-                current_state, routing_weights[top_x_list, idx_list, None]
+            current_hidden_states = (
+                expert_layer(current_state)
+                * routing_weights[top_x_list, idx_list, None]
             )
 
             # However `index_add_` only support torch tensors for indexing so we'll use
@@ -127,6 +123,7 @@ class PrunableMixtralSparseMoeBlockWrapper(torch.nn.Module):
 
     @torch.no_grad()
     def enumerate(self):
+        # disable caching
         self.cache_logits = False
         self.cache_X = False
         self.cache_Z = False
@@ -150,8 +147,8 @@ class PrunableMixtralSparseMoeBlockWrapper(torch.nn.Module):
                         device=self.model.gate.weight.data.device,
                         non_blocking=True,
                     )
-
                     final_hidden_states_e, _ = self.forward(hidden_states.unsqueeze(0))
+                    # compute the |Z - Z_e|_2 L2 loss
                     loss += torch.norm(
                         final_hidden_states
                         - final_hidden_states_e.squeeze(0).to(torch.float64)
@@ -173,6 +170,7 @@ class PrunableMixtralSparseMoeBlockWrapper(torch.nn.Module):
             set(range(self.model.num_experts)) - set(self.experts_to_drop)
         )
 
+        # create a new gate with the experts to reserve
         gate_new = torch.nn.Linear(
             in_features=self.model.gate.in_features,
             out_features=self.r,

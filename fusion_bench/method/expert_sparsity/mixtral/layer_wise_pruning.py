@@ -67,13 +67,11 @@ def layerwise_pruning(
     for l, layer in tqdm(
         list(enumerate(model.model.layers)), desc="Enumerating loss on sample set..."
     ):
-        b = layer.block_sparse_moe
+        layer = cast(MixtralDecoderLayer, layer)
+        b: PrunableMixtralSparseMoeBlockWrapper = layer.block_sparse_moe
         if not hasattr(b, "cache_space"):
             continue
-        if l < 16:
-            b.to("cuda:0")
-        else:
-            b.to("cuda:1")
+        b.to("cuda")
         loss_history = b.enumerate()
         global_loss_history[l] = loss_history
         b.prune()
