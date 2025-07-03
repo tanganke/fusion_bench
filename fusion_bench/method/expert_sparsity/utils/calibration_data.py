@@ -14,6 +14,7 @@ import transformers
 from datasets import load_dataset
 from transformers import PreTrainedTokenizer, default_data_collator
 from transformers.testing_utils import CaptureLogger
+from huggingface_hub import hf_hub_download
 
 logger = logging.getLogger(__name__)
 
@@ -21,15 +22,27 @@ logger = logging.getLogger(__name__)
 DATASETS = {
     # C4: Please download first part of the C4 training data `c4-train.00000-of-01024.json` from [allenai/c4](https://huggingface.co/datasets/allenai/c4/blob/main/en/c4-train.00000-of-01024.json.gz).
     "c4": lambda: load_dataset(
-        "allenai/c4",
-        data_files={"train": "en/c4-train.00000-of-01024.json.gz"},
+        "json",
+        data_files={
+            "train": hf_hub_download(
+                "allenai/c4",
+                filename="en/c4-train.00000-of-01024.json.gz",
+                repo_type="dataset",
+            )
+        },
     ),
     # MATH: You can use our pre-built calibration set in `./data/math_pretrain_style.json`. To reproduce our construction, please download the training set of [MATH](https://github.com/hendrycks/math) and use our [script](data/math_calib_construction.py).
     # NOTE: I have uploaded the math_pretrain_style.json to my huggingface repo:
     # https://huggingface.co/datasets/tanganke/math_pretrain_style/tree/main.
     "math": lambda: load_dataset(
-        "tanganke/math_pretrain_style",
-        data_files={"train": "math_pretrain_style.json"},
+        "json",
+        data_files={
+            "train": hf_hub_download(
+                "tanganke/math_pretrain_style",
+                filename="math_pretrain_style.json",
+                repo_type="dataset",
+            )
+        },
     ),
 }
 

@@ -175,7 +175,7 @@ class PrunableMixtralSparseMoeBlockWrapper(torch.nn.Module):
             in_features=self.model.gate.in_features,
             out_features=self.r,
             bias=False,
-            device="cpu",
+            device=self.model.gate.weight.data.device,
             dtype=torch.bfloat16,
         )
         gate_new.weight.data = self.model.gate.weight.data[list(experts_to_reserve)]

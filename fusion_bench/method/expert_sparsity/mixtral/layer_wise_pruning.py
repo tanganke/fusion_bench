@@ -59,10 +59,6 @@ def layerwise_pruning(
             outputs = model(**model_inputs)
             assert outputs is not None
 
-    logger.info("Moving whole model to cpu...")
-    model.to("cpu")
-    torch.cuda.empty_cache()
-
     global_loss_history = dict()
     for l, layer in tqdm(
         list(enumerate(model.model.layers)), desc="Enumerating loss on sample set..."
@@ -71,11 +67,9 @@ def layerwise_pruning(
         b: PrunableMixtralSparseMoeBlockWrapper = layer.block_sparse_moe
         if not hasattr(b, "cache_space"):
             continue
-        b.to("cuda")
         loss_history = b.enumerate()
         global_loss_history[l] = loss_history
         b.prune()
-        b.to("cpu")
 
     logger.info("Merging & saving...")
     for l, layer in enumerate(model.model.layers):
