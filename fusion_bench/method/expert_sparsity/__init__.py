@@ -7,4 +7,4 @@ Reference:
     http://arxiv.org/abs/2402.14800
 """
 
-from .mixtral import LayerWisePruningForMixtral
+from .mixtral import *

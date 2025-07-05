@@ -12,4 +12,12 @@ if use flash attention 2, pass the following to the command line:
 ```
 """
 
+from .dynamic_skipping import DynamicSkippingPruningForMixtral
 from .layer_wise_pruning import LayerWisePruningForMixtral
+from .progressive_pruning import ProgressivePruningForMixtral
+
+__all__ = [
+    "DynamicSkippingPruningForMixtral",
+    "LayerWisePruningForMixtral",
+    "ProgressivePruningForMixtral",
+]
