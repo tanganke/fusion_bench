@@ -163,6 +163,7 @@ class ProgressivePruningForMixtral(
         if self.model_save_path is not None:
             with self.profile("save model"):
                 modelpool.save_model(
+                    model,
                     path=self.model_save_path,
                     tokenizer=tokenizer,
                 )
