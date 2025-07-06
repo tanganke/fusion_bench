@@ -4,3 +4,8 @@ SCRIPT_DIR=$(dirname $(realpath $0))
 
 export HF_HOME=$SCRIPT_DIR/.cache/huggingface
 echo "HF_HOME set to $HF_HOME"
+
+# if `HF_HOME` does not exist, create it
+if [ ! -d $HF_HOME ]; then
+    mkdir -p $HF_HOME
+fi
