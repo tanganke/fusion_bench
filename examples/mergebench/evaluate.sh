@@ -1,14 +1,22 @@
 #! /bin/bash
 
+LM_EVAL_ARGS=""
+
+function run_command() {
+  echo "Running $@"
+  $@
+}
+
 function lm_eval_evaluate_task() {
   # if output file exists, skip
-  if [ -f $OUTPUT_DIR/$MODEL/$TASK ]; then
+  MODEL_PATH=$(echo $MODEL | sed 's/\//__/g')
+  if [ -d $OUTPUT_DIR/$TASK/$MODEL_PATH ]; then
     echo "Skipping $MODEL on $TASK because output file exists"
   else
     echo "Evaluating $MODEL on $TASK"
-    lm_eval \
+    run_command lm_eval \
       --model_args pretrained="$MODEL",dtype='bfloat16',parallelize=True \
-      --apply_chat_template \
+      $LM_EVAL_ARGS \
       --tasks $TASK \
       --batch_size $BATCH_SIZE \
       --output_path $OUTPUT_DIR/$TASK

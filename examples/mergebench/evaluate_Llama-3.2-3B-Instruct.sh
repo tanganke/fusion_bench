@@ -12,4 +12,6 @@ MODELS=(
   "MergeBench/Llama-3.2-3B-Instruct_safety"
 )
 
+LM_EVAL_ARGS="--apply_chat_template"
+
 evaluate_all_models
