@@ -11,7 +11,7 @@ function lm_eval_evaluate_task() {
       --apply_chat_template \
       --tasks $TASK \
       --batch_size $BATCH_SIZE \
-      --output_path $OUTPUT_DIR/$MODEL/$TASK
+      --output_path $OUTPUT_DIR/$TASK
   fi
 }
 
