@@ -1,74 +1,52 @@
-#!/bin/bash
+#! /bin/bash
 
-MODEL=$1
-GPU_ID=$2
-OUTPUT_PATH=$3
+function lm_eval_evaluate_task() {
+  # if output file exists, skip
+  if [ -f $OUTPUT_DIR/$MODEL/$TASK ]; then
+    echo "Skipping $MODEL on $TASK because output file exists"
+  else
+    echo "Evaluating $MODEL on $TASK"
+    lm_eval \
+      --model_args pretrained="$MODEL",dtype='bfloat16',parallelize=True \
+      --apply_chat_template \
+      --tasks $TASK \
+      --batch_size $BATCH_SIZE \
+      --output_path $OUTPUT_DIR/$MODEL/$TASK
+  fi
+}
 
-echo $MODEL
-echo $GPU_ID
-echo $OUTPUT_PATH
+function evaluate_all_models() {
+  for MODEL in ${MODELS[@]}; do
+    # math
+    for TASK in gsm8k_cot; do
+      lm_eval_evaluate_task
+    done
 
-export CUDA_VISIBLE_DEVICES=$GPU_ID
+    # multilingual
+    for TASK in m_mmlu_fr arc_fr hellaswag_fr m_mmlu_es arc_es hellaswag_es m_mmlu_de arc_de hellaswag_de m_mmlu_ru arc_ru hellaswag_ru; do
+      lm_eval_evaluate_task
+    done
 
-source $(conda info --base)/etc/profile.d/conda.sh
-mkdir -p $OUTPUT_PATH
+    # instruction following
+    for TASK in ifeval; do
+      lm_eval_evaluate_task
+    done
 
-conda activate lmeval
+    # coding
+    for TASK in mbpp; do
+      lm_eval_evaluate_task
+    done
 
-# category: math
-lm_eval --model hf \
-    --model_args pretrained=$MODEL \
-    --tasks gsm8k_cot \
-    --device cuda:$GPU_ID \
-    --batch_size 16 \
-    --output_path $OUTPUT_PATH
+    # safety
+    for TASK in truthfulqa; do
+      lm_eval_evaluate_task
+    done
+  done
+}
 
-# category: multilingual
-lm_eval --model hf \
-    --model_args pretrained=$MODEL \
-    --tasks m_mmlu_fr,arc_fr,hellaswag_fr,m_mmlu_es,arc_es,hellaswag_es,m_mmlu_de,arc_de,hellaswag_de,m_mmlu_ru,arc_ru,hellaswag_ru \
-    --device cuda:$GPU_ID \
-    --batch_size 8 \
-    --output_path $OUTPUT_PATH
+OUTPUT_DIR="results/"
+BATCH_SIZE=8
 
-# category: instruction following
-lm_eval --model hf \
-    --model_args pretrained=$MODEL \
-    --tasks ifeval \
-    --device cuda:$GPU_ID \
-    --batch_size 8 \
-    --output_path $OUTPUT_PATH
-
-# category: coding
-conda deactivate
-conda activate bigcode
-cd bigcode-evaluation-harness
-
-accelerate launch main.py \
-    --model $MODEL \
-    --max_length_generation 512 \
-    --precision bf16 \
-    --tasks humanevalplus,mbppplus \
-    --temperature 0.2 \
-    --n_samples 10 \
-    --batch_size 10 \
-    --allow_code_execution \
-    --metric_output_path $OUTPUT_PATH/code_eval.json \
-    --use_auth_token
-
-# category: safety
-cd ..
-conda deactivate
-conda activate safety-eval
-cd safety-eval-fork
-
-export OPENAI_API_KEY=''
-
-python evaluation/eval.py generators \
-    --model_name_or_path $MODEL \
-    --use_vllm \
-    --model_input_template_path_or_name llama3 \
-    --tasks wildguardtest,harmbench,xstest,do_anything_now \
-    --report_output_path $OUTPUT_PATH/safety_eval.json \
-    --save_individual_results_path $OUTPUT_PATH/safety_generation.json \
-    --batch_size 8
+if [ ! -d $OUTPUT_DIR ]; then
+  mkdir -p $OUTPUT_DIR
+fi
