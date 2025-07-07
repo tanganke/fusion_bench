@@ -296,13 +296,17 @@ class FabricModelFusionProgram(
             if hydra_output_dir is not None:
                 os.makedirs(self.log_dir, exist_ok=True)
                 try:
-                    os.symlink(
-                        hydra_output_dir,
-                        os.path.join(
-                            self.log_dir,
-                            "hydra_output_" + os.path.basename(hydra_output_dir),
-                        ),
-                        target_is_directory=True,
-                    )
+                    # if the system is windows, use the `mklink` command in "CMD" to create the symlink
+                    if os.name == "nt":
+                        os.system(f"mklink /J {os.path.abspath(os.path.join(self.log_dir, 'hydra_output_' + os.path.basename(hydra_output_dir)))} {os.path.abspath(hydra_output_dir)}")
+                    else:
+                        os.symlink(
+                            hydra_output_dir,
+                            os.path.join(
+                                self.log_dir,
+                                "hydra_output_" + os.path.basename(hydra_output_dir),
+                            ),
+                            target_is_directory=True,
+                        )
                 except OSError as e:
                     log.warning(f"Failed to create symbolic link: {e}")
