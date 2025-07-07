@@ -19,6 +19,7 @@ function lm_eval_evaluate_task() {
       $LM_EVAL_ARGS \
       --tasks $TASK \
       --batch_size $BATCH_SIZE \
+      --confirm_run_unsafe_code \
       --output_path $OUTPUT_DIR/$TASK
   fi
 }
@@ -41,12 +42,12 @@ function evaluate_all_models() {
     done
 
     # coding
-    for TASK in mbpp; do
+    for TASK in humaneval_plus mbpp_plus; do
       lm_eval_evaluate_task
     done
 
     # safety
-    for TASK in truthfulqa; do
+    for TASK in truthfulqa toxigen winogender; do
       lm_eval_evaluate_task
     done
   done
