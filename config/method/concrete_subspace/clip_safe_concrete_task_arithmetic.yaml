@@ -1,0 +1,27 @@
+# Reference: Jinluan Yang, et al. Mitigating the Backdoor Effect for Multi-Task Model Merging via Safety-Aware Subspace. ICLR 2025.
+name: clip_safe_concrete_task_arithmetic
+# batch size per gpu
+# if you have multiple gpus, the total batch size will be `batch_size * num_gpus`
+batch_size: 16
+num_workers: 8
+optimizer: adam
+lr: 1e-3
+scaling_factor: 0.3
+###new
+adv_lr: 1e-4
+trigger_norm: 1000
+adv_weight: 0.1
+max_steps: 2000
+save_interval: 500
+initial_logits: 0
+temperature: 0.5
+# "discrete" or "continuous", this is the mask applied for evaluation, not during training
+# the performance of final model are expected to be similar
+eval_mask_type: continuous
+mask_checkpoint: null
+# if `clamp_weights` is true, the weights will be clamped to [0, 1]
+clamp_weights: false
+# arguments of `functional_call`
+tie_weights: true
+strict: false
+cache_dir: outputs

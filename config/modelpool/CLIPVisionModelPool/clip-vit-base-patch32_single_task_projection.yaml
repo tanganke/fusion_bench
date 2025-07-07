@@ -1,0 +1,12 @@
+defaults:
+  - /model/clip-vit@models:
+      - clip-vit-base-patch32
+      - clip-vit-base-patch32_sun397
+      - clip-vit-base-patch32_stanford-cars
+_target_: fusion_bench.modelpool.CLIPVisionModelPool
+_recursive_: false
+train_datasets: null
+test_datasets: null
+processor:
+  _target_: transformers.CLIPProcessor.from_pretrained
+  pretrained_model_name_or_path: openai/clip-vit-base-patch32
