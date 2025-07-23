@@ -8,6 +8,7 @@ from torch import nn
 from fusion_bench.method.base_algorithm import BaseAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
+from fusion_bench.utils import LazyStateDict
 from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_add,
     state_dict_avg,
@@ -104,6 +105,15 @@ class SimpleAverageAlgorithm(
             # Divide the accumulated state dictionary by the number of models to get the average
             sd = state_dict_div(sd, len(modelpool.model_names))
 
+        if isinstance(forward_model, LazyStateDict):
+            # if the model is a LazyStateDict, convert it to an empty module
+            forward_model = forward_model.meta_module.to_empty(
+                device=(
+                    "cpu"
+                    if forward_model._torch_dtype is None
+                    else forward_model._torch_dtype
+                )
+            )
         forward_model.load_state_dict(sd)
         # print profile report and log the merged models
         self.print_profile_summary()

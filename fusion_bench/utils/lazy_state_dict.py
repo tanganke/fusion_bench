@@ -290,6 +290,21 @@ class LazyStateDict:
             )
             return tensor
 
+    def __setitem__(self, key: str, value: torch.Tensor) -> None:
+        """
+        Set a tensor in the LazyStateDict. This will update the state dict cache if it is enabled.
+        """
+        assert key in list(
+            self.keys()
+        ), "KeyError: Cannot set a tensor for a key that does not exist in the LazyStateDict."
+        if self._state_dict_cache is not None:
+            self._state_dict_cache[key] = value
+        else:
+            log.warning(
+                "State dict cache is disabled, setting a tensor will not update the cache."
+            )
+            self._state_dict_cache = {key: value}
+
     def __contains__(self, key: str) -> bool:
         if self._state_dict_cache is not None and key in self._state_dict_cache:
             return True
@@ -349,7 +364,7 @@ class LazyStateDict:
 
     def __repr__(self) -> str:
         if self._index is not None:
-            return f"{self.__class__.__name__}(index={self._index})"
+            return f"{self.__class__.__name__}(keys={list(self.keys())})"
         else:
             return (
                 f"{self.__class__.__name__}(checkpoint_files={self._checkpoint_files})"
@@ -371,3 +386,25 @@ class LazyStateDict:
             raise RuntimeError(
                 "Cannot get submodule because meta_module is not provided."
             )
+
+    def load_state_dict(
+        self, state_dict: Dict[str, torch.Tensor], strict: bool = True
+    ) -> None:
+        """
+        Load a state dict into this LazyStateDict.
+        This method is only for compatibility with nn.Module and it overrides the cache of LazyStateDict.
+
+        Args:
+            state_dict (Dict[str, torch.Tensor]): The state dict to load.
+            strict (bool): Whether to enforce that all keys in the state dict are present in this LazyStateDict.
+        """
+        log.warning(
+            "Loading state dict into LazyStateDict is not recommended, as it may lead to unexpected behavior. "
+            "Use with caution."
+        )
+        if strict:
+            for key in state_dict:
+                if key not in self:
+                    raise KeyError(f"Key {key} not found in LazyStateDict.")
+        for key, value in state_dict.items():
+            self[key] = value
