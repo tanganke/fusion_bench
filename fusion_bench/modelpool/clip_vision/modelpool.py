@@ -12,7 +12,6 @@ from typing_extensions import override
 
 from fusion_bench.utils import instantiate, timeit_context
 from fusion_bench.utils.modelscope import (
-    modelscope_snapshot_download,
     resolve_repo_path,
 )
 
@@ -180,12 +179,8 @@ class CLIPVisionModelPool(BaseModelPool):
         Returns:
             Dataset: The loaded dataset.
         """
-        if self._platform == "hf":
-            return load_dataset(name, split=split)
-        elif self._platform == "modelscope":
-            dataset_dir = modelscope_snapshot_download(name, repo_type="dataset")
-            return load_dataset(dataset_dir, split=split)
-        else:
-            raise ValueError(
-                f"Unsupported platform: {self._platform}. Supported platforms are 'hf' and 'modelscope'."
-            )
+        datset_dir = resolve_repo_path(
+            name, repo_type="dataset", platform=self._platform
+        )
+        dataset = load_dataset(datset_dir, split=split)
+        return dataset
