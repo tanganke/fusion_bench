@@ -32,12 +32,19 @@ class SimpleAverageForLlama(BaseAlgorithm):
 
     _config_mapping = BaseAlgorithm._config_mapping | {
         "merge_backbone": "merge_backbone",
+        "show_pbar": "show_pbar",
     }
 
-    def __init__(self, merge_backbone: bool, model_save_path: Optional[str] = None):
+    def __init__(
+        self,
+        merge_backbone: bool,
+        model_save_path: Optional[str] = None,
+        show_pbar: bool = False,
+    ):
         super().__init__()
         self.merge_backbone = merge_backbone
         self.model_save_path = model_save_path
+        self.show_pbar = show_pbar
 
     @override
     def run(self, modelpool: CausalLMPool):
@@ -56,10 +63,14 @@ class SimpleAverageForLlama(BaseAlgorithm):
                 )
             backbone_modelpool = instantiate(modelpool_config)
             model = modelpool.load_model("_pretrained_")
-            backbone_model = SimpleAverageAlgorithm().run(backbone_modelpool)
+            backbone_model = SimpleAverageAlgorithm(show_pbar=self.show_pbar).run(
+                backbone_modelpool
+            )
             model.model.layers = backbone_model
         else:
-            model = SimpleAverageAlgorithm().run(modelpool=modelpool)
+            model = SimpleAverageAlgorithm(show_pbar=self.show_pbar).run(
+                modelpool=modelpool
+            )
 
         if self.model_save_path is not None:
             with timeit_context(f"Saving the model to {self.model_save_path}"):

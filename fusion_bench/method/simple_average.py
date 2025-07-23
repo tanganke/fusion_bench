@@ -63,6 +63,18 @@ class SimpleAverageAlgorithm(
     BaseAlgorithm,
     SimpleProfilerMixin,
 ):
+    _config_mapping = BaseAlgorithm._config_mapping | {
+        "show_pbar": "show_pbar",
+    }
+
+    def __init__(self, show_pbar: bool = False):
+        """
+        Args:
+            show_pbar (bool): If True, shows a progress bar during model loading and merging. Default is False.
+        """
+        super().__init__()
+        self.show_pbar = show_pbar
+
     @torch.no_grad()
     def run(self, modelpool: Union[BaseModelPool, Dict[str, nn.Module]]):
         """
@@ -100,10 +112,14 @@ class SimpleAverageAlgorithm(
                     forward_model = model
                 else:
                     # Add the current model's state dictionary to the accumulated state dictionary
-                    sd = state_dict_add(sd, model.state_dict(keep_vars=True))
+                    sd = state_dict_add(
+                        sd, model.state_dict(keep_vars=True), show_pbar=self.show_pbar
+                    )
         with self.profile("merge weights"):
             # Divide the accumulated state dictionary by the number of models to get the average
-            sd = state_dict_div(sd, len(modelpool.model_names))
+            sd = state_dict_div(
+                sd, len(modelpool.model_names), show_pbar=self.show_pbar
+            )
 
         if isinstance(forward_model, LazyStateDict):
             # if the model is a LazyStateDict, convert it to an empty module

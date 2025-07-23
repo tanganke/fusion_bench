@@ -4,6 +4,7 @@ from typing import Callable, Dict, List, Literal, Union, cast
 
 import torch
 from torch import Tensor
+from tqdm.auto import tqdm
 
 from .parameters import check_parameters_all_equal
 from .type import BoolStateDictType, StateDictType
@@ -124,7 +125,11 @@ def state_dict_sub(
 
 
 def state_dict_add(
-    a: StateDictType, b: StateDictType, strict: bool = True, device=None
+    a: StateDictType,
+    b: StateDictType,
+    strict: bool = True,
+    device=None,
+    show_pbar: bool = False,
 ):
     """
     Returns the sum of two state dicts.
@@ -140,10 +145,10 @@ def state_dict_add(
     ans = {}
     if strict:
         check_parameters_all_equal([a, b])
-        for key in a:
+        for key in tqdm(tuple(a.keys())) if show_pbar else a:
             ans[key] = a[key] + b[key]
     else:
-        for key in a:
+        for key in tqdm(tuple(a.keys())) if show_pbar else a:
             if key in b:
                 ans[key] = a[key] + b[key]
     if device is not None:
@@ -175,7 +180,7 @@ def state_dict_mul(state_dict: StateDictType, scalar: float):
     return diff
 
 
-def state_dict_div(state_dict: StateDictType, scalar: float):
+def state_dict_div(state_dict: StateDictType, scalar: float, show_pbar: bool = False):
     """
     Returns the division of a state dict by a scalar.
 
@@ -187,7 +192,7 @@ def state_dict_div(state_dict: StateDictType, scalar: float):
         Dict: The division of the state dict by the scalar.
     """
     diff = OrderedDict()
-    for k in state_dict:
+    for k in tqdm(tuple(state_dict.keys())) if show_pbar else state_dict:
         diff[k] = state_dict[k] / scalar
     return diff
 
