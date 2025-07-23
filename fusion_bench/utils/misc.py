@@ -1,4 +1,5 @@
-from typing import Iterable, List
+from difflib import get_close_matches
+from typing import Any, Iterable, List, Optional
 
 __all__ = [
     "first",
@@ -47,10 +48,6 @@ def attr_equal(obj, attr: str, value):
     if not hasattr(obj, attr):
         return False
     return getattr(obj, attr) == value
-
-
-from difflib import get_close_matches
-from typing import Iterable, Any, Optional
 
 
 def validate_and_suggest_corrections(
