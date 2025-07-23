@@ -1,4 +1,5 @@
-from typing import Optional
+from copy import deepcopy
+from typing import TYPE_CHECKING, Optional
 
 from typing_extensions import override
 
@@ -6,6 +7,11 @@ from fusion_bench import timeit_context
 from fusion_bench.method.base_algorithm import BaseAlgorithm
 from fusion_bench.method.simple_average import SimpleAverageAlgorithm
 from fusion_bench.modelpool import CausalLMBackbonePool, CausalLMPool
+from fusion_bench.utils.pylogger import getRankZeroLogger
+from omegaconf import flag_override
+from fusion_bench.utils import instantiate
+
+log = getRankZeroLogger(__name__)
 
 
 class SimpleAverageForLlama(BaseAlgorithm):
@@ -40,12 +46,20 @@ class SimpleAverageForLlama(BaseAlgorithm):
 
         if self.merge_backbone:
             assert modelpool.has_pretrained
-            backbone_modelpool = CausalLMBackbonePool(**modelpool.config)
+            log.info(
+                "Merging backbone of the model pool, use CausalLMBackbonePool instead of CausalLMPool."
+            )
+            modelpool_config = deepcopy(modelpool.config)
+            with flag_override(modelpool_config, "allow_objects", True):
+                modelpool_config._target_ = (
+                    "fusion_bench.modelpool.causal_lm.CausalLMBackbonePool"
+                )
+            backbone_modelpool = instantiate(modelpool_config)
             model = modelpool.load_model("_pretrained_")
             backbone_model = SimpleAverageAlgorithm().run(backbone_modelpool)
             model.model.layers = backbone_model
         else:
-            model = SimpleAverageAlgorithm().run()
+            model = SimpleAverageAlgorithm().run(modelpool=modelpool)
 
         if self.model_save_path is not None:
             with timeit_context(f"Saving the model to {self.model_save_path}"):
