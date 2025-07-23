@@ -14,6 +14,7 @@ from torch import nn
 from transformers import AutoConfig
 
 from fusion_bench.utils.dtype import parse_dtype
+from fusion_bench.utils.packages import import_object
 
 if TYPE_CHECKING:
     from transformers import PretrainedConfig
@@ -54,10 +55,13 @@ class LazyStateDict:
     """
 
     _local_path: str
+    """local path to the checkpoint."""
     _state_dict_cache: Optional[Dict]
+    """Cache for the state dict, if enabled."""
     _index_filename: Optional[str]
     _checkpoint_files: Optional[List[str]]
-    _index: Optional[Dict]
+    _index: Optional[Dict[str, str]]
+    """Mapping of parameter names to checkpoint files."""
 
     def __init__(
         self,
@@ -71,7 +75,22 @@ class LazyStateDict:
         hf_cache_dir: Optional[str] = None,
         hf_proxies: Optional[Dict] = None,
     ):
+        """
+        Args:
+            checkpoint (str): Path to the checkpoint file or directory.
+            meta_module_class (Type[nn.Module], optional): Class of the meta module to instantiate.
+            meta_module (nn.Module, optional): Pre-initialized meta module.
+            cache_state_dict (bool): Whether to cache the state dict in memory.
+            torch_dtype (torch.dtype, optional): The dtype to use for the tensors.
+            device (str): The device to load the tensors onto.
+            hf_revision (str, optional): The revision of the model to download from Hugging Face Hub.
+            hf_cache_dir (str, optional): The cache directory for Hugging Face models.
+            hf_proxies (Dict, optional): Proxies to use for downloading from Hugging Face Hub.
+        """
+        self.cache_state_dict = cache_state_dict
         self.meta_module_class = meta_module_class
+        if isinstance(self.meta_module_class, str):
+            self.meta_module_class = import_object(self.meta_module_class)
         self.meta_module = meta_module
         if self.meta_module_class is not None:
             if self.meta_module is not None:
@@ -111,6 +130,18 @@ class LazyStateDict:
             else:
                 self._state_dict_cache = None
         elif len(self._checkpoint_files) == 1 and self._checkpoint_files[0].endswith(
+            SAFE_WEIGHTS_NAME
+        ):
+            # let the keys of self._index be the keys of the state dict, the values are the checkpoint file
+            with safe_open(
+                self._checkpoint_files[0], framework="pt", device=device
+            ) as f:
+                self._index = {key: self._checkpoint_files[0] for key in f.keys()}
+                if cache_state_dict:
+                    self._state_dict_cache = {}
+                else:
+                    self._state_dict_cache = None
+        elif len(self._checkpoint_files) == 1 and self._checkpoint_files[0].endswith(
             WEIGHTS_NAME
         ):
             log.info(f"Loading full state dict from {WEIGHTS_NAME}")
@@ -137,7 +168,11 @@ class LazyStateDict:
     def config(self) -> "PretrainedConfig":
         return AutoConfig.from_pretrained(self._checkpoint)
 
-    def state_dict(self) -> "LazyStateDict":
+    def state_dict(self, keep_vars: bool = False) -> "LazyStateDict":
+        """
+        Args:
+            keep_vars (bool): Ignored, as LazyStateDict does not support keep_vars. Just for compatibility.
+        """
         return self
 
     def _resolve_checkpoint_files(self, checkpoint: str):
