@@ -66,10 +66,66 @@ def resolve_repo_path(
     platform: Literal["hf", "huggingface", "modelscope"] = "hf",
     **kwargs,
 ):
+    """
+    Resolve and download a repository from various platforms to a local path.
+
+    This function handles multiple repository sources including local paths, Hugging Face,
+    and ModelScope. It automatically downloads remote repositories to local cache and
+    returns the local path for further use.
+
+    Args:
+        repo_id (str): Repository identifier. Can be:
+            - Local file/directory path (returned as-is if exists)
+            - Hugging Face model/dataset ID (e.g., "bert-base-uncased")
+            - ModelScope model/dataset ID
+            - URL-prefixed ID (e.g., "hf://model-name", "modelscope://model-name").
+              The prefix will override the platform argument.
+        repo_type (str, optional): Type of repository to download. Defaults to "model".
+            Common values include "model" and "dataset".
+        platform (Literal["hf", "huggingface", "modelscope"], optional):
+            Platform to download from. Defaults to "hf". Options:
+            - "hf" or "huggingface": Hugging Face Hub
+            - "modelscope": ModelScope platform
+        **kwargs: Additional arguments passed to the underlying download functions.
+
+    Returns:
+        str: Local path to the repository (either existing local path or downloaded cache path).
+
+    Raises:
+        FileNotFoundError: If the repository cannot be found or downloaded from any platform.
+        ValueError: If an unsupported platform is specified.
+        ImportError: If required dependencies for the specified platform are not installed.
+
+    Examples:
+        >>> # Local path (returned as-is)
+        >>> resolve_repo_path("/path/to/local/model")
+        "/path/to/local/model"
+
+        >>> # Hugging Face model
+        >>> resolve_repo_path("bert-base-uncased")
+        "/home/user/.cache/huggingface/hub/models--bert-base-uncased/..."
+
+        >>> # ModelScope model with explicit platform
+        >>> resolve_repo_path("damo/nlp_bert_backbone_base_std", platform="modelscope")
+        "/home/user/.cache/modelscope/hub/damo/nlp_bert_backbone_base_std/..."
+
+        >>> # URL-prefixed repository ID
+        >>> resolve_repo_path("hf://microsoft/DialoGPT-medium")
+        "/home/user/.cache/huggingface/hub/models--microsoft--DialoGPT-medium/..."
+    """
+    # If it's a HuggingFace Hub model id, download snapshot
+    if repo_id.startswith("hf://") or repo_id.startswith("huggingface://"):
+        repo_id = repo_id.replace("hf://", "").replace("huggingface://", "")
+        platform = "hf"
+    # If it's a ModelScope model id, download snapshot
+    elif repo_id.startswith("modelscope://"):
+        repo_id = repo_id.replace("modelscope://", "")
+        platform = "modelscope"
+
     # If it's a local file or directory, return as is
     if os.path.exists(repo_id):
         return repo_id
-    # If it's a HuggingFace Hub model id, download snapshot
+
     try:
         validate_and_suggest_corrections(platform, AVAILABLE_PLATFORMS)
         # This will download the model to the cache and return the local path
