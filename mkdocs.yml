@@ -22,6 +22,7 @@ nav:
         - Ties-Merging: algorithms/ties_merging.md
         - AdaMerging: algorithms/adamerging.md
         - RegMean: algorithms/regmean.md
+        - RegMean++: algorithms/regmean_plusplus.md
         - Concrete Subspace: algorithms/concrete_subspace.md
         - Task Singular Vector: algorithms/task_singular_vector.md
         - Isotropic Merging: algorithms/isotropic_merging.md

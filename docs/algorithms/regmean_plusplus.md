@@ -1,21 +1,25 @@
 # RegMean++
 
-## Revisiting the RegMean Algorithm
-**Regression Mean (RegMean)**[^1], an approach that formulates model merging as a linear regression problem, aims to find the optimal weights for each linear layer in the merge model by minimizing the discrepancy in predictions between the merge and candidate models. At a transformer layer $l$, to obtain the merge weights for a linear layer $\bm W^{(l)}_{M}$ , RegMean provides a precise closed-form solution for merging those from $K$ candidate models as follows:
+[![arxiv](https://img.shields.io/badge/arXiv-2508.03121-b31b1b.svg)](https://www.arxiv.org/abs/2508.03121)
+[![github](https://img.shields.io/badge/GitHub-Code-181717.svg)](https://github.com/nthehai01/RegMean-plusplus)
 
-$$\bm W^{(l)}_{M} = \left[\sum_{i=1}^{K}  (\bm X^{(l)}_i)^{\top} \bm X^{(l)}_i\right]^{-1} \sum_{i=1}^{K} (\bm X^{(l)}_i)^{\top} \bm X^{(l)}_i \bm W^{(l)}_i.$$
+## Revisiting the RegMean Algorithm
+**Regression Mean (RegMean)**[^1], an approach that formulates model merging as a linear regression problem, aims to find the optimal weights for each linear layer in the merge model by minimizing the discrepancy in predictions between the merge and candidate models. At a transformer layer $l$, to obtain the merge weights for a linear layer $W^{(l)}_{M}$ , RegMean provides a precise closed-form solution for merging those from $K$ candidate models as follows:
+
+$$W^{(l)}_{M} = \left[\sum_{i=1}^{K}  (X^{(l)}_i)^{\top} X^{(l)}_i\right]^{-1} \sum_{i=1}^{K} (X^{(l)}_i)^{\top} X^{(l)}_i W^{(l)}_i.$$
 
 ## Problem of RegMean and How RegMean++ Addresses It
 RegMean merges each linear layer independently, overlooking how the features and information in the earlier layers propagate through the layers and influence the final prediction in the merge model. To address this, **RegMean++**[^2] is proposed to explicitly incorporate both *intra- and cross-layer dependencies between merge models' layers* into RegMean's objective.
 
-<p align="center">
-    <img src="./images/regmean_vs_regmean_plusplus.png" alt="regmean vs regmean++" width="750"/>
-</p>
-<p align="center">
-    <em><b>Comparison between RegMean and RegMean++ for model merging.</b> RegMean++ leverages representations from the merge model for merging, enabling accurate alignment with its behavior.</em>
-</p>
 
-The key difference between RegMean++ and RegMean lies in how input feature $\bm X^{(l,j)}_i$ for the $j$-th linear layer is obtained: *For input features that are **activations** (cushion representations between transformer layers), RegMean++ computes $\bm X^{(l,j)}_i$ based on the activations produced by the **previous merge layer** $f_{M}^{(l-1)}$ in the merge model, that is, $\bm X^{(l)}_i = f_{M}^{(l-1)}(\bm X^{(l-1)}_{i})$ while RegMean relies on the activations produced by the **previous candidate layer** $f_{i}^{(l-1)}$ in the candidate model, that is, $\bm X^{(l)}_i = f_{i}^{(l-1)}(\bm X^{(l-1)}_{i})$.*
+<figure markdown="span">
+  ![alt text](images/regmean_vs_regmean_plusplus.png){ width="750" }
+  <figcaption>
+  <em><b>Comparison between RegMean and RegMean++ for model merging.</b> RegMean++ leverages representations from the merge model for merging, enabling accurate alignment with its behavior.</em>
+  </figcaption>
+</figure>
+
+The key difference between RegMean++ and RegMean lies in how input feature $X^{(l,j)}_i$ for the $j$-th linear layer is obtained: *For input features that are **activations** (cushion representations between transformer layers), RegMean++ computes $X^{(l,j)}_i$ based on the activations produced by the **previous merge layer** $f_{M}^{(l-1)}$ in the merge model, that is, $X^{(l)}_i = f_{M}^{(l-1)}(X^{(l-1)}_{i})$ while RegMean relies on the activations produced by the **previous candidate layer** $f_{i}^{(l-1)}$ in the candidate model, that is, $X^{(l)}_i = f_{i}^{(l-1)}(X^{(l-1)}_{i})$.*
 
 
 ## Code Integration
@@ -49,6 +53,10 @@ fusion_bench \
         taskpool.base_model=openai/clip-vit-large-patch14
 ```
 
+## Code Implementation
+
+::: fusion_bench.method.regmean_plusplus.RegMeanAlgorithmPlusPlus
+::: fusion_bench.method.regmean_plusplus.RegMeanAlgorithmForCLIPPlusPlus
 
 ## References
 
