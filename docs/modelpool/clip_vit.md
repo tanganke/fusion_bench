@@ -573,6 +573,22 @@ fusion_bench \
   taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8_L14
 ```
 
+### RegMean++
+
+Run and evaluate the RegMean++ algorithm on eight image classification tasks:
+
+```bash
+for model in clip-vit-base-patch32 clip-vit-base-patch16 clip-vit-large-patch14
+do
+  fusion_bench \
+      method=regmean_plusplus/clip_regmean_plusplus \
+      modelpool=CLIPVisionModelPool/${model}_TA8 \
+      taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
+        taskpool.base_model=openai/${model} \
+      report_save_path=outputs/${model}_TA8_regmean_plusplus.json
+done
+```
+
 ### Task Arithmetic
 
 merge CLIP-ViT-B/32 models using task arithmetic and evaluate on the eight tasks
@@ -778,7 +794,8 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
     | Model Merging                                  |        |      |          |         |      |       |       |      |         |
     | Simple Averaging                               | 65.4   | 62.6 | 70.8     | 76.9    | 64.5 | 54.9  | 86.3  | 50.9 | 66.5    |
     | Fisher Merging                                 | 66.7   | 64.0 | 72.2     | 91.6    | 69.0 | 64.3  | 83.5  | 53.7 | 70.6    |
-    | RegMean                                        | 67.8   | 68.9 | 82.5     | 94.4    | 90.6 | 79.2  | 97.6  | 63.2 | 80.5    |
+    | RegMean                                        | 68.6   | 70.0 | 84.6     | 95.4    | 92.6 | 83.4  | 98.4  | 66.1 | 82.4    |
+    | RegMean++                                      | 69.3   | 70.5 | 86.7     | 96.1    | 94.1 | 90.4  | 99.0  | 68.7 | 84.4    |
     | Task Arithmetic ($\lambda=0.3$)                | 57.1   | 55.7 | 64.9     | 76.7    | 77.9 | 68.5  | 96.1  | 47.2 | 68.0    |
     | Concrete Task Arithmetic ($\lambda=0.3$)       | 64.2   | 63.3 | 75.6     | 94.1    | 90.3 | 82.9  | 98.0  | 52.5 | 77.6    |
     | Ties-Merging ($\lambda=0.3$)                   | 67.1   | 64.2 | 74.1     | 76.8    | 77.7 | 69.4  | 94.1  | 54.0 | 72.2    |
@@ -799,7 +816,8 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
     | Model Merging                         |        |      |          |         |      |       |       |      |         |
     | Simple Averaging                      | 68.7   | 69.0 | 75.0     | 83.2    | 74.9 | 62.5  | 93.7  | 51.1 | 72.3    |
     | Fisher Merging                        | 70.8   | 71.8 | 76.2     | 93.4    | 77.4 | 61.2  | 90.7  | 52.3 | 74.2    |
-    | RegMean                               | 71.1   | 76.4 | 86.0     | 95.4    | 93.9 | 86.5  | 98.4  | 64.3 | 84.0    |
+    | RegMean                               | 72.6   | 78.8 | 89.2     | 96.3    | 94.9 | 90.0  | 98.8  | 67.9 | 86.0    |
+    | RegMean++                             | 72.8   | 78.9 | 89.3     | 97.3    | 96.0 | 93.0  | 99.1  | 71.0 | 87.2    |
     | Task Arithmetic ($\lambda=0.3$)       | 65.9   | 68.3 | 75.4     | 84.5    | 88.8 | 81.9  | 98.0  | 53.9 | 77.1    |
     | Ties-Merging ($\lambda=0.3$)          | 70.6   | 71.2 | 79.8     | 87.5    | 83.2 | 76.2  | 96.4  | 55.4 | 77.5    |
     | Layer-wise AdaMerging ($\lambda=0.3$) | 70.6   | 79.6 | 86.1     | 93.6    | 93.5 | 95.4  | 98.1  | 62.9 | 85.0    |
@@ -818,7 +836,8 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
     | Model Merging                         |        |      |          |         |      |       |       |      |         |
     | Simple Averaging                      | 72.5   | 81.5 | 82.2     | 90.0    | 81.6 | 74.0  | 96.6  | 61.8 | 80.0    |
     | Fisher Merging                        | 70.6   | 79.4 | 84.1     | 98.1    | 74.7 | 85.0  | 89.5  | 61.0 | 80.3    |
-    | RegMean                               | 75.3   | 88.4 | 90.0     | 97.1    | 95.9 | 92.4  | 98.5  | 72.6 | 88.8    |
+    | RegMean                               | 76.9   | 89.8 | 93.0     | 97.5    | 96.3 | 94.1  | 98.7  | 77.0 | 90.4    |
+    | RegMean++                             | 77.2   | 89.6 | 92.8     | 97.5    | 96.9 | 96.3  | 99.2  | 78.4 | 91.0    |
     | Task Arithmetic ($\lambda=0.3$)       | 72.0   | 79.0 | 80.5     | 86.0    | 87.5 | 83.5  | 98.0  | 58.8 | 80.7    |
     | Ties-Merging ($\lambda=0.3$)          | 74.7   | 83.3 | 86.4     | 91.3    | 89.7 | 85.2  | 97.8  | 63.9 | 84.0    |
     | Task-wise AdaMerging ($\lambda=0.3$)  | 75.8   | 80.1 | 77.2     | 83.6    | 68.4 | 93.5  | 93.1  | 69.0 | 80.1    |
@@ -909,7 +928,8 @@ An example of corruption data visualization, in which the corruption image gener
     | Method                | SUN397     | Cars | RESISC45 | DTD  | SVHN | GTSRB | Avg. | MNIST        | EuroSAT | Avg. |
     | Pre-trained           | 63.2       | 59.9 | 60.6     | 43.9 | 23.5 | 30.4  | 46.9 | 47.6         | 45.6    | 46.6 |
     | Fisher Merging        | 65.5       | 67.2 | 78.2     | 57.6 | 84.2 | 75.9  | 71.4 | 71.8         | 49.4    | 60.6 |
-    | RegMean               | 68.7       | 70.0 | 86.5     | 65.9 | 93.9 | 86.7  | 78.6 | 82.2         | 49.3    | 65.7 |
+    | RegMean               | 69.5       | 70.8 | 88.7     | 67.2 | 95.2 | 89.4  | 80.1 | 82.9         | 44.6    | 63.8 |
+    | RegMean++             | 69.8       | 70.8 | 90.2     | 70.3 | 95.5 | 93.2  | 81.6 | 81.3         | 44.1    | 62.7 |
     | Task Arithmetic       | 64.3       | 63.0 | 73.2     | 54.9 | 84.7 | 79.5  | 69.9 | 75.5         | 42.6    | 59.1 |
     | Ties-Merging          | 68.3       | 65.5 | 76.9     | 54.9 | 75.4 | 72.0  | 68.9 | 73.1         | 47.3    | 60.2 |
     | Layer-wise AdaMerging | 68.4       | 71.9 | 87.9     | 69.1 | 92.2 | 93.8  | 80.5 | 77.7         | 47.3    | 62.5 |
@@ -922,7 +942,8 @@ An example of corruption data visualization, in which the corruption image gener
     | Method                | SUN397     | Cars | GTSRB | EuroSAT | DTD  | MNIST | Avg. | RESISC45     | SVHN | Avg. |
     | Pre-trained           | 63.2       | 59.9 | 30.4  | 45.6    | 43.9 | 47.6  | 48.4 | 60.6         | 23.5 | 40.1 |
     | Fisher Merging        | 68.1       | 67.4 | 67.2  | 86.4    | 58.6 | 81.6  | 71.5 | 60.2         | 42.5 | 51.3 |
-    | RegMean               | 69.4       | 70.5 | 86.9  | 97.0    | 67.1 | 98.3  | 81.5 | 50.2         | 51.5 | 50.8 |
+    | RegMean               | 70.4       | 71.9 | 89.3  | 97.6    | 69.8 | 98.8  | 83.0 | 49.4         | 49.0 | 49.2 |
+    | RegMean++             | 70.6       | 71.4 | 94.2  | 96.8    | 70.5 | 99.2  | 83.8 | 50.8         | 54.8 | 52.8 |
     | Task Arithmetic       | 65.2       | 63.6 | 76.1  | 87.1    | 56.4 | 94.2  | 73.8 | 52.4         | 45.2 | 48.8 |
     | Ties-Merging          | 68.2       | 65.9 | 70.0  | 81.2    | 56.0 | 89.0  | 71.7 | 60.3         | 47.3 | 53.8 |
     | Layer-wise AdaMerging | 69.8       | 72.4 | 95.5  | 95.1    | 70.7 | 98.1  | 83.6 | 48.7         | 60.7 | 54.7 |
@@ -935,28 +956,32 @@ Table: Results of the robustness experiments ($\lambda=0.3$).
 | --------------------- | -------------- | ------- | -------- | ----- | ---- | ---------------- | ------- | -------- | ----- | ---- |
 |                       | Clean Test set |         |          |       |      | Motion Blur      |         |          |       |      |
 | Fisher Merging        | 66.0           | 92.7    | 83.7     | 78.7  | 80.3 | 60.7             | 57.6    | 81.7     | 78.4  | 69.6 |
-| RegMean               | 72.1           | 97.5    | 88.9     | 93.9  | 88.1 | 70.0             | 71.3    | 87.5     | 86.8  | 78.9 |
+| RegMean               | 73.1           | 97.2    | 91.2     | 95.1  | 89.1 | 70.8             | 71.3    | 88.7     | 87.9  | 79.7 |
+| RegMean++             | 73.7           | 96.7    | 91.9     | 96.6  | 89.7 | 72.6             | 71.2    | 89.9     | 93.6  | 81.8 |
 | Task Arithmetic       | 64.6           | 91.8    | 80.2     | 74.8  | 77.9 | 62.4             | 59.2    | 78.5     | 63.3  | 65.9 |
 | Ties-Merging          | 65.2           | 83.3    | 78.1     | 67.4  | 73.5 | 64.4             | 53.9    | 76.4     | 57.1  | 62.9 |
 | Layer-wise AdaMerging | 75.2           | 94.3    | 87.6     | 96.7  | 88.5 | 72.4             | 72.7    | 85.3     | 94.3  | 81.2 |
 | Weight-Ensembling MoE | 77.4           | 98.9    | 94.4     | 99.0  | 92.4 | 76.5             | 74.2    | 93.7     | 97.4  | 85.5 |
 |                       | Impulse Noise  |         |          |       |      | Gaussian Noise   |         |          |       |      |
 | Fisher Merging        | 61.5           | 50.0    | 74.7     | 52.6  | 59.7 | 61.6             | 48.1    | 76.0     | 51.3  | 59.3 |
-| RegMean               | 66.9           | 51.0    | 80.6     | 68.7  | 66.8 | 69.4             | 41.8    | 84.0     | 67.7  | 65.7 |
+| RegMean               | 68.1           | 54.2    | 85.1     | 69.2  | 69.1 | 69.6             | 42.8    | 87.1     | 69.8  | 67.3 |
+| RegMean++             | 69.3           | 48.6    | 85.8     | 76.2  | 70.0 | 71.4             | 39.9    | 88.2     | 74.2  | 68.4 |
 | Task Arithmetic       | 59.8           | 53.3    | 72.3     | 45.0  | 57.6 | 61.5             | 52.5    | 75.0     | 50.1  | 59.8 |
 | Ties-Merging          | 60.2           | 45.6    | 69.8     | 38.3  | 53.5 | 61.8             | 47.3    | 73.1     | 42.3  | 56.1 |
 | Layer-wise AdaMerging | 69.2           | 40.0    | 79.6     | 83.3  | 68.0 | 70.0             | 53.3    | 82.1     | 80.0  | 71.4 |
 | Weight-Ensembling MoE | 75.1           | 9.7     | 91.5     | 91.8  | 67.0 | 76.5             | 9.6     | 92.7     | 88.7  | 66.8 |
 |                       | Pixelate       |         |          |       |      | Spatter          |         |          |       |      |
 | Fisher Merging        | 2.2            | 34.0    | 17.0     | 63.2  | 29.1 | 61.4             | 64.2    | 74.6     | 47.3  | 61.9 |
-| RegMean               | 2.3            | 38.3    | 18.2     | 89.4  | 37.0 | 67.7             | 60.0    | 81.3     | 81.9  | 72.7 |
+| RegMean               | 2.3            | 38.1    | 17.1     | 90.9  | 37.1 | 68.5             | 64.0    | 84.6     | 83.9  | 75.2 |
+| RegMean++             | 2.2            | 37.9    | 17.2     | 94.2  | 37.9 | 69.7             | 60.3    | 84.2     | 89.3  | 75.9 |
 | Task Arithmetic       | 2.3            | 33.2    | 19.1     | 65.6  | 30.0 | 61.0             | 62.5    | 72.8     | 57.0  | 63.3 |
 | Ties-Merging          | 3.3            | 31.8    | 18.0     | 58.5  | 27.9 | 61.3             | 52.9    | 70.3     | 48.1  | 58.2 |
 | Layer-wise AdaMerging | 1.3            | 52.9    | 21.0     | 91.0  | 41.5 | 68.4             | 55.9    | 78.3     | 92.3  | 73.7 |
 | Weight-Ensembling MoE | 0.5            | 11.6    | 2.3      | 97.5  | 28.0 | 75.1             | 9.7     | 91.4     | 96.3  | 68.1 |
 |                       | Contrast       |         |          |       |      | JPEG Compression |         |          |       |      |
 | Fisher Merging        | 63.8           | 58.4    | 75.5     | 70.4  | 67.0 | 66.3             | 67.6    | 82.6     | 58.9  | 68.8 |
-| RegMean               | 69.6           | 64.8    | 84.4     | 90.0  | 77.2 | 71.5             | 72.6    | 88.7     | 82.2  | 78.7 |
+| RegMean               | 70.7           | 62.9    | 87.1     | 91.5  | 78.0 | 72.4             | 76.6    | 91.1     | 83.4  | 80.9 |
+| RegMean++             | 72.1           | 63.0    | 87.7     | 95.5  | 79.6 | 73.5             | 76.3    | 91.8     | 89.6  | 82.8 |
 | Task Arithmetic       | 62.3           | 55.7    | 75.3     | 70.8  | 66.0 | 63.9             | 66.1    | 80.1     | 61.0  | 67.8 |
 | Ties-Merging          | 64.2           | 52.4    | 74.8     | 63.5  | 63.7 | 65.0             | 59.5    | 77.9     | 53.2  | 63.9 |
 | Layer-wise AdaMerging | 73.1           | 67.4    | 83.0     | 96.2  | 79.9 | 72.9             | 70.7    | 86.3     | 90.6  | 80.1 |
