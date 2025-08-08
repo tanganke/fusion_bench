@@ -1,6 +1,6 @@
 # CLIP-ViT Models for Open Vocabulary Image Classification
 
-Here we provides a list of CLIP-ViT models that are trained for open vocabulary image classification. 
+This document provides comprehensive information about CLIP-ViT models for open vocabulary image classification, including model implementation details, usage instructions, and experimental results. The `CLIPVisionModelPool` class manages collections of pre-trained and fine-tuned CLIP Vision models for open vocabulary image classification tasks.
 
 ## The Eight Tasks
 
@@ -31,7 +31,9 @@ Only the vision encoder is fine-tuned, while the text encoder remains fixed to p
 
 To use these models, you can load them from the Transformers library as follows:
 
-load vision backbone
+### Direct Model Usage
+
+Load vision backbone directly:
 
 ```python
 from transformers import CLIPVisionModel
@@ -40,7 +42,7 @@ from transformers import CLIPVisionModel
 vision_model = CLIPVisionModel.from_pretrained('tanganke/clip-vit-base-patch32_gtsrb')
 ```
 
-substitute the vision encoder of clip
+Substitute the vision encoder of CLIP:
 
 ```python
 from transformers import CLIPProcessor, CLIPModel
@@ -49,6 +51,56 @@ from transformers import CLIPProcessor, CLIPModel
 clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
 # substitute the vision model with the fine-tuned one
 clip_model.vision_model.load_state_dict(vision_model.vision_model.state_dict())
+```
+
+### Using `CLIPVisionModelPool`
+
+For more convenient model management, use the CLIPVisionModelPool:
+
+```python
+from fusion_bench.modelpool import CLIPVisionModelPool
+from omegaconf import DictConfig
+
+# Initialize model pool
+modelpool = CLIPVisionModelPool(
+    models={
+        "_pretrained_": "openai/clip-vit-base-patch32",
+        "gtsrb": "tanganke/clip-vit-base-patch32_gtsrb"
+    },
+    processor="openai/clip-vit-base-patch32"
+)
+
+# Load models through the pool
+vision_model = modelpool.load_model("gtsrb")
+processor = modelpool.load_processor()
+
+# Or load complete CLIP model
+clip_model = modelpool.load_clip_model("_pretrained_")
+```
+
+The `CLIPVisionModelPool` class provides a convenient way to manage multiple CLIP Vision models, and the models are automatically downloaded from the Hugging Face Model Hub when needed.
+Alternatively, you can configure a model pool to automatically download models from ModelScope. This is useful if you prefer to use the ModelScope platform, which is popular in China and provides access to a wide range of models.
+
+```python
+from fusion_bench.modelpool import CLIPVisionModelPool
+from omegaconf import DictConfig
+
+# Initialize model pool
+modelpool = CLIPVisionModelPool(
+    models={
+        "_pretrained_": "openai-mirror/clip-vit-base-patch32",
+        "gtsrb": "tanganke/clip-vit-base-patch32_gtsrb"
+    },
+    processor="openai-mirror/clip-vit-base-patch32",
+    platform="modelscope"
+)
+
+# Load models through the pool
+vision_model = modelpool.load_model("gtsrb")
+processor = modelpool.load_processor()
+
+# Or load complete CLIP model
+clip_model = modelpool.load_clip_model("gtsrb")
 ```
 
 ### Performance of the Fine-tuned Models
@@ -126,6 +178,27 @@ done
     | MNIST       | 56.0     | 49.8     | 53.5     | 26.6     | 48.2     | 33.1     | **99.8** | 47.1     | 51.7    |
     | DTD         | 66.8     | 75.3     | 65.5     | 43.7     | 49.5     | 45.0     | 68.5     | **85.5** | 62.5    |
 
+## CLIPVisionModelPool Implementation
+
+The `CLIPVisionModelPool` class extends the base `BaseModelPool` class and provides specialized functionality for managing CLIP Vision models from Hugging Face Transformers library.
+
+### Key Features
+
+- **Multi-platform Support**: Supports both Hugging Face (`hf`) and ModelScope (`modelscope`) platforms.
+- **Model Loading**: Handles CLIPVisionModel and CLIPModel loading with automatic path resolution
+- **Dataset Integration**: Built-in support for loading train/validation/test datasets via the `datasets` library.
+- **Processor Management**: Manages CLIPProcessor instances for consistent image preprocessing.
+- **Model Persistence**: Save and load models with proper state preservation.
+
+### Class Configuration
+
+The CLIPVisionModelPool accepts the following parameters:
+
+- `models` (DictConfig): Configuration mapping model names to their paths or configurations
+- `processor` (Optional[DictConfig]): Configuration for the CLIP processor (defaults to corresponding CLIP model processor)
+- `platform` (Literal["hf", "huggingface", "modelscope"]): Platform for model/dataset loading (default: "hf")
+- `train_datasets`, `val_datasets`, `test_datasets` (Optional[DictConfig]): Dataset configurations
+
 ### Model Pool Configuration
 
 To use these models from our FusionBench library, you can specify the modelpool configuration file as follows:
@@ -145,23 +218,160 @@ This configuration structure allows for modular and reusable setups, making it e
 
 The type of the modelpool is `fusion_bench.modelpool.CLIPVisionModelPool`.
 
-### LoRA and L-LoRA
+#### Special Model Handling
 
-Here we fine-tuned the CLIP-ViT-B/16 models on the eight image classification tasks using the LoRA and L-LoRA methods.
-`q_proj` and `v_proj` are fine-tuned with a learning rate of 1e-5 using the Adam optimizer for 2000 steps.
-You can find the script for fine-tuning the models at `examples/clip_finetune/clip_finetune.sh`.
+The modelpool recognizes special model names:
+
+- `_pretrained_`: Reserved name for the base pretrained model
+- All other names are treated as task-specific fine-tuned models
+- Use `has_pretrained` property to check for pretrained model availability
+- Access model lists via `all_model_names` (includes special) or `model_names` (excludes special)
+
+#### Basic Usage Example
+
+```python
+from fusion_bench.modelpool import CLIPVisionModelPool
+from omegaconf import DictConfig
+
+# Configure the model pool
+config = DictConfig({
+    "models": {
+        "_pretrained_": "openai/clip-vit-base-patch32",
+        "sun397": "tanganke/clip-vit-base-patch32_sun397",
+        "cars": "tanganke/clip-vit-base-patch32_stanford-cars"
+    },
+    "processor": "openai/clip-vit-base-patch32",
+})
+
+# Initialize the model pool
+modelpool = CLIPVisionModelPool(config.models, processor=config.processor)
+
+# Load models
+pretrained_model = modelpool.load_model("_pretrained_")
+sun397_model = modelpool.load_model("sun397")
+
+# Load processor
+processor = modelpool.load_processor()
+
+# Load complete CLIP model
+clip_model = modelpool.load_clip_model("_pretrained_")
+
+# Check available models
+print(f"All models: {modelpool.all_model_names}")
+print(f"Task-specific models: {modelpool.model_names}")
+print(f"Has pretrained model: {modelpool.has_pretrained}")
+```
+
+#### Advanced Configuration Example
+
+```python
+from fusion_bench.modelpool import CLIPVisionModelPool
+
+# Advanced configuration with custom loading parameters
+modelpool = CLIPVisionModelPool(
+    models={
+        "_pretrained_": {
+            "_target_": "transformers.CLIPVisionModel.from_pretrained",
+            "pretrained_model_name_or_path": "openai/clip-vit-base-patch32",
+            "torch_dtype": "auto",
+            "device_map": "cuda:0"
+        },
+        "sun397": "tanganke/clip-vit-base-patch32_sun397"
+    },
+    processor={
+        "_target_": "transformers.CLIPProcessor.from_pretrained", 
+        "pretrained_model_name_or_path": "openai/clip-vit-base-patch32"
+    },
+    train_datasets={
+        "sun397": "tanganke/sun397",
+        "cars": "tanganke/stanford-cars"
+    },
+)
+
+# Load dataset
+train_dataset = modelpool.load_train_dataset("sun397")
+```
+
+#### Working with ModelScope Platform
+
+```python
+# Use ModelScope platform (popular in China)
+modelpool = CLIPVisionModelPool(
+    models={
+        "_pretrained_": "openai-community/clip-vit-base-patch32",
+        "custom_task": "your-modelscope-username/custom-model"
+    },
+    platform="modelscope"
+)
+
+# Models and datasets will be loaded from ModelScope hub
+model = modelpool.load_model("_pretrained_")
+```
+
+### LoRA and L-LoRA Models
+
+We have fine-tuned CLIP-ViT-B/16 models on the eight image classification tasks using LoRA (Low-Rank Adaptation) and L-LoRA (Linearized LoRA) methods.
+
+#### Training Configuration
+
+- **Target modules**: `q_proj` and `v_proj` layers
+- **Learning rate**: 1e-5 using Adam optimizer
+- **Training steps**: 2000 steps
+- **Fine-tuning script**: Available at `examples/clip_finetune/clip_finetune.sh`
+
+#### Available Model Collections
 
 - [CLIP-ViT-B/16 on the eight image classification tasks (LoRA)](https://huggingface.co/collections/tanganke/clip-vit-b-16-on-the-eight-image-classification-tasks-lora-66cd554ee7829e9dbb236c29)
 - [CLIP-ViT-B/16 on eight image classification tasks (L-LoRA)](https://huggingface.co/collections/tanganke/clip-vit-b-16-on-eight-image-classification-tasks-l-lora-66cd5b0e332ce5c7468d1bc6)
 
-Load LoRA models (see [load_lora_vision_model_hf][fusion_bench.models.linearized.vision_model.load_lora_vision_model_hf]):
+#### Loading LoRA Models
+
+Load LoRA models using PEFT (see [load_lora_vision_model_hf][fusion_bench.models.linearized.vision_model.load_lora_vision_model_hf]):
 
 ```python
+from transformers import CLIPVisionModel
+from peft import PeftModel
+
+# Load base model
 base_model = CLIPVisionModel.from_pretrained('openai/clip-vit-base-patch16').vision_model
+
+# Load LoRA adapter
 model = PeftModel.from_pretrained(base_model, peft_model_id)
 ```
 
-Load L-LoRA models, refer to [load_l_lora_vision_model_hf][fusion_bench.models.linearized.vision_model.load_l_lora_vision_model_hf].
+#### Loading L-LoRA Models
+
+Load L-LoRA models using the specialized loader (refer to [load_l_lora_vision_model_hf][fusion_bench.models.linearized.vision_model.load_l_lora_vision_model_hf]):
+
+```python
+from fusion_bench.models.linearized.vision_model import load_l_lora_vision_model_hf
+
+# Load L-LoRA model
+model = load_l_lora_vision_model_hf(
+    base_model_name='openai/clip-vit-base-patch16',
+    lora_model_name=lora_model_id
+)
+```
+
+#### Integration with CLIPVisionModelPool
+
+The CLIPVisionModelPool can be configured to work with LoRA/L-LoRA models by specifying appropriate model configurations:
+
+```python
+from fusion_bench.modelpool import CLIPVisionModelPool
+
+# Configure pool for LoRA models
+modelpool = CLIPVisionModelPool(
+    models={
+        "_pretrained_": "openai/clip-vit-base-patch16",
+        "sun397_lora": {
+            "_target_": "fusion_bench.models.linearized.vision_model.load_lora_vision_model_hf",
+            "base_model_name": "openai/clip-vit-base-patch16",
+            "lora_model_name": "tanganke/clip-vit-base-patch16_sun397_lora"
+        }
+    }
+)
+```
 
 === "Performance of the fine-tuned CLIP-ViT-B/16 models (LoRA-16)"
 
@@ -192,24 +402,25 @@ Load L-LoRA models, refer to [load_l_lora_vision_model_hf][fusion_bench.models.l
 ![alt text](images/clip-vit-base-patch16_full&lora&l-lora.png){ width="1000px" }
 ![alt text](images/clip-vit-base-patch16_full&lora&l-lora_average.png){ width="1000px" }
 
-## Basic Examples
+## Usage Examples
 
-Here are some basic examples of using the CLIP-ViT models for open vocabulary image classification with different fusion methods, using the [`fusion_bench`](../cli/fusion_bench.md) command line interface.
+This section demonstrates various ways to use CLIP-ViT models for open vocabulary image classification with different fusion methods using the [`fusion_bench`](../cli/fusion_bench.md) command line interface and the CLIPVisionModelPool API.
 
-### Inspection of Model Information
+### Model Information Inspection
 
-Print the basic information of the CLIP-ViT-B/32 model and CLIP-ViT-L/14 model
+Inspect basic information about CLIP-ViT models including parameter counts:
 
 ```bash
+# Inspect CLIP-ViT-B/32 model
 fusion_bench \
   method=dummy \
   modelpool=CLIPVisionModelPool/clip-vit-base-patch32_individual \
-  taskpool=dummy  # a dummy task that just report the basic information of model (e.g., number of parameters)
+  taskpool=dummy  # dummy task reports basic model information (e.g., parameter count)
 
 # Output:
 # {'model_info': {'trainable_params': 87456000, 'all_params': 87456000, 'trainable_percentage': 1.0}}
 
-# or use the following command to inspect the CLIP-ViT-L/14 model
+# Inspect CLIP-ViT-L/14 model
 fusion_bench \
   method=dummy \
   modelpool=CLIPVisionModelPool/clip-vit-large-patch14_individual \
@@ -217,6 +428,28 @@ fusion_bench \
 
 # Output:
 # {'model_info': {'trainable_params': 303179776, 'all_params': 303179776, 'trainable_percentage': 1.0}}
+```
+
+#### Programmatic Model Information
+
+You can also inspect models programmatically using the CLIPVisionModelPool:
+
+```python
+from fusion_bench.modelpool import CLIPVisionModelPool
+
+# Initialize model pool
+modelpool = CLIPVisionModelPool(
+    models={"clip_model": "openai/clip-vit-base-patch32"}
+)
+
+# Load and inspect model
+model = modelpool.load_model("clip_model")
+total_params = sum(p.numel() for p in model.parameters())
+trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+print(f"Total parameters: {total_params:,}")
+print(f"Trainable parameters: {trainable_params:,}")
+print(f"Model architecture: {model}")
 ```
 
 ### Single Model Evaluation
@@ -755,9 +988,60 @@ Table: Results of the robustness experiments ($\lambda=0.3$).
 | Weight-Ensembling MoE | 77.2           | 34.7    | 93.1     | 98.4  | 75.9 | 77.3             | 61.0    | 94.1     | 95.7  | 82.0 |
 
 
-## References
+## API Reference
+
+### CLIPVisionModelPool Class
 
 ::: fusion_bench.modelpool.clip_vision
+
+### Linearized Vision Models
+
 ::: fusion_bench.models.linearized.vision_model
+
+### Model Configuration Schema
+
+The CLIPVisionModelPool supports flexible model configurations:
+
+```python
+# Simple string configuration
+models = {
+    "model_name": "huggingface/model-id"
+}
+
+# Advanced configuration with custom parameters
+models = {
+    "model_name": {
+        "_target_": "transformers.CLIPVisionModel.from_pretrained",
+        "pretrained_model_name_or_path": "huggingface/model-id",
+        "torch_dtype": "auto",
+        "device_map": "auto"
+    }
+}
+
+# Mixed configuration
+models = {
+    "_pretrained_": "openai/clip-vit-base-patch32",
+    "sun397": "tanganke/clip-vit-base-patch32_sun397",
+    "custom_model": {
+        "_target_": "some.custom.loader",
+        "custom_param": "value"
+    }
+}
+```
+
+### Platform Support
+
+The modelpool supports multiple platforms for model and dataset loading:
+
+- **Hugging Face Hub** (`platform="hf"`): Default platform for loading models and datasets
+- **ModelScope** (`platform="modelscope"`): Alternative platform popular in China
+
+```python
+# Hugging Face platform (default, platform="hf" or "huggingface")
+modelpool = CLIPVisionModelPool(models, platform="hf")
+
+# ModelScope platform
+modelpool = CLIPVisionModelPool(models, platform="modelscope")
+```
 
 [^1]: Dan Hendrycks and Thomas Dietterich. Benchmarking neural network robustness to common corruptions and perturbations. Proceedings of the International Conference on Learning Representations, 2019.
