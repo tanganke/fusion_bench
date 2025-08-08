@@ -5,7 +5,7 @@ exclude_param_names_regex: []
 num_regmean_examples: 256
 weight_transpose: true
 # float, reduce non-diagonal elements in regmean weights by multiplying this scalar
-reduce_non_diagonal_ratio: 0.6
+reduce_non_diagonal_ratio: 0.95
 dataloader_kwargs:
   batch_size: 32
   num_workers: 0
