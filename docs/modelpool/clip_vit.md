@@ -340,6 +340,22 @@ fusion_bench \
   taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8_L14
 ```
 
+### RegMean++
+
+Run and evaluate the RegMean++ algorithm on eight image classification tasks:
+
+```bash
+for model in clip-vit-base-patch32 clip-vit-base-patch16 clip-vit-large-patch14
+do
+  fusion_bench \
+      method=regmean_plusplus/clip_regmean_plusplus \
+      modelpool=CLIPVisionModelPool/${model}_TA8 \
+      taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
+        taskpool.base_model=openai/${model} \
+      report_save_path=outputs/${model}_TA8_regmean_plusplus.json
+done
+```
+
 ### Task Arithmetic
 
 merge CLIP-ViT-B/32 models using task arithmetic and evaluate on the eight tasks
@@ -545,7 +561,8 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
     | Model Merging                                  |        |      |          |         |      |       |       |      |         |
     | Simple Averaging                               | 65.4   | 62.6 | 70.8     | 76.9    | 64.5 | 54.9  | 86.3  | 50.9 | 66.5    |
     | Fisher Merging                                 | 66.7   | 64.0 | 72.2     | 91.6    | 69.0 | 64.3  | 83.5  | 53.7 | 70.6    |
-    | RegMean                                        | 67.8   | 68.9 | 82.5     | 94.4    | 90.6 | 79.2  | 97.6  | 63.2 | 80.5    |
+    | RegMean                                        | 68.6   | 70.0 | 84.6     | 95.4    | 92.6 | 83.4  | 98.4  | 66.1 | 82.4    |
+    | RegMean++                                      | 69.3   | 70.5 | 86.7     | 96.1    | 94.1 | 90.4  | 99.0  | 68.7 | 84.4    |
     | Task Arithmetic ($\lambda=0.3$)                | 57.1   | 55.7 | 64.9     | 76.7    | 77.9 | 68.5  | 96.1  | 47.2 | 68.0    |
     | Concrete Task Arithmetic ($\lambda=0.3$)       | 64.2   | 63.3 | 75.6     | 94.1    | 90.3 | 82.9  | 98.0  | 52.5 | 77.6    |
     | Ties-Merging ($\lambda=0.3$)                   | 67.1   | 64.2 | 74.1     | 76.8    | 77.7 | 69.4  | 94.1  | 54.0 | 72.2    |
@@ -566,7 +583,8 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
     | Model Merging                         |        |      |          |         |      |       |       |      |         |
     | Simple Averaging                      | 68.7   | 69.0 | 75.0     | 83.2    | 74.9 | 62.5  | 93.7  | 51.1 | 72.3    |
     | Fisher Merging                        | 70.8   | 71.8 | 76.2     | 93.4    | 77.4 | 61.2  | 90.7  | 52.3 | 74.2    |
-    | RegMean                               | 71.1   | 76.4 | 86.0     | 95.4    | 93.9 | 86.5  | 98.4  | 64.3 | 84.0    |
+    | RegMean                               | 72.6   | 78.8 | 89.2     | 96.3    | 94.9 | 90.0  | 98.8  | 67.9 | 86.0    |
+    | RegMean++                             | 72.8   | 78.9 | 89.3     | 97.3    | 96.0 | 93.0  | 99.1  | 71.0 | 87.2    |
     | Task Arithmetic ($\lambda=0.3$)       | 65.9   | 68.3 | 75.4     | 84.5    | 88.8 | 81.9  | 98.0  | 53.9 | 77.1    |
     | Ties-Merging ($\lambda=0.3$)          | 70.6   | 71.2 | 79.8     | 87.5    | 83.2 | 76.2  | 96.4  | 55.4 | 77.5    |
     | Layer-wise AdaMerging ($\lambda=0.3$) | 70.6   | 79.6 | 86.1     | 93.6    | 93.5 | 95.4  | 98.1  | 62.9 | 85.0    |
@@ -585,7 +603,8 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
     | Model Merging                         |        |      |          |         |      |       |       |      |         |
     | Simple Averaging                      | 72.5   | 81.5 | 82.2     | 90.0    | 81.6 | 74.0  | 96.6  | 61.8 | 80.0    |
     | Fisher Merging                        | 70.6   | 79.4 | 84.1     | 98.1    | 74.7 | 85.0  | 89.5  | 61.0 | 80.3    |
-    | RegMean                               | 75.3   | 88.4 | 90.0     | 97.1    | 95.9 | 92.4  | 98.5  | 72.6 | 88.8    |
+    | RegMean                               | 76.9   | 89.8 | 93.0     | 97.5    | 96.3 | 94.1  | 98.7  | 77.0 | 90.4    |
+    | RegMean++                             | 77.2   | 89.6 | 92.8     | 97.5    | 96.9 | 96.3  | 99.2  | 78.4 | 91.0    |
     | Task Arithmetic ($\lambda=0.3$)       | 72.0   | 79.0 | 80.5     | 86.0    | 87.5 | 83.5  | 98.0  | 58.8 | 80.7    |
     | Ties-Merging ($\lambda=0.3$)          | 74.7   | 83.3 | 86.4     | 91.3    | 89.7 | 85.2  | 97.8  | 63.9 | 84.0    |
     | Task-wise AdaMerging ($\lambda=0.3$)  | 75.8   | 80.1 | 77.2     | 83.6    | 68.4 | 93.5  | 93.1  | 69.0 | 80.1    |

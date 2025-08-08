@@ -41,6 +41,7 @@ _import_structure = {
         "FisherMergingAlgorithmForGPT2",
     ],
     "regmean": ["RegMeanAlgorithmForCLIP", "RegMeanAlgorithmForGPT2"],
+    "regmean_plusplus": ["RegMeanAlgorithmForCLIPPlusPlus"],
     "adamerging": [
         "CLIPTaskWiseAdaMergingAlgorithm",
         "CLIPLayerWiseAdaMergingAlgorithm",
@@ -195,6 +196,7 @@ if TYPE_CHECKING:
     )
     from .rankone_moe import CLIPRankOneMoEAlgorithm, RankOneMoEAlgorithm
     from .regmean import RegMeanAlgorithmForCLIP, RegMeanAlgorithmForGPT2
+    from .regmean_plusplus import RegMeanAlgorithmForCLIPPlusPlus
     from .simple_average import SimpleAverageAlgorithm
     from .slerp import SlerpMergeAlgorithm
     from .smile_upscaling import (
