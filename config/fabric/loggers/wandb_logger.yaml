@@ -1,0 +1,2 @@
+# https://lightning.ai/docs/fabric/2.4.0/guide/loggers/wandb.html#weights-and-biases
+_target_: wandb.integration.lightning.fabric.WandbLogger

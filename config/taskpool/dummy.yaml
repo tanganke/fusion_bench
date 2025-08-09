@@ -1,0 +1,2 @@
+_target_: fusion_bench.taskpool.DummyTaskPool
+model_save_path: null

@@ -1,0 +1,11 @@
+_target_: WeightedAverageForLLama
+normalize: true # if true, the weights will be normalized before merging
+weights: # List of weights for each model
+  - 0.5
+  - 0.5
+# if true, only the backbone of the model will be merged and the head will be keeped as the pre-trained model (if the pre-trained model is provided, otherwise the head of the first model will be used)
+# if false, the whole model will be merged
+backbone_only: true
+merged_model_save_path: null
+save_tokenizer: true
+push_to_hub: false
