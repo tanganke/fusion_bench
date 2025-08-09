@@ -53,6 +53,17 @@ fusion_bench \
         taskpool.base_model=openai/clip-vit-large-patch14
 ```
 
+## Citation
+
+```bibtex
+@article{nguyen2025regmean++,
+  title={RegMean++: Enhancing Effectiveness and Generalization of Regression Mean for Model Merging},
+  author={Nguyen, The-Hai and Huu-Tien, Dang and Suzuki, Takeshi and Nguyen, Le-Minh},
+  journal={arXiv preprint arXiv:2508.03121},
+  year={2025}
+}
+```
+
 ## Code Implementation
 
 ::: fusion_bench.method.regmean_plusplus.RegMeanAlgorithmPlusPlus
