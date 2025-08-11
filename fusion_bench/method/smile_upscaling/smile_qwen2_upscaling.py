@@ -137,7 +137,7 @@ class SmileQwen2UpscalingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
             log.info(f"Saving model to {config.model_path}")
             tokenizer = self.modelpool.load_tokenizer()
             tokenizer.save_pretrained(config.model_path)
-            if self.save_with_remote_code:
+            if not self.save_with_remote_code:
                 model.save_pretrained(config.model_path)
             else:
                 save_pretrained_with_remote_code(
