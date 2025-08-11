@@ -10,6 +10,7 @@ from fusion_bench.models.separate_io import separate_save
 from fusion_bench.taskpool.base_pool import BaseTaskPool
 from fusion_bench.utils import timeit_context
 from fusion_bench.utils.parameters import count_parameters, print_parameters
+from lightning.pytorch.utilities import rank_zero_only
 
 
 def get_model_summary(model: nn.Module) -> dict:
@@ -49,10 +50,11 @@ class DummyTaskPool(BaseTaskPool):
         Args:
             model: The model to evaluate.
         """
-        print_parameters(model, is_human_readable=True)
+        if rank_zero_only.rank == 0:
+            print_parameters(model, is_human_readable=True)
 
-        if self.model_save_path is not None:
-            with timeit_context(f"Saving the model to {self.model_save_path}"):
-                separate_save(model, self.model_save_path)
+            if self.model_save_path is not None:
+                with timeit_context(f"Saving the model to {self.model_save_path}"):
+                    separate_save(model, self.model_save_path)
 
         return get_model_summary(model)

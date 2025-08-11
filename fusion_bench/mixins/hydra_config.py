@@ -9,7 +9,7 @@ from hydra import compose, initialize
 from omegaconf import DictConfig, OmegaConf
 
 from fusion_bench.utils import import_object, instantiate
-from fusion_bench.utils.instantiate import set_print_function_call
+from fusion_bench.utils.instantiate_utils import set_print_function_call
 
 log = logging.getLogger(__name__)
 
