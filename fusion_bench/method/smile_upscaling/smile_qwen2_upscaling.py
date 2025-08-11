@@ -17,9 +17,12 @@ from transformers.models.qwen2.modeling_qwen2 import Qwen2DecoderLayer
 from fusion_bench import BaseAlgorithm, BaseModelPool
 from fusion_bench.compat.modelpool import to_modelpool
 from fusion_bench.mixins import SimpleProfilerMixin
+from fusion_bench.modelpool import CausalLMPool
+from fusion_bench.models.hf_utils import save_pretrained_with_remote_code
 from fusion_bench.models.modeling_smile_qwen2 import (
     SmileQwen2Config,
     SmileQwen2ForCausalLM,
+    SmileQwen2Model,
 )
 from fusion_bench.models.modeling_smile_qwen2.modeling_smile_qwen2 import (
     SmileQwen2DecoderLayer,
@@ -58,6 +61,7 @@ class SmileQwen2UpscalingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
         "rank_of_router": "rank_of_router",
         "rank_of_expert": "rank_of_expert",
     }
+    modelpool: CausalLMPool
 
     def __init__(
         self,
@@ -68,6 +72,7 @@ class SmileQwen2UpscalingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
         num_experts_per_tok,
         rank_of_router,
         rank_of_expert,
+        save_with_remote_code: bool = True,
         **kwargs,
     ):
         self.device = device
@@ -78,10 +83,11 @@ class SmileQwen2UpscalingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
         self.num_experts_per_tok = num_experts_per_tok
         self.rank_of_router = rank_of_router
         self.rank_of_expert = rank_of_expert
+        self.save_with_remote_code = save_with_remote_code
         super().__init__(**kwargs)
 
     @torch.no_grad()
-    def run(self, modelpool: BaseModelPool) -> SmileQwen2ForCausalLM:
+    def run(self, modelpool) -> SmileQwen2ForCausalLM:
         """
         Executes the upscaling process.
 
@@ -129,13 +135,20 @@ class SmileQwen2UpscalingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
             if os.path.dirname(config.model_path):
                 os.makedirs(os.path.dirname(config.model_path), exist_ok=True)
             log.info(f"Saving model to {config.model_path}")
-            pretrained_model_config = self.modelpool.get_model_config("_pretrained_")
-            pretrained_path = pretrained_model_config.get(
-                "path", pretrained_model_config["pretrained_model_name_or_path"]
-            )
-            tokenizer = AutoTokenizer.from_pretrained(pretrained_path)
+            tokenizer = self.modelpool.load_tokenizer()
             tokenizer.save_pretrained(config.model_path)
-            model.save_pretrained(config.model_path)
+            if self.save_with_remote_code:
+                model.save_pretrained(config.model_path)
+            else:
+                save_pretrained_with_remote_code(
+                    model,
+                    auto_map={
+                        "AutoConfig": SmileQwen2Config,
+                        "AutoModel": SmileQwen2Model,
+                        "AutoModelForCausalLM": SmileQwen2ForCausalLM,
+                    },
+                    save_directory=config.model_path,
+                )
 
         return model
 
@@ -158,9 +171,12 @@ class SmileQwen2UpscalingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
 
         with init_empty_weights():
             pretrained_model_config = self.modelpool.get_model_config("_pretrained_")
-            pretrained_path = pretrained_model_config.get(
-                "path", pretrained_model_config["pretrained_model_name_or_path"]
-            )
+            if isinstance(pretrained_model_config, str):
+                pretrained_path = pretrained_model_config
+            else:
+                pretrained_path = pretrained_model_config.get(
+                    "path", pretrained_model_config["pretrained_model_name_or_path"]
+                )
             base_config = AutoConfig.from_pretrained(pretrained_path)
             model_config = SmileQwen2Config(
                 num_experts_per_tok=config.num_experts_per_tok,

@@ -28,7 +28,7 @@ PRINT_FUNCTION_CALL_FUNC = print
 Function to be used for printing function calls.
 """
 
-CATCH_EXCEPTION = True
+CATCH_EXCEPTION = False
 
 
 @contextmanager
