@@ -1,3 +1,6 @@
+---
+status: new
+---
 # RegMean++
 
 [![arxiv](https://img.shields.io/badge/arXiv-2508.03121-b31b1b.svg)](https://www.arxiv.org/abs/2508.03121)
@@ -51,6 +54,17 @@ fusion_bench \
     modelpool=CLIPVisionModelPool/clip-vit-large-patch14_TA8 \
     taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
         taskpool.base_model=openai/clip-vit-large-patch14
+```
+
+## Citation
+
+```bibtex
+@article{nguyen2025regmean++,
+  title={RegMean++: Enhancing Effectiveness and Generalization of Regression Mean for Model Merging},
+  author={Nguyen, The-Hai and Huu-Tien, Dang and Suzuki, Takeshi and Nguyen, Le-Minh},
+  journal={arXiv preprint arXiv:2508.03121},
+  year={2025}
+}
 ```
 
 ## Code Implementation
