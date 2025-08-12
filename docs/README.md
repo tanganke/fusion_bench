@@ -5,7 +5,7 @@ description: A Comprehensive Benchmark/Toolkit of Deep Model Fusion
 
 # FusionBench: A Comprehensive Benchmark/Toolkit of Deep Model Fusion
 
-[![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](http://arxiv.org/abs/2406.03280)
+[![arXiv](https://img.shields.io/badge/arXiv-2406.03280-b31b1b.svg)](http://arxiv.org/abs/2406.03280)
 [![GitHub License](https://img.shields.io/github/license/tanganke/fusion_bench)](https://github.com/tanganke/fusion_bench/blob/main/LICENSE)
 [![PyPI - Version](https://img.shields.io/pypi/v/fusion-bench)](https://pypi.org/project/fusion-bench/)
 [![Downloads](https://static.pepy.tech/badge/fusion-bench/month)](https://pepy.tech/project/fusion-bench)
@@ -15,10 +15,12 @@ description: A Comprehensive Benchmark/Toolkit of Deep Model Fusion
 
 ??? bug "Breaking Changes in v0.2"
 
-    Recent upgrade to v0.2.0 may cause some breaking changes. Make some documented instructions may be outdated.
+    Recent upgrade to version >= v0.2.0 may cause some breaking changes. Make some documented instructions may be outdated.
     You can install a specific version by `pip install fusion-bench==0.1.6` or checkout to a specific version by `git checkout v0.1.6`.
     If you encounter any issues, please feel free to raise an issue.
-    We are working on the documentation and will update it as soon as possible. Use version >=0.2.0 is recommended.
+    We are working on the documentation and will update it as soon as possible. 
+    
+    **Use version >=0.2.0 is recommended.**
 
 !!! note
 

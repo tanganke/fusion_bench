@@ -68,9 +68,9 @@ nav:
     - Natural Language Processing:
       - Tasks:
         - guides/nlp/question_answering.md
-  - Reading Lists: 
-    - readinglist/README.md
-    - Mode Connectivity: readinglist/mode_connectivity.md
+  # - Reading Lists: 
+    # - readinglist/README.md
+    # - Mode Connectivity: readinglist/mode_connectivity.md
 
 plugins:
   - search
