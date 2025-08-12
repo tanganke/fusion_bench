@@ -5,8 +5,6 @@ description: A Comprehensive Benchmark/Toolkit of Deep Model Fusion
 
 # FusionBench: A Comprehensive Benchmark/Toolkit of Deep Model Fusion
 
-**FusionBench: 一个全面的深度模型融合的基准/工具包**
-
 [![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](http://arxiv.org/abs/2406.03280)
 [![GitHub License](https://img.shields.io/github/license/tanganke/fusion_bench)](https://github.com/tanganke/fusion_bench/blob/main/LICENSE)
 [![PyPI - Version](https://img.shields.io/pypi/v/fusion-bench)](https://pypi.org/project/fusion-bench/)
@@ -15,25 +13,17 @@ description: A Comprehensive Benchmark/Toolkit of Deep Model Fusion
 [![Static Badge](https://img.shields.io/badge/code%20style-black-black)](https://github.com/psf/black)
 [![Static Badge](https://img.shields.io/badge/code%20style-yamlfmt-black)](https://github.com/google/yamlfmt)
 
-??? bug "Breaking Changes in v0.2 (重大变更)"
+??? bug "Breaking Changes in v0.2"
 
     Recent upgrade to v0.2.0 may cause some breaking changes. Make some documented instructions may be outdated.
     You can install a specific version by `pip install fusion-bench==0.1.6` or checkout to a specific version by `git checkout v0.1.6`.
     If you encounter any issues, please feel free to raise an issue.
     We are working on the documentation and will update it as soon as possible. Use version >=0.2.0 is recommended.
 
-    > 最近升级到 v0.2.0 可能会导致一些重大变更，使得文档中的一些指令可能已过时，需要更新。
-    > 您可以通过 `pip install fusion-bench==0.1.6` 安装特定版本，或者通过 `git checkout v0.1.6` 切换到特定版本。
-    > 如果遇到任何问题，请随时提出问题。
-    > 我们正在努力更新文档，并会尽快更新。建议使用 >=0.2.0 版本。
-
 !!! note
-    
+
     - Any questions or comments can be directed to the [GitHub Issues](https://github.com/tanganke/fusion_bench/issues) page for this project.
     - Any contributions or pull requests are welcome. If you find any mistakes or have suggestions for improvements, please feel free to raise an issue or submit a pull request.
-
-    > - 任何问题或评论可以直接在该项目的GitHub Issues页面上提出。
-    > - 欢迎任何贡献或拉取请求。如果您发现任何错误或有改进建议，请随时提出问题或提交拉取请求。
 
 !!! tip "Introduction to Deep Model Fusion (The Learn From Model Paradigm)"
 
@@ -41,13 +31,6 @@ description: A Comprehensive Benchmark/Toolkit of Deep Model Fusion
     It can be used to improve the performance and robustness of model or to combine the strengths of different models, such as fuse multiple task-specific models to create a multi-task model.
     For a more detailed introduction to deep model fusion, you can refer to [W. Li, 2023, 'Deep Model Fusion: A Survey'](https://arxiv.org/abs/2309.15698). 
     In this benchmark, we evaluate the performance of different fusion methods on a variety of datasets and tasks. ...
-
-    > **深度模型融合简介（从模型中学习的范式）**
-    >
-    > 深度模型融合是一种将多个深度神经网络合并、集成或融合以获得统一模型的技术。
-    > 它可以用来提高模型的性能和鲁棒性，或者结合不同模型的优势，例如将多个特定任务的模型融合成一个多任务模型。
-    > 有关深度模型融合的更详细介绍，可以参考 [W. Li, 2023, 'Deep Model Fusion: A Survey'](https://arxiv.org/abs/2309.15698)。
-    > 在这个基准测试中，我们评估了不同融合方法在各种数据集和任务上的性能。...
 
     [:octicons-arrow-right-24: Read More](introduction_to_model_fusion.md)
 
@@ -88,8 +71,8 @@ mkdocs serve
 
 ### Command Line Interface
 
-`fusion_bench` is the command line interface for running the benchmark. 
-It takes a configuration file as input, which specifies the models, fusion method to be used, and the datasets to be evaluated. 
+`fusion_bench` is the command line interface for running the benchmark.
+It takes a configuration file as input, which specifies the models, fusion method to be used, and the datasets to be evaluated.
 To run the benchmark, you can use the following command:
 
 ```
@@ -141,7 +124,7 @@ The general structure of the FusionBench project can be visualized through its m
       - Models & Warpers: Tools and scripts for model loading, wrapping, and pre-processing.
       - Datasets: The datasets used for training, validation, and testing the fused models.
       - Metrics: The performance metrics used to evaluate the models, providing a comprehensive understanding of their capabilities.
-5. **YAML Configurations**: Central to the project's modularity, YAML files are used to configure models, datasets, and metrics, allowing seamless customization and scalability. 
+5. **YAML Configurations**: Central to the project's modularity, YAML files are used to configure models, datasets, and metrics, allowing seamless customization and scalability.
     This is based on the hydra framework, which allows for easy customization and scalability.
     [:octicons-arrow-right-24: Read More](https://hydra.cc/)
 
@@ -177,15 +160,15 @@ fusion_bench \
     taskpool=clip-vit-base-patch32_robustness_corrupted
 ```
 
-1. Here we specify the main configuration file to be used. 
-    The `corruption` option specifies the type of data corruption to be applied to the evaluation datasets. In this case, we use Gaussian noise. 
-    In FusionBench, we are currently provide 7 types of data corruptions for imaage classification tasks Standford Cars, EuroSAT, RESISC45 and GTSRB. 
+1. Here we specify the main configuration file to be used.
+    The `corruption` option specifies the type of data corruption to be applied to the evaluation datasets. In this case, we use Gaussian noise.
+    In FusionBench, we are currently provide 7 types of data corruptions for imaage classification tasks Standford Cars, EuroSAT, RESISC45 and GTSRB.
     The option `corrption` can be one of: `contrast`, `gaussian_noise`, `impulse_noise`, `jpeg_compression`, `motion_blur`, `pixelate`, `spatter`.
 2. The `method` option specifies the fusion algorithm to be used. In this case, we use the simple averaging algorithm.
-3. Here we specify the model pool to be used. 
+3. Here we specify the model pool to be used.
     The model pool is responsible for managing the loading, preprocessing, and saving of the models.
     By pass option `modelpool=CLIPVisionModelPool/clip-vit-base-patch32_robustness_corrupted`, the program instantiate a modelpool object that manages 4 task-specific CLIP-ViT-B/32 models that are fine-tuned on Stanford Cars, EuroSAT, RESISC45, and GTSRB datasets.
-4. Here we specify the task pool to be used. 
+4. Here we specify the task pool to be used.
     The task pool is responsible for managing the evaluation datasets and metrics.
     By pass option `taskpool=clip-vit-base-patch32_robustness_corrupted`, the program instantiate a taskpool object that manages 4 tasks with data corrupted by Gaussian noise.
 
@@ -200,7 +183,6 @@ The configurations are stored in the `configs` directory, listed as follows:
     ```
 
     1. Name of the fusion algorithm. The `name` field specifies the class of the fusion algorithm.
-
 
 === "Model Pool Configuration"
 
@@ -270,7 +252,6 @@ The configurations are stored in the `configs` directory, listed as follows:
     3. Base model used for intializing the classification head. Here, we need the text encoder of CLIP-ViT-B/32 to initialize the classification head.
     4. Batch size and number of workers used for data loading.
 
-
 A flowchart of the FusionBench command line interface is shown below:
 
 <figure markdown="span">
@@ -280,7 +261,7 @@ A flowchart of the FusionBench command line interface is shown below:
 <div class="grid cards" markdown>
 
 - **Fusion Algorithm Module**
-    
+
     ---
 
     Implement the fusion algorithms. Receive the model pool and return the fused model.
@@ -292,7 +273,7 @@ A flowchart of the FusionBench command line interface is shown below:
     ---
 
     Manage the models, including [large language models](modelpool/causal_lm.md). Responsible for loading, preprocessing, and saving the models.
-        
+
     [:octicons-arrow-right-24: Read More](modelpool/README.md)
 
 - **Task Pool Module**
@@ -310,18 +291,10 @@ A flowchart of the FusionBench command line interface is shown below:
 If you find this benchmark useful, please consider citing our work:
 
 ```bibtex
-@misc{tangFusionBenchComprehensiveBenchmark2024,
-  title = {{{FusionBench}}: {{A Comprehensive Benchmark}} of {{Deep Model Fusion}}},
-  shorttitle = {{{FusionBench}}},
-  author = {Tang, Anke and Shen, Li and Luo, Yong and Hu, Han and Du, Bo and Tao, Dacheng},
-  year = {2024},
-  month = jun,
-  number = {arXiv:2406.03280},
-  eprint = {2406.03280},
-  publisher = {arXiv},
-  url = {http://arxiv.org/abs/2406.03280},
-  archiveprefix = {arxiv},
-  langid = {english},
-  keywords = {Computer Science - Artificial Intelligence,Computer Science - Computation and Language,Computer Science - Machine Learning}
+@article{tang2024fusionbench,
+  title={Fusionbench: A comprehensive benchmark of deep model fusion},
+  author={Tang, Anke and Shen, Li and Luo, Yong and Hu, Han and Du, Bo and Tao, Dacheng},
+  journal={arXiv preprint arXiv:2406.03280},
+  year={2024}
 }
 ```

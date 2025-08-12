@@ -239,19 +239,11 @@ It provides an interactive way to select and customize FusionBench configuration
 If you find this benchmark useful, please consider citing our work:
 
 ```bibtex
-@misc{tangFusionBenchComprehensiveBenchmark2024,
-  title = {{{FusionBench}}: {{A Comprehensive Benchmark}} of {{Deep Model Fusion}}},
-  shorttitle = {{{FusionBench}}},
-  author = {Tang, Anke and Shen, Li and Luo, Yong and Hu, Han and Du, Bo and Tao, Dacheng},
-  year = {2024},
-  month = jun,
-  number = {arXiv:2406.03280},
-  eprint = {2406.03280},
-  publisher = {arXiv},
-  url = {http://arxiv.org/abs/2406.03280},
-  archiveprefix = {arxiv},
-  langid = {english},
-  keywords = {Computer Science - Artificial Intelligence,Computer Science - Computation and Language,Computer Science - Machine Learning}
+@article{tang2024fusionbench,
+  title={Fusionbench: A comprehensive benchmark of deep model fusion},
+  author={Tang, Anke and Shen, Li and Luo, Yong and Hu, Han and Du, Bo and Tao, Dacheng},
+  journal={arXiv preprint arXiv:2406.03280},
+  year={2024}
 }
 ```
 
