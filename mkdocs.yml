@@ -67,7 +67,7 @@ nav:
         # - Command Line Interface:
     # - fusion_bench: cli/fusion_bench.md
   - API Reference:
-      - api/README.md
+      - api/index.md
       - api/fusion_bench.md
       - api/fusion_bench.mixins.md
       - api/fusion_bench.program.md
@@ -118,13 +118,13 @@ plugins:
             show_root_members_full_path: false
             show_object_full_path: false
             group_by_category: true
-            show_submodules: true
-            # parameter_headings: true
+            show_submodules: false
+            parameter_headings: false
             show_bases: true
             docstring_section_style: list
             show_symbol_type_heading: true
             show_symbol_type_toc: true
-            heading_level: 4
+            heading_level: 3
 markdown_extensions:
   - attr_list
   - md_in_html

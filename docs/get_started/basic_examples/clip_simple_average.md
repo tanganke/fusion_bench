@@ -82,7 +82,7 @@ After completing this example, consider exploring:
 - **Model Compatibility**: Ensure all models in the pool share the same architecture
 - **Dataset Quality**: Use high-quality evaluation datasets for reliable performance assessment
 - **Resource Management**: Monitor memory usage when working with large models
-- **Experiment Tracking**: Keep detailed records of your merging experiments for reproducibilityle Average Example
+- **Experiment Tracking**: Keep detailed records of your merging experiments for reproducibility
 
 here we show the example of merging clip models using simple average, which is a hyperparameter-free algorithm.
 

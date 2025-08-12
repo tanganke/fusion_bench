@@ -56,7 +56,7 @@ class BaseModelPool(BaseYAMLSerializableModel, HydraConfigMixin):
         super().__init__(**kwargs)
 
     @property
-    def has_pretrained(self):
+    def has_pretrained(self) -> bool:
         """
         Check if the model pool contains a pretrained model.
 
@@ -125,7 +125,7 @@ class BaseModelPool(BaseYAMLSerializableModel, HydraConfigMixin):
         return len(self.model_names)
 
     @staticmethod
-    def is_special_model(model_name: str):
+    def is_special_model(model_name: str) -> bool:
         """
         Determine if a model is special based on its name.
 
@@ -159,7 +159,7 @@ class BaseModelPool(BaseYAMLSerializableModel, HydraConfigMixin):
         Load a model from the pool based on the provided configuration.
 
         Args:
-            model (Union[str, DictConfig]): The model name or configuration.
+            model_name_or_config (Union[str, DictConfig]): The model name or configuration.
 
         Returns:
             nn.Module: The instantiated model.

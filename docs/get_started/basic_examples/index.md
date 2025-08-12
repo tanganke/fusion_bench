@@ -31,7 +31,7 @@
 
     Learn how to build structured configuration files and group configurations effectively in FusionBench.
 
-    [:octicons-arrow-right-24: Read More](2_structured_configs.md)
+    [:octicons-arrow-right-24: Read More](structured_configs.md)
 
 - **Evaluate on Corrupted Datasets**
 

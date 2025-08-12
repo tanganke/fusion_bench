@@ -16,61 +16,9 @@ from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_weighted_sum,
 )
 from fusion_bench.utils.type import StateDictType
+from fusion_bench.models.utils import del_attr, set_attr, get_attr
 
 log = logging.getLogger(__name__)
-
-
-def join_list(list_of_list: List[List]):
-    ans = []
-    for l in list_of_list:
-        ans.extend(l)
-    return ans
-
-
-def del_attr(obj, names: List[str]):
-    """
-    Deletes an attribute from an object recursively.
-
-    Args:
-        obj (object): Object to delete attribute from.
-        names (list): List of attribute names to delete recursively.
-    """
-    if len(names) == 1:
-        delattr(obj, names[0])
-    else:
-        del_attr(getattr(obj, names[0]), names[1:])
-
-
-def set_attr(obj, names: List[str], val):
-    """
-    Sets an attribute of an object recursively.
-
-    Args:
-        obj (object): Object to set attribute of.
-        names (list): List of attribute names to set recursively.
-        val (object): Value to set the attribute to.
-    """
-    if len(names) == 1:
-        setattr(obj, names[0], val)
-    else:
-        set_attr(getattr(obj, names[0]), names[1:], val)
-
-
-def get_attr(obj, names: List[str]):
-    """
-    Gets an attribute of an object recursively.
-
-    Args:
-        obj (object): Object to get attribute of.
-        names (list): List of attribute names to get recursively.
-
-    Returns:
-        object: The attribute of the object.
-    """
-    if len(names) == 1:
-        return getattr(obj, names[0])
-    else:
-        return get_attr(getattr(obj, names[0]), names[1:])
 
 
 class Depth_0_Gate(nn.Module):
