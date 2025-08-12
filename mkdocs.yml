@@ -68,6 +68,20 @@ nav:
     # - fusion_bench: cli/fusion_bench.md
   - API Reference:
       - api/README.md
+      - api/fusion_bench.md
+      - api/fusion_bench.mixins.md
+      - api/fusion_bench.program.md
+      - api/fusion_bench.method.md
+      - api/fusion_bench.modelpool.md
+      - api/fusion_bench.taskpool.md
+      - api/fusion_bench.utils.md
+      - api/fusion_bench.models.md
+      - api/fusion_bench.datasets.md
+      - api/fusion_bench.tasks.md
+      - api/fusion_bench.metrics.md
+      - api/fusion_bench.optim.md
+      - api/fusion_bench.constants.md
+      - api/fusion_bench.compat.md
   - Guides:
       - guides/docs.md
       - FusionBench Programming Guide:
@@ -105,7 +119,7 @@ plugins:
             show_object_full_path: false
             group_by_category: true
             show_submodules: true
-            parameter_headings: true
+            # parameter_headings: true
             show_bases: true
             docstring_section_style: list
             show_symbol_type_heading: true
