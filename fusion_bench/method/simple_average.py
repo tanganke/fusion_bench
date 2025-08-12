@@ -8,6 +8,7 @@ from torch import nn
 from fusion_bench.method.base_algorithm import BaseAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
+from fusion_bench.utils import LazyStateDict
 from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_add,
     state_dict_avg,
@@ -45,6 +46,7 @@ def simple_average(
         >>> state_dict2 = model2.state_dict()
         >>> averaged_state_dict = simple_average([state_dict1, state_dict2])
     """
+    assert len(modules) > 0, "modules must be a non-empty list"
     if isinstance(modules[0], nn.Module):
         if base_module is None:
             new_module = deepcopy(modules[0])
@@ -61,6 +63,18 @@ class SimpleAverageAlgorithm(
     BaseAlgorithm,
     SimpleProfilerMixin,
 ):
+    _config_mapping = BaseAlgorithm._config_mapping | {
+        "show_pbar": "show_pbar",
+    }
+
+    def __init__(self, show_pbar: bool = False):
+        """
+        Args:
+            show_pbar (bool): If True, shows a progress bar during model loading and merging. Default is False.
+        """
+        super().__init__()
+        self.show_pbar = show_pbar
+
     @torch.no_grad()
     def run(self, modelpool: Union[BaseModelPool, Dict[str, nn.Module]]):
         """
@@ -82,7 +96,7 @@ class SimpleAverageAlgorithm(
             f"Fusing models using simple average on {len(modelpool.model_names)} models."
             f"models: {modelpool.model_names}"
         )
-        state_dict: Optional[StateDictType] = None
+        sd: Optional[StateDictType] = None
         forward_model = None
         merged_model_names = []
 
@@ -92,18 +106,31 @@ class SimpleAverageAlgorithm(
                 merged_model_names.append(model_name)
                 print(f"load model of type: {type(model).__name__}")
             with self.profile("merge weights"):
-                if state_dict is None:
+                if sd is None:
                     # Initialize the state dictionary with the first model's state dictionary
-                    state_dict = model.state_dict(keep_vars=True)
+                    sd = model.state_dict(keep_vars=True)
                     forward_model = model
                 else:
                     # Add the current model's state dictionary to the accumulated state dictionary
-                    state_dict = state_dict_add(state_dict, model.state_dict(keep_vars=True))
+                    sd = state_dict_add(
+                        sd, model.state_dict(keep_vars=True), show_pbar=self.show_pbar
+                    )
         with self.profile("merge weights"):
             # Divide the accumulated state dictionary by the number of models to get the average
-            state_dict = state_dict_div(state_dict, len(modelpool.model_names))
+            sd = state_dict_div(
+                sd, len(modelpool.model_names), show_pbar=self.show_pbar
+            )
 
-        forward_model.load_state_dict(state_dict)
+        if isinstance(forward_model, LazyStateDict):
+            # if the model is a LazyStateDict, convert it to an empty module
+            forward_model = forward_model.meta_module.to_empty(
+                device=(
+                    "cpu"
+                    if forward_model._torch_dtype is None
+                    else forward_model._torch_dtype
+                )
+            )
+        forward_model.load_state_dict(sd)
         # print profile report and log the merged models
         self.print_profile_summary()
         log.info(f"merged {len(merged_model_names)} models:")

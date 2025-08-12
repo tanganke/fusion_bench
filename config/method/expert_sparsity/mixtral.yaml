@@ -1,0 +1,17 @@
+_target_: fusion_bench.method.LayerWisePruningForMixtral
+num_preserved_experts: 4
+# c4 or math
+# corresponding to the keys of `fusion_bench.method.expert_sparsity.utils.calibration_data.DATASETS`
+calib_set: c4
+# Maximal sequence length of each sample in calibration set
+max_block_size: 2048
+# Number of sequences in calibration set. If set to 0 or negative, the whole dataset will be used
+n_blocks_for_stat: 128
+# Batch size for model inference
+batch_size: 8
+# Number of workers in dataloader
+num_workers: 8
+# Random seed
+seed: 42
+# Path to save the pruned model
+model_save_path: "{log_dir}/pruned_model"

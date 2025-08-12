@@ -291,7 +291,7 @@ A flowchart of the FusionBench command line interface is shown below:
 
     ---
 
-     Magage the models. Responsible for loading, preprocessing, and saving the models.
+    Manage the models, including [large language models](modelpool/causal_lm.md). Responsible for loading, preprocessing, and saving the models.
         
     [:octicons-arrow-right-24: Read More](modelpool/README.md)
 

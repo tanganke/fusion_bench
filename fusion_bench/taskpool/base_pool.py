@@ -5,6 +5,7 @@ from fusion_bench.mixins import BaseYAMLSerializableModel
 
 class BaseTaskPool(BaseYAMLSerializableModel):
     _program = None
+    _config_key = "taskpool"
 
     @abstractmethod
     def evaluate(self, model, *args, **kwargs):

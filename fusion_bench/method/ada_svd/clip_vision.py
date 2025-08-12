@@ -31,7 +31,10 @@ from fusion_bench.method import WeightedAverageAlgorithm
 from fusion_bench.method.simple_average import simple_average
 from fusion_bench.mixins import SimpleProfilerMixin
 from fusion_bench.modelpool import CLIPVisionModelPool
-from fusion_bench.models.smile_moe.linear import ExpertNotTrainedError, SmileMoELinear
+from fusion_bench.models.smile_moe.linear_from_module import (
+    ExpertNotTrainedError,
+    SmileMoELinear,
+)
 from fusion_bench.models.utils import find_layers_with_type, get_attr, set_attr
 from fusion_bench.utils.devices import get_device
 

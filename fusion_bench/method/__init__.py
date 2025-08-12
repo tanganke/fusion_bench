@@ -41,6 +41,7 @@ _import_structure = {
         "FisherMergingAlgorithmForGPT2",
     ],
     "regmean": ["RegMeanAlgorithmForCLIP", "RegMeanAlgorithmForGPT2"],
+    "regmean_plusplus": ["RegMeanAlgorithmForCLIPPlusPlus"],
     "adamerging": [
         "CLIPTaskWiseAdaMergingAlgorithm",
         "CLIPLayerWiseAdaMergingAlgorithm",
@@ -67,6 +68,7 @@ _import_structure = {
         "CLIPTaskWiseGossipAlgorithm",
         "FlanT5LayerWiseGossipAlgorithm",
     ],
+    "fw_merging": ["FrankWolfeHardAlgorithm", "FrankWolfeSoftAlgorithm"],
     # plug-and-play model merging methods
     "concrete_subspace": [
         "ConcreteTaskArithmeticAlgorithmForCLIP",
@@ -103,11 +105,18 @@ _import_structure = {
         "RandomPruningForLlama",
         "MagnitudePruningForLlama",
         "WandaPruningForLlama",
+        "SparseGPTPruningForLlama",
     ],
     "sparselo": [
         "IterativeSparseLoForLlama",
         "SparseLoForLlama",
         "PCPSparseLoForLlama",
+    ],
+    # MoE expert pruning
+    "expert_sparsity": [
+        "DynamicSkippingPruningForMixtral",
+        "LayerWisePruningForMixtral",
+        "ProgressivePruningForMixtral",
     ],
 }
 
@@ -140,7 +149,13 @@ if TYPE_CHECKING:
         SimpleEnsembleAlgorithm,
         WeightedEnsembleAlgorithm,
     )
+    from .expert_sparsity import (
+        DynamicSkippingPruningForMixtral,
+        LayerWisePruningForMixtral,
+        ProgressivePruningForMixtral,
+    )
     from .fisher_merging import FisherMergingForCLIPVisionModel
+    from .fw_merging import FrankWolfeHardAlgorithm, FrankWolfeSoftAlgorithm
     from .gossip import (
         CLIPLayerWiseGossipAlgorithm,
         CLIPTaskWiseGossipAlgorithm,
@@ -172,6 +187,7 @@ if TYPE_CHECKING:
         MagnitudeDiffPruningAlgorithm,
         MagnitudePruningForLlama,
         RandomPruningForLlama,
+        SparseGPTPruningForLlama,
         WandaPruningForLlama,
     )
     from .pwe_moe import (
@@ -180,6 +196,7 @@ if TYPE_CHECKING:
     )
     from .rankone_moe import CLIPRankOneMoEAlgorithm, RankOneMoEAlgorithm
     from .regmean import RegMeanAlgorithmForCLIP, RegMeanAlgorithmForGPT2
+    from .regmean_plusplus import RegMeanAlgorithmForCLIPPlusPlus
     from .simple_average import SimpleAverageAlgorithm
     from .slerp import SlerpMergeAlgorithm
     from .smile_upscaling import (

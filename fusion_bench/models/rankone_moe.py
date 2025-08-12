@@ -8,62 +8,11 @@ from torch import Tensor, nn
 from torch.func import functional_call
 from torch.nn import functional as F
 
+from fusion_bench.models.smile_moe.utils import _is_all_zeros, svd
+from fusion_bench.models.utils import del_attr, get_attr, set_attr
 from fusion_bench.utils.type import StateDictType
 
 log = logging.getLogger(__name__)
-
-
-def join_list(list_of_list: List[List]):
-    ans = []
-    for l in list_of_list:
-        ans.extend(l)
-    return ans
-
-
-def del_attr(obj, names: List[str]):
-    """
-    Deletes an attribute from an object recursively.
-
-    Args:
-        obj (object): Object to delete attribute from.
-        names (list): List of attribute names to delete recursively.
-    """
-    if len(names) == 1:
-        delattr(obj, names[0])
-    else:
-        del_attr(getattr(obj, names[0]), names[1:])
-
-
-def set_attr(obj, names: List[str], val):
-    """
-    Sets an attribute of an object recursively.
-
-    Args:
-        obj (object): Object to set attribute of.
-        names (list): List of attribute names to set recursively.
-        val (object): Value to set the attribute to.
-    """
-    if len(names) == 1:
-        setattr(obj, names[0], val)
-    else:
-        set_attr(getattr(obj, names[0]), names[1:], val)
-
-
-def get_attr(obj, names: List[str]):
-    """
-    Gets an attribute of an object recursively.
-
-    Args:
-        obj (object): Object to get attribute of.
-        names (list): List of attribute names to get recursively.
-
-    Returns:
-        object: The attribute of the object.
-    """
-    if len(names) == 1:
-        return getattr(obj, names[0])
-    else:
-        return get_attr(getattr(obj, names[0]), names[1:])
 
 
 class Depth_0_Gate(nn.Module):
@@ -130,41 +79,6 @@ def construct_rankone_moe_gate(
 
 class ExpertNotTrainedError(Exception):
     pass
-
-
-def _is_all_zeros(tensor: Tensor | List[Tensor]) -> bool:
-    """
-    Check if a tensor or a list of tensors are all zeros.
-    """
-    if isinstance(tensor, Tensor):
-        return torch.allclose(tensor, torch.zeros_like(tensor))
-    else:
-        return all(_is_all_zeros(t) for t in tensor)
-
-
-def _svd(w: Tensor, full_matrices=True) -> Tuple[Tensor, Tensor, Tensor]:
-    """
-    Perform Singular Value Decomposition (SVD) on a tensor.
-    """
-    u, s, vh = torch.linalg.svd(
-        w, full_matrices=full_matrices, driver="gesvd" if w.is_cuda else None
-    )
-    v = vh.T
-    return u, s, v
-
-
-def svd(
-    w: Tensor, full_matrices=True, accelerator=None
-) -> Tuple[Tensor, Tensor, Tensor]:
-    """
-    Perform SVD on a tensor, optionally using a specified accelerator.
-    """
-    if accelerator is None:
-        return _svd(w, full_matrices=full_matrices)
-    original_device = w.device
-    w = w.to(accelerator)
-    u, s, v = _svd(w)
-    return u.to(original_device), s.to(original_device), v.to(original_device)
 
 
 def fun_joint_svd(

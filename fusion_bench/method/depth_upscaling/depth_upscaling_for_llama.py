@@ -1,9 +1,10 @@
 import os
 from typing import Optional
 
+from transformers import PreTrainedModel
 from typing_extensions import override
 
-from fusion_bench.modelpool.causal_lm.causal_lm import CausalLM, CausalLMPool
+from fusion_bench.modelpool.causal_lm.causal_lm import CausalLMPool
 from fusion_bench.utils import timeit_context
 
 from .depth_upscaling import DepthUpscalingAlgorithm
@@ -46,7 +47,7 @@ class DepthUpscalingForLlama(DepthUpscalingAlgorithm):
         if self.model_save_path is not None:
             tokenizer = modelpool.load_tokenizer()
 
-        model: CausalLM = modelpool.load_pretrained_or_first_model()
+        model: PreTrainedModel = modelpool.load_pretrained_or_first_model()
         model.model.layers = super().run(model.model.layers)
         model.config.num_hidden_layers = len(model.model.layers)
 

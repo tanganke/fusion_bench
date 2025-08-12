@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "fusion_bench"
 description = "A Comprehensive Benchmark of Deep Model Fusion"
 readme = "README.md"
-version = "0.2.13"
+version = "0.2.20"
 authors = [{ name = "Anke Tang", email = "tang.anke@foxmail.com" }]
 license = { file = 'LICENSE' }
 requires-python = ">= 3.10"
@@ -45,3 +45,6 @@ fusion_bench = ['../fusion_bench_config/**/*']
 
 [tool.isort]
 profile = "black"
+
+[project.optional-dependencies]
+lm-eval-harness = ["lm-eval"]
