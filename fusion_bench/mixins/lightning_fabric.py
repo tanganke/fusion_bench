@@ -52,9 +52,11 @@ class LightningFabricMixin:
     and nodes, with support for custom logging via TensorBoard.
 
     Attributes:
+
     - _fabric (L.Fabric): The Lightning Fabric instance used for distributed computing.
 
     Note:
+
     This mixin is designed to be used with classes that require distributed computing capabilities and wish to
     leverage the Lightning Fabric for this purpose. It assumes the presence of a `config` attribute or parameter
     in the consuming class for configuration.
