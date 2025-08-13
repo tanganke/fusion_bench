@@ -33,12 +33,6 @@
         show_root_full_path: true
         heading_level: 3
 
-::: fusion_bench.tasks.flan_t5_text_generation.glue_evaluation
-    options:
-        show_root_heading: true
-        show_root_full_path: true
-        heading_level: 3
-
 ::: fusion_bench.tasks.flan_t5_text_generation.glue_prompt_templates
     options:
         show_root_heading: true
