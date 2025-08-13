@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-class SeqenceClassificationModelPool(BaseModelPool):
+class SequenceClassificationModelPool(BaseModelPool):
 
     def __init__(
         self,

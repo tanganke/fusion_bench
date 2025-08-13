@@ -31,7 +31,7 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from fusion_bench.dataset.llama.collate import bradley_terry_rm_collate
 from fusion_bench.method import BaseAlgorithm
 from fusion_bench.mixins import FabricTrainingMixin
-from fusion_bench.modelpool import SeqenceClassificationModelPool
+from fusion_bench.modelpool import SequenceClassificationModelPool
 from fusion_bench.utils import instantiate
 from fusion_bench.utils.dtype import get_dtype
 
@@ -121,7 +121,7 @@ class BradleyTerryRewardModeling(BaseAlgorithm, FabricTrainingMixin):
         self.fix_token_embedding = fix_token_embedding
         super().__init__(**kwargs)
 
-    def run(self, modelpool: SeqenceClassificationModelPool):
+    def run(self, modelpool: SequenceClassificationModelPool):
         self.modelpool = modelpool
         self.setup()
         self.train(self.model, self.optimizer, self.lr_scheduler)

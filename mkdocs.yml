@@ -67,11 +67,18 @@ nav:
         # - Command Line Interface:
     # - fusion_bench: cli/fusion_bench.md
   - API Reference:
-      - api/README.md
+      - api/index.md
       - api/fusion_bench.md
       - api/fusion_bench.mixins.md
       - api/fusion_bench.program.md
-      - api/fusion_bench.method.md
+      - fusion_bench.method:
+          - api/fusion_bench.method/index.md
+          - api/fusion_bench.method/ensemble.md
+          - api/fusion_bench.method/merging.md
+          - api/fusion_bench.method/mixing.md
+          - api/fusion_bench.method/compression.md
+          - api/fusion_bench.method/training.md
+          - api/fusion_bench.method/utility.md
       - api/fusion_bench.modelpool.md
       - api/fusion_bench.taskpool.md
       - api/fusion_bench.utils.md
@@ -118,19 +125,19 @@ plugins:
             show_root_members_full_path: false
             show_object_full_path: false
             group_by_category: true
-            show_submodules: true
-            # parameter_headings: true
+            show_submodules: false
+            parameter_headings: false
             show_bases: true
             docstring_section_style: list
             show_symbol_type_heading: true
             show_symbol_type_toc: true
-            heading_level: 4
+            heading_level: 3
 markdown_extensions:
   - attr_list
   - md_in_html
   - toc:
       permalink: true
-      toc_depth: 6
+      toc_depth: 4
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
