@@ -36,14 +36,6 @@
 
     [:octicons-arrow-right-24: Read More](structured_configs.md)
 
-- **Evaluate on Corrupted Datasets**
-
-    ---
-
-    Learn how to evaluate the performance of models on corrupted datasets in FusionBench.
-
-    [:octicons-arrow-right-24: Read More](evaluate_on_corrupted_datasets.md)
-
 </div>
 
 ## FusionBench as a Package

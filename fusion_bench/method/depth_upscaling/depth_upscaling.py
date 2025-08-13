@@ -1,6 +1,6 @@
 import logging
 from copy import deepcopy
-from typing import List, Mapping, Union  # noqa: F401
+from typing import Any, List, Mapping, Union  # noqa: F401
 
 import torch
 from torch import nn
@@ -30,7 +30,7 @@ class DepthUpscalingAlgorithm(BaseAlgorithm):
         "layer_indices": "layer_indices",
     }
 
-    def __init__(self, layer_indices: Union[str, List[int]], **kwargs):
+    def __init__(self, layer_indices: Union[str, List[int]], **kwargs: Any):
         self.layer_indices = layer_indices
         super().__init__(**kwargs)
 

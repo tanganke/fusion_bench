@@ -2,6 +2,7 @@ import functools
 import logging
 import os
 from copy import deepcopy
+from typing import Any, Iterator
 
 import torch
 from torch import Tensor
@@ -38,7 +39,7 @@ class CLIPWeightEnsemblingMoEAlgorithm(
 
     modelpool: CLIPVisionModelPool = None
 
-    def load_checkpoint(self, model, checkpoint):
+    def load_checkpoint(self, model: Any, checkpoint: Any):
         """
         Load the checkpoint file.
 
@@ -49,7 +50,7 @@ class CLIPWeightEnsemblingMoEAlgorithm(
         state = {"model": model}
         self._fabric.load(checkpoint, state)
 
-    def save_checkpoint(self, model, checkpoint):
+    def save_checkpoint(self, model: Any, checkpoint: Any):
         """
         Save the checkpoint file.
 
@@ -102,7 +103,7 @@ class CLIPWeightEnsemblingMoEAlgorithm(
         return moe_model
 
     @functools.cache
-    def get_shuffled_test_loader_iter(self, tta_dataset: str):
+    def get_shuffled_test_loader_iter(self, tta_dataset: str) -> Iterator:
         """
         Get an iterator for the shuffled test data loader.
 
@@ -131,7 +132,7 @@ class CLIPWeightEnsemblingMoEAlgorithm(
         """
         self.setup_zero_shot_classification_head()
 
-    def compute_logits(self, module, batch, task) -> Tensor:
+    def compute_logits(self, module: Any, batch: Any, task: Any) -> Tensor:
         """
         Compute the logits for the given batch and task.
 

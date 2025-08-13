@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 class SimpleEnsembleAlgorithm(BaseAlgorithm):
     @torch.no_grad()
-    def run(self, modelpool: BaseModelPool | List[nn.Module]):
+    def run(self, modelpool: BaseModelPool | List[nn.Module]) -> EnsembleModule:
         """
         Run the simple ensemble algorithm on the given model pool.
 
@@ -48,7 +48,7 @@ class WeightedEnsembleAlgorithm(BaseAlgorithm):
         super().__init__(**kwargs)
 
     @torch.no_grad()
-    def run(self, modelpool: BaseModelPool | List[nn.Module]):
+    def run(self, modelpool: BaseModelPool | List[nn.Module]) -> WeightedEnsembleModule:
         """
         Run the weighted ensemble algorithm on the given model pool.
 
@@ -78,7 +78,7 @@ class WeightedEnsembleAlgorithm(BaseAlgorithm):
 
 class MaxModelPredictorAlgorithm(BaseAlgorithm):
     @torch.no_grad()
-    def run(self, modelpool: BaseModelPool | List[nn.Module]):
+    def run(self, modelpool: BaseModelPool | List[nn.Module]) -> MaxModelPredictor:
         """
         Run the max model predictor algorithm on the given model pool.
 
