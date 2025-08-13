@@ -30,6 +30,10 @@ fusion_bench \
   taskpool=gpt-2_glue
 ```
 
-## References
+## Implementation Details
+
+- [fusion_bench.method.RegMeanAlgorithmForCLIP][]
+- [fusion_bench.method.RegMeanAlgorithmForGPT2][]
+
 
 [^1]: Xisen Jin, et al. "Dataless Knowledge Fusion by Merging Weights of Language Models." http://arxiv.org/abs/2212.09849

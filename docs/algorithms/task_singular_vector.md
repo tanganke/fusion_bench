@@ -77,3 +77,8 @@ The final merged model parameters are obtained by adding the merged task vector 
 $$\theta_{\text{TSVM}} = \theta_0 + \alpha \tau_{\text{TSVM}}$$
 
 where $\alpha$ is an optional global scaling factor.
+
+
+## Implementation Details
+
+- [fusion_bench.method.TaskSingularVectorMerging][]

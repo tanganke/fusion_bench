@@ -95,9 +95,9 @@ fusion_bench \
     taskpool=dummy # this is a dummy taskpool that does nothing but print the parameter counts of the merged model
 ```
 
-## References
+## Implementation Details
 
-::: fusion_bench.method.mixture_of_experts.mixtral_upcycling
-
+- [fusion_bench.method.MixtralUpscalingAlgorithm][]
+- [fusion_bench.method.MixtralForCausalLMUpscalingAlgorithm][]
 
 [^1]: Sparse Upcycling: Training Mixture-of-Experts from Dense Checkpoints. http://arxiv.org/abs/2212.05055

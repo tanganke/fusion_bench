@@ -20,7 +20,7 @@ class TransformedImageDataset(Dataset):
         transform (Callable): The transform to be applied to the images.
     """
 
-    def __init__(self, dataset, transform: Callable):
+    def __init__(self, dataset: Dataset, transform: Callable):
         super().__init__()
         self.dataset = dataset
         self.transform = transform

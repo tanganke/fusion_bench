@@ -241,8 +241,8 @@ backbone_pool = CausalLMBackbonePool.from_config(config)
 layers = backbone_pool.load_model("model_a")  # Returns model.layers
 ```
 
-## References
+## Implementation Details
 
-::: fusion_bench.modelpool.CausalLMPool
-::: fusion_bench.modelpool.CausalLMBackbonePool
-::: fusion_bench.modelpool.causal_lm.load_peft_causal_lm
+- [fusion_bench.modelpool.CausalLMPool][]
+- [fusion_bench.modelpool.CausalLMBackbonePool][]
+- [fusion_bench.modelpool.causal_lm.load_peft_causal_lm][]

@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 from typing import Dict, Optional, Union
 
-from omegaconf import OmegaConf
+from omegaconf import DictConfig, OmegaConf
 
 from fusion_bench.utils import import_object, instantiate
 
@@ -57,7 +57,7 @@ class YAMLSerializationMixin:
             log.warning(f"Unused argument: {key}={value}")
 
     @property
-    def config(self):
+    def config(self) -> DictConfig:
         R"""
         Returns the configuration of the model pool as a DictConfig.
 

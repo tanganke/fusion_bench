@@ -81,4 +81,5 @@ fusion_bench method=weighted_ensemble \
 
 ## References
 
-::: fusion_bench.method.WeightedEnsembleAlgorithm
+- [fusion_bench.method.WeightedEnsembleAlgorithm][]
+

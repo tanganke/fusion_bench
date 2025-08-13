@@ -75,11 +75,10 @@ fusion_bench \
 ```
 
 
-## References
+## Implementation Details
 
-::: fusion_bench.method.model_recombination.ModelRecombinationAlgorithm
-
-::: fusion_bench.method.model_recombination.recombine_modellist
-::: fusion_bench.method.model_recombination.recombine_modeldict
-::: fusion_bench.method.model_recombination.recombine_state_dict
+- [fusion_bench.method.ModelRecombinationAlgorithm][]
+- [fusion_bench.method.model_recombination.recombine_modellist][]
+- [fusion_bench.method.model_recombination.recombine_modeldict][]
+- [fusion_bench.method.model_recombination.recombine_state_dict][]
 

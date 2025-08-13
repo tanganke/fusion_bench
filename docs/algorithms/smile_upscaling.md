@@ -431,11 +431,9 @@ done
 ```
 
 
-## References
+## Implementation Details
 
-### Algorithms
-
-::: fusion_bench.method.SmileUpscalingAlgorithm
+- [fusion_bench.method.SmileUpscalingAlgorithm][]
 
 
 [^1]: A. Tang et. al. SMILE: Zero-Shot Sparse Mixture of Low-Rank Experts Construction From Pre-Trained Foundation Models. Aug, 2024.

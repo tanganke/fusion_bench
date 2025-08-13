@@ -59,9 +59,11 @@ fusion_bench \
   taskpool=gpt-2_glue
 ```
 
-## References
+## Implementation Details
 
-::: fusion_bench.method.fisher_merging.fisher_merging.FisherMergingAlgorithm
+- [fusion_bench.method.FisherMergingAlgorithm][]
+- [fusion_bench.method.FisherMergingForCLIPVisionModel][]
+- [fusion_bench.method.FisherMergingAlgorithmForGPT2][]
 
 [^1]: M. Matena, C. Raffel. "Merging Models with Fisher-Weighted Averaging" http://arxiv.org/abs/2111.09832
 [^2]: C. Wu, et al. "Pi-Tuning: Transferring Multimodal Foundation Models with Optimal Multi-task Interpolation". https://github.com/TencentARC/pi-Tuning
