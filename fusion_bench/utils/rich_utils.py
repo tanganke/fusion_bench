@@ -189,6 +189,9 @@ if __name__ == "__main__":
 
 
 def setup_colorlogging(force=False, **config_kwargs):
+    """
+    Sets up color logging for the application.
+    """
     FORMAT = "%(message)s"
 
     logging.basicConfig(

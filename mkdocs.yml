@@ -6,15 +6,10 @@ nav:
           - get_started/index.md
           - Basic Examples:
               - get_started/basic_examples/index.md
-              - get_started/basic_examples/clip_simple_average.md
-              - get_started/basic_examples/structured_configs.md
           - Intermediate Examples:
               - get_started/intermediate_examples/index.md
-              - get_started/intermediate_examples/customize_algorithm.md
-              - get_started/intermediate_examples/assess_model_performance_within_algorithm.md
           - Advanced Examples:
               - get_started/advanced_examples/index.md
-              - get_started/advanced_examples/customize_program.md
       - Further Reading:
           - introduction_to_model_fusion.md
   - Algorithms:
@@ -81,9 +76,19 @@ nav:
           - api/fusion_bench.method/utility.md
       - api/fusion_bench.modelpool.md
       - api/fusion_bench.taskpool.md
-      - api/fusion_bench.utils.md
+      - fusion_bench.utils:
+          - api/fusion_bench.utils/index.md
+          - api/fusion_bench.utils/logging.md
+          - api/fusion_bench.utils/profiling.md
+          - api/fusion_bench.utils/caching.md
+          - api/fusion_bench.utils/data.md
+          - api/fusion_bench.utils/model.md
+          - api/fusion_bench.utils/torch.md
+          - api/fusion_bench.utils/filesystem.md
+          - api/fusion_bench.utils/modelscope.md
+          - api/fusion_bench.utils/package_management.md
       - api/fusion_bench.models.md
-      - api/fusion_bench.datasets.md
+      - api/fusion_bench.dataset.md
       - api/fusion_bench.tasks.md
       - api/fusion_bench.metrics.md
       - api/fusion_bench.optim.md

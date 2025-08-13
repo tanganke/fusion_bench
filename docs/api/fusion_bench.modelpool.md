@@ -22,7 +22,7 @@
 
 ::: fusion_bench.modelpool.OpenCLIPVisionModelPool
     options:
-            heading_level: 4
+        heading_level: 4
 
 ## NLP Model Pool
 

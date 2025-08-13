@@ -1,7 +1,8 @@
 # Basic Examples
 
+## Get Started with FusionBench CLI
 
-<div class="grid cards" markdown>
+<div class="grid cards" markdown style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
 
 - **CLIP Simple Average**
 
@@ -41,4 +42,9 @@
 
     [:octicons-arrow-right-24: Read More](evaluate_on_corrupted_datasets.md)
 
+</div>
+
+## FusionBench as a Package
+
+<div class="grid cards" markdown style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
 </div>
