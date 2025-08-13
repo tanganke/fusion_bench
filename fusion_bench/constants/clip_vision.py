@@ -26,7 +26,7 @@ TASK_NAMES_TALL14 = TASK_NAMES_TALL12 + [
 TASK_NAMES_TALL16 = TASK_NAMES_TALL14 + ["cifar10", "food101"]
 TASK_NAMES_TALL18 = TASK_NAMES_TALL16 + ["fashion_mnist", "emnist_letters"]
 TASK_NAMES_TALL20 = TASK_NAMES_TALL18 + ["kmnist", "rendered-sst2"]
-"The 20 tasks used in the tall mask paper"
+"The 20 tasks used in the TALL mask paper"
 TASK_NAMES_TA8_CAP = [
     "SUN397",
     "Cars",
