@@ -54,7 +54,7 @@ Installing `fusion-bench` will also install the latest [stable PyTorch](https://
 
     ---
 
-    Learn the basic concepts of FusionBench and the command line interface (CLI).
+    Learn the basic concepts of FusionBench and the command line interface (CLI) as well as the programmatic usage of FusionBench.
 
     [:octicons-arrow-right-24: Read More](get_started/index.md)
 
