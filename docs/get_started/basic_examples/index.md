@@ -24,7 +24,9 @@
 
     ---
 
-    12
+    Merge CLIP vision models using task arithmetic, allowing you to adjust the scaling factor as a hyperparameter.
+
+    [:octicons-arrow-right-24: Read More](clip_task_arithmetic.md)
 
 - **Structured Configs**
 
@@ -47,4 +49,14 @@
 ## FusionBench as a Package
 
 <div class="grid cards" markdown style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
+
+- **Import and Use Merging Algorithms**
+
+    ---
+
+    Learn how to import and use different merging algorithms in FusionBench.
+
+    [:octicons-arrow-right-24: Read More](import_and_use_merging_algorithms.md)
+
+
 </div>

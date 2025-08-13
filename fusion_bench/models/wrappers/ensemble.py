@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, List, cast
+from typing import Any, Callable, Dict, List, Union, cast
 
 import numpy as np
 import torch
@@ -6,7 +6,9 @@ from omegaconf import ListConfig
 from torch import Tensor, nn
 
 
-def aggregate_tensors(outputs: List[Any], aggregate_fn: Callable) -> Tensor:
+def aggregate_tensors(
+    outputs: List[Any], aggregate_fn: Callable
+) -> Union[Tensor, Dict, List, None]:
     """
     Aggregates a list of outputs using the provided aggregation function.
 
@@ -84,7 +86,7 @@ class EnsembleModule(nn.Module):
         """
         return torch.stack(outputs).mean(dim=0)
 
-    def forward(self, *args, **kwargs):
+    def forward(self, *args: Any, **kwargs: Any) -> Any:
         """
         Performs a forward pass by averaging the outputs of the models.
 
@@ -150,7 +152,7 @@ class WeightedEnsembleModule(nn.Module):
         weights = cast(Tensor, self.weights).view(-1, *([1] * outputs[0].dim()))
         return (torch.stack(outputs) * weights).sum(dim=0)
 
-    def forward(self, *args, **kwargs):
+    def forward(self, *args: Any, **kwargs: Any) -> Any:
         """
         Performs a forward pass by computing the weighted average of the models' outputs.
 

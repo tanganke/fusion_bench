@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 __all__ = ["get_task_wise_weights", "fuse_weights", "TaskWiseMergedModel"]
 
 
-def get_task_wise_weights(num_models: int, init_values: float = None):
+def get_task_wise_weights(num_models: int, init_values: float = None) -> Tensor:
     """
     This function generates a tensor of weights for each model.
 
@@ -47,7 +47,7 @@ def get_task_wise_weights(num_models: int, init_values: float = None):
     return torch.full((num_models,), init_values, dtype=torch.float32)
 
 
-def _fuse_weights(task_wise_weight: Tensor, tensors: List[Tensor]):
+def _fuse_weights(task_wise_weight: Tensor, tensors: List[Tensor]) -> Tensor:
     """
     This function fuses the weights of the models.
 

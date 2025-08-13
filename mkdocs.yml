@@ -63,7 +63,6 @@ nav:
     # - fusion_bench: cli/fusion_bench.md
   - API Reference:
       - api/index.md
-      - api/fusion_bench.md
       - api/fusion_bench.mixins.md
       - api/fusion_bench.program.md
       - fusion_bench.method:
@@ -137,6 +136,8 @@ plugins:
             show_symbol_type_heading: true
             show_symbol_type_toc: true
             heading_level: 3
+            signature_crossrefs: true
+            show_overloads: true
 markdown_extensions:
   - attr_list
   - md_in_html

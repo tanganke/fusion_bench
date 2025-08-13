@@ -2,6 +2,7 @@ import os
 from typing import Literal, Optional
 
 from datasets import load_dataset as datasets_load_dataset
+
 from fusion_bench.utils import validate_and_suggest_corrections
 
 try:

@@ -1,14 +1,15 @@
-_target_: fusion_bench.programs.FabricModelFusionProgram # (1)!
+_target_: fusion_bench.programs.FabricModelFusionProgram
 _recursive_: false
-method: # (2)!
-  _target_: fusion_bench.method.SimpleAverageAlgorithm
-modelpool: # (3)!
+method:
+  _target_: fusion_bench.method.TaskArithmeticAlgorithm
+  scaling_factor: 0.7
+modelpool:
   _target_: fusion_bench.modelpool.CLIPVisionModelPool
   models:
     _pretrained_: openai/clip-vit-base-patch32
     sun397: tanganke/clip-vit-base-patch32_sun397
     stanford-cars: tanganke/clip-vit-base-patch32_stanford-cars
-taskpool: # (4)!
+taskpool:
   _target_: fusion_bench.taskpool.CLIPVisionModelTaskPool
   test_datasets:
     sun397:

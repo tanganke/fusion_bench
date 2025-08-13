@@ -1,8 +1,9 @@
 # Code adapted from https://github.com/IST-DASLab/sparsegpt/blob/master/datautils.py
 
+import os
 import random
 from typing import List, Optional, Tuple, cast  # noqa: F401
-import os
+
 from datasets import load_dataset
 from torch import Tensor
 from tqdm.auto import tqdm

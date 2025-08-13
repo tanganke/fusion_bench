@@ -1,6 +1,6 @@
 import importlib
 import warnings
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Tuple
 
 from datasets import load_dataset
 
@@ -79,7 +79,9 @@ class CLIPTemplateFactory:
     }
 
     @staticmethod
-    def get_classnames_and_templates(dataset_name: str):
+    def get_classnames_and_templates(
+        dataset_name: str,
+    ) -> Tuple[List[str], List[Callable]]:
         """
         Retrieves class names and templates for the specified dataset.
 
@@ -169,7 +171,7 @@ class CLIPTemplateFactory:
         CLIPTemplateFactory._dataset_mapping[dataset_name] = dataset_info
 
     @staticmethod
-    def get_available_datasets():
+    def get_available_datasets() -> List[str]:
         """
         Get a list of all available dataset names.
 
@@ -179,5 +181,5 @@ class CLIPTemplateFactory:
         return list(CLIPTemplateFactory._dataset_mapping.keys())
 
 
-def get_classnames_and_templates(dataset_name: str):
+def get_classnames_and_templates(dataset_name: str) -> Tuple[List[str], List[Callable]]:
     return CLIPTemplateFactory.get_classnames_and_templates(dataset_name)

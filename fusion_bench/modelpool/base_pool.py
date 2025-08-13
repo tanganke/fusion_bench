@@ -1,6 +1,6 @@
 import logging
 from copy import deepcopy
-from typing import Dict, List, Optional, Union
+from typing import Dict, Generator, List, Optional, Tuple, Union
 
 import torch
 from omegaconf import DictConfig
@@ -201,11 +201,11 @@ class BaseModelPool(BaseYAMLSerializableModel, HydraConfigMixin):
             model = self.load_model(self.model_names[0], *args, **kwargs)
         return model
 
-    def models(self):
+    def models(self) -> Generator[nn.Module, None, None]:
         for model_name in self.model_names:
             yield self.load_model(model_name)
 
-    def named_models(self):
+    def named_models(self) -> Generator[Tuple[str, nn.Module], None, None]:
         for model_name in self.model_names:
             yield model_name, self.load_model(model_name)
 
