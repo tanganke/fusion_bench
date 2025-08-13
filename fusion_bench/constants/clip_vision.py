@@ -10,9 +10,9 @@ TASK_NAMES_TA8 = [
     "mnist",
     "dtd",
 ]
-"The 8 tasks used in the task arithmetic paper."
+"The 8 tasks used in the Task Arithmetic paper."
 TASK_NAMES_TALL8 = TASK_NAMES_TA8
-"The 8 tasks used in the tall mask paper"
+"The 8 tasks used in the Tall Mask paper"
 TASK_NAMES_TALL10 = TASK_NAMES_TA8 + ["oxford_flowers102", "pcam"]
 TASK_NAMES_TALL12 = TASK_NAMES_TALL10 + [
     "fer2013",
@@ -22,11 +22,11 @@ TASK_NAMES_TALL14 = TASK_NAMES_TALL12 + [
     "stl10",
     "cifar100",
 ]
-"The 14 tasks used in the tall mask paper"
+"The 14 tasks used in the TALL mask paper"
 TASK_NAMES_TALL16 = TASK_NAMES_TALL14 + ["cifar10", "food101"]
 TASK_NAMES_TALL18 = TASK_NAMES_TALL16 + ["fashion_mnist", "emnist_letters"]
 TASK_NAMES_TALL20 = TASK_NAMES_TALL18 + ["kmnist", "rendered-sst2"]
-"The 20 tasks used in the tall mask paper"
+"The 20 tasks used in the TALL mask paper"
 TASK_NAMES_TA8_CAP = [
     "SUN397",
     "Cars",
