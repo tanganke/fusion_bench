@@ -41,8 +41,11 @@ nav:
           - SMILE Upscaling: algorithms/smile_upscaling.md
           # - Model Stitching: algorithms/model_stitching.md
           - Model Recombination: algorithms/model_recombination.md
-      - Model Pruning:
-          - Magnitude Pruning: algorithms/pruning/magnitude_pruning.md
+      - Model Compression:
+        - Task Vector Compression:
+            - BitDelta: algorithms/bitdelta.md
+        - Parameter Pruning:
+            - Magnitude Pruning: algorithms/pruning/magnitude_pruning.md
   - Model Pool (Benchmark Models):
       - modelpool/README.md
       - CLIP-ViT Models: modelpool/clip_vit.md

@@ -99,6 +99,8 @@ _import_structure = {
         "SmileUpscalingAlgorithm",
         "SingularProjectionMergingAlgorithm",
     ],
+    # task vector compression methods
+    "bitdelta": ["BitDeltaAlgorithm"],
     # pruning methods
     "pruning": [
         "MagnitudeDiffPruningAlgorithm",
@@ -126,6 +128,7 @@ if TYPE_CHECKING:
     from .adamerging import *
     from .analysis import TaskVectorCosSimilarity, TaskVectorViolinPlot
     from .base_algorithm import BaseAlgorithm, BaseModelFusionAlgorithm
+    from .bitdelta import BitDeltaAlgorithm
     from .classification import (
         ContinualImageClassificationFineTuningForCLIP,
         ImageClassificationFineTuningForCLIP,
