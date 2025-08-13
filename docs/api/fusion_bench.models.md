@@ -13,3 +13,5 @@
 ## Model Linearization (NTK)
 
 ::: fusion_bench.models.linearized.linearized_model_utils.LinearizedModelWraper
+::: fusion_bench.models.linearized.vision_model.load_lora_vision_model_hf
+::: fusion_bench.models.linearized.vision_model.load_l_lora_vision_model_hf
