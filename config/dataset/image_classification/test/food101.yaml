@@ -1,0 +1,4 @@
+food101:
+  _target_: datasets.load_dataset
+  path: ethz/food101
+  split: validation

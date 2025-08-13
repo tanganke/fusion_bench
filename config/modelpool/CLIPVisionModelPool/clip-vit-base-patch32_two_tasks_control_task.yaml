@@ -1,0 +1,12 @@
+defaults:
+  - /dataset/image_classification/train@train_datasets:
+      - tiny-imagenet
+  - _self_
+_target_: fusion_bench.modelpool.CLIPVisionModelPool
+_recursive_: False
+models:
+  _pretrained_: openai/clip-vit-base-patch32
+  model_1: tanganke/clip-vit-base-patch32_sun397
+  model_2: tanganke/clip-vit-base-patch32_stanford-cars
+processor: openai/clip-vit-base-patch32
+platform: hf

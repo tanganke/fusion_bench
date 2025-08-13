@@ -1,0 +1,14 @@
+defaults:
+  - CLIPVisionModelPool@: _template
+  - /model/clip-vit@models:
+      - clip-vit-base-patch32
+      - clip-vit-base-patch32_svhn
+      - clip-vit-base-patch32_mnist
+_target_: fusion_bench.modelpool.CLIPVisionModelPool
+_recursive_: False
+processor: openai/clip-vit-base-patch32
+models:
+  _pretrained_: openai/clip-vit-base-patch32
+  svhn: tanganke/clip-vit-base-patch32_svhn
+  mnist: tanganke/clip-vit-base-patch32_mnist
+platform: hf

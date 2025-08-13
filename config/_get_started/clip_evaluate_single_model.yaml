@@ -1,0 +1,21 @@
+_target_: fusion_bench.programs.FabricModelFusionProgram
+_recursive_: false
+method:
+  _target_: fusion_bench.method.DummyAlgorithm
+modelpool:
+  _target_: fusion_bench.modelpool.CLIPVisionModelPool
+  models:
+    _pretrained_: openai/clip-vit-base-patch32
+taskpool:
+  _target_: fusion_bench.taskpool.CLIPVisionModelTaskPool
+  test_datasets:
+    sun397:
+      _target_: datasets.load_dataset
+      path: tanganke/sun397
+      split: test
+    stanford-cars:
+      _target_: datasets.load_dataset
+      path: tanganke/stanford_cars
+      split: test
+  clip_model: openai/clip-vit-base-patch32
+  processor: openai/clip-vit-base-patch32
