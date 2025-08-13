@@ -1,6 +1,6 @@
 # Model Compression
 
-## Task Vector Compreesion
+## Task Vector Compression
 
 ### BitDelta
 

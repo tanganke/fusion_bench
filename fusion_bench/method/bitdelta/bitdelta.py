@@ -134,9 +134,6 @@ class BitDeltaAlgorithm(
         # save trained delta
         save_diff(finetuned_compressed_model, os.path.join(self.save_dir, "diff.pt"))
 
-        del base_model, finetuned_model, finetuned_compressed_model
-        torch.cuda.empty_cache()
-
         if self.save_full_model:
             print("saving uncalibrated model")
             save_full_model(
@@ -154,3 +151,6 @@ class BitDeltaAlgorithm(
                 os.path.join(self.save_dir, "calibrated_model"),
                 device="cpu",
             )
+
+        del base_model, finetuned_model, finetuned_compressed_model
+        torch.cuda.empty_cache()
