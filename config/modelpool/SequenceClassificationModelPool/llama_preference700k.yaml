@@ -1,4 +1,4 @@
-_target_: fusion_bench.modelpool.SeqenceClassificationModelPool
+_target_: fusion_bench.modelpool.SequenceClassificationModelPool
 pretrained_model_name_or_path: meta-llama/Llama-3.2-1B-Instruct
 models:
   _pretrained_:

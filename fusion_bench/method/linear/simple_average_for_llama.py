@@ -19,7 +19,6 @@ class SimpleAverageForLlama(BaseAlgorithm):
     A simple averaging algorithm for LLama models. If `merge_backbone` is set to `True`, the backbone of the model will be averaged and the rest of the model will be loaded from the pre-trained model.
 
     Examples:
-
         The following example demonstrates how to use the `SimpleAverageForLlama` algorithm to merge Mistral models.
 
         ```bash

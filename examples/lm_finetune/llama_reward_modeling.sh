@@ -12,4 +12,4 @@ fusion_bench --config-name llama_full_finetune \
   method.max_epochs=2 \
   method.checkpoint_save_interval=epoch \
   method.checkpoint_save_frequency=1 \
-  modelpool=SeqenceClassificationModelPool/llama_preference700k
+  modelpool=SequenceClassificationModelPool/llama_preference700k
