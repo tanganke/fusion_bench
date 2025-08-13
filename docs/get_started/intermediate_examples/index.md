@@ -1,6 +1,6 @@
 # Intermediate Examples
 
-<div class="grid cards" markdown>
+<div class="grid cards" markdown style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
 
 - **Customize Algorithm**
 
