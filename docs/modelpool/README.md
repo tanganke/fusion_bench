@@ -34,8 +34,8 @@ model = modelpool.load_model('model_name')
 ```
 
 
-## References
+## Implementation Details
 
-::: fusion_bench.modelpool.BaseModelPool
+- [fusion_bench.modelpool.BaseModelPool][]
 
 [^1]: AdaMerging: Adaptive Model Merging for Multi-Task Learning. http://arxiv.org/abs/2310.02575

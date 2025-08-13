@@ -49,7 +49,7 @@ def get_layer_wise_weights(
     return torch.full((num_models, num_layers), init_values, dtype=dtype)
 
 
-def _fuse_weights(layer_wise_weight: Tensor, tensors: List[Tensor]):
+def _fuse_weights(layer_wise_weight: Tensor, tensors: List[Tensor]) -> Tensor:
     """
     Fuse the layer-wise weights with the given state dictionaries.
 

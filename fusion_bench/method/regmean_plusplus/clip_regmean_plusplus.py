@@ -125,22 +125,21 @@ class RegMeanAlgorithmForCLIPPlusPlus(
 
             param_dict = {}
             for name, param in model_to_merge_state_dict.items():
-                if name.startswith("vision_model.embeddings") or name.startswith("vision_model.pre_layrnorm"):
+                if name.startswith("vision_model.embeddings") or name.startswith(
+                    "vision_model.pre_layrnorm"
+                ):
                     param_dict[name] = param
 
             for param_name in param_dict.keys():
-                models_to_merge_param_dict[param_name].append(
-                    param_dict[param_name]
-                )
+                models_to_merge_param_dict[param_name].append(param_dict[param_name])
 
         # merge the parameters of the embedding layer
         merged_params_dict = {}
         for param_name, param_list in models_to_merge_param_dict.items():
             merged_params_dict[param_name] = torch.stack(param_list).mean(dim=0)
-                
+
         return merged_params_dict
-        
-    
+
     def get_input_for_first_layer(self, model: nn.Module, train_dataset):
         # setup dataloader
         train_dataset = CLIPDataset(train_dataset, self.clip_processor)
@@ -157,9 +156,9 @@ class RegMeanAlgorithmForCLIPPlusPlus(
             image_embeds = model.vision_model.embeddings(images)
             image_embeds = model.vision_model.pre_layrnorm(image_embeds)
             image_embeds = image_embeds.detach().cpu()
-            
+
             return image_embeds
-        
+
         num_computed_examples = 0
         num_regmean_examples = self.num_regmean_examples
 
@@ -169,24 +168,32 @@ class RegMeanAlgorithmForCLIPPlusPlus(
                 break
             batches_input.append(compute_input(model, batch))
             num_computed_examples += batch[0].size(0)
-        
+
         return batches_input
 
     def get_layers(self, model: nn.Module):
         return model.vision_model.encoder.layers
-    
-    def update_merged_params_dict(self, merged_params_dict, new_merged_params, layer_idx):
+
+    def update_merged_params_dict(
+        self, merged_params_dict, new_merged_params, layer_idx
+    ):
         for key, value in new_merged_params.items():
             key = f"vision_model.encoder.layers.{layer_idx}.{key}"
             merged_params_dict[key] = value
 
         return merged_params_dict
-    
-    def layer_batches_forward(self, layer: nn.Module, batches_input: List[Tensor]) -> Tensor:
+
+    def layer_batches_forward(
+        self, layer: nn.Module, batches_input: List[Tensor]
+    ) -> Tensor:
         batches_output = []
         for batch in batches_input:
             device = next(layer.parameters()).device
             batch = batch.to(device)
-            logits = layer(batch, attention_mask=None, causal_attention_mask=None)[0].detach().cpu()
+            logits = (
+                layer(batch, attention_mask=None, causal_attention_mask=None)[0]
+                .detach()
+                .cpu()
+            )
             batches_output.append(logits)
         return batches_output

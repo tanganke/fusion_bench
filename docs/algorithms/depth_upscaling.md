@@ -111,9 +111,9 @@ You can then run the `fusion_bench` command with the specified configuration fil
 fusion_bench method=depth_upscaling ...
 ```
 
-## References
+## Implementation Details
 
-::: fusion_bench.method.depth_upscaling.DepthUpscalingAlgorithm
+- [fusion_bench.method.depth_upscaling.DepthUpscalingAlgorithm][]
 
 
 [^1]: [SOLAR 10.7B: Scaling Large Language Models with Simple yet Effective Depth Up-Scaling](http://arxiv.org/abs/2312.15166)

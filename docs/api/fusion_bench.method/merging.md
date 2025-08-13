@@ -39,6 +39,7 @@
         show_root_heading: false
         heading_level: 4
         members:
+        - TaskArithmeticAlgorithm
         - TaskArithmeticForLlama
 
 ### Ties-Merging
@@ -57,6 +58,7 @@
         show_root_heading: false
         heading_level: 4
         members:
+        - FisherMergingAlgorithm
         - FisherMergingForCLIPVisionModel
         - FisherMergingAlgorithmForGPT2
 
@@ -122,6 +124,7 @@
         show_root_heading: false
         heading_level: 4
         members:
+        - RegMeanAlgorithmPlusPlus
         - RegMeanAlgorithmForCLIPPlusPlus
 
 ### Frank-Wolfe Merging

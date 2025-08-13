@@ -61,4 +61,8 @@ fusion_bench method=max_model_predictor \
   taskpool=<taskpool_name>
 ```
 
+## Implementation Details
+
+- [fusion_bench.method.MaxModelPredictorAlgorithm][]
+
 [^1]: Zhu et.al. ICML 2019. Heterogeneous model reuse via optimizing multiparty multiclass margin

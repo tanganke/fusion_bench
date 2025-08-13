@@ -91,7 +91,6 @@ method:
 
 ## References
 
-::: fusion_bench.method.weighted_average.weighted_average.WeightedAverageAlgorithm
-    options:
-        members: true
-::: fusion_bench.method.weighted_average.llama.WeightedAverageForLLama
+- [fusion_bench.method.weighted_average.weighted_average.WeightedAverageAlgorithm][]
+- [fusion_bench.method.weighted_average.llama.WeightedAverageForLLama][]
+

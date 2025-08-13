@@ -37,11 +37,11 @@ _import_structure = {
     "ties_merging": ["TiesMergingAlgorithm"],
     "dare": ["DareSimpleAverage", "DareTaskArithmetic", "DareTiesMerging"],
     "fisher_merging": [
-        "FisherMergingForCLIPVisionModel",
+        "FisherMergingAlgorithm" "FisherMergingForCLIPVisionModel",
         "FisherMergingAlgorithmForGPT2",
     ],
     "regmean": ["RegMeanAlgorithmForCLIP", "RegMeanAlgorithmForGPT2"],
-    "regmean_plusplus": ["RegMeanAlgorithmForCLIPPlusPlus"],
+    "regmean_plusplus": ["RegMeanAlgorithmPlusPlus", "RegMeanAlgorithmForCLIPPlusPlus"],
     "adamerging": [
         "CLIPTaskWiseAdaMergingAlgorithm",
         "CLIPLayerWiseAdaMergingAlgorithm",
@@ -154,7 +154,11 @@ if TYPE_CHECKING:
         LayerWisePruningForMixtral,
         ProgressivePruningForMixtral,
     )
-    from .fisher_merging import FisherMergingForCLIPVisionModel
+    from .fisher_merging import (
+        FisherMergingAlgorithm,
+        FisherMergingAlgorithmForGPT2,
+        FisherMergingForCLIPVisionModel,
+    )
     from .fw_merging import FrankWolfeHardAlgorithm, FrankWolfeSoftAlgorithm
     from .gossip import (
         CLIPLayerWiseGossipAlgorithm,
@@ -196,7 +200,10 @@ if TYPE_CHECKING:
     )
     from .rankone_moe import CLIPRankOneMoEAlgorithm, RankOneMoEAlgorithm
     from .regmean import RegMeanAlgorithmForCLIP, RegMeanAlgorithmForGPT2
-    from .regmean_plusplus import RegMeanAlgorithmForCLIPPlusPlus
+    from .regmean_plusplus import (
+        RegMeanAlgorithmForCLIPPlusPlus,
+        RegMeanAlgorithmPlusPlus,
+    )
     from .simple_average import SimpleAverageAlgorithm
     from .slerp import SlerpMergeAlgorithm
     from .smile_upscaling import (

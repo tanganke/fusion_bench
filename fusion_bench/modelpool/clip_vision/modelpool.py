@@ -11,9 +11,7 @@ from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 from typing_extensions import override
 
 from fusion_bench.utils import instantiate, timeit_context
-from fusion_bench.utils.modelscope import (
-    resolve_repo_path,
-)
+from fusion_bench.utils.modelscope import resolve_repo_path
 
 from ..base_pool import BaseModelPool
 

@@ -81,13 +81,11 @@ def regmean_params_merge(
     reduce_non_diagonal_ratio: float = 1.0,
     weight_transpose: bool = True,
     module_name: str = "",
-    device = "cpu"
+    device="cpu",
 ):
     # two lists with length num_models_to_merge
     param_multiplied_results, module_regmean_weights_list = [], []
-    for model_idx, module_regmean_weights in enumerate(
-        param_regmean_list
-    ):
+    for model_idx, module_regmean_weights in enumerate(param_regmean_list):
         # reduce non-diagonal elements
         module_regmean_weights = reduce_non_diagonal_elements(
             regmean_weights=module_regmean_weights,
@@ -113,9 +111,7 @@ def regmean_params_merge(
     sum_param_multiplied_results = sum(param_multiplied_results)
 
     # get the inverse matrix
-    inv_sum_module_regmean_weights = torch.inverse(
-        sum_module_regmean_weights
-    )
+    inv_sum_module_regmean_weights = torch.inverse(sum_module_regmean_weights)
     # merge parameters with regmean
     merged_param = torch.matmul(
         inv_sum_module_regmean_weights, sum_param_multiplied_results
@@ -158,15 +154,19 @@ def merging_with_regmean_weights(
                     device = param_value_list[model_idx].device
 
                     # Tensor, shape (hidden_dim, hidden_dim)
-                    module_regmean_weights = model_to_merge_regmean_weights[module_name].to(device)
+                    module_regmean_weights = model_to_merge_regmean_weights[
+                        module_name
+                    ].to(device)
                     module_regmean_weights_list.append(module_regmean_weights)
 
-                merged_params[param_name] = regmean_params_merge(param_weight_list=param_value_list,
-                                                                 param_regmean_list=module_regmean_weights_list,
-                                                                 reduce_non_diagonal_ratio=reduce_non_diagonal_ratio,
-                                                                 weight_transpose=weight_transpose,
-                                                                 module_name=module_name,
-                                                                 device=device)
+                merged_params[param_name] = regmean_params_merge(
+                    param_weight_list=param_value_list,
+                    param_regmean_list=module_regmean_weights_list,
+                    reduce_non_diagonal_ratio=reduce_non_diagonal_ratio,
+                    weight_transpose=weight_transpose,
+                    module_name=module_name,
+                    device=device,
+                )
 
                 merged_by_regmean = True
         # use average merging for parameters whose names are not end with ".weight" or not in Linear module
@@ -205,7 +205,9 @@ class RegMeanAlgorithmPlusPlus(BaseAlgorithm, SimpleProfilerMixin):
             modelpool = BaseModelPool(modelpool)
         self.modelpool = modelpool
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
-        models_to_merge_dict = {name: model.to(device) for name, model in modelpool.named_models()}
+        models_to_merge_dict = {
+            name: model.to(device) for name, model in modelpool.named_models()
+        }
         self.on_regmean_start()
 
         # initialize the merged models as the pretrained model
@@ -213,7 +215,9 @@ class RegMeanAlgorithmPlusPlus(BaseAlgorithm, SimpleProfilerMixin):
         merged_params_dict = {}
 
         # 1. merge embedding layer
-        merged_embedding_dict = self.merge_embedding_layer(models_to_merge_dict=models_to_merge_dict)
+        merged_embedding_dict = self.merge_embedding_layer(
+            models_to_merge_dict=models_to_merge_dict
+        )
         merged_model.load_state_dict(merged_embedding_dict, strict=False)
 
         with torch.no_grad():
@@ -223,12 +227,13 @@ class RegMeanAlgorithmPlusPlus(BaseAlgorithm, SimpleProfilerMixin):
                 self.profile("computing first layer input"),
             ):
                 batches_input_dict = defaultdict(list)
-                for name in tqdm(models_to_merge_dict.keys(), desc="computing input for first layer"):
+                for name in tqdm(
+                    models_to_merge_dict.keys(), desc="computing input for first layer"
+                ):
                     dataset = modelpool.load_train_dataset(name)
-                    
+
                     batches_input_dict[name] = self.get_input_for_first_layer(
-                        merged_model,
-                        dataset
+                        merged_model, dataset
                     )
 
             # 2. iteratively merge layer by layer with regmean algorithm
@@ -240,9 +245,9 @@ class RegMeanAlgorithmPlusPlus(BaseAlgorithm, SimpleProfilerMixin):
                 models_to_merge_layers_dict[name] = self.get_layers(model)
 
             param_names_to_merge = None
-            for layer_idx, backbone_layer in tqdm(enumerate(backbone_layers), 
-                                                  desc="merging layers", 
-                                                  total=num_layers):
+            for layer_idx, backbone_layer in tqdm(
+                enumerate(backbone_layers), desc="merging layers", total=num_layers
+            ):
                 # dictionary of list, where key is the parameter name,
                 # value is a list of the corresponding parameters of all the models that need to be merged
                 models_to_merge_param_dict = defaultdict(list)
@@ -263,16 +268,19 @@ class RegMeanAlgorithmPlusPlus(BaseAlgorithm, SimpleProfilerMixin):
                                 "exclude_param_names_regex", []
                             ),
                         )
-                
+
                     for param_name in param_names_to_merge:
                         models_to_merge_param_dict[param_name].append(
                             param_dict[param_name]
                         )
 
                     linear_modules_to_merge = get_modules_to_merge(
-                        model=layer_to_merge, include_module_types=self._include_module_type
+                        model=layer_to_merge,
+                        include_module_types=self._include_module_type,
                     )
-                    assert len(linear_modules_to_merge) > 0, "No linear modules to merge"
+                    assert (
+                        len(linear_modules_to_merge) > 0
+                    ), "No linear modules to merge"
 
                     # 2.1. compute regmean weights for each model
                     with (
@@ -288,12 +296,19 @@ class RegMeanAlgorithmPlusPlus(BaseAlgorithm, SimpleProfilerMixin):
 
                         module_subset = get_param_names_to_merge(
                             input_param_names=list(param_dict.keys()),
-                            exclude_param_names_regex=self.exclude_param_names_regex
+                            exclude_param_names_regex=self.exclude_param_names_regex,
                         )
-                        module_subset = [name.replace(".weight", "").replace(".bias", "") for name in module_subset]
+                        module_subset = [
+                            name.replace(".weight", "").replace(".bias", "")
+                            for name in module_subset
+                        ]
                         module_subset = list(set(module_subset))
-                        regmean_weights = {module_name: regmean_weights[module_name] for module_name in module_subset if module_name in regmean_weights}
-                        
+                        regmean_weights = {
+                            module_name: regmean_weights[module_name]
+                            for module_name in module_subset
+                            if module_name in regmean_weights
+                        }
+
                         models_to_merge_regmean_weights_list.append(regmean_weights)
 
                 # 2.2. merge parameters with regmean weights
@@ -318,21 +333,22 @@ class RegMeanAlgorithmPlusPlus(BaseAlgorithm, SimpleProfilerMixin):
                     self.profile("forwarding next layer"),
                 ):
                     if layer_idx < num_layers - 1:
-                        backbone_layer.load_state_dict(merged_layer_params, strict=False)
+                        backbone_layer.load_state_dict(
+                            merged_layer_params, strict=False
+                        )
                         batches_output_dict = defaultdict(list)
                         for name in models_to_merge_dict.keys():
                             batches_output_dict[name] = self.layer_batches_forward(
-                                backbone_layer, 
-                                batches_input_dict[name]
+                                backbone_layer, batches_input_dict[name]
                             )
                         batches_input_dict = batches_output_dict
-                
+
             # 3. load state dict to the merged model
             merged_model.load_state_dict(merged_params_dict, strict=False)
 
         self.print_profile_summary()
         return merged_model
-    
+
     def merge_embedding_layer(self, models_to_merge_dict: Dict[str, nn.Module]):
         """
         Merge the embedding layer of the model with the merged model.
@@ -345,10 +361,12 @@ class RegMeanAlgorithmPlusPlus(BaseAlgorithm, SimpleProfilerMixin):
 
     def get_layers(self, model: nn.Module):
         raise NotImplementedError
-    
-    def update_merged_params_dict(self, merged_params_dict, new_merged_params, layer_idx):
+
+    def update_merged_params_dict(
+        self, merged_params_dict, new_merged_params, layer_idx
+    ):
         raise NotImplementedError
-    
+
     def layer_batches_forward(self, layer: nn.Module, batches_input: List[Tensor]):
         raise NotImplementedError
 

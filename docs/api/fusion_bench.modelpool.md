@@ -57,6 +57,10 @@
         - CausalLMPool
         - CausalLMBackbonePool
 
+::: fusion_bench.modelpool.causal_lm.load_peft_causal_lm
+    options:
+        heading_level: 4
+
 ## Others
 
 ### Transformers AutoModel

@@ -5,9 +5,7 @@ import torch
 
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.utils.parameters import count_parameters
-from fusion_bench.utils.state_dict_arithmetic import (
-    state_dict_mul,
-)
+from fusion_bench.utils.state_dict_arithmetic import state_dict_mul
 
 from .base_algorithm import SuperposedAlgorithmBase, compare_models
 

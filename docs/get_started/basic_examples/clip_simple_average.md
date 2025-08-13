@@ -12,7 +12,7 @@ where \( \theta_{merged} \) is the set of parameters for the merged model, \( N 
 
 This method works especially well for *large* models that have been fine-tuned on distinct downstream tasks[^3], or for models trained on the same task but with varying hyperparameter settings such as learning rate or batch size[^1][^2].
 
-## 🔧 Configuration
+## 🔧 Standalone YAML Configuration
 
 The example uses the following standalone configuration file that demonstrates merging CLIP models fine-tuned on different image classification datasets:
 
@@ -42,7 +42,7 @@ The example uses the following standalone configuration file that demonstrates m
 Execute the model merging process with the following command:
 
 ```bash
-fusion_bench --config-path config/_get_started --config-name clip_simple_average
+fusion_bench --config-path $PWD/config/_get_started --config-name clip_simple_average
 ```
 
 This command will:
@@ -51,14 +51,6 @@ This command will:
 2. **Apply the Simple Average algorithm** to merge their parameters
 3. **Evaluate the merged model** on the specified test datasets
 4. **Generate performance reports** comparing the merged model against individual models
-
-## 📊 Expected Outcomes
-
-After running this example, you should expect:
-
-- **Merged Model Creation**: A single CLIP model combining knowledge from both fine-tuned models
-- **Performance Evaluation**: Accuracy metrics on both SUN397 and Stanford Cars test sets
-- **Comparison Results**: Performance comparison between the merged model and individual task-specific models
 
 ## 🎓 Key Learning Points
 
@@ -69,32 +61,7 @@ This example teaches you:
 3. **Task Pool Configuration**: How to define evaluation datasets
 4. **Simple Execution**: How to run model merging with a single command
 
-## 🔄 Next Steps
-
-After completing this example, consider exploring:
-
-- **[Weighted Averaging](../algorithms/weighted_averaging.md)**: Learn how to assign different weights to models during merging
-- **[Task Arithmetic](../algorithms/task_arithmetic.md)**: Explore more sophisticated merging techniques
-- **[Model Evaluation](../guides/evaluation.md)**: Understand comprehensive evaluation strategies
-
-## 💡 Tips and Best Practices
-
-- **Model Compatibility**: Ensure all models in the pool share the same architecture
-- **Dataset Quality**: Use high-quality evaluation datasets for reliable performance assessment
-- **Resource Management**: Monitor memory usage when working with large models
-- **Experiment Tracking**: Keep detailed records of your merging experiments for reproducibility
-
-here we show the example of merging clip models using simple average, which is a hyperparameter-free algorithm.
-
-```yaml title="config/_get_started/clip_simple_average.yaml"
---8<-- "config/_get_started/clip_simple_average.yaml"
-```
-
-```bash
-fusion_bench \
-  --config-path config/_get_started \
-  --config-name clip_simple_average
-```
+## 🐛 Debugging Configuration (VS Code)
 
 ```json title=".vscode/launch.json"
 {

@@ -107,7 +107,12 @@ def prepare_calibration_input(
         device=device,
         requires_grad=False,
     )
-    cache = {"i": 0, "attention_mask": None, "position_ids": None, 'position_embeddings': None}
+    cache = {
+        "i": 0,
+        "attention_mask": None,
+        "position_ids": None,
+        "position_embeddings": None,
+    }
 
     class Catcher(nn.Module):
         def __init__(self, module):

@@ -1,6 +1,8 @@
 import logging
+from typing import Any
 
 import torch
+from torch import nn
 
 from fusion_bench import BaseAlgorithm, BaseModelPool
 from fusion_bench.utils.state_dict_arithmetic import state_dict_weighted_sum
@@ -19,7 +21,7 @@ class LinearInterpolationAlgorithm(BaseAlgorithm):
         "t": "t",
     }
 
-    def __init__(self, t: float, **kwargs):
+    def __init__(self, t: float, **kwargs: Any):
         """
         Initialize the `LinearInterpolationAlgorithm` with the given interpolation parameter.
 
@@ -31,7 +33,7 @@ class LinearInterpolationAlgorithm(BaseAlgorithm):
         self.t = t
         super().__init__(**kwargs)
 
-    def run(self, modelpool: BaseModelPool):
+    def run(self, modelpool: BaseModelPool) -> nn.Module:
         """
         Run the linear interpolation algorithm on the given model pool.
 

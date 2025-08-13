@@ -48,11 +48,8 @@ fusion_bench \
     fabric.loggers.name=PWEMoE-LS-8tasks
 ```
 
-## References
+## Implementation Details
 
-::: fusion_bench.method.pwe_moe.clip_pwe_moe
-      options:
-        members:
-        - PWEMoEAlgorithmForCLIP
-        - PWEMoELinearScalarizationForCLIP
-        - PWEMoExactParetoOptimalForCLIP
+- [fusion_bench.method.pwe_moe.clip_pwe_moe.PWEMoEAlgorithmForCLIP][]
+- [fusion_bench.method.pwe_moe.clip_pwe_moe.PWEMoELinearScalarizationForCLIP][]
+- [fusion_bench.method.pwe_moe.clip_pwe_moe.PWEMoExactParetoOptimalForCLIP][]

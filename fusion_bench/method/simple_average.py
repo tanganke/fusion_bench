@@ -76,7 +76,7 @@ class SimpleAverageAlgorithm(
         self.show_pbar = show_pbar
 
     @torch.no_grad()
-    def run(self, modelpool: Union[BaseModelPool, Dict[str, nn.Module]]):
+    def run(self, modelpool: Union[BaseModelPool, Dict[str, nn.Module]]) -> nn.Module:
         """
         Fuse the models in the given model pool using simple averaging.
 

@@ -21,6 +21,15 @@
         members:
         - ModelRecombinationAlgorithm
 
+::: fusion_bench.method.model_recombination
+    options:
+        show_root_heading: false
+        heading_level: 4
+        members:
+        - recombine_modellist
+        - recombine_modeldict
+        - recombine_state_dict
+
 ## MoE-based Mixing
 
 ### MoE Upscaling
@@ -63,6 +72,17 @@
         members:
         - RankOneMoEAlgorithm
         - CLIPRankOneMoEAlgorithm
+
+### Pareto-driven Weight-Ensembling MoE (PWE-MoE)
+
+::: fusion_bench.method.pwe_moe.clip_pwe_moe
+      options:
+        show_root_heading: false
+        heading_level: 4
+        members:
+        - PWEMoEAlgorithmForCLIP
+        - PWEMoELinearScalarizationForCLIP
+        - PWEMoExactParetoOptimalForCLIP
 
 ### Smile Upscaling
 

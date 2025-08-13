@@ -68,11 +68,9 @@ fusion_bench method=ties_merging \
   taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
 ```
 
-## Reference
+## Implementation Details
 
-::: fusion_bench.method.ties_merging.TiesMergingAlgorithm
-    options:
-        members: true
+- [fusion_bench.method.ties_merging.TiesMergingAlgorithm][]
 
 
 [^1]: (NIPS 2023) Resolving Interference When Merging Models. http://arxiv.org/abs/2306.01708

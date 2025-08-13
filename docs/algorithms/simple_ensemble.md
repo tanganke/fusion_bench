@@ -36,6 +36,6 @@ fusion_bench \
   taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 
 ```
 
-## References
+## Implementation Details
 
-::: fusion_bench.method.SimpleEnsembleAlgorithm
+- [fusion_bench.method.SimpleEnsembleAlgorithm][]

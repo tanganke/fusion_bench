@@ -14,7 +14,7 @@ import logging
 import os
 from copy import deepcopy
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, TypeVar, Union
 
 import hydra.core.global_hydra
 from hydra import compose, initialize
@@ -24,6 +24,8 @@ from fusion_bench.utils import import_object, instantiate
 from fusion_bench.utils.instantiate_utils import set_print_function_call
 
 log = logging.getLogger(__name__)
+
+T = TypeVar("T", bound="HydraConfigMixin")
 
 
 class HydraConfigMixin:
@@ -63,7 +65,7 @@ class HydraConfigMixin:
         cls,
         config_name: Union[str, Path],
         overrides: Optional[List[str]] = None,
-    ):
+    ) -> T:
         """
         Create an instance of the class from a Hydra configuration.
 

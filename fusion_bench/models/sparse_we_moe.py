@@ -11,12 +11,12 @@ from torch.func import functional_call
 from torch.nn import functional as F
 from tqdm.auto import tqdm
 
+from fusion_bench.models.utils import del_attr, get_attr, set_attr
 from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_sub,
     state_dict_weighted_sum,
 )
 from fusion_bench.utils.type import StateDictType
-from fusion_bench.models.utils import del_attr, set_attr, get_attr
 
 log = logging.getLogger(__name__)
 

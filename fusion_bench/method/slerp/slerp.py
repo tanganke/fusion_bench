@@ -1,10 +1,13 @@
 import logging
+from typing import Any, Dict
 
 import torch
+from torch import nn
 from typing_extensions import override
 
 from fusion_bench.method import BaseAlgorithm
 from fusion_bench.modelpool import BaseModelPool
+from fusion_bench.utils.type import StateDictType
 
 from .slerp_utils import slerp
 
@@ -18,7 +21,7 @@ def slerp_on_state_dicts(
     *,
     DOT_THRESHOLD: float = 0.9995,
     epsilon: float = 1e-8,
-):
+) -> StateDictType:
     """
     Perform spherical linear interpolation (slerp) on the state dictionaries of two models.
 
@@ -72,7 +75,7 @@ class SlerpMergeAlgorithm(BaseAlgorithm):
         super().__init__()
 
     @override
-    def run(self, modelpool: BaseModelPool):
+    def run(self, modelpool: BaseModelPool) -> nn.Module:
         """
         Run the SlerpMergeAlgorithm on the given model pool.
 

@@ -1,7 +1,7 @@
 import logging
 from collections import OrderedDict
 from copy import deepcopy
-from typing import Optional
+from typing import Any, Dict, Optional, Tuple
 
 import torch.nn as nn
 from torch.func import functional_call, jvp
@@ -9,7 +9,7 @@ from torch.func import functional_call, jvp
 log = logging.getLogger(__name__)
 
 
-def dict_params_to_tuple(dict_params: dict):
+def dict_params_to_tuple(dict_params: dict) -> Tuple:
     return tuple(v for k, v in dict_params.items())
 
 
@@ -33,7 +33,7 @@ class LinearizedModelWraper(nn.Module):
         for p in self.params0_values:
             p.requires_grad_(False)
 
-    def tuple_params_to_dict(self, tuple_params):
+    def tuple_params_to_dict(self, tuple_params) -> Dict[str, Any]:
         """
         Converts a tuple of parameters to a dictionary with keys corresponding to the parameter names.
 
@@ -50,7 +50,7 @@ class LinearizedModelWraper(nn.Module):
             state_dict[k] = p
         return state_dict
 
-    def forward(self, *args, **kwargs):
+    def forward(self, *args: Any, **kwargs: Any) -> Any:
         """
         Computes the linearized model output using a first-order Taylor decomposition.
 

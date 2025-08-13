@@ -44,7 +44,7 @@ fusion_bench \
 
 This guide provides a step-by-step process for merging models using the `fusion_bench` command-line interface. By following these instructions, you can merge your own models and save them for future use.
 
-## References
+## Implementation Details
 
-::: fusion_bench.method.mixture_of_experts.mixtral_merging
-
+- [fusion_bench.method.MixtralMoEMergingAlgorithm][]
+- [fusion_bench.method.MixtralForCausalLMMergingAlgorithm][]

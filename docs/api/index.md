@@ -32,7 +32,7 @@ Base class for all FusionBench components.
 
 - [fusion_bench.mixins](fusion_bench.mixins.md): Mixins.
 - [fusion_bench.program](fusion_bench.program.md): Program definitions.
-- [fusion_bench.method](fusion_bench.method.md): Implementation of methods.
+- [fusion_bench.method](fusion_bench.method/index.md): Implementation of methods.
 - [fusion_bench.modelpool](fusion_bench.modelpool.md): Model pools.
 - [fusion_bench.taskpool](fusion_bench.taskpool.md): Task pools.
 - [fusion_bench.utils](fusion_bench.utils/index.md): Utility functions.
