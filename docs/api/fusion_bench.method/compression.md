@@ -4,7 +4,12 @@
 
 ### BitDelta
 
-
+::: fusion_bench.method
+    options:
+        show_root_heading: false
+        heading_level: 4
+        members:
+        - BitDeltaAlgorithm
 
 ## Parameter Pruning
 
