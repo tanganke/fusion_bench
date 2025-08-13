@@ -12,7 +12,7 @@ TASK_NAMES_TA8 = [
 ]
 "The 8 tasks used in the Task Arithmetic paper."
 TASK_NAMES_TALL8 = TASK_NAMES_TA8
-"The 8 tasks used in the tall mask paper"
+"The 8 tasks used in the Tall Mask paper"
 TASK_NAMES_TALL10 = TASK_NAMES_TA8 + ["oxford_flowers102", "pcam"]
 TASK_NAMES_TALL12 = TASK_NAMES_TALL10 + [
     "fer2013",
