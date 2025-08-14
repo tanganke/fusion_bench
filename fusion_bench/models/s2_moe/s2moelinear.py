@@ -5,6 +5,11 @@ from fusion_bench.models.smile_moe.utils import _is_all_zeros, svd
 from fusion_bench.models.s2_moe.sparse_linear import SparseLinear
 import torch.nn.functional as F
 
+
+class ExpertNotTrainedError(Exception):
+    pass
+
+
 class S2MoELinear(nn.Module):
     @torch.no_grad()
     def __init__(
@@ -58,20 +63,22 @@ class S2MoELinear(nn.Module):
             for w in w_diff_list:
                 # 保存原始数据类型
                 original_dtype = w.dtype
-                
+
                 # 如果是BFloat16类型，转换为float32
                 if w.dtype == torch.bfloat16:
                     w = w.to(torch.float32)
-                
+
                 # 执行SVD操作
-                u, s, v = svd(w, full_matrices=full_matrices, accelerator=upscaling_accelerator)
-                
+                u, s, v = svd(
+                    w, full_matrices=full_matrices, accelerator=upscaling_accelerator
+                )
+
                 # 如果原始数据是BFloat16，将结果转换回BFloat16
                 if original_dtype == torch.bfloat16:
                     u = u.to(torch.bfloat16)
                     s = s.to(torch.bfloat16)
                     v = v.to(torch.bfloat16)
-                
+
                 svd_cache_list.append((u, s, v))
             # SVD缓存列表，避免重复计算
         self.orig_v = orig_v
@@ -102,7 +109,12 @@ class S2MoELinear(nn.Module):
         if k > 0:
             experts = [
                 #! use SparseLinear instead of SmileCompressedLinear
-                SparseLinear(m.in_features, m.out_features, bias=m.bias is not None, sparsity_ratio=0.8) 
+                SparseLinear(
+                    m.in_features,
+                    m.out_features,
+                    bias=m.bias is not None,
+                    sparsity_ratio=0.8,
+                )
                 for m in finetuned_models
             ]
             for m, expert in zip(finetuned_models, experts):
@@ -117,7 +129,7 @@ class S2MoELinear(nn.Module):
             for m in experts:
                 m.bias.data = m.bias.data - pretrained_model.bias
         # 分配预训练模型（共享部分）
-        self.pretrained_model = pretrained_model
+        self.shared_linear = pretrained_model
 
     def forward(self, hidden_states: Tensor):
         """
@@ -129,7 +141,7 @@ class S2MoELinear(nn.Module):
         Returns:
             Tensor: 输出张量。
         """
-        pretrained_out = self.pretrained_model(hidden_states)
+        pretrained_out = self.shared_linear(hidden_states)
         input_shape = hidden_states.size()
         hidden_states = hidden_states.view(-1, self.in_features)
 
@@ -185,17 +197,17 @@ class S2MoELinear(nn.Module):
         """
         Mimic linear layer. Bacause in some cases, user might indicate the device (or dtype of parameters) of the linear layer using `linear_layer.weight.device`
         """
-        return self.pretrained_model.weight
+        return self.shared_linear.weight
 
     @property
     def bias(self):
-        return self.pretrained_model.bias
+        return self.shared_linear.bias
 
     def __repr__(self):
         return (
             f"SingularMoELinear("
-            f"in_features={self.pretrained_model.in_features}, "
-            f"out_features={self.pretrained_model.out_features}, "
+            f"in_features={self.shared_linear.in_features}, "
+            f"out_features={self.shared_linear.out_features}, "
             f"num_experts={self.num_experts}, "
             f"top_k={self.top_k}, "
             f"gate_k={self.gate_k}, "
@@ -209,7 +221,7 @@ class ProjectionBasedGate(nn.Module):
         self,
         input_features: int,
         w_diff_list: List[Tensor],
-        orig_v,
+        orig_v: List[Tensor],
         k: int,
         threshold: float = 0.1,
         top_k: int = 2,
@@ -238,7 +250,10 @@ class ProjectionBasedGate(nn.Module):
         # self.task_subspaces_U = nn.ParameterList()
         # self.task_subspaces_S = nn.ParameterList()
 
-        self.orig_v = orig_v
+        # TODO: use torch.stack to convet the parameter list into a single parameter
+        self.orig_v = nn.ParameterList(
+            [nn.Parameter(v, requires_grad=False) for v in orig_v]
+        )
         # for i, w_diff in enumerate(w_diff_orig):
         #     u, s, v = svd(w_diff.T, accelerator=upscaling_accelerator)
         #     split_k = int(1/self.num_experts * s.shape[0])
@@ -271,10 +286,6 @@ class ProjectionBasedGate(nn.Module):
         residuals = []
 
         for i in range(self.num_experts):
-            # U = self.task_subspaces_U[i]
-            # S = self.task_subspaces_S[i]
-            # V = self.task_subspaces_V[i]
-
             v_0 = self.orig_v[i]
 
             # 判断x_l的维度为3则进行视图变换
@@ -313,7 +324,9 @@ class ProjectionBasedGate(nn.Module):
             top_k_mask = torch.zeros_like(routing_weights, dtype=torch.bool)
             top_k_mask.scatter_(1, top_indices, True)
             mask = mask & top_k_mask
-
+        # print("top_values: ", top_values)
+        # print("top_indices: ", top_indices)
+        # print("#######################################################")
         # 将未选中的权重置为0，并重新归一化
         filtered_weights = routing_weights * mask.float()
         sum_weights = filtered_weights.sum(dim=1, keepdim=True)

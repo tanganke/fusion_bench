@@ -1,0 +1,13 @@
+_target_: fusion_bench.method.smile_upscaling.smile_mistral_upscaling.SmileMistralUpscalingAlgorithm
+# device to put the models on
+device: cpu
+# device to perform SVD on
+accelerator: cuda
+# path to save/load the model
+model_path: null
+model_dtype: null
+# SmileMoE parameters
+num_experts_per_tok: 1
+rank_of_router: 8
+# if rank_of_expert < 0, dense expert is used.
+rank_of_expert: 512

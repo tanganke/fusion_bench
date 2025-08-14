@@ -1,0 +1,16 @@
+# This is useful for evluate the performance of a single clip vision model
+#
+# fusion_bench \
+#   modelpool=CLIPVisionModelPool/clip-vit-base-patch16_individual \
+#   modelpool.base_model=${MODEL_PATH}
+#   ...
+defaults:
+  - CLIPVisionModelPool@: _template
+models:
+  _pretrained_:
+    _target_: transformers.CLIPVisionModel.from_pretrained
+    pretrained_model_name_or_path: ${...base_model}
+processor:
+  _target_: transformers.CLIPProcessor.from_pretrained
+  pretrained_model_name_or_path: ${..base_model}
+base_model: openai/clip-vit-base-patch16

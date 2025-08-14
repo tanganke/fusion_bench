@@ -1,0 +1,44 @@
+name: flan-t5_glue_text_generation # whatever you want to name your task pool
+type: FlanT5GLUETextGenerationTaskPool
+tasks:
+  - name: cola
+    dataset:
+      name: cola
+      split: validation
+  - name: mnli
+    dataset:
+      name: mnli
+      split: validation_matched
+  - name: mrpc
+    dataset:
+      name: mrpc
+      split: validation
+  - name: qnli
+    dataset:
+      name: qnli
+      split: validation
+  - name: qqp
+    dataset:
+      name: qqp
+      split: validation
+  - name: rte
+    dataset:
+      name: rte
+      split: validation
+  - name: sst2
+    dataset:
+      name: sst2
+      split: validation
+  - name: stsb
+    dataset:
+      name: stsb
+      split: validation
+# all flan-t5 models share the same tokenizer,
+# so it is not necessary to change it when you evaluate other models,
+# such as flan-t5-large, flan-t5-xxl
+tokenizer: google/flan-t5-base
+# cache directory for storing the preprocessed data
+cache_dir: outputs/cache
+batch_size: 32
+num_workers: 4
+fast_dev_run: ${fast_dev_run}

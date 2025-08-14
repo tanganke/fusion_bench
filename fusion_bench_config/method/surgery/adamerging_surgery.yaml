@@ -1,0 +1,26 @@
+# this option can be "clip_task_wise_adamerging"
+name: clip_layer_wise_adamerging_surgery
+# this weights can be a list of float, or a string that points to a *.np, *.pt file containing the weights
+# if weights is specified, skip the test-time adaptation training
+weights: null
+# learning rate
+optimizer: adam
+lr: 1e-3
+init_values: 0.3
+# if `clamp_weights` is true, the weights will be clamped to [0, 1]
+clamp_weights: false
+# arguments of `functional_call`
+tie_weights: true
+strict: false
+# this is overrided by `fabric.devices` if launched from the `fusion_bench` CLI.
+devices: 1
+batch_size: 16
+num_workers: 8
+max_steps: 1000
+fast_dev_run: ${fast_dev_run}
+# the path for saving the merging weights
+save_merging_weights: 'merging_weights.pt'
+cache_dir: outputs
+# parameters of Surgery
+eval_iterations: 200
+surgery_steps: 1000

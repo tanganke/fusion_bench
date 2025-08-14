@@ -55,11 +55,12 @@ class SparseLinear(nn.Linear):
         self.in_features = in_features
         self.out_features = out_features
         self.sparsity_ratio = sparsity_ratio
-
+        self.is_bias = bias
         self.weight = nn.Parameter(
             torch.empty((out_features, in_features), **factory_kwargs)
         )
-        if bias is not None:
+
+        if bias:
             self.bias = nn.Parameter(torch.empty(out_features, **factory_kwargs))
         else:
             self.register_parameter("bias", None)
@@ -91,8 +92,12 @@ class SparseLinear(nn.Linear):
 
     def forward(self, input: torch.Tensor):
         if self.weight.is_sparse:
-            y = torch.sparse.mm(input, self.weight.t())
-            y = y + self.bias
+            if self.weight.dtype == torch.float32:
+                y = torch.sparse.mm(input, self.weight.t())
+            else:
+                y = torch.mm(input, self.weight.to_dense().t())
+            if self.bias:
+                y = y + self.bias
             return y
         else:
             return F.linear(input, self.weight, self.bias)

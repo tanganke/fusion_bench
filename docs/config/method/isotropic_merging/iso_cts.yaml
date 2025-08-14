@@ -1,0 +1,4 @@
+_target_: fusion_bench.method.ISO_CTS_Merge
+scaling_factor: 1.0
+common_space_fraction: 0.8
+exclude_keys: null

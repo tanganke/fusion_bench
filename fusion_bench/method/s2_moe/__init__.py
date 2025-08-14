@@ -1,1 +1,2 @@
 from .s2_moe_upscaling import S2MoEUpscalingAlgorithm
+from .s2_moe_llama_upscaling import S2MoEUpscalingAlgorithmForLlama

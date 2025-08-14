@@ -4,31 +4,49 @@ import os
 import time
 from copy import deepcopy
 from re import U
-from typing import Dict, List, Tuple  # noqa: F401
+from typing import TYPE_CHECKING, Dict, List, Tuple  # noqa: F401
 
 import numpy as np
 import torch
 import torch.nn.functional as F
+from joblib import Memory
 from omegaconf import OmegaConf
 from torch import Tensor, nn
 from tqdm.auto import tqdm
+from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 
+from fusion_bench.compat.modelpool.base_pool import DictModelPool
 from fusion_bench.method import BaseAlgorithm
 from fusion_bench.method.s2_moe.utils import TSVC_utils, TSVM_utils
 from fusion_bench.method.simple_average import simple_average
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
-from fusion_bench.modelpool import BaseModelPool
-from fusion_bench.models.s2_moe.s2moelinear import S2MoELinear
+from fusion_bench.modelpool import BaseModelPool, CausalLMPool
+from fusion_bench.models.modeling_s2_moe_llama import (
+    S2MoELlamaConfig,
+    S2MoELlamaForCausalLM,
+)
+from fusion_bench.models.modeling_s2_moe_llama.modeling_s2_moe_llama import (
+    S2MoELlamaDecoderLayer,
+)
+from fusion_bench.models.s2_moe.s2moelinear_from_hf_config import (
+    S2MoELinear,
+    upscale_to_s2moe_linear,
+)
 from fusion_bench.models.s2_moe.sparse_linear import SparseLinear
 from fusion_bench.models.smile_moe.linear_from_module import ExpertNotTrainedError
 from fusion_bench.models.smile_moe.utils import _is_all_zeros, svd
 from fusion_bench.models.utils import get_attr, set_attr
 from fusion_bench.utils.parameters import print_parameters
 
+if TYPE_CHECKING:
+    from transformers.models.llama.modeling_llama import LlamaForCausalLM
+
 log = logging.getLogger(__name__)
 
+memory = Memory("outputs/cache", verbose=0)
 
-class S2MoEUpscalingAlgorithm(
+
+class S2MoEUpscalingAlgorithmForLlama(
     SimpleProfilerMixin,
     BaseAlgorithm,
 ):
@@ -37,13 +55,14 @@ class S2MoEUpscalingAlgorithm(
         "device": "device",
         "upscaling_accelerator": "upscaling_accelerator",
         "full_matrices": "full_matrices",
-        "gate_k": "gate_k",
-        "k": "k",
         "top_k": "top_k",
         "routing_use_diff": "routing_use_diff",
         "average_experts": "average_experts",
         "model_path": "model_path",
+        "model_save_path": "model_save_path",
         "threshold": "threshold",  # 新增参数
+        "use_aparse_expert": "use_aparse_expert",
+        "sparsity_ratio": "sparsity_ratio",
     }
 
     def __init__(
@@ -52,13 +71,14 @@ class S2MoEUpscalingAlgorithm(
         device: str = "cuda",
         upscaling_accelerator: str = None,
         full_matrices: bool = True,
-        gate_k: int = 256,
-        k: int = 256,
         top_k: int = 2,
         threshold: float = 0.1,  # 新增参数
         routing_use_diff: bool = True,
         average_experts: bool = False,
         model_path: str = None,
+        model_save_path: str = None,
+        use_aparse_expert: bool = True,
+        sparsity_ratio: float = 0.0,
         **kwargs,
     ):
         """
@@ -68,27 +88,29 @@ class S2MoEUpscalingAlgorithm(
             device (str): 用于计算的设备。
             upscaling_accelerator (str): 用于SVD计算的设备。
             full_matrices (bool): 是否计算完整大小的U和V矩阵。
-            gate_k (int): 门控网络保留的奇异值数量。
-            k (int): 专家保留的奇异值数量。
             top_k (int): 选择的顶部专家数量。
             threshold (float): 激活任务子空间的阈值。
             routing_use_diff (bool): 是否使用权重差异进行路由。
             average_experts (bool): 是否平均专家。
             model_path (str): 保存/加载模型的路径。
+            use_aparse_expert (bool): 是否使用稀疏专家。
+            sparsity_ratio (float): 稀疏性比率。
             **kwargs: 额外参数。
         """
         super().__init__()
         self.device = device
         self.upscaling_accelerator = upscaling_accelerator
         self.full_matrices = full_matrices
-        self.gate_k = gate_k
-        self.k = k
         self.top_k = top_k
         self.threshold = threshold  # 新增参数
         self.routing_use_diff = routing_use_diff
         self.average_experts = average_experts
         self.model_path = model_path
         self.rout_svd_cache = None
+        self.use_aparse_expert = use_aparse_expert
+        self.sparsity_ratio = sparsity_ratio
+        self.model_save_path = model_save_path
+        
         for key, value in kwargs.items():
             log.warning(f"Unrecognized argument: {key}")
             setattr(self, key, value)
@@ -97,9 +119,10 @@ class S2MoEUpscalingAlgorithm(
         print(f"=== Config for `{type(self).__name__}` ===")
         print(OmegaConf.to_yaml(self.config))
         print(f"=== Config for `{type(self).__name__}` ===")
+        #print("config sparse ratio: ", self.config.sparsity_ratio)
 
     @torch.no_grad()
-    def run(self, modelpool: BaseModelPool):
+    def run(self, modelpool: CausalLMPool):
         """
         Executes the upscaling process.
 
@@ -109,14 +132,15 @@ class S2MoEUpscalingAlgorithm(
         Returns:
             nn.Module: The upscaled model.
         """
+
         if not isinstance(modelpool, BaseModelPool):
             modelpool = BaseModelPool(modelpool)
 
-        if self.config.model_path is not None and os.path.exists(
-            self.config.model_path
-        ):
-            log.info(f"Loading model from {self.config.model_path}")
-            model = torch.load(self.config.model_path)
+        self.modelpool = modelpool
+
+        if self.model_path is not None and os.path.exists(self.model_path):
+            log.info(f"Loading model from {self.model_path}")
+            model = AutoModelForCausalLM.from_pretrained(self.model_path)
             print_parameters(model)
             return model
 
@@ -135,16 +159,26 @@ class S2MoEUpscalingAlgorithm(
                 finetuned_models = [m.cuda() for m in finetuned_models]
 
         # pretrained_model_orig = copy.deepcopy(pretrained_model)
-        pretrained_model, orig_v = self.tsv_m(pretrained_model, finetuned_models)
-
+        pretrained_model, orig_v = memory.cache(
+            lambda: self.tsv_m(pretrained_model, finetuned_models)
+        )()
+        #pretrained_model, orig_v = self.tsv_m(pretrained_model, finetuned_models)
+        
         with self.profile("merge model"):
             model = self.merge(pretrained_model, finetuned_models, orig_v)
 
         self.print_profile_summary()
-        if self.config.model_path is not None:
-            os.makedirs(os.path.dirname(self.config.model_path), exist_ok=True)
-            log.info(f"Saving model to {self.config.model_path}")
-            torch.save(model, self.config.model_path)
+        if self.config.model_save_path is not None:
+            os.makedirs(os.path.dirname(self.config.model_save_path), exist_ok=True)
+            log.info(f"Saving model to {self.config.model_save_path}")
+            # copy the tokenizer
+            tokenizer = modelpool.load_tokenizer()
+            tokenizer.save_pretrained(self.config.model_save_path)
+            model.save_pretrained(self.config.model_save_path)
+        
+        for name, module in model.named_modules():
+            if isinstance(module, SparseLinear):
+                module.apply_pruning_()
         print_parameters(model)
         return model
 
@@ -166,12 +200,82 @@ class S2MoEUpscalingAlgorithm(
         Returns:
             nn.Module: The merged model.
         """
-        if in_place:
-            model = pretrained_model
-        else:
-            model = deepcopy(pretrained_model)
 
-        self._upscale_submodules(model, finetuned_models, orig_v)
+        # if in_place:
+        #     pre_model = pretrained_model
+        # else:
+        #     pre_model = deepcopy(pretrained_model)
+        print(
+            "#############################create model with S2MoELlamaForCausalLM############################"
+        )
+
+        pretrained_model_config = self.modelpool.get_model_config("_pretrained_")
+        if isinstance(pretrained_model_config, str):
+            pretrained_path = pretrained_model_config
+        else:
+            pretrained_path = pretrained_model_config.get(
+                "path", pretrained_model_config["pretrained_model_name_or_path"]
+            )
+        base_config = AutoConfig.from_pretrained(pretrained_path)
+        # print("orig_v: ",orig_v)
+        # print("orig_v [0] shape:",orig_v[0].shape)
+        # import sys
+        # sys.exit()
+        model_config = S2MoELlamaConfig(
+            num_experts_per_tok=self.top_k,
+            num_local_experts=len(finetuned_models),
+            use_sparse_expert=self.use_aparse_expert,
+            sparsity_ratio=self.sparsity_ratio,
+            **base_config.to_dict(),
+        )
+        model = S2MoELlamaForCausalLM(model_config)
+        model.to(dtype=pretrained_model.dtype).to_empty(device="cpu")
+
+        # copy pretrained model weights
+        state_dict = model.state_dict()
+        pretrained_state_dict = dict(pretrained_model.state_dict())
+        for key in list(pretrained_state_dict.keys()):
+            if key not in state_dict:
+                pretrained_state_dict.pop(key)
+        model.load_state_dict(pretrained_state_dict, strict=False)
+
+        pretrained_model_linears = [
+            (name, module)
+            for name, module in list(pretrained_model.named_modules())[1:-1]
+            if isinstance(module, self._linear_layer_cls)
+        ]
+
+        # upscale model
+        for layer_idx, (name, module) in tqdm(
+            enumerate(pretrained_model_linears),
+            "Upscaling Modules (layer)",
+            dynamic_ncols=True,
+        ):
+            name_list = name.split(".")
+            pretrained_layer = get_attr(pretrained_model, name_list)
+            finetuned_layers = [get_attr(m, name_list) for m in finetuned_models]
+            target_layer = get_attr(model, name_list)
+
+            try:
+                upscale_to_s2moe_linear(
+                    base=pretrained_layer,
+                    experts=finetuned_layers,
+                    target=target_layer,
+                    orig_v=orig_v[layer_idx],
+                    use_sparse_expert=self.use_aparse_expert,
+                    sparsity_ratio=self.sparsity_ratio,
+                )
+            except ExpertNotTrainedError:
+                print(
+                    "ExpertNotTrainedError!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+                )
+                setattr(
+                    target_layer.self_attn,
+                    n,
+                    getattr(pretrained_layer.self_attn, n),
+                )
+
+        # self._upscale_submodules(model, finetuned_models, orig_v)
         return model
 
     def _upscale_linear_layer(
@@ -199,8 +303,6 @@ class S2MoEUpscalingAlgorithm(
             moe_linear = S2MoELinear(
                 module,
                 experts,
-                gate_k=config.gate_k,
-                k=config.k,
                 top_k=config.top_k,
                 threshold=config.threshold,  # 新增参数
                 routing_use_diff=self.routing_use_diff,
@@ -253,7 +355,6 @@ class S2MoEUpscalingAlgorithm(
             leave=False,
             dynamic_ncols=True,
         ):
-            
             if isinstance(module, self._linear_layer_cls):
                 self._upscale_linear_layer(
                     pretrained_model=pretrained_model,
@@ -277,8 +378,9 @@ class S2MoEUpscalingAlgorithm(
         Returns:
             合并后的模型(在原预训练模型基础上修改)
         """
+
         ft_model_length = len(finetuned_models)
-        sv_reduction = 1.0 / ft_model_length  # 根据模型数量确定压缩比例
+        sv_reduction = 1.0 / (4*ft_model_length)  # 根据模型数量确定压缩比例
 
         # 预先获取所有线性层模块，避免重复遍历
         linear_modules = [
@@ -329,14 +431,18 @@ class S2MoEUpscalingAlgorithm(
                     )
                     # 将结果存储在列表中
                     svd_results.append((u, s, v))
-                    svd_orig.append((U, S, V))
+                    svd_orig.append((U,S,V))
 
                 # 参考TSVM_utils中的方法合并SVD结果
+
+                # svd_results -> num_experts x 3 x rank_of_router x in_features
                 all_u = [result[0] for result in svd_results]
                 all_s = [result[1] for result in svd_results]
                 all_v = [result[2] for result in svd_results]
-                # orig_v.append(all_u)
-                orig_v.append(all_v)
+
+                # orig_v -> num of layers x num_experts x 3 x rank_of_router x in_features?????????
+                #orig_v.append(torch.stack(all_v, dim=0))
+                orig_v.append(torch.stack(all_v, dim=0))
                 # svd_results = [all_u,all_s,all_v]
                 # 创建一个与第一个专家的U矩阵形状相同的全零张量
                 concat_u = torch.zeros_like(U, device=all_u[0].device)
@@ -386,7 +492,9 @@ class S2MoEUpscalingAlgorithm(
                 )
 
                 # 更新预训练模型权重
-                reconstructed_weight = reconstructed_weight.to(pretrained_module.weight.device)
+                reconstructed_weight = reconstructed_weight.to(
+                    pretrained_module.weight.device
+                )
                 pretrained_module.weight.data.add_(reconstructed_weight)
 
                 # 打印日志信息
@@ -407,131 +515,3 @@ class S2MoEUpscalingAlgorithm(
             for name, _ in tqdm(non_linear_modules, desc="处理非线性层"):
                 self._average_experts(pretrained_model, finetuned_models, name)
         return pretrained_model, orig_v
-
-
-class ProjectionBasedGate(nn.Module):
-    def __init__(
-        self,
-        input_features: int,
-        w_diff_list: List[Tensor],
-        orig_v,
-        k: int,
-        threshold: float = 0.1,
-        top_k: int = 2,
-        upscaling_accelerator=None,
-    ):
-        """
-        基于投影的路由门控模块。
-
-        Args:
-            input_features (int): 输入特征的维度。
-            w_diff_list (List[Tensor]): 权重差异张量列表。
-            k (int): 保留的奇异值数量。
-            threshold (float): 激活任务子空间的阈值。
-            top_k (int): 最多选择的任务子空间数量。
-            svd_list: 缓存的SVD结果。
-            upscaling_accelerator: 用于计算的设备。
-        """
-        super().__init__()
-        self.input_features = input_features
-        self.num_experts = len(w_diff_list)
-        # self.threshold = threshold
-        self.threshold = 1 / self.num_experts
-        self.top_k = min(top_k, self.num_experts)
-        # # 构建任务子空间
-        # self.task_subspaces_V = nn.ParameterList()
-        # self.task_subspaces_U = nn.ParameterList()
-        # self.task_subspaces_S = nn.ParameterList()
-
-        self.orig_v = orig_v
-        # for i, w_diff in enumerate(w_diff_orig):
-        #     u, s, v = svd(w_diff.T, accelerator=upscaling_accelerator)
-        #     split_k = int(1/self.num_experts * s.shape[0])
-
-        # for i, w_diff in enumerate(w_diff_list):
-        #     u, s, v = svd(w_diff, accelerator=upscaling_accelerator)
-
-        #     # 截断到秩k
-        #     #v_truncated = v[:, :k]
-        #     # 存储右奇异向量作为子空间的基
-        #     self.task_subspaces_U.append(nn.Parameter(u, requires_grad=False))
-        #     self.task_subspaces_S.append(nn.Parameter(s, requires_grad=False))
-        #     self.task_subspaces_V.append(nn.Parameter(v, requires_grad=False))
-
-    def forward(self, x: Tensor, x_l: Tensor):
-        """
-        前向传播，计算路由权重。
-
-        Args:
-            x (Tensor): 输入张量。
-
-        Returns:
-            Tensor: 路由权重。
-        """
-        batch_size = x.size(0)
-        if self.num_experts == 1:
-            return torch.ones(batch_size, 1, device=x.device, dtype=x.dtype)
-
-        # 计算每个任务子空间的投影残差
-        residuals = []
-
-        for i in range(self.num_experts):
-            # U = self.task_subspaces_U[i]
-            # S = self.task_subspaces_S[i]
-            # V = self.task_subspaces_V[i]
-
-            v_0 = self.orig_v[i]
-
-            # 判断x_l的维度为3则进行视图变换
-            if len(x.shape) == 3:
-                # 将三维张量重塑为二维张量，合并前两个维度
-                x = x.view(x.shape[0] * x.shape[1], -1)
-
-            projection = torch.matmul(
-                v_0, torch.matmul(v_0.T, x.T)
-            ).T  # 768 96 96 768 768 6400  ——》 6400 768
-            # 计算残差: r = ||x - proj_V(x)||_2
-            # projection = torch.nn.functional.normalize(projection, p=2, dim=-1)
-            # x_l = torch.nn.functional.normalize(x_l, p=2, dim=-1)
-            residual = torch.norm(x - projection, p=2, dim=-1)
-            residuals.append(residual)
-        # 将残差堆叠为形状 [batch_size, num_experts] 的张量
-        residuals = torch.stack(residuals, dim=1)
-
-        # 计算残差的加性逆（取负数并加上最大值，确保非负）
-        # inverse_residuals = -residuals + torch.max(residuals, dim=1, keepdim=True)[0]
-
-        # 通过softmax归一化得到路由权重
-        routing_weights = F.softmax(-residuals, dim=1)
-
-        # 应用阈值过滤
-        mask = routing_weights > self.threshold
-
-        # 如果没有超过阈值的权重，选择最大的一个
-        if not torch.any(mask):
-            top_values, top_indices = torch.topk(routing_weights, 1, dim=1)
-            mask = torch.zeros_like(routing_weights, dtype=torch.bool)
-            mask.scatter_(1, top_indices, True)
-        # 限制选择前top_k个
-        if self.top_k < self.num_experts:
-            top_values, top_indices = torch.topk(routing_weights, self.top_k, dim=1)
-            top_k_mask = torch.zeros_like(routing_weights, dtype=torch.bool)
-            top_k_mask.scatter_(1, top_indices, True)
-            mask = mask & top_k_mask
-
-        # 将未选中的权重置为0，并重新归一化
-        filtered_weights = routing_weights * mask.float()
-        sum_weights = filtered_weights.sum(dim=1, keepdim=True)
-        sum_weights = torch.where(
-            sum_weights == 0, torch.ones_like(sum_weights), sum_weights
-        )
-        normalized_weights = filtered_weights / sum_weights
-
-        torch.set_printoptions(threshold=np.inf)
-        # print("routing weights",routing_weights)
-        # print("mask : ", mask)
-        # print("self.top_k: ", self.top_k)
-        # import sys
-        # sys.exit()
-
-        return normalized_weights

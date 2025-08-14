@@ -1,0 +1,16 @@
+_target_: fusion_bench.method.opcm.ties_merging.ContinualTiesMergingForCLIP
+# Scaling factor $\lambda$
+scaling_factor: 0.5
+threshold: 20
+# List of keys to remove from the state dict, default is empty
+remove_keys: []
+# Function to merge the models, default is sum. Options are 'sum', 'mean', and 'max'
+merge_func: sum
+# shuffle the order of the models
+shuffle_order: true
+# the random seed to use
+seed: null
+# save the merged model on every step
+save_on_every_step: true
+# evaluate the merged model on every step
+evaluate_on_every_step: true

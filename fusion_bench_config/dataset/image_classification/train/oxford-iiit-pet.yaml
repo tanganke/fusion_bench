@@ -1,0 +1,4 @@
+oxford-iiit-pet:
+  _target_: datasets.load_dataset
+  path: timm/oxford-iiit-pet
+  split: train

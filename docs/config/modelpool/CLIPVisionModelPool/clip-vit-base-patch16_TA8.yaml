@@ -1,0 +1,8 @@
+defaults:
+  - CLIPVisionModelPool@: _template
+  - /model/clip-vit@models: clip-vit-base-patch16_eight_tasks
+  - /dataset/image_classification/train@train_datasets: the_eight_tasks
+  - /dataset/image_classification/test@test_datasets: the_eight_tasks
+processor:
+  _target_: transformers.CLIPProcessor.from_pretrained
+  pretrained_model_name_or_path: openai/clip-vit-base-patch16

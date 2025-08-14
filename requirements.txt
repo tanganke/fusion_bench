@@ -1,6 +1,7 @@
 numpy
 matplotlib
 scipy
+huggingface-hub==0.24.7
 torch
 lightning
 transformers

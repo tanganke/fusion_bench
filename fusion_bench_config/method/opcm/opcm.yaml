@@ -1,0 +1,11 @@
+_target_: fusion_bench.method.opcm.opcm.OPCMForCLIP
+# shuffle the order of the models
+shuffle_order: true
+# the scaling factor for the SVD projection
+alpha: 0.5
+# the random seed to use
+seed: null
+# save the merged model on every step
+save_on_every_step: true
+# evaluate the merged model on every step
+evaluate_on_every_step: true

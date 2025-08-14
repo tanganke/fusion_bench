@@ -1,0 +1,10 @@
+_target_: fusion_bench.method.opcm.task_arithmetic.ContinualTaskArithmeticForCLIP
+scaling_factor: 0.3
+# shuffle the order of the models
+shuffle_order: true
+# the random seed to use
+seed: null
+# save the merged model on every step
+save_on_every_step: true
+# evaluate the merged model on every step
+evaluate_on_every_step: true

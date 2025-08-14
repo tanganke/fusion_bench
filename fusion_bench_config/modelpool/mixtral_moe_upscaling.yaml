@@ -1,0 +1,6 @@
+type: AutoModelForCausalLMPool
+# each model should have a name and a path, and the model is loaded from the path
+# this is equivalent to `AutoModelForCausalLM.from_pretrained(path)`
+models:
+  - name: _pretrained_
+    path: path_to_your_pretrained_model

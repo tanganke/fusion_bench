@@ -1,0 +1,6 @@
+defaults:
+  - Seq2SeqLMPool@: _template
+models:
+  _pretrained_:
+    _target_: transformers.AutoModelForSeq2SeqLM.from_pretrained
+    pretrained_model_name_or_path: google/flan-t5-base

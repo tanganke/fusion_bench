@@ -1,0 +1,4 @@
+_target_: fusion_bench.method.SlerpMergeAlgorithm
+t: 0.5 # interpolation factor
+DOT_THRESHOLD: 0.9995
+epsilon: 1e-8

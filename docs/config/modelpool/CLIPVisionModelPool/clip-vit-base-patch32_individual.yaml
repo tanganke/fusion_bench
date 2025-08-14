@@ -1,0 +1,10 @@
+defaults:
+  - CLIPVisionModelPool@: _template
+models:
+  _pretrained_:
+    _target_: transformers.CLIPVisionModel.from_pretrained
+    pretrained_model_name_or_path: ${...base_model}
+processor:
+  _target_: transformers.CLIPProcessor.from_pretrained
+  pretrained_model_name_or_path: ${..base_model}
+base_model: openai/clip-vit-base-patch32
