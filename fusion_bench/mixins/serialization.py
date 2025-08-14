@@ -266,7 +266,6 @@ class YAMLSerializationMixin:
         self._config_mapping[attr_name] = param_name
 
 
-@auto_register_config
 class BaseYAMLSerializable(YAMLSerializationMixin):
     """
     A base class for YAML-serializable classes with enhanced metadata support.
@@ -345,9 +344,13 @@ class BaseYAMLSerializable(YAMLSerializationMixin):
             ```
         """
         super().__init__(**kwargs)
+        self.register_parameter_to_config("_recursive_", "_recursive_", _recursive_)
+        self.register_parameter_to_config("_usage_", "_usage_", _usage_)
         if _version_ != FUSION_BENCH_VERSION:
             log.warning(
                 f"Current fusion-bench version is {FUSION_BENCH_VERSION}, but the serialized version is {_version_}. "
                 "Attempting to use current version."
             )
-            self._version_ = FUSION_BENCH_VERSION
+        self.register_parameter_to_config(
+            "_version_", "_version_", FUSION_BENCH_VERSION
+        )

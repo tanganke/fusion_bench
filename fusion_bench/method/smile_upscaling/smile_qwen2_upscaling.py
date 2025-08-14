@@ -16,9 +16,12 @@ from transformers.models.qwen2.modeling_qwen2 import Qwen2DecoderLayer
 
 from fusion_bench import BaseAlgorithm, BaseModelPool
 from fusion_bench.compat.modelpool import to_modelpool
-from fusion_bench.mixins import SimpleProfilerMixin
+from fusion_bench.mixins import SimpleProfilerMixin, auto_register_config
 from fusion_bench.modelpool import CausalLMPool
-from fusion_bench.models.hf_utils import save_pretrained_with_remote_code
+from fusion_bench.models.hf_utils import (
+    generate_complete_readme,
+    save_pretrained_with_remote_code,
+)
 from fusion_bench.models.modeling_smile_qwen2 import (
     SmileQwen2Config,
     SmileQwen2ForCausalLM,
@@ -37,6 +40,7 @@ from fusion_bench.utils.parameters import print_parameters
 log = logging.getLogger(__name__)
 
 
+@auto_register_config
 class SmileQwen2UpscalingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
     R"""
     SmileQwen2UpscalingAlgorithm is a model fusion algorithm designed to upscale
@@ -52,15 +56,6 @@ class SmileQwen2UpscalingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
             Merges the pretrained model with the fine-tuned models to create an upscaled model.
     """
 
-    _config_mapping = BaseAlgorithm._config_mapping | {
-        "device": "device",
-        "accelerator": "accelerator",
-        "model_path": "model_path",
-        "model_dtype": "model_dtype",
-        "num_experts_per_tok": "num_experts_per_tok",
-        "rank_of_router": "rank_of_router",
-        "rank_of_expert": "rank_of_expert",
-    }
     modelpool: CausalLMPool
 
     def __init__(
@@ -75,15 +70,6 @@ class SmileQwen2UpscalingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
         save_with_remote_code: bool = True,
         **kwargs,
     ):
-        self.device = device
-        self.accelerator = accelerator
-        self.model_path = model_path
-        self.model_dtype = model_dtype
-        # SmileMoE parameters, except `num_local_experts` which is set later according to the number of finetuned models
-        self.num_experts_per_tok = num_experts_per_tok
-        self.rank_of_router = rank_of_router
-        self.rank_of_expert = rank_of_expert
-        self.save_with_remote_code = save_with_remote_code
         super().__init__(**kwargs)
 
     @torch.no_grad()
@@ -149,6 +135,15 @@ class SmileQwen2UpscalingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
                     },
                     save_directory=config.model_path,
                 )
+
+            # save readme
+            complete_readme = generate_complete_readme(
+                algorithm=self,
+                modelpool=modelpool,
+                models=[modelpool.get_model_path(m) for m in modelpool.all_model_names],
+            )
+            with open(os.path.join(config.model_path, "README.md"), "w") as f:
+                f.write(complete_readme)
 
         return model
 

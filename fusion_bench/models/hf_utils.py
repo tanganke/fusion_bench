@@ -5,15 +5,22 @@ This module contains utilities for working with Hugging Face models.
 import inspect
 import os
 import shutil
-from typing import cast
+from typing import Optional, cast
 
+from omegaconf import OmegaConf
 from transformers.modeling_utils import PreTrainedModel
 
+from fusion_bench import BaseAlgorithm, BaseModelPool
 from fusion_bench.utils.pylogger import getRankZeroLogger
 
 log = getRankZeroLogger(__name__)
 
-__all__ = ["save_pretrained_with_remote_code"]
+__all__ = [
+    "save_pretrained_with_remote_code",
+    "generate_readme_head",
+    "generate_readme_body",
+    "generate_complete_readme",
+]
 
 
 def save_pretrained_with_remote_code(
@@ -90,3 +97,86 @@ def save_pretrained_with_remote_code(
         for key, file_name in auto_map_files.items():
             base_name = os.path.basename(file_name).split(".")[0]
             f.write(f"from .{base_name} import {auto_map[key].__name__}\n")
+
+
+def generate_readme_head(
+    models: list[str] | BaseModelPool,
+    library_name: str = "transformers",
+    tags: list[str] = ["fusion-bench", "merge"],
+):
+    text = "---\nbase_model:\n"
+    for model_name in models:
+        text += f"- {model_name}\n"
+    if library_name:
+        text += f"library_name: {library_name}\n"
+    text += "tags:\n"
+    for tag in tags:
+        text += f"- {tag}\n"
+    text += "---\n"
+    return text
+
+
+def generate_readme_body(
+    algorithm: BaseAlgorithm,
+    models_or_modelpool: Optional[list[str] | BaseModelPool] = None,
+    models: list[str] = None,
+):
+    text = """\
+# Merge
+
+This is a merge of pre-trained language models created using [fusion-bench](https://github.com/tanganke/fusion_bench).
+
+"""
+
+    if models is not None:
+        text += """
+## Models Merged
+
+The following models were included in the merge:
+
+"""
+        for model_name in models:
+            text += f"- {model_name}\n"
+        text += "\n"
+
+        try:
+            text += f"""\
+    ## Configuration
+
+    The following YAML configuration was used to produce this model:
+
+    ```yaml
+    {OmegaConf.to_yaml(algorithm.config, resolve=True, sort_keys=True)}
+    ```
+    """
+        except Exception as e:
+            return (
+                text  # If the algorithm config cannot be converted to YAML, we skip it.
+            )
+
+    if isinstance(models_or_modelpool, BaseModelPool):
+        try:
+            text += f"""
+```yaml
+{OmegaConf.to_yaml(models_or_modelpool.config, resolve=True, sort_keys=True)}
+```
+"""
+        except Exception as e:
+            pass  # If the model pool config cannot be converted to YAML, we skip it.
+    return text
+
+
+def generate_complete_readme(
+    algorithm: BaseAlgorithm, modelpool: BaseModelPool, models: list[str]
+):
+    # Generate the complete README content
+    text = generate_readme_head(
+        [modelpool.get_model_path(m) for m in modelpool.model_names]
+    )
+    readme_body = generate_readme_body(
+        algorithm,
+        models_or_modelpool=modelpool,
+        models=[modelpool.get_model_path(m) for m in modelpool.model_names],
+    )
+    complete_readme = text + "\n" + readme_body
+    return complete_readme
