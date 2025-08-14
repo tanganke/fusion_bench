@@ -1,6 +1,7 @@
 defaults:
   - hydra: default
   - fabric: auto
+  - path: default
   # --- Model, Method, Task ---
   - modelpool: CLIPVisionModelPool/clip-vit-base-patch32_TA8
   - method: dummy
