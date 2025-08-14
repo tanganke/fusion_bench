@@ -11,7 +11,11 @@ _import_structure = {
     "hydra_config": ["HydraConfigMixin"],
     "lightning_fabric": ["LightningFabricMixin"],
     "openclip_classification": ["OpenCLIPClassificationMixin"],
-    "serialization": ["YAMLSerializationMixin", "BaseYAMLSerializableModel"],
+    "serialization": [
+        "BaseYAMLSerializable",
+        "YAMLSerializationMixin",
+        "auto_register_config",
+    ],
     "simple_profiler": ["SimpleProfilerMixin"],
 }
 
@@ -21,7 +25,11 @@ if TYPE_CHECKING:
     from .hydra_config import HydraConfigMixin
     from .lightning_fabric import LightningFabricMixin
     from .openclip_classification import OpenCLIPClassificationMixin
-    from .serialization import BaseYAMLSerializableModel, YAMLSerializationMixin
+    from .serialization import (
+        BaseYAMLSerializable,
+        YAMLSerializationMixin,
+        auto_register_config,
+    )
     from .simple_profiler import SimpleProfilerMixin
 else:
     sys.modules[__name__] = LazyImporter(

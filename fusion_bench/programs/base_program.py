@@ -12,16 +12,16 @@ while allowing for flexible implementations of different fusion workflows.
 
 from abc import abstractmethod
 
-from fusion_bench.mixins import BaseYAMLSerializableModel
+from fusion_bench.mixins import BaseYAMLSerializable
 
 
-class BaseHydraProgram(BaseYAMLSerializableModel):
+class BaseHydraProgram(BaseYAMLSerializable):
     """
     Abstract base class for all FusionBench programs that use Hydra configuration.
 
     This class serves as the foundation for all FusionBench execution programs,
     providing a standardized interface for configuration-driven model fusion
-    workflows. It combines the serialization capabilities of BaseYAMLSerializableModel
+    workflows. It combines the serialization capabilities of BaseYAMLSerializable
     with the requirement for a main execution method.
 
     The class is designed to work seamlessly with Hydra's configuration management
@@ -71,7 +71,7 @@ class BaseHydraProgram(BaseYAMLSerializableModel):
     See Also:
 
     - [FabricModelFusionProgram][fusion_bench.programs.FabricModelFusionProgram]: Lightning Fabric-based implementation
-    - [BaseYAMLSerializableModel][fusion_bench.mixins.BaseYAMLSerializableModel]: Parent class providing serialization
+    - [BaseYAMLSerializable][fusion_bench.mixins.BaseYAMLSerializable]: Parent class providing serialization
     - FusionBench CLI documentation for program execution details
     """
 

@@ -2,7 +2,7 @@ import logging
 from abc import abstractmethod
 from typing import Optional  # noqa: F401
 
-from fusion_bench.mixins import BaseYAMLSerializableModel
+from fusion_bench.mixins import BaseYAMLSerializable
 from fusion_bench.modelpool import BaseModelPool
 
 __all__ = ["BaseAlgorithm", "BaseModelFusionAlgorithm"]
@@ -10,7 +10,7 @@ __all__ = ["BaseAlgorithm", "BaseModelFusionAlgorithm"]
 log = logging.getLogger(__name__)
 
 
-class BaseAlgorithm(BaseYAMLSerializableModel):
+class BaseAlgorithm(BaseYAMLSerializable):
     """
     Base class for model fusion algorithms.
 

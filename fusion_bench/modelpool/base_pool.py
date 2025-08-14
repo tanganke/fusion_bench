@@ -7,7 +7,7 @@ from omegaconf import DictConfig
 from torch import nn
 from torch.utils.data import Dataset
 
-from fusion_bench.mixins import BaseYAMLSerializableModel, HydraConfigMixin
+from fusion_bench.mixins import BaseYAMLSerializable, HydraConfigMixin
 from fusion_bench.utils import instantiate, timeit_context
 
 __all__ = ["BaseModelPool"]
@@ -15,7 +15,7 @@ __all__ = ["BaseModelPool"]
 log = logging.getLogger(__name__)
 
 
-class BaseModelPool(BaseYAMLSerializableModel, HydraConfigMixin):
+class BaseModelPool(BaseYAMLSerializable, HydraConfigMixin):
     """
     A class for managing and interacting with a pool of models along with their associated datasets or other specifications. For example, a model pool may contain multiple models, each with its own training, validation, and testing datasets. As for the specifications, a vision model pool may contain image preprocessor, and a language model pool may contain a tokenizer.
 
@@ -31,7 +31,7 @@ class BaseModelPool(BaseYAMLSerializableModel, HydraConfigMixin):
     _program = None
     _config_key = "modelpool"
     _models: Union[DictConfig, Dict[str, nn.Module]]
-    _config_mapping = BaseYAMLSerializableModel._config_mapping | {
+    _config_mapping = BaseYAMLSerializable._config_mapping | {
         "_models": "models",
         "_train_datasets": "train_datasets",
         "_val_datasets": "val_datasets",

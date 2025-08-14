@@ -6,7 +6,7 @@ import torch
 from torch import nn
 
 from fusion_bench.method.base_algorithm import BaseAlgorithm
-from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
+from fusion_bench.mixins import SimpleProfilerMixin, auto_register_config
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.utils import LazyStateDict
 from fusion_bench.utils.state_dict_arithmetic import (
@@ -59,21 +59,17 @@ def simple_average(
         return state_dict_avg(modules)
 
 
+@auto_register_config
 class SimpleAverageAlgorithm(
     BaseAlgorithm,
     SimpleProfilerMixin,
 ):
-    _config_mapping = BaseAlgorithm._config_mapping | {
-        "show_pbar": "show_pbar",
-    }
-
-    def __init__(self, show_pbar: bool = False):
+    def __init__(self, show_pbar: bool = False, **kwargs):
         """
         Args:
             show_pbar (bool): If True, shows a progress bar during model loading and merging. Default is False.
         """
-        super().__init__()
-        self.show_pbar = show_pbar
+        super().__init__(**kwargs)
 
     @torch.no_grad()
     def run(self, modelpool: Union[BaseModelPool, Dict[str, nn.Module]]) -> nn.Module:
