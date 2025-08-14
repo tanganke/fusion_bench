@@ -6,7 +6,9 @@ from typing import Dict, Optional, Union
 
 from omegaconf import DictConfig, OmegaConf
 
+from fusion_bench.constants import FUSION_BENCH_VERSION
 from fusion_bench.utils import import_object, instantiate
+from fusion_bench.utils.instantiate_utils import set_print_function_call
 
 log = logging.getLogger(__name__)
 
@@ -175,9 +177,8 @@ class YAMLSerializationMixin:
         R"""
         Returns the configuration of the model pool as a DictConfig.
 
-        This property calls the `to_config` method to convert the model pool
-        instance into a dictionary configuration, which can be used for
-        serialization or other purposes.
+        This property converts the model pool instance into a dictionary
+        configuration, which can be used for serialization or other purposes.
 
         Example:
 
@@ -193,7 +194,11 @@ class YAMLSerializationMixin:
         Returns:
             DictConfig: The configuration of the model pool.
         """
-        return self.to_config()
+        config = {"_target_": f"{type(self).__module__}.{type(self).__qualname__}"}
+        for attr, key in self._config_mapping.items():
+            if hasattr(self, attr):
+                config[key] = getattr(self, attr)
+        return OmegaConf.create(config)
 
     def to_yaml(self, path: Union[str, Path], resolve: bool = True):
         """
@@ -202,8 +207,7 @@ class YAMLSerializationMixin:
         Args:
             path (Union[str, Path]): The path to save the model pool to.
         """
-        config = self.to_config()
-        OmegaConf.save(config, path, resolve=resolve)
+        OmegaConf.save(self.config, path, resolve=resolve)
 
     @classmethod
     def from_yaml(cls, path: Union[str, Path]):
@@ -225,20 +229,8 @@ class YAMLSerializationMixin:
                 f"The class {target_cls.__name__} is not the same as the class {cls.__name__}. "
                 f"Instantiating the class {target_cls.__name__} instead."
             )
-        return instantiate(config)
-
-    def to_config(self):
-        """
-        Convert the model pool to a DictConfig.
-
-        Returns:
-            Dict: The model pool as a DictConfig.
-        """
-        config = {"_target_": f"{type(self).__module__}.{type(self).__qualname__}"}
-        for attr, key in self._config_mapping.items():
-            if hasattr(self, attr):
-                config[key] = getattr(self, attr)
-        return OmegaConf.create(config)
+        with set_print_function_call(False):
+            return instantiate(config)
 
     def register_parameter_to_config(
         self,
@@ -328,7 +320,7 @@ class BaseYAMLSerializable(YAMLSerializationMixin):
         self,
         _recursive_: bool = False,
         _usage_: Optional[str] = None,
-        _version_: Optional[str] = None,
+        _version_: Optional[str] = FUSION_BENCH_VERSION,
         **kwargs,
     ):
         """
@@ -353,3 +345,9 @@ class BaseYAMLSerializable(YAMLSerializationMixin):
             ```
         """
         super().__init__(**kwargs)
+        if _version_ != FUSION_BENCH_VERSION:
+            log.warning(
+                f"Current fusion-bench version is {FUSION_BENCH_VERSION}, but the serialized version is {_version_}. "
+                "Attempting to use current version."
+            )
+            self._version_ = FUSION_BENCH_VERSION
