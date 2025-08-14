@@ -1,8 +1,10 @@
 defaults:
   - hydra: default
   - fabric: auto
-  - modelpool: nyuv2_modelpool
+  - path: default
+  # --- Model, Method, Task ---
   - method: simple_average
+  - modelpool: nyuv2_modelpool
   - taskpool: nyuv2_taskpool
   - _self_
 _target_: fusion_bench.programs.FabricModelFusionProgram

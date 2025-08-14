@@ -1,10 +1,10 @@
 from abc import abstractmethod
 from typing import Any, Dict
 
-from fusion_bench.mixins import BaseYAMLSerializableModel
+from fusion_bench.mixins import BaseYAMLSerializable
 
 
-class BaseTaskPool(BaseYAMLSerializableModel):
+class BaseTaskPool(BaseYAMLSerializable):
     _program = None
     _config_key = "taskpool"
 

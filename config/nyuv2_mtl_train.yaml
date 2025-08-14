@@ -1,5 +1,6 @@
 defaults:
   - hydra: default
+  - path: default
   - _self_
 fast_dev_run: false
 exp_name: null

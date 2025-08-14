@@ -1,37 +1,30 @@
-import logging
 from functools import partial
 from typing import Callable, Optional, Tuple, Union
 
 import torch
-from torch import nn
+import torch.nn as nn
 from transformers.activations import ACT2FN
-from transformers.cache_utils import (
-    Cache,
-    DynamicCache,
-    SlidingWindowCache,
-    StaticCache,
-)
+from transformers.cache_utils import Cache, HybridCache, StaticCache
 from transformers.generation import GenerationMixin
-from transformers.modeling_attn_mask_utils import AttentionMaskConverter
 from transformers.modeling_flash_attention_utils import FlashAttentionKwargs
 from transformers.modeling_outputs import (
     BaseModelOutputWithPast,
     CausalLMOutputWithPast,
-    QuestionAnsweringModelOutput,
     SequenceClassifierOutputWithPast,
     TokenClassifierOutput,
 )
 from transformers.modeling_rope_utils import ROPE_INIT_FUNCTIONS, dynamic_rope_update
 from transformers.modeling_utils import ALL_ATTENTION_FUNCTIONS, PreTrainedModel
-from transformers.models.qwen2.modeling_qwen2 import (
-    Qwen2RMSNorm,
-    Qwen2RotaryEmbedding,
+from transformers.models.gemma2.modeling_gemma2 import (
+    _CHECKPOINT_FOR_DOC,
+    GEMMA2_INPUTS_DOCSTRING,
+    Gemma2RMSNorm,
+    Gemma2RotaryEmbedding,
     apply_rotary_pos_emb,
     eager_attention_forward,
 )
 from transformers.processing_utils import Unpack
 from transformers.utils import (
-    LossKwargs,
     add_code_sample_docstrings,
     add_start_docstrings,
     add_start_docstrings_to_model_forward,
@@ -43,41 +36,35 @@ from transformers.utils.deprecation import deprecate_kwarg
 
 from fusion_bench.models.smile_moe.linear_from_hf_config import SmileLinear
 
-from .configuration_smile_qwen2 import SmileQwen2Config
+from .configuration_smile_gemma2 import SmileGemma2Config
 
 logger = logging.get_logger(__name__)
 
-_CONFIG_FOR_DOC = "SmileQwen2Config"
+_CONFIG_FOR_DOC = "SmileGemma2Config"
 
 
-class SmileQwen2MLP(nn.Module):
-    def __init__(self, config: SmileQwen2Config):
+class SmileGemma2MLP(nn.Module):
+    def __init__(self, config: SmileGemma2Config):
         super().__init__()
         self.config = config
         self.hidden_size = config.hidden_size
         self.intermediate_size = config.intermediate_size
-        # --- replace the linear modules with SmileLinear ---
-        self.gate_proj = SmileLinear(
-            config, self.hidden_size, self.intermediate_size, bias=False
-        )
-        self.up_proj = SmileLinear(
-            config, self.hidden_size, self.intermediate_size, bias=False
-        )
-        self.down_proj = SmileLinear(
-            config, self.intermediate_size, self.hidden_size, bias=False
-        )
-        # --- end of replacement ---
-        self.act_fn = ACT2FN[config.hidden_act]
+        # * --- replace nn.Linear with SmileLinear ---
+        self.gate_proj = SmileLinear(config, self.hidden_size, self.intermediate_size)
+        self.up_proj = SmileLinear(config, self.hidden_size, self.intermediate_size)
+        self.down_proj = SmileLinear(config, self.intermediate_size, self.hidden_size)
+        # * --- end of replacement ---
+        self.act_fn = ACT2FN[config.hidden_activation]
 
     def forward(self, x):
         down_proj = self.down_proj(self.act_fn(self.gate_proj(x)) * self.up_proj(x))
         return down_proj
 
 
-class SmileQwen2Attention(nn.Module):
+class SmileGemma2Attention(nn.Module):
     """Multi-headed attention from 'Attention Is All You Need' paper"""
 
-    def __init__(self, config: SmileQwen2Config, layer_idx: int):
+    def __init__(self, config: SmileGemma2Config, layer_idx: int):
         super().__init__()
         self.config = config
         self.layer_idx = layer_idx
@@ -87,35 +74,38 @@ class SmileQwen2Attention(nn.Module):
         self.num_key_value_groups = (
             config.num_attention_heads // config.num_key_value_heads
         )
-        self.scaling = self.head_dim**-0.5
-        self.attention_dropout = config.attention_dropout
+        self.scaling = config.query_pre_attn_scalar**-0.5
+        self.attention_dropout = self.config.attention_dropout
         self.is_causal = True
-        # --- replace the linear modules with SmileLinear ---
+
+        # * --- replace nn.Linear with SmileLinear ---
         self.q_proj = SmileLinear(
             config,
             config.hidden_size,
             config.num_attention_heads * self.head_dim,
-            bias=True,
+            bias=config.attention_bias,
         )
         self.k_proj = SmileLinear(
             config,
             config.hidden_size,
             config.num_key_value_heads * self.head_dim,
-            bias=True,
+            bias=config.attention_bias,
         )
         self.v_proj = SmileLinear(
             config,
             config.hidden_size,
             config.num_key_value_heads * self.head_dim,
-            bias=True,
+            bias=config.attention_bias,
         )
         self.o_proj = SmileLinear(
             config,
             config.num_attention_heads * self.head_dim,
             config.hidden_size,
-            bias=False,
+            bias=config.attention_bias,
         )
-        # --- end of replacement ---
+        # * --- end of replacement ---
+        self.attn_logit_softcapping = self.config.attn_logit_softcapping
+        self.sliding_window = config.sliding_window if not bool(layer_idx % 2) else None
 
     def forward(
         self,
@@ -140,18 +130,26 @@ class SmileQwen2Attention(nn.Module):
 
         if past_key_value is not None:
             # sin and cos are specific to RoPE models; cache_position needed for the static cache
-            cache_kwargs = {"sin": sin, "cos": cos, "cache_position": cache_position}
+            cache_kwargs = {
+                "sin": sin,
+                "cos": cos,
+                "cache_position": cache_position,
+                "sliding_window": self.sliding_window,
+            }
             key_states, value_states = past_key_value.update(
                 key_states, value_states, self.layer_idx, cache_kwargs
             )
 
-        sliding_window = None
-        if (
-            self.config.use_sliding_window
-            and getattr(self.config, "sliding_window", None) is not None
-            and self.layer_idx >= self.config.max_window_layers
-        ):
-            sliding_window = self.config.sliding_window
+            # Here we need to slice as we use a static cache by default, but FA2 does not support it
+            if (
+                attention_mask is not None
+                and self.config._attn_implementation == "flash_attention_2"
+            ):
+                seq_len = attention_mask.shape[-1]
+                key_states, value_states = (
+                    key_states[:, :, :seq_len, :],
+                    value_states[:, :, :seq_len, :],
+                )
 
         attention_interface: Callable = eager_attention_forward
         if self.config._attn_implementation != "eager":
@@ -173,9 +171,10 @@ class SmileQwen2Attention(nn.Module):
             key_states,
             value_states,
             attention_mask,
-            dropout=0.0 if not self.training else self.attention_dropout,
+            dropout=self.attention_dropout if self.training else 0.0,
             scaling=self.scaling,
-            sliding_window=sliding_window,  # main diff with Llama
+            sliding_window=self.sliding_window,
+            softcap=self.attn_logit_softcapping,
             **kwargs,
         )
 
@@ -184,40 +183,74 @@ class SmileQwen2Attention(nn.Module):
         return attn_output, attn_weights
 
 
-class SmileQwen2DecoderLayer(nn.Module):
-    def __init__(self, config: SmileQwen2Config, layer_idx: int):
+class SmileGemma2DecoderLayer(nn.Module):
+
+    def __init__(self, config: SmileGemma2Config, layer_idx: int):
         super().__init__()
         self.hidden_size = config.hidden_size
-        # --- replace attention and MLP with SmileQwen2Attention and SmileQwen2MLP ---
-        self.self_attn = SmileQwen2Attention(config=config, layer_idx=layer_idx)
-        self.mlp = SmileQwen2MLP(config)
-        # --- end of replacement ---
-        self.input_layernorm = Qwen2RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
-        self.post_attention_layernorm = Qwen2RMSNorm(
+        self.config = config
+        self.is_sliding = not bool(layer_idx % 2)
+        self.self_attn = SmileGemma2Attention(config=config, layer_idx=layer_idx)
+        self.mlp = SmileGemma2MLP(config)
+        self.input_layernorm = Gemma2RMSNorm(
             config.hidden_size, eps=config.rms_norm_eps
         )
-        if config.sliding_window and config._attn_implementation != "flash_attention_2":
-            logger.warning_once(
-                f"Sliding Window Attention is enabled but not implemented for `{config._attn_implementation}`; "
-                "unexpected results may be encountered."
-            )
+        self.post_attention_layernorm = Gemma2RMSNorm(
+            config.hidden_size, eps=config.rms_norm_eps
+        )
+
+        self.pre_feedforward_layernorm = Gemma2RMSNorm(
+            config.hidden_size, eps=config.rms_norm_eps
+        )
+        self.post_feedforward_layernorm = Gemma2RMSNorm(
+            config.hidden_size, eps=config.rms_norm_eps
+        )
+        self.sliding_window = config.sliding_window
 
     def forward(
         self,
         hidden_states: torch.Tensor,
+        position_embeddings: Tuple[torch.Tensor, torch.Tensor],
         attention_mask: Optional[torch.Tensor] = None,
         position_ids: Optional[torch.LongTensor] = None,
         past_key_value: Optional[Cache] = None,
         output_attentions: Optional[bool] = False,
         use_cache: Optional[bool] = False,
         cache_position: Optional[torch.LongTensor] = None,
-        position_embeddings: Optional[
-            Tuple[torch.Tensor, torch.Tensor]
-        ] = None,  # necessary, but kept here for BC
-        **kwargs: Unpack[FlashAttentionKwargs],
+        last_cache_position: int = 0,
+        **kwargs,
     ) -> Tuple[
         torch.FloatTensor, Optional[Tuple[torch.FloatTensor, torch.FloatTensor]]
     ]:
+        if (
+            self.is_sliding and attention_mask is not None
+        ):  # efficient SDPA and no padding
+            # In prefill, we may be larger than sliding window
+            effective_seq_len = max(cache_position.shape[0], self.sliding_window)
+            # For FA2, the mask is 2D and is of shape [bs, processed_tokens] (not [bs, max_cache_len]),
+            # thus we must slice from the right (at most `effective_seq_len` elements)
+            if self.config._attn_implementation == "flash_attention_2":
+                attention_mask = attention_mask[:, -effective_seq_len:]
+            # Otherwise, the mask is 4D of shape [bs, 1, query_len, max_cache_len] thus we must slice
+            # from the left, with an offset if we are beyond the sliding window
+            else:
+                min_dtype = torch.finfo(attention_mask.dtype).min
+                sliding_window_mask = torch.tril(
+                    torch.ones_like(attention_mask, dtype=torch.bool),
+                    diagonal=-self.sliding_window,
+                )
+                attention_mask = torch.where(
+                    sliding_window_mask, min_dtype, attention_mask
+                )
+                # In case we are beyond the sliding window, we need to correctly offset the mask slicing
+                # `last_cache_position` is equivalent to `cache_position[-1]` but without breaking dynamo
+                offset = last_cache_position - effective_seq_len
+                # Should only be used when beyond the sliding window (i.e. offset > 0)
+                offset = max(0, offset)
+                attention_mask = attention_mask[
+                    :, :, :, offset : offset + effective_seq_len
+                ]
+
         residual = hidden_states
 
         hidden_states = self.input_layernorm(hidden_states)
@@ -225,35 +258,37 @@ class SmileQwen2DecoderLayer(nn.Module):
         # Self Attention
         hidden_states, self_attn_weights = self.self_attn(
             hidden_states=hidden_states,
+            position_embeddings=position_embeddings,
             attention_mask=attention_mask,
             position_ids=position_ids,
             past_key_value=past_key_value,
             output_attentions=output_attentions,
             use_cache=use_cache,
             cache_position=cache_position,
-            position_embeddings=position_embeddings,
             **kwargs,
         )
+        hidden_states = self.post_attention_layernorm(hidden_states)
         hidden_states = residual + hidden_states
 
-        # Fully Connected
         residual = hidden_states
-        hidden_states = self.post_attention_layernorm(hidden_states)
+        hidden_states = self.pre_feedforward_layernorm(hidden_states)
         hidden_states = self.mlp(hidden_states)
+        hidden_states = self.post_feedforward_layernorm(hidden_states)
         hidden_states = residual + hidden_states
 
         outputs = (hidden_states,)
+
         if output_attentions:
             outputs += (self_attn_weights,)
 
         return outputs
 
 
-class SmileQwen2PreTrainedModel(PreTrainedModel):
-    config_class = SmileQwen2Config
+class SmileGemma2PreTrainedModel(PreTrainedModel):
+    config_class = SmileGemma2Config
     base_model_prefix = "model"
     supports_gradient_checkpointing = True
-    _no_split_modules = ["SmileQwen2DecoderLayer"]
+    _no_split_modules = ["SmileGemma2DecoderLayer"]
     _skip_keys_device_placement = ["past_key_values"]
     _supports_flash_attn_2 = True
     _supports_sdpa = True
@@ -275,15 +310,15 @@ class SmileQwen2PreTrainedModel(PreTrainedModel):
                 module.weight.data[module.padding_idx].zero_()
 
 
-class SmileQwen2Model(SmileQwen2PreTrainedModel):
+class SmileGemma2Model(SmileGemma2PreTrainedModel):
     """
-    Transformer decoder consisting of *config.num_hidden_layers* layers. Each layer is a [`SmileQwen2DecoderLayer`]
+    Transformer decoder consisting of *config.num_hidden_layers* layers. Each layer is a [`Gemma2DecoderLayer`]
 
     Args:
-        config: SmileQwen2Config
+        config: Gemma2Config
     """
 
-    def __init__(self, config: SmileQwen2Config):
+    def __init__(self, config: SmileGemma2Config):
         super().__init__(config)
         self.padding_idx = config.pad_token_id
         self.vocab_size = config.vocab_size
@@ -293,14 +328,12 @@ class SmileQwen2Model(SmileQwen2PreTrainedModel):
         )
         self.layers = nn.ModuleList(
             [
-                SmileQwen2DecoderLayer(
-                    config, layer_idx
-                )  # * replace Qwen2DecoderLayer with SmileQwen2DecoderLayer
+                SmileGemma2DecoderLayer(config, layer_idx)
                 for layer_idx in range(config.num_hidden_layers)
             ]
         )
-        self.norm = Qwen2RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
-        self.rotary_emb = Qwen2RotaryEmbedding(config=config)
+        self.norm = Gemma2RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
+        self.rotary_emb = Gemma2RotaryEmbedding(config=config)
         self.gradient_checkpointing = False
 
         # Initialize weights and apply final processing
@@ -313,17 +346,19 @@ class SmileQwen2Model(SmileQwen2PreTrainedModel):
         self.embed_tokens = value
 
     @can_return_tuple
+    @add_start_docstrings_to_model_forward(GEMMA2_INPUTS_DOCSTRING)
     def forward(
         self,
         input_ids: Optional[torch.LongTensor] = None,
         attention_mask: Optional[torch.Tensor] = None,
         position_ids: Optional[torch.LongTensor] = None,
-        past_key_values: Optional[Cache] = None,
+        past_key_values: Optional[HybridCache] = None,
         inputs_embeds: Optional[torch.FloatTensor] = None,
         use_cache: Optional[bool] = None,
         output_attentions: Optional[bool] = None,
         output_hidden_states: Optional[bool] = None,
         cache_position: Optional[torch.LongTensor] = None,
+        last_cache_position: Optional[int] = None,
         **flash_attn_kwargs: Unpack[FlashAttentionKwargs],
     ) -> BaseModelOutputWithPast:
         output_attentions = (
@@ -349,17 +384,19 @@ class SmileQwen2Model(SmileQwen2PreTrainedModel):
             )
             use_cache = False
 
-        # TODO (joao): remove this exception in v4.56 -- it exists for users that try to pass a legacy cache
-        if not isinstance(past_key_values, (type(None), Cache)):
-            raise ValueError(
-                "The `past_key_values` should be either a `Cache` object or `None`."
-            )
-
         if inputs_embeds is None:
             inputs_embeds = self.embed_tokens(input_ids)
 
-        if use_cache and past_key_values is None:
-            past_key_values = DynamicCache()
+        if use_cache and past_key_values is None and not self.training:
+            batch_size, seq_len, _ = inputs_embeds.shape
+            # NOTE: ideally, `HybridCache` should be initialized outside the model with `layer_device_map`
+            past_key_values = HybridCache(
+                self.config,
+                max_batch_size=batch_size,
+                max_cache_len=seq_len,
+                dtype=inputs_embeds.dtype,
+                device=self.device,
+            )
 
         if cache_position is None:
             past_seen_tokens = (
@@ -374,6 +411,18 @@ class SmileQwen2Model(SmileQwen2PreTrainedModel):
         if position_ids is None:
             position_ids = cache_position.unsqueeze(0)
 
+        # This is needed to correctly slice the mask without data-dependent slicing later on if using dynamo tracing
+        # (retrieving the same value from `cache_position` later on would crash dynamo)
+        if last_cache_position is None:
+            last_cache_position = 0
+            if attention_mask is not None:
+                # In case a 4d mask is passed directly without using `generate`, we have to rely on cache_position
+                # It will break dynamo tracing but there are no way around it (and it should never happen in practice)
+                last_cache_position = (
+                    attention_mask.shape[-1]
+                    if attention_mask.dim() == 2
+                    else cache_position[-1].item()
+                )
         causal_mask = self._update_causal_mask(
             attention_mask,
             inputs_embeds,
@@ -382,10 +431,19 @@ class SmileQwen2Model(SmileQwen2PreTrainedModel):
             output_attentions,
         )
 
+        # embed positions
         hidden_states = inputs_embeds
 
         # create position embeddings to be shared across the decoder layers
         position_embeddings = self.rotary_emb(hidden_states, position_ids)
+
+        # normalized
+        # Gemma2 downcasts the below to float16, causing sqrt(3072)=55.4256 to become 55.5
+        # See https://github.com/huggingface/transformers/pull/29402
+        normalizer = torch.tensor(
+            self.config.hidden_size**0.5, dtype=hidden_states.dtype
+        )
+        hidden_states = hidden_states * normalizer
 
         # decoder layers
         all_hidden_states = () if output_hidden_states else None
@@ -399,24 +457,26 @@ class SmileQwen2Model(SmileQwen2PreTrainedModel):
                 layer_outputs = self._gradient_checkpointing_func(
                     partial(decoder_layer.__call__, **flash_attn_kwargs),
                     hidden_states,
+                    position_embeddings,
                     causal_mask,
                     position_ids,
                     past_key_values,
                     output_attentions,
                     use_cache,
                     cache_position,
-                    position_embeddings,
+                    last_cache_position,
                 )
             else:
                 layer_outputs = decoder_layer(
                     hidden_states,
+                    position_embeddings=position_embeddings,
                     attention_mask=causal_mask,
                     position_ids=position_ids,
                     past_key_value=past_key_values,
                     output_attentions=output_attentions,
                     use_cache=use_cache,
                     cache_position=cache_position,
-                    position_embeddings=position_embeddings,
+                    last_cache_position=last_cache_position,
                     **flash_attn_kwargs,
                 )
 
@@ -427,76 +487,41 @@ class SmileQwen2Model(SmileQwen2PreTrainedModel):
 
         hidden_states = self.norm(hidden_states)
 
-        # add hidden states from the last decoder layer
         if output_hidden_states:
             all_hidden_states += (hidden_states,)
 
         return BaseModelOutputWithPast(
             last_hidden_state=hidden_states,
-            past_key_values=past_key_values if use_cache else None,
+            past_key_values=past_key_values,
             hidden_states=all_hidden_states,
             attentions=all_self_attns,
         )
 
+    @torch.no_grad()
     def _update_causal_mask(
         self,
         attention_mask: torch.Tensor,
         input_tensor: torch.Tensor,
         cache_position: torch.Tensor,
-        past_key_values: Cache,
-        output_attentions: bool = False,
+        past_key_values: HybridCache,
+        output_attentions: bool,
     ):
+        # Flash Attention currently doesn't support static cache but Gemma2 work only with static cache.
+        # So we will pass in attention mask as is in any case, not only when ther's padding. Then we'll use its shape
+        # to cut out keys/values trailing 0 used in static cache. This workaround should be compile compatible
+        # as it doesn't cause dynamic control issues.
         if self.config._attn_implementation == "flash_attention_2":
-            if attention_mask is not None and past_key_values is not None:
-                is_padding_right = (
-                    attention_mask[:, -1].sum().item() != input_tensor.size()[0]
-                )
-                if is_padding_right:
-                    raise ValueError(
-                        "You are attempting to perform batched generation with padding_side='right'"
-                        " this may lead to unexpected behaviour for Flash Attention version of Qwen2. Make sure to "
-                        " call `tokenizer.padding_side  = 'left'` before tokenizing the input. "
-                    )
-            if attention_mask is not None and 0.0 in attention_mask:
-                return attention_mask
-            return None
-
-        # For SDPA, when possible, we will rely on its `is_causal` argument instead of its `attn_mask` argument, in
-        # order to dispatch on Flash Attention 2. This feature is not compatible with static cache, as SDPA will fail
-        # to infer the attention mask.
-        past_seen_tokens = (
-            past_key_values.get_seq_length() if past_key_values is not None else 0
-        )
-        using_static_cache = isinstance(past_key_values, StaticCache)
-        using_sliding_window_cache = isinstance(past_key_values, SlidingWindowCache)
-
-        # When output attentions is True, sdpa implementation's forward method calls the eager implementation's forward
-        if (
-            self.config._attn_implementation == "sdpa"
-            and not (using_static_cache or using_sliding_window_cache)
-            and not output_attentions
-        ):
-            if AttentionMaskConverter._ignore_causal_mask_sdpa(
-                attention_mask,
-                inputs_embeds=input_tensor,
-                past_key_values_length=past_seen_tokens,
-                sliding_window=self.config.sliding_window,
-                is_training=self.training,
-            ):
-                return None
+            return attention_mask
 
         dtype, device = input_tensor.dtype, input_tensor.device
-        min_dtype = torch.finfo(dtype).min
         sequence_length = input_tensor.shape[1]
-        # SlidingWindowCache or StaticCache
-        if using_sliding_window_cache or using_static_cache:
+        if isinstance(past_key_values, (HybridCache, StaticCache)):
             target_length = past_key_values.get_max_cache_shape()
-        # DynamicCache or no cache
         else:
             target_length = (
                 attention_mask.shape[-1]
-                if isinstance(attention_mask, torch.Tensor)
-                else past_seen_tokens + sequence_length + 1
+                if attention_mask is not None
+                else input_tensor.shape[1]
             )
 
         # In case the provided `attention` mask is 2D, we generate a causal mask here (4D).
@@ -508,23 +533,7 @@ class SmileQwen2Model(SmileQwen2PreTrainedModel):
             device=device,
             cache_position=cache_position,
             batch_size=input_tensor.shape[0],
-            config=self.config,
-            past_key_values=past_key_values,
         )
-
-        if (
-            self.config._attn_implementation == "sdpa"
-            and attention_mask is not None
-            and attention_mask.device.type in ["cuda", "xpu"]
-            and not output_attentions
-        ):
-            # Attend to all tokens in fully masked rows in the causal_mask, for example the relevant first rows when
-            # using left padding. This is required by F.scaled_dot_product_attention memory-efficient attention path.
-            # Details: https://github.com/pytorch/pytorch/issues/110213
-            causal_mask = AttentionMaskConverter._unmask_unattended(
-                causal_mask, min_dtype
-            )
-
         return causal_mask
 
     @staticmethod
@@ -536,8 +545,7 @@ class SmileQwen2Model(SmileQwen2PreTrainedModel):
         device: torch.device,
         cache_position: torch.Tensor,
         batch_size: int,
-        config: SmileQwen2Config,
-        past_key_values: Cache,
+        **kwargs,
     ):
         """
         Creates a causal 4D mask of shape `(batch_size, 1, query_length, key_value_length)` from a 2D mask of shape
@@ -545,11 +553,13 @@ class SmileQwen2Model(SmileQwen2PreTrainedModel):
 
         Args:
             attention_mask (`torch.Tensor`):
-                A 2D attention mask of shape `(batch_size, key_value_length)` or a 4D attention mask of shape `(batch_size, 1, query_length, key_value_length)`.
+                A 2D attention mask of shape `(batch_size, key_value_length)` or a 4D attention mask of shape
+                `(batch_size, 1, query_length, key_value_length)`.
             sequence_length (`int`):
                 The sequence length being processed.
             target_length (`int`):
-                The target length: when generating with static cache, the mask should be as long as the static cache, to account for the 0 padding, the part of the cache that is not filled yet.
+                The target length: when generating with static cache, the mask should be as long as the static cache,
+                to account for the 0 padding, the part of the cache that is not filled yet.
             dtype (`torch.dtype`):
                 The dtype to use for the 4D attention mask.
             device (`torch.device`):
@@ -558,10 +568,6 @@ class SmileQwen2Model(SmileQwen2PreTrainedModel):
                 Indices depicting the position of the input sequence tokens in the sequence.
             batch_size (`torch.Tensor`):
                 Batch size.
-            config (`Qwen2Config`):
-                The model's configuration class
-            past_key_values (`Cache`):
-                The cache class that is being used currently to generate
         """
         if attention_mask is not None and attention_mask.dim() == 4:
             # In this case we assume that the mask comes already in inverted form and requires no inversion or slicing.
@@ -574,28 +580,16 @@ class SmileQwen2Model(SmileQwen2PreTrainedModel):
                 dtype=dtype,
                 device=device,
             )
-            diagonal_attend_mask = torch.arange(
+            if sequence_length != 1:
+                causal_mask = torch.triu(causal_mask, diagonal=1)
+            causal_mask *= torch.arange(
                 target_length, device=device
             ) > cache_position.reshape(-1, 1)
-            if config.sliding_window is not None:
-                # if we have sliding window, we should not attend to tokens beyond sliding window length, so we mask them out also
-                # the check is needed to verify is current checkpoint was trained with sliding window or not
-                if (
-                    not isinstance(past_key_values, SlidingWindowCache)
-                    or sequence_length > target_length
-                ):
-                    sliding_attend_mask = torch.arange(
-                        target_length, device=device
-                    ) <= (cache_position.reshape(-1, 1) - config.sliding_window)
-                    diagonal_attend_mask.bitwise_or_(sliding_attend_mask)
-            causal_mask *= diagonal_attend_mask
             causal_mask = causal_mask[None, None, :, :].expand(batch_size, 1, -1, -1)
             if attention_mask is not None:
                 causal_mask = (
                     causal_mask.clone()
                 )  # copy to contiguous memory for in-place edit
-                if attention_mask.shape[-1] > target_length:
-                    attention_mask = attention_mask[:, :target_length]
                 mask_length = attention_mask.shape[-1]
                 padding_mask = causal_mask[:, :, :, :mask_length] + attention_mask[
                     :, None, None, :
@@ -604,20 +598,18 @@ class SmileQwen2Model(SmileQwen2PreTrainedModel):
                 causal_mask[:, :, :, :mask_length] = causal_mask[
                     :, :, :, :mask_length
                 ].masked_fill(padding_mask, min_dtype)
+
         return causal_mask
 
 
-class KwargsForCausalLM(FlashAttentionKwargs, LossKwargs): ...
-
-
-class SmileQwen2ForCausalLM(SmileQwen2PreTrainedModel, GenerationMixin):
+class SmileGemma2ForCausalLM(SmileGemma2PreTrainedModel, GenerationMixin):
     _tied_weights_keys = ["lm_head.weight"]
     _tp_plan = {"lm_head": "colwise_rep"}
     _pp_plan = {"lm_head": (["hidden_states"], ["logits"])}
 
     def __init__(self, config):
         super().__init__(config)
-        self.model = SmileQwen2Model(config)
+        self.model = SmileGemma2Model(config)
         self.vocab_size = config.vocab_size
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
 
@@ -644,6 +636,7 @@ class SmileQwen2ForCausalLM(SmileQwen2PreTrainedModel, GenerationMixin):
 
     @can_return_tuple
     @deprecate_kwarg("num_logits_to_keep", version="4.50", new_name="logits_to_keep")
+    @add_start_docstrings_to_model_forward(GEMMA2_INPUTS_DOCSTRING)
     @replace_return_docstrings(
         output_type=CausalLMOutputWithPast, config_class=_CONFIG_FOR_DOC
     )
@@ -652,7 +645,7 @@ class SmileQwen2ForCausalLM(SmileQwen2PreTrainedModel, GenerationMixin):
         input_ids: Optional[torch.LongTensor] = None,
         attention_mask: Optional[torch.Tensor] = None,
         position_ids: Optional[torch.LongTensor] = None,
-        past_key_values: Optional[Cache] = None,
+        past_key_values: Optional[HybridCache] = None,
         inputs_embeds: Optional[torch.FloatTensor] = None,
         labels: Optional[torch.LongTensor] = None,
         use_cache: Optional[bool] = None,
@@ -660,7 +653,7 @@ class SmileQwen2ForCausalLM(SmileQwen2PreTrainedModel, GenerationMixin):
         output_hidden_states: Optional[bool] = None,
         cache_position: Optional[torch.LongTensor] = None,
         logits_to_keep: Union[int, torch.Tensor] = 0,
-        **kwargs: Unpack[KwargsForCausalLM],
+        **loss_kwargs,
     ) -> CausalLMOutputWithPast:
         r"""
             labels (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):
@@ -680,19 +673,25 @@ class SmileQwen2ForCausalLM(SmileQwen2PreTrainedModel, GenerationMixin):
         Example:
 
         ```python
-        >>> from transformers import AutoTokenizer, Qwen2ForCausalLM
+        >>> from transformers import AutoTokenizer, Gemma2ForCausalLM
 
-        >>> model = Qwen2ForCausalLM.from_pretrained("meta-qwen2/Qwen2-2-7b-hf")
-        >>> tokenizer = AutoTokenizer.from_pretrained("meta-qwen2/Qwen2-2-7b-hf")
+        >>> model = Gemma2ForCausalLM.from_pretrained("google/gemma-2-9b")
+        >>> tokenizer = AutoTokenizer.from_pretrained("google/gemma-2-9b")
 
-        >>> prompt = "Hey, are you conscious? Can you talk to me?"
+        >>> prompt = "What is your favorite condiment?"
         >>> inputs = tokenizer(prompt, return_tensors="pt")
 
         >>> # Generate
         >>> generate_ids = model.generate(inputs.input_ids, max_length=30)
         >>> tokenizer.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
-        "Hey, are you conscious? Can you talk to me?\nI'm not conscious, but I can talk to you."
+        "What is your favorite condiment?"
         ```"""
+
+        if self.training and self.config._attn_implementation != "eager":
+            logger.warning_once(
+                "It is strongly recommended to train Gemma2 models with the `eager` attention implementation "
+                f"instead of `{self.config._attn_implementation}`. Use `eager` with `AutoModelForCausalLM.from_pretrained('<path-to-checkpoint>', attn_implementation='eager')`."
+            )
         output_attentions = (
             output_attentions
             if output_attentions is not None
@@ -703,7 +702,6 @@ class SmileQwen2ForCausalLM(SmileQwen2PreTrainedModel, GenerationMixin):
             if output_hidden_states is not None
             else self.config.output_hidden_states
         )
-
         # decoder outputs consists of (dec_features, layer_state, dec_hidden, dec_attn)
         outputs: BaseModelOutputWithPast = self.model(
             input_ids=input_ids,
@@ -715,7 +713,7 @@ class SmileQwen2ForCausalLM(SmileQwen2PreTrainedModel, GenerationMixin):
             output_attentions=output_attentions,
             output_hidden_states=output_hidden_states,
             cache_position=cache_position,
-            **kwargs,
+            **loss_kwargs,
         )
 
         hidden_states = outputs.last_hidden_state
@@ -726,15 +724,14 @@ class SmileQwen2ForCausalLM(SmileQwen2PreTrainedModel, GenerationMixin):
             else logits_to_keep
         )
         logits = self.lm_head(hidden_states[:, slice_indices, :])
+        if self.config.final_logit_softcapping is not None:
+            logits = logits / self.config.final_logit_softcapping
+            logits = torch.tanh(logits)
+            logits = logits * self.config.final_logit_softcapping
 
         loss = None
         if labels is not None:
-            loss = self.loss_function(
-                logits=logits,
-                labels=labels,
-                vocab_size=self.config.vocab_size,
-                **kwargs,
-            )
+            loss = self.loss_function(logits, labels, self.vocab_size, **loss_kwargs)
 
         return CausalLMOutputWithPast(
             loss=loss,
@@ -744,14 +741,73 @@ class SmileQwen2ForCausalLM(SmileQwen2PreTrainedModel, GenerationMixin):
             attentions=outputs.attentions,
         )
 
+    def prepare_inputs_for_generation(
+        self,
+        input_ids,
+        past_key_values=None,
+        attention_mask=None,
+        inputs_embeds=None,
+        cache_position=None,
+        position_ids=None,
+        use_cache=True,
+        logits_to_keep=None,
+        **kwargs,
+    ):
+        # Overwritten: has a special cache type, `HybridCache`
 
-class SmileQwen2ForSequenceClassification(SmileQwen2PreTrainedModel):
+        model_inputs = super().prepare_inputs_for_generation(
+            input_ids,
+            past_key_values=past_key_values,
+            attention_mask=attention_mask,
+            inputs_embeds=inputs_embeds,
+            cache_position=cache_position,
+            position_ids=position_ids,
+            use_cache=use_cache,
+            logits_to_keep=logits_to_keep,
+            **kwargs,
+        )
+
+        # This is needed to correctly slice the mask without data-dependent slicing later on if using dynamo tracing
+        # (retrieving the same value from `cache_position` later on would crash dynamo)
+        model_inputs["last_cache_position"] = (
+            attention_mask.shape[-1] if attention_mask is not None else 0
+        )
+        if logits_to_keep is None:
+            _ = model_inputs.pop("logits_to_keep", None)
+
+        if (
+            isinstance(past_key_values, HybridCache)
+            and attention_mask.ndim == 2
+            and not self.config._attn_implementation == "flash_attention_2"
+        ):
+            if model_inputs["inputs_embeds"] is not None:
+                batch_size, sequence_length, _ = model_inputs["inputs_embeds"].shape
+                device = model_inputs["inputs_embeds"].device
+            else:
+                batch_size, sequence_length = model_inputs["input_ids"].shape
+                device = model_inputs["input_ids"].device
+
+            attention_mask = (
+                self.model._prepare_4d_causal_attention_mask_with_cache_position(
+                    attention_mask,
+                    sequence_length=sequence_length,
+                    target_length=past_key_values.get_max_cache_shape(),
+                    dtype=self.lm_head.weight.dtype,
+                    device=device,
+                    cache_position=cache_position,
+                    batch_size=batch_size,
+                )
+            )
+            model_inputs["attention_mask"] = attention_mask
+
+        return model_inputs
+
+
+class SmileGemma2ForSequenceClassification(SmileGemma2PreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
-        self.model = SmileQwen2Model(
-            config
-        )  # * replace Qwen2Model with SmileQwen2Model
+        self.model = SmileGemma2Model(config)
         self.score = nn.Linear(config.hidden_size, self.num_labels, bias=False)
 
         # Initialize weights and apply final processing
@@ -764,6 +820,7 @@ class SmileQwen2ForSequenceClassification(SmileQwen2PreTrainedModel):
         self.model.embed_tokens = value
 
     @can_return_tuple
+    @add_start_docstrings_to_model_forward(GEMMA2_INPUTS_DOCSTRING)
     def forward(
         self,
         input_ids: Optional[torch.LongTensor] = None,
@@ -845,77 +902,85 @@ class SmileQwen2ForSequenceClassification(SmileQwen2PreTrainedModel):
         )
 
 
-class SmileQwen2ForQuestionAnswering(SmileQwen2PreTrainedModel):
-    base_model_prefix = "transformer"
-
-    def __init__(self, config):
+class SmileGemma2ForTokenClassification(SmileGemma2PreTrainedModel):
+    def __init__(self, config: SmileGemma2Config):
         super().__init__(config)
-        self.transformer = SmileQwen2Model(
-            config
-        )  # * replace Qwen2Model with SmileQwen2Model
-        self.qa_outputs = nn.Linear(config.hidden_size, 2)
+        self.num_labels = config.num_labels
+        self.model = SmileGemma2Model(config)
+        if getattr(config, "classifier_dropout", None) is not None:
+            classifier_dropout = config.classifier_dropout
+        elif getattr(config, "hidden_dropout", None) is not None:
+            classifier_dropout = config.hidden_dropout
+        else:
+            classifier_dropout = 0.1
+        self.dropout = nn.Dropout(classifier_dropout)
+        self.score = nn.Linear(config.hidden_size, config.num_labels)
 
         # Initialize weights and apply final processing
         self.post_init()
 
     def get_input_embeddings(self):
-        return self.transformer.embed_tokens
+        return self.model.embed_tokens
 
     def set_input_embeddings(self, value):
-        self.transformer.embed_tokens = value
+        self.model.embed_tokens = value
 
     @can_return_tuple
+    @add_start_docstrings_to_model_forward(GEMMA2_INPUTS_DOCSTRING)
+    @add_code_sample_docstrings(
+        checkpoint=_CHECKPOINT_FOR_DOC,
+        output_type=TokenClassifierOutput,
+        config_class=_CONFIG_FOR_DOC,
+    )
     def forward(
         self,
         input_ids: Optional[torch.LongTensor] = None,
-        attention_mask: Optional[torch.FloatTensor] = None,
+        attention_mask: Optional[torch.Tensor] = None,
         position_ids: Optional[torch.LongTensor] = None,
         past_key_values: Optional[Cache] = None,
         inputs_embeds: Optional[torch.FloatTensor] = None,
-        start_positions: Optional[torch.LongTensor] = None,
-        end_positions: Optional[torch.LongTensor] = None,
+        labels: Optional[torch.LongTensor] = None,
+        use_cache: Optional[bool] = None,
         output_attentions: Optional[bool] = None,
         output_hidden_states: Optional[bool] = None,
-        **kwargs,
-    ) -> QuestionAnsweringModelOutput:
+    ) -> TokenClassifierOutput:
         r"""
-        start_positions (`torch.LongTensor` of shape `(batch_size,)`, *optional*):
-            Labels for position (index) of the start of the labelled span for computing the token classification loss.
-            Positions are clamped to the length of the sequence (`sequence_length`). Position outside of the sequence
-            are not taken into account for computing the loss.
-        end_positions (`torch.LongTensor` of shape `(batch_size,)`, *optional*):
-            Labels for position (index) of the end of the labelled span for computing the token classification loss.
-            Positions are clamped to the length of the sequence (`sequence_length`). Position outside of the sequence
-            are not taken into account for computing the loss.
+        labels (`torch.LongTensor` of shape `(batch_size,)`, *optional*):
+            Labels for computing the sequence classification/regression loss. Indices should be in `[0, ...,
+            config.num_labels - 1]`. If `config.num_labels == 1` a regression loss is computed (Mean-Square loss), If
+            `config.num_labels > 1` a classification loss is computed (Cross-Entropy).
         """
 
-        outputs: BaseModelOutputWithPast = self.transformer(
+        outputs: BaseModelOutputWithPast = self.model(
             input_ids,
             attention_mask=attention_mask,
             position_ids=position_ids,
             past_key_values=past_key_values,
             inputs_embeds=inputs_embeds,
+            use_cache=use_cache,
             output_attentions=output_attentions,
             output_hidden_states=output_hidden_states,
         )
-
         sequence_output = outputs.last_hidden_state
-
-        logits = self.qa_outputs(sequence_output)
-        start_logits, end_logits = logits.split(1, dim=-1)
-        start_logits = start_logits.squeeze(-1).contiguous()
-        end_logits = end_logits.squeeze(-1).contiguous()
+        sequence_output = self.dropout(sequence_output)
+        logits = self.score(sequence_output)
 
         loss = None
-        if start_positions is not None and end_positions is not None:
-            loss = self.loss_function(
-                start_logits, end_logits, start_positions, end_positions, **kwargs
-            )
+        if labels is not None:
+            loss = self.loss_function(logits, labels, self.config)
 
-        return QuestionAnsweringModelOutput(
+        return TokenClassifierOutput(
             loss=loss,
-            start_logits=start_logits,
-            end_logits=end_logits,
+            logits=logits,
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
         )
+
+
+__all__ = [
+    "SmileGemma2PreTrainedModel",
+    "SmileGemma2Model",
+    "SmileGemma2ForCausalLM",
+    "SmileGemma2ForSequenceClassification",
+    "SmileGemma2ForTokenClassification",
+]

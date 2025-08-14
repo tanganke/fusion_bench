@@ -12,7 +12,7 @@
 
 ::: fusion_bench.mixins.HydraConfigMixin
 ::: fusion_bench.mixins.YAMLSerializationMixin
-::: fusion_bench.mixins.BaseYAMLSerializableModel
+::: fusion_bench.mixins.BaseYAMLSerializable
 ::: fusion_bench.mixins.SimpleProfilerMixin
 ::: fusion_bench.mixins.LightningFabricMixin
 ::: fusion_bench.mixins.CLIPClassificationMixin
