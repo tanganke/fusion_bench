@@ -5,7 +5,7 @@ from torch import Tensor, nn
 from torchmetrics import Metric
 
 
-class SegmentationMertic(Metric):
+class SegmentationMetric(Metric):
     metric_names = ["mIoU", "pixAcc"]
 
     def __init__(self, num_classes=13):

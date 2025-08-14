@@ -88,17 +88,10 @@ Profiler Report
 ----------------------------------------------------------------------------------------------------------------------------------
 ```
 
-## Reference
+## Implementation Details
 
-### Task-Wise AdaMerging
-
-::: fusion_bench.method.adamerging.task_wise_adamerging
-::: fusion_bench.method.adamerging.clip_task_wise_adamerging
-
-### Layer-Wise AdaMerging
-
-::: fusion_bench.method.adamerging.layer_wise_adamerging
-::: fusion_bench.method.adamerging.clip_layer_wise_adamerging
+- [CLIPTaskWiseAdaMergingAlgorithm][fusion_bench.method.CLIPTaskWiseAdaMergingAlgorithm]
+- [CLIPLayerWiseAdaMergingAlgorithm][fusion_bench.method.CLIPLayerWiseAdaMergingAlgorithm]
 
 [^1]: (ICLR 2024) AdaMerging: Adaptive Model Merging for Multi-Task Learning. https://openreview.net/pdf?id=nZP6NgD3QY
 [^2]: Jason Yosinski, Jeff Clune, Yoshua Bengio, and Hod Lipson. How transferable are features in deep neural networks? Advances in neural information processing systems, 27, 2014.

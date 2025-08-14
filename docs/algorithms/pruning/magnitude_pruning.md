@@ -64,6 +64,6 @@ The following image shows the pruned weights of the first layer of the pruned mo
 
 ![alt text](images/llama_2_4_semistructued_first_layer.png){ width="650px" }
 
-## References
+## Implementation Details
 
-::: fusion_bench.method.pruning.llama_magnitude_prune.MagnitudePruningForLlama
+- [fusion_bench.method.pruning.llama_magnitude_prune.MagnitudePruningForLlama][]

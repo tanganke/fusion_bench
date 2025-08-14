@@ -1,106 +1,242 @@
-# Introduction to Algorithm Module
+# Algorithm Module
 
-The `Fusion Algorithm` module is a core component of the FusionBench project, dedicated to the implementation and execution of various model fusion techniques. 
-This module provides the mechanisms necessary to combine multiple models from the Model Pool, enabling nuanced and optimized model merging operations.
+The Algorithm module is a core component of FusionBench, dedicated to the implementation and execution of various model fusion techniques. This module provides the mechanisms necessary to combine multiple models from model pools, enabling sophisticated and optimized model merging operations.
 
-### Key Points of the `Fusion Algorithm` Module
+## Algorithm Configuration Structure
 
-- Adaptive Fusion: The module supports advanced fusion techniques, such as AdaMerging, that adaptively learn the best coefficients for model merging using sophisticated methods like entropy minimization.
-- Algorithm Configuration: Algorithms are defined and loaded based on configuration files, ensuring flexibility and ease of experimentation. This modular approach allows researchers to switch between different fusion methods seamlessly.
-- Model Integration: It facilitates the integration of multiple models, combining their strengths and mitigating individual weaknesses. The result is a single, merged model that ideally performs better than any individual model alone or has multitasking capability.
-- Evaluation Support: Once the model fusion process is completed, the merged model can interface with the TaskPool to evaluate the performance of the merged model across various tasks, providing a comprehensive assessment of its capabilities.
+Algorithms use Hydra-based configuration with the `_target_` field:
 
-#### Example Capabilities
+### Basic Algorithm Configuration
 
-- Entropy Minimization: Some algorithms in this module utilize entropy minimization on unlabeled test samples to refine merging coefficients, ensuring that the fusion process is data-driven and optimized.
-- Layer-wise and Task-wise Fusion: It allows both layer-wise and task-wise model fusion, where merging coefficients can be learned for individual layers or entire tasks, respectively.
+```yaml
+# Simple algorithm with no parameters
+_target_: fusion_bench.method.SimpleAverageAlgorithm
+```
 
-### Code Integration
+### Parameterized Algorithm Configuration
 
-The module is typically invoked through a configuration-driven approach in CLI scripts, enabling users to specify fusion algorithms and parameters via YAML configuration files. This method ensures reproducibility and ease of use.
-For more information, see [the document of fusion_bench CLI](../cli/fusion_bench.md).
+```yaml
+# Algorithm with parameters
+_target_: fusion_bench.method.TaskArithmeticAlgorithm
+scaling_factor: 0.3
+```
 
-`ModelFusionAlgorithm` is the base class for all fusion algorithms in the Fusion Algorithm module. 
-It provides a common interface for different fusion techniques, allowing for seamless integration and execution of various algorithms.
+### Advanced Algorithm Configuration
 
+```yaml
+# Complex algorithm with multiple parameters
+_target_: fusion_bench.method.MoreAdvancedAlgorithm
+weights_initial: [0.3, 0.3, 0.4]  
+layer_wise_weight: false
+entropy_k: 1
+entropy_regularization_weight: 0.001
+test_time_adaptation_steps: 100
+```
 
-#### Example Usage
+## Implementation Architecture
 
-Implement your own model fusion algorithm:
+All fusion algorithms inherit from [`BaseAlgorithm`][fusion_bench.BaseAlgorithm]:
 
 ```python
-from fusion_bench.method import BaseModelFusionAlgorithm
+from fusion_bench.method import BaseAlgorithm
 from fusion_bench.modelpool import BaseModelPool
 
-class DerivedModelFusionAlgorithm(BaseModelFusionAlgorithm):
+class CustomAlgorithm(BaseAlgorithm):
     """
-    An example of a derived model fusion algorithm.
+    Custom model fusion algorithm implementation.
     """
-
-    # _config_mapping maps the attribution to the corresponding key in the configuration file.
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
-        "hyperparam_attr_1": "hyperparam_1",
-        "hyperparam_attr_2": "hyperparam_2",
+    
+    # Configuration mapping for YAML serialization
+    _config_mapping = BaseAlgorithm._config_mapping | {
+        "custom_param": "custom_param",
+        "another_param": "another_param",
     }
 
-    def __init__(self, hyperparam_1, hyperparam_2, **kwargs):
-        self.hyperparam_attr_1 = hyperparam_1
-        self.hyperparam_attr_2 = hyperparam_2
+    def __init__(self, custom_param: float = 0.5, another_param: bool = True, **kwargs):
+        """Initialize the algorithm with custom parameters."""
+        self.custom_param = custom_param
+        self.another_param = another_param
         super().__init__(**kwargs)
 
     def run(self, modelpool: BaseModelPool):
-        # implement the fusion algorithm here
-        raise NotImplementedError(
-            "DerivedModelFusionAlgorithm.run() is not implemented."
-        )
+        """
+        Execute the fusion algorithm.
+        
+        Args:
+            modelpool: Pool of models to fuse
+            
+        Returns:
+            Fused model (torch.nn.Module)
+        """
+        # Your fusion logic here
+        pretrained_model = modelpool.load_pretrained_model()
+        models = [modelpool.load_model(name) for name in modelpool.model_names]
+        
+        # Implement your fusion strategy
+        merged_model = self.merge_models(pretrained_model, models)
+        return merged_model
 ```
 
-We provide a simple example to illustrate how the algorithm is used in the FusionBench as follows:
+## Usage Examples
+
+### Direct Instantiation
 
 ```python
-import logging
-from typing import Dict, Optional
-from omegaconf import DictConfig
+from fusion_bench.method import TaskArithmeticAlgorithm
+from fusion_bench.modelpool import BaseModelPool
 
-from fusion_bench.utils import instantiate
+# Create algorithm directly
+algorithm = TaskArithmeticAlgorithm(scaling_factor=0.3)
 
-log = logging.getLogger(__name__)
-
-def run_model_fusion(
-    method_config: DictConfig,
-    modelpool_config: DictConfig,
-    taskpool_config: Optional[DictConfig] = None,
-    seed: Optional[int] = None,
-    print_config: bool = True,
-    **kwargs
-):
-    """
-    Run the model fusion process.
-
-    Args:
-        method_config: Configuration for the fusion method.
-        modelpool_config: Configuration for the model pool.
-        taskpool_config: Configuration for the task pool (optional).
-    """
-    # Instantiate components: modelpool, method, and taskpool
-    modelpool = instantiate(modelpool_config)
-    method = instantiate(method_config)
-    taskpool = None
-    if taskpool_config is not None:
-        taskpool = instantiate(taskpool_config)
-
-    # Run fusion
-    merged_model = method.run(modelpool)
-
-    # Evaluate if taskpool is provided
-    if taskpool is not None:
-        report = taskpool.evaluate(merged_model)
+# Apply to your model pool
+merged_model = algorithm.run(your_modelpool)
 ```
 
-In summary, the Fusion Algorithm module is vital for the model merging operations within FusionBench, leveraging sophisticated techniques to ensure optimal fusion and performance evaluation of deep learning models. This capability makes it an indispensable tool for researchers and practitioners focusing on model fusion strategies.
+### Configuration-Based Usage
+
+```python
+from fusion_bench.utils import instantiate
+from omegaconf import OmegaConf
+
+# Load from configuration
+config = OmegaConf.load("config/method/task_arithmetic.yaml")
+algorithm = instantiate(config)
+
+# Execute fusion
+merged_model = algorithm.run(modelpool)
+```
+
+### Integration with Programs
+
+The most common usage is through FusionBench programs:
+
+```python
+from fusion_bench.programs import FabricModelFusionProgram
+
+# Full workflow using program
+program = FabricModelFusionProgram(
+    method=method_config,
+    modelpool=modelpool_config, 
+    taskpool=taskpool_config
+)
+
+# This runs: algorithm.run(modelpool) + evaluation
+program.run()
+```
+
+### Command Line Usage
+
+```bash
+fusion_bench \
+    method=task_arithmetic \
+    method.scaling_factor=0.3 \
+    modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
+    taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
+```
+
+## Advanced Features
+
+### Profiling Support
+
+Many algorithms support profiling through `SimpleProfilerMixin`:
+
+```python
+from fusion_bench.method import BaseAlgorithm
+from fusion_bench.mixins import SimpleProfilerMixin
+
+class ProfilingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
+    
+    def run(self, modelpool):
+        with self.profile("initialization"):
+            # Initialization code
+            pass
+        
+        with self.profile("model_merging"):
+            # Merging logic
+            pass
+        
+        # Print timing summary
+        self.print_profile_summary()
+```
+
+### Lightning Fabric Integration
+
+For distributed and accelerated computing:
+
+```python
+from fusion_bench.method import BaseAlgorithm
+from fusion_bench.mixins import LightningFabricMixin
+
+class DistributedAlgorithm(BaseAlgorithm, LightningFabricMixin):
+    
+    def run(self, modelpool):
+        # Access fabric for distributed operations
+        if hasattr(self, 'fabric'):
+            # Use self.fabric for distributed operations
+            pass
+        
+        # Algorithm implementation
+        merged_model = self.merge_models(modelpool)
+        return merged_model
+```
+
+### Integration with TaskPools
+
+Algorithms can access taskpools for evaluation during fusion:
+
+```python
+class AdaptiveAlgorithm(BaseAlgorithm):
+    
+    def run(self, modelpool):
+        # Access taskpool if available through program
+        if hasattr(self, '_program') and self._program.taskpool:
+            # Use taskpool for adaptive fusion
+            taskpool = self._program.taskpool
+            
+            for step in range(self.adaptation_steps):
+                merged_model = self.merge_step(modelpool)
+                results = taskpool.evaluate(merged_model)
+                self.update_weights(results)
+        
+        return merged_model
+```
+
+## Migration from v0.1.x
+
+If you're migrating from v0.1.x, note these key changes:
+
+1. **Base Class**: Use [`BaseAlgorithm`][fusion_bench.BaseAlgorithm] instead of [`ModelFusionAlgorithm`][fusion_bench.compat.method.ModelFusionAlgorithm]
+2. **Configuration**: Use `_target_` fields instead of string-based algorithm names  
+3. **Instantiation**: Use `instantiate(config)` instead of factory methods
+4. **Parameters**: Pass parameters to `__init__` instead of through config dict
+
+### Migration Example
+
+```python
+# Old (v0.1.x, deprecated)
+from fusion_bench.compat.method import ModelFusionAlgorithm, AlgorithmFactory
+
+class OldAlgorithm(ModelFusionAlgorithm):
+    def __init__(self, algorithm_config):
+        super().__init__(algorithm_config)
+        self.param = algorithm_config.get('param', 0.5)
+
+algorithm = AlgorithmFactory.create_algorithm(config)
+
+# New (v0.2+)
+from fusion_bench.method import BaseAlgorithm
+
+class NewAlgorithm(BaseAlgorithm):
+    def __init__(self, param: float = 0.5, **kwargs):
+        self.param = param
+        super().__init__(**kwargs)
+
+algorithm = instantiate(config)  # or direct instantiation
+```
 
 
-### References
+For backward compatibility, v0.1.x style configurations and factory methods are still supported through the `fusion_bench.compat` module, but new implementations should use the v0.2+ style.
 
-::: fusion_bench.method.BaseAlgorithm
-::: fusion_bench.method.BaseModelFusionAlgorithm
+## Implementation Details
+
+- [fusion_bench.method.BaseAlgorithm][]

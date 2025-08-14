@@ -55,7 +55,9 @@ class LayerWiseAdaMergingAlgorithm(
         super().__init__(algorithm_config)
 
     @torch.no_grad()
-    def construct_layer_wise_merged_model(self, modelpool: "ModelPool"):
+    def construct_layer_wise_merged_model(
+        self, modelpool: "ModelPool"
+    ) -> LayerWiseMergedModel:
         """
         Constructs a wrapped layer-wise merged model from model pool.
 
@@ -125,7 +127,7 @@ class LayerWiseAdaMergingAlgorithm(
                 os.makedirs(os.path.dirname(save_path), exist_ok=True)
             torch.save(merging_weights.detach().cpu(), save_path)
 
-    def run(self, modelpool: ModelPool, **kwargs):
+    def run(self, modelpool: ModelPool, **kwargs) -> nn.Module:
         """
         Run the Layer-Wise AdaMerging Algorithm.
 
@@ -176,7 +178,9 @@ class LayerWiseAdaMergingAlgorithm(
         pass
 
     @abstractmethod
-    def compute_logits(self, module, images: Tensor, task: str) -> Tensor:
+    def compute_logits(
+        self, module: LayerWiseMergedModel, images: Tensor, task: str
+    ) -> Tensor:
         """
         Compute the logits for the given images and task.
 
@@ -190,7 +194,9 @@ class LayerWiseAdaMergingAlgorithm(
         """
         pass
 
-    def test_time_adaptation(self, module: "LayerWiseMergedModel[TorchModelType]"):
+    def test_time_adaptation(
+        self, module: "LayerWiseMergedModel[TorchModelType]"
+    ) -> "LayerWiseMergedModel[TorchModelType]":
         """
         Perform test-time adaptation on the merged model.
 

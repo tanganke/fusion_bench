@@ -122,9 +122,9 @@ class CLIPVisionModelTaskPool(
         self,
         test_datasets: Union[DictConfig, Dict[str, Dataset]],
         *,
-        processor: Union[DictConfig, CLIPProcessor],
-        data_processor: Union[DictConfig, CLIPProcessor],
-        clip_model: Union[DictConfig, CLIPModel],
+        processor: Union[str, DictConfig, CLIPProcessor],
+        clip_model: Union[str, DictConfig, CLIPModel],
+        data_processor: Union[DictConfig, CLIPProcessor] = None,
         dataloader_kwargs: DictConfig = None,
         layer_wise_feature_save_path: Optional[str] = None,
         layer_wise_feature_first_token_only: bool = True,
@@ -159,21 +159,35 @@ class CLIPVisionModelTaskPool(
         Set up the processor, data processor, CLIP model, test datasets, and data loaders.
         """
         # setup processor and clip model
-        self.processor = (
-            instantiate(self._processor)
-            if isinstance(self._processor, DictConfig)
-            else self._processor
-        )
-        self.data_processor = (
-            instantiate(self._data_processor)
-            if isinstance(self._data_processor, DictConfig)
-            else self._data_processor
-        )
-        self.clip_model = (
-            instantiate(self._clip_model)
-            if isinstance(self._clip_model, DictConfig)
-            else self._clip_model
-        )
+        if isinstance(self._processor, str):
+            self.processor = CLIPProcessor.from_pretrained(self._processor)
+        elif (
+            isinstance(self._processor, (dict, DictConfig))
+            and "_target_" in self._processor
+        ):
+            self.processor = instantiate(self._processor)
+        else:
+            self.processor = self._processor
+
+        if self._data_processor is None:
+            self.data_processor = self.processor
+        else:
+            self.data_processor = (
+                instantiate(self._data_processor)
+                if isinstance(self._data_processor, DictConfig)
+                else self._data_processor
+            )
+
+        if isinstance(self._clip_model, str):
+            self.clip_model = CLIPModel.from_pretrained(self._clip_model)
+        elif (
+            isinstance(self._clip_model, (dict, DictConfig))
+            and "_target_" in self._clip_model
+        ):
+            self.clip_model = instantiate(self._clip_model)
+        else:
+            self.clip_model = self._clip_model
+
         self.clip_model = self.fabric.to_device(self.clip_model)
         self.clip_model.requires_grad_(False)
         self.clip_model.eval()
@@ -348,8 +362,15 @@ class CLIPVisionModelTaskPool(
 
         log.info(f"Evaluation Result: {report}")
         if self.fabric.is_global_zero and len(self.fabric._loggers) > 0:
-            with open(os.path.join(self.log_dir, "report.json"), "w") as fp:
+            save_path = os.path.join(self.log_dir, "report.json")
+            for version in itertools.count(1):
+                if not os.path.exists(save_path):
+                    break
+                # if the file already exists, increment the version to avoid overwriting
+                save_path = os.path.join(self.log_dir, f"report_{version}.json")
+            with open(save_path, "w") as fp:
                 json.dump(report, fp)
+            log.info(f"Evaluation report saved to {save_path}")
         return report
 
     def on_task_evaluation_begin(self, classifier: HFCLIPClassifier, task_name: str):

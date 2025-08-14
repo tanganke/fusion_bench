@@ -1,6 +1,6 @@
 import copy
 from collections import OrderedDict
-from typing import List, Mapping, Optional, Union
+from typing import Dict, List, Mapping, Optional, Union
 
 import torch
 from torch import nn
@@ -83,7 +83,7 @@ def vector_to_state_dict(
     vector: torch.Tensor,
     state_dict: Union[StateDictType, nn.Module],
     remove_keys: Optional[List[str]] = None,
-):
+) -> Dict[str, torch.Tensor]:
     """
     Convert a vector to a state dictionary.
 
@@ -220,6 +220,39 @@ def count_parameters(module: nn.Module, non_zero_only: bool = False) -> tuple[in
             trainable_params += num_params
 
     return trainable_params, all_param
+
+
+@torch.no_grad()
+def get_parameter_summary(
+    module_or_state_dict: Union[nn.Module, StateDictType], non_zero_only: bool = False
+) -> dict:
+    """
+    Get a summary of the parameters in a PyTorch model.
+    """
+    if isinstance(module_or_state_dict, nn.Module):
+        state_dict = module_or_state_dict.state_dict(keep_vars=True)
+    else:
+        state_dict = module_or_state_dict
+
+    trainable_params = 0
+    all_param = 0
+    bytes = 0
+
+    for name, param in state_dict.items():
+        # count the number of parameters
+        num_params = _numel(param, non_zero_only)
+        bytes += _numel(param, non_zero_only=False) * param.element_size()
+
+        # accumulate the number of trainable and total parameters
+        all_param += num_params
+        if param.requires_grad:
+            trainable_params += num_params
+
+    return {
+        "trainable_params": trainable_params,
+        "all_param": all_param,
+        "bytes": bytes,
+    }
 
 
 def print_parameters(

@@ -4,6 +4,7 @@ This is the dummy task pool that is used for debugging purposes.
 
 from typing import Optional
 
+from lightning.pytorch.utilities import rank_zero_only
 from torch import nn
 
 from fusion_bench.models.separate_io import separate_save
@@ -49,10 +50,11 @@ class DummyTaskPool(BaseTaskPool):
         Args:
             model: The model to evaluate.
         """
-        print_parameters(model, is_human_readable=True)
+        if rank_zero_only.rank == 0:
+            print_parameters(model, is_human_readable=True)
 
-        if self.model_save_path is not None:
-            with timeit_context(f"Saving the model to {self.model_save_path}"):
-                separate_save(model, self.model_save_path)
+            if self.model_save_path is not None:
+                with timeit_context(f"Saving the model to {self.model_save_path}"):
+                    separate_save(model, self.model_save_path)
 
         return get_model_summary(model)

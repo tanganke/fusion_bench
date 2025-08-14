@@ -29,7 +29,7 @@ from fusion_bench.models.wrappers.layer_wise_fusion import (
     get_layer_wise_weights,
 )
 from fusion_bench.utils.data import InfiniteDataLoader, load_tensor_from_file
-from fusion_bench.utils.instantiate import instantiate
+from fusion_bench.utils.instantiate_utils import instantiate
 
 from .entropy_loss import entropy_loss
 from .min_norm_solvers import MinNormSolver

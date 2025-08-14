@@ -37,10 +37,11 @@ _import_structure = {
     "ties_merging": ["TiesMergingAlgorithm"],
     "dare": ["DareSimpleAverage", "DareTaskArithmetic", "DareTiesMerging"],
     "fisher_merging": [
-        "FisherMergingForCLIPVisionModel",
+        "FisherMergingAlgorithm" "FisherMergingForCLIPVisionModel",
         "FisherMergingAlgorithmForGPT2",
     ],
     "regmean": ["RegMeanAlgorithmForCLIP", "RegMeanAlgorithmForGPT2"],
+    "regmean_plusplus": ["RegMeanAlgorithmPlusPlus", "RegMeanAlgorithmForCLIPPlusPlus"],
     "adamerging": [
         "CLIPTaskWiseAdaMergingAlgorithm",
         "CLIPLayerWiseAdaMergingAlgorithm",
@@ -67,6 +68,7 @@ _import_structure = {
         "CLIPTaskWiseGossipAlgorithm",
         "FlanT5LayerWiseGossipAlgorithm",
     ],
+    "fw_merging": ["FrankWolfeHardAlgorithm", "FrankWolfeSoftAlgorithm"],
     # plug-and-play model merging methods
     "concrete_subspace": [
         "ConcreteTaskArithmeticAlgorithmForCLIP",
@@ -97,17 +99,26 @@ _import_structure = {
         "SmileUpscalingAlgorithm",
         "SingularProjectionMergingAlgorithm",
     ],
+    # task vector compression methods
+    "bitdelta": ["BitDeltaAlgorithm"],
     # pruning methods
     "pruning": [
         "MagnitudeDiffPruningAlgorithm",
         "RandomPruningForLlama",
         "MagnitudePruningForLlama",
         "WandaPruningForLlama",
+        "SparseGPTPruningForLlama",
     ],
     "sparselo": [
         "IterativeSparseLoForLlama",
         "SparseLoForLlama",
         "PCPSparseLoForLlama",
+    ],
+    # MoE expert pruning
+    "expert_sparsity": [
+        "DynamicSkippingPruningForMixtral",
+        "LayerWisePruningForMixtral",
+        "ProgressivePruningForMixtral",
     ],
 }
 
@@ -117,6 +128,7 @@ if TYPE_CHECKING:
     from .adamerging import *
     from .analysis import TaskVectorCosSimilarity, TaskVectorViolinPlot
     from .base_algorithm import BaseAlgorithm, BaseModelFusionAlgorithm
+    from .bitdelta import BitDeltaAlgorithm
     from .classification import (
         ContinualImageClassificationFineTuningForCLIP,
         ImageClassificationFineTuningForCLIP,
@@ -140,7 +152,17 @@ if TYPE_CHECKING:
         SimpleEnsembleAlgorithm,
         WeightedEnsembleAlgorithm,
     )
-    from .fisher_merging import FisherMergingForCLIPVisionModel
+    from .expert_sparsity import (
+        DynamicSkippingPruningForMixtral,
+        LayerWisePruningForMixtral,
+        ProgressivePruningForMixtral,
+    )
+    from .fisher_merging import (
+        FisherMergingAlgorithm,
+        FisherMergingAlgorithmForGPT2,
+        FisherMergingForCLIPVisionModel,
+    )
+    from .fw_merging import FrankWolfeHardAlgorithm, FrankWolfeSoftAlgorithm
     from .gossip import (
         CLIPLayerWiseGossipAlgorithm,
         CLIPTaskWiseGossipAlgorithm,
@@ -172,6 +194,7 @@ if TYPE_CHECKING:
         MagnitudeDiffPruningAlgorithm,
         MagnitudePruningForLlama,
         RandomPruningForLlama,
+        SparseGPTPruningForLlama,
         WandaPruningForLlama,
     )
     from .pwe_moe import (
@@ -180,6 +203,10 @@ if TYPE_CHECKING:
     )
     from .rankone_moe import CLIPRankOneMoEAlgorithm, RankOneMoEAlgorithm
     from .regmean import RegMeanAlgorithmForCLIP, RegMeanAlgorithmForGPT2
+    from .regmean_plusplus import (
+        RegMeanAlgorithmForCLIPPlusPlus,
+        RegMeanAlgorithmPlusPlus,
+    )
     from .simple_average import SimpleAverageAlgorithm
     from .slerp import SlerpMergeAlgorithm
     from .smile_upscaling import (

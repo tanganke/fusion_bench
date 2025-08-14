@@ -23,7 +23,7 @@ from fusion_bench.mixins import CLIPClassificationMixin
 from fusion_bench.modelpool import CLIPVisionModelPool
 from fusion_bench.utils import timeit_context
 from fusion_bench.utils.data import InfiniteDataLoader
-from fusion_bench.utils.instantiate import instantiate
+from fusion_bench.utils.instantiate_utils import instantiate
 
 from .warppers.dawe_model import DataAdaptiveWeightEnsemblingCLIPVisionModel
 

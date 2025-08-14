@@ -1,6 +1,6 @@
 import fnmatch
 import os
-from typing import Callable, Optional
+from typing import Callable, Dict, Optional, Tuple
 
 import numpy as np
 import torch
@@ -68,7 +68,7 @@ class NYUv2(Dataset):
         )
         self.noise = torch.rand(self.data_len, 1, 288, 384)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
         Retrieve an item from the dataset.
 

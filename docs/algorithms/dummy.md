@@ -11,10 +11,8 @@ To use the Dummy Algorithm, you need to specify `"dummy"` as the algorithm name.
 fusion_bench method=dummy ...
 ```
 
-## Implementation
+## Implementation Details
 
 The implementation of the Dummy Algorithm is straightforward. Here is the main method of the `DummyAlgorithm` class:
 
-::: fusion_bench.method.dummy.DummyAlgorithm
-    options:
-        members: [fuse]
+- [fusion_bench.method.dummy.DummyAlgorithm][]

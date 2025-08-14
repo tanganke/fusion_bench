@@ -22,6 +22,7 @@ import torch
 from torch import Tensor, nn
 from torch.func import functional_call
 
+from fusion_bench.models.utils import StateDictType, del_attr, get_attr, set_attr
 from fusion_bench.utils.type import StateDictType, TorchModelType
 
 log = logging.getLogger(__name__)
@@ -29,77 +30,7 @@ log = logging.getLogger(__name__)
 __all__ = ["get_task_wise_weights", "fuse_weights", "TaskWiseMergedModel"]
 
 
-def del_attr(obj, names: List[str]):
-    """
-    Deletes an attribute from an object recursively.
-
-    Args:
-        obj (object): Object to delete attribute from.
-        names (list): List of attribute names to delete recursively.
-    """
-    if len(names) == 1:
-        delattr(obj, names[0])
-    else:
-        del_attr(getattr(obj, names[0]), names[1:])
-
-
-def set_attr(obj, names: List[str], val):
-    """
-    Sets an attribute of an object recursively.
-
-    Args:
-        obj (object): Object to set attribute of.
-        names (list): List of attribute names to set recursively.
-        val (object): Value to set the attribute to.
-    """
-    if len(names) == 1:
-        setattr(obj, names[0], val)
-    else:
-        set_attr(getattr(obj, names[0]), names[1:], val)
-
-
-def get_attr(obj, names: List[str]):
-    """
-    Gets an attribute of an object recursively.
-
-    Args:
-        obj (object): Object to get attribute of.
-        names (list): List of attribute names to get recursively.
-
-    Returns:
-        object: The attribute of the object.
-    """
-    if len(names) == 1:
-        return getattr(obj, names[0])
-    else:
-        return get_attr(getattr(obj, names[0]), names[1:])
-
-
-def check_parameterNamesMatch(checkpoints: List[StateDictType]) -> None:
-    """
-    Checks that the parameter names of the given checkpoints match.
-
-    Args:
-        checkpoints (List[Dict[str, float]]): A list of checkpoints, where each checkpoint is a dictionary of parameter names and their corresponding values.
-
-    Raises:
-        ValueError: If the number of checkpoints is less than 2 or if the parameter names of any two checkpoints differ.
-
-    """
-    parameter_names = set(checkpoints[0].keys())
-
-    if len(checkpoints) >= 2:
-        # raise ValueError("Number of models is less than 2.")
-        for checkpoint in checkpoints[1:]:
-            current_parameterNames = set(checkpoint.keys())
-            if current_parameterNames != parameter_names:
-                raise ValueError(
-                    "Differing parameter names in models. "
-                    f"The different parameters are {parameter_names.symmetric_difference(current_parameterNames)}"
-                )
-
-
-def get_task_wise_weights(num_models: int, init_values: float = None):
+def get_task_wise_weights(num_models: int, init_values: float = None) -> Tensor:
     """
     This function generates a tensor of weights for each model.
 
@@ -116,7 +47,7 @@ def get_task_wise_weights(num_models: int, init_values: float = None):
     return torch.full((num_models,), init_values, dtype=torch.float32)
 
 
-def _fuse_weights(task_wise_weight: Tensor, tensors: List[Tensor]):
+def _fuse_weights(task_wise_weight: Tensor, tensors: List[Tensor]) -> Tensor:
     """
     This function fuses the weights of the models.
 
@@ -158,6 +89,100 @@ def fuse_weights(
 
 
 class TaskWiseMergedModel(nn.Module, Generic[TorchModelType]):
+    """
+    A PyTorch module that dynamically merges multiple fine-tuned models using learnable task-wise weights.
+
+    This class implements a sophisticated model fusion approach where multiple task-specific models
+    are combined with a pretrained base model using learnable weights. The fusion is performed
+    using task vectors (differences between fine-tuned and pretrained models) that are weighted
+    and added to the base model's parameters.
+
+    The key innovation is that the merging weights are learnable parameters that can be optimized
+    during training, allowing the model to automatically learn the optimal combination of different
+    task-specific knowledge.
+
+    Architecture:
+        - Base pretrained model (frozen)
+        - Multiple task vectors (differences from pretrained model, frozen)
+        - Learnable task-wise weights (trainable parameters)
+        - Dynamic merging during forward pass
+
+    Args:
+        task_wise_weight (Tensor): Initial weights for each task model. Shape: (num_models,).
+            These become learnable parameters that control the contribution of each task vector.
+        pretrained_model (TorchModelType): The base pretrained model that serves as the foundation.
+            This model is frozen and used as the starting point for merging.
+        finetuned_models (List[TorchModelType]): List of fine-tuned models for different tasks.
+            These are converted to task vectors (differences from pretrained model) and frozen.
+        clamp_weights (bool, optional): Whether to clamp merge weights to [0, 1] range.
+            Defaults to True. When True, ensures weights are non-negative and bounded.
+        tie_weights (bool, optional): Whether to tie weights during functional call.
+            Defaults to False. Used in the underlying PyTorch functional_call.
+        strict (bool, optional): Whether to enforce strict parameter matching.
+            Defaults to True. Used in the underlying PyTorch functional_call.
+        task_vector_dtype (Optional[torch.dtype], optional): Data type for task vectors.
+            Defaults to None. Can be used to save memory (e.g., torch.float16).
+
+    Attributes:
+        merge_weight (nn.Parameter): Learnable weights for merging task vectors.
+        pretrained_model (TorchModelType): The frozen base model.
+        task_vectors (nn.ModuleList): List of frozen task vector models.
+        _merged_state_dict (StateDictType): Cached merged state dictionary.
+
+    Example:
+        ```python
+        import torch
+        import torch.nn as nn
+
+        # Create example models
+        pretrained_model = nn.Linear(10, 5)
+        finetuned_model1 = nn.Linear(10, 5)  # Fine-tuned on task 1
+        finetuned_model2 = nn.Linear(10, 5)  # Fine-tuned on task 2
+
+        # Initialize task-wise weights
+        task_weights = torch.tensor([0.3, 0.7])  # Initial weights for 2 tasks
+
+        # Create merged model
+        merged_model = TaskWiseMergedModel(
+            task_wise_weight=task_weights,
+            pretrained_model=pretrained_model,
+            finetuned_models=[finetuned_model1, finetuned_model2],
+            clamp_weights=True
+        )
+
+        # Use like a regular PyTorch model
+        x = torch.randn(32, 10)
+        output = merged_model(x)
+
+        # Train the merge weights
+        optimizer = torch.optim.Adam(merged_model.parameters())
+        loss = some_loss_function(output, targets)
+        loss.backward()
+        optimizer.step()
+
+        # Get the final merged model
+        final_model = merged_model.merge_and_unload()
+        ```
+
+    Training Workflow:
+        1. **Initialization**: Task vectors are computed as differences from pretrained model
+        2. **Forward Pass**: Weights are dynamically merged based on current merge_weight values
+        3. **Loss Computation**: Standard loss computation on model outputs
+        4. **Backpropagation**: Gradients flow through merge_weight parameters
+        5. **Optimization**: merge_weight parameters are updated to improve performance
+
+    Memory Efficiency:
+        - Task vectors can use lower precision (task_vector_dtype)
+        - Base model and task vectors are frozen (no gradient computation)
+        - Only merge weights require gradients
+
+    Note:
+        - The pretrained model and task vectors are frozen during training
+        - Only the merge weights (task_wise_weight) are trainable parameters
+        - Task vectors represent the difference between fine-tuned and pretrained models
+        - The merged state dict is cached and recomputed when merge weights change
+    """
+
     _merged_state_dict: StateDictType = None
 
     def __init__(
@@ -170,6 +195,32 @@ class TaskWiseMergedModel(nn.Module, Generic[TorchModelType]):
         strict: bool = True,
         task_vector_dtype: Optional[torch.dtype] = None,
     ):
+        """
+        Initialize the TaskWiseMergedModel.
+
+        This constructor sets up the model by:
+        1. Converting fine-tuned models to task vectors (differences from pretrained)
+        2. Freezing the pretrained model and task vectors
+        3. Setting up learnable merge weights as parameters
+        4. Configuring merging behavior options
+
+        Args:
+            task_wise_weight (Tensor): Initial weights for each task model. Shape: (num_models,).
+                These values become the starting point for learnable parameters.
+            pretrained_model (TorchModelType): The base pretrained model.
+                Will be frozen and used as the foundation for merging.
+            finetuned_models (List[TorchModelType]): List of fine-tuned models.
+                Must have the same architecture as pretrained_model.
+            clamp_weights (bool, optional): Whether to clamp weights to [0, 1]. Defaults to True.
+            tie_weights (bool, optional): Whether to tie weights in functional_call. Defaults to False.
+            strict (bool, optional): Whether to use strict parameter matching. Defaults to True.
+            task_vector_dtype (Optional[torch.dtype], optional): Data type for task vectors.
+                Defaults to None (same as original models).
+
+        Raises:
+            ValueError: If the number of task_wise_weights doesn't match the number of fine-tuned models.
+            RuntimeError: If models have incompatible architectures.
+        """
         super().__init__()
         self.clamp_weights = clamp_weights
         self.tie_weights = tie_weights
@@ -196,6 +247,24 @@ class TaskWiseMergedModel(nn.Module, Generic[TorchModelType]):
 
     @property
     def forward_model(self):
+        """
+        Get a functional model with merged parameters.
+
+        Returns a partial function that applies the pretrained model with the current
+        merged state dictionary. This allows for efficient forward passes without
+        modifying the original model's parameters.
+
+        Returns:
+            Callable: A partial function that can be called with (args, kwargs) to
+                perform forward pass with merged parameters.
+
+        Example:
+            ```python
+            # Internal usage during forward pass
+            forward_fn = merged_model.forward_model
+            output = forward_fn(args=(x,), kwargs={})
+            ```
+        """
         return functools.partial(
             functional_call,
             self.pretrained_model,
@@ -205,6 +274,43 @@ class TaskWiseMergedModel(nn.Module, Generic[TorchModelType]):
         )
 
     def merge_weights(self, task_vector_mask: Optional[Dict[str, Tensor]] = None):
+        """
+        Merge task vectors with the pretrained model using current merge weights.
+
+        This method computes the merged model parameters by combining the pretrained
+        model with weighted task vectors. The resulting state dictionary represents
+        a model that incorporates knowledge from all task-specific models.
+
+        The merging formula for each parameter is:
+        merged_param = pretrained_param + Σ(weight_i * task_vector_i * mask_i)
+
+        Args:
+            task_vector_mask (Optional[Dict[str, Tensor]], optional): Optional masks
+                to selectively apply task vectors to specific parameters. Keys should
+                match parameter names, values should be tensors with the same shape
+                as the corresponding parameters. Defaults to None (no masking).
+
+        Returns:
+            StateDictType: The merged state dictionary containing combined parameters.
+
+        Example:
+            ```python
+            # Basic merging
+            merged_state = model.merge_weights()
+
+            # Merging with parameter-specific masks
+            masks = {
+                'layer1.weight': torch.ones_like(model.pretrained_model.layer1.weight),
+                'layer2.weight': torch.zeros_like(model.pretrained_model.layer2.weight),
+            }
+            masked_state = model.merge_weights(task_vector_mask=masks)
+            ```
+
+        Note:
+            - If clamp_weights is True, merge weights are clamped to [0, 1] range
+            - The merged state dict is cached in _merged_state_dict
+            - Task vector masks allow fine-grained control over which parameters are affected
+        """
         if self.clamp_weights:
             merge_weight = self.merge_weight.clamp(0, 1)
         else:
@@ -222,11 +328,83 @@ class TaskWiseMergedModel(nn.Module, Generic[TorchModelType]):
         return state_dict
 
     def merge_and_unload(self, task_vector_mask: Optional[Dict[str, Tensor]] = None):
+        """
+        Merge models and return the final merged model.
+
+        This method performs the merging operation and then loads the merged parameters
+        into the pretrained model, returning a standard PyTorch model that can be used
+        independently of the TaskWiseMergedModel wrapper.
+
+        Args:
+            task_vector_mask (Optional[Dict[str, Tensor]], optional): Optional masks
+                for selective parameter merging. Defaults to None.
+
+        Returns:
+            TorchModelType: The pretrained model with merged parameters loaded.
+                This is a standalone model that can be used without the wrapper.
+
+        Example:
+            ```python
+            # Train the merged model
+            for epoch in range(num_epochs):
+                # ... training loop ...
+                pass
+
+            # Get the final merged model
+            final_model = merged_model.merge_and_unload()
+
+            # Save or use the final model
+            torch.save(final_model.state_dict(), 'merged_model.pth')
+            output = final_model(new_input)
+            ```
+
+        Warning:
+            This method modifies the pretrained_model's parameters in-place.
+            The original pretrained model parameters will be lost.
+        """
         self.merge_weights(task_vector_mask=task_vector_mask)
         self.pretrained_model.load_state_dict(self._merged_state_dict)
         return self.pretrained_model
 
     def forward(self, *args, **kwargs):
+        """
+        Forward pass through the dynamically merged model.
+
+        This method performs the forward pass by first ensuring the model parameters
+        are merged according to the current merge weights, then applying the merged
+        model to the input data.
+
+        The forward pass involves:
+        1. Check if merged state dict is current (recompute if needed)
+        2. Apply the merged model to inputs using functional_call
+        3. Return the model outputs
+
+        Args:
+            *args: Positional arguments to pass to the underlying model.
+            **kwargs: Keyword arguments to pass to the underlying model.
+
+        Returns:
+            Any: The output of the merged model, typically torch.Tensor or tuple of tensors.
+
+        Example:
+            ```python
+            # Single input
+            x = torch.randn(32, 784)
+            output = merged_model(x)
+
+            # Multiple inputs
+            x1, x2 = torch.randn(32, 784), torch.randn(32, 100)
+            output = merged_model(x1, x2)
+
+            # With keyword arguments
+            output = merged_model(input_ids=input_ids, attention_mask=attention_mask)
+            ```
+
+        Note:
+            - The merged state dict is recomputed if merge weights have changed
+            - This allows for dynamic behavior during training as weights are updated
+            - The computation is efficient as merging only happens when needed
+        """
         if self._merged_state_dict is None:
             self.merge_weights()
         return self.forward_model(args=args, kwargs=kwargs)

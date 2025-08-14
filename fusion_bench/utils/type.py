@@ -9,6 +9,7 @@ try:
     from torch import Tensor, nn
 
     StateDictType: TypeAlias = Dict[str, Tensor]
+    BoolStateDictType: TypeAlias = Dict[str, torch.BoolTensor]
     TorchModelType = TypeVar("TorchModelType", bound=nn.Module)
 
 except ImportError:

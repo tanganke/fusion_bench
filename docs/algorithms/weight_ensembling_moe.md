@@ -257,10 +257,9 @@ fusion_bench \
     taskpool.clip_model=openai/clip-vit-large-patch14
 ```
 
-## Reference
+## Implementation Details
 
-::: fusion_bench.method.we_moe.we_moe
-::: fusion_bench.method.we_moe.clip_we_moe
+- [fusion_bench.method.CLIPWeightEnsemblingMoEAlgorithm]
 
 
 [^1]: Anke Tang et.al. ICML 2024. Merging Multi-Task Models via Weight-Ensembling Mixture of Experts. http://arxiv.org/abs/2402.00433 ICML 2024.

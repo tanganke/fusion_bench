@@ -19,6 +19,7 @@ class BaseAlgorithm(BaseYAMLSerializableModel):
     """
 
     _program = None
+    _config_key = "method"
 
     @abstractmethod
     def run(self, modelpool: BaseModelPool):

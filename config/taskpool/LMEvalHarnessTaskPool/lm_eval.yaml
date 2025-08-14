@@ -1,0 +1,11 @@
+_target_: fusion_bench.taskpool.LMEvalHarnessTaskPool
+tasks:
+  - truthfulqa
+batch_size: 1
+verbosity: null
+include_path: null
+apply_chat_template: false
+# if `output_path` is not given, the results will be saved to `log_dir/lm_eval_results`, where `log_dir` is the directory controlled by lightning Fabric.
+output_path: null
+# if `log_samples` is true, the samples will be saved to `output_path`.
+log_samples: false
