@@ -268,6 +268,8 @@ Flan-T5-Large models:
     | Ties-Merging ($\lambda=0.3$)    | 77.1 | 85.1 | 86.3 | 93.9 | 86.0 | 87.7 | 95.1  | 88.0 | 87.4    |
 
 
-## References
+## Implementation Details
 
-::: fusion_bench.modelpool.Seq2SeqLMPool
+- [fusion_bench.modelpool.Seq2SeqLMPool][]
+- [fusion_bench.modelpool.SequenceClassificationModelPool][]
+- [fusion_bench.modelpool.PeftModelForSeq2SeqLMPool][]

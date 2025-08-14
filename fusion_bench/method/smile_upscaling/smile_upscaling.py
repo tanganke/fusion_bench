@@ -1,7 +1,7 @@
 import logging
 import os
 from copy import deepcopy
-from typing import Dict, List, Tuple  # noqa: F401
+from typing import Any, Dict, List, Tuple  # noqa: F401
 
 import torch
 import torch.nn.functional as F
@@ -54,7 +54,7 @@ class SmileUpscalingAlgorithm(
         routing_use_diff: bool = True,
         average_experts: bool = False,
         model_path: str = None,
-        **kwargs,
+        **kwargs: Any,
     ):
         """
         Initialize the SmileUpscalingAlgorithm.
@@ -91,7 +91,7 @@ class SmileUpscalingAlgorithm(
         print(f"=== Config for `{type(self).__name__}` ===")
 
     @torch.no_grad()
-    def run(self, modelpool: BaseModelPool):
+    def run(self, modelpool: BaseModelPool) -> nn.Module:
         """
         Executes the upscaling process.
 
@@ -142,7 +142,7 @@ class SmileUpscalingAlgorithm(
         pretrained_model: nn.Module,
         finetuned_models: List[nn.Module],
         in_place: bool = True,
-    ):
+    ) -> nn.Module:
         """
         Merges the pretrained model with the fine-tuned models to create an upscaled model.
 

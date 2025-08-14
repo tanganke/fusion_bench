@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-This is the CLI script that is executed when the user runs the `fusion-bench` command.
+This is the CLI script that is executed when the user runs the `fusion_bench` command.
 The script is responsible for parsing the command-line arguments, loading the configuration file, and running the fusion algorithm.
 """
 

@@ -104,7 +104,7 @@ class TaskArithmeticAlgorithm(
         super().__init__()
 
     @torch.no_grad()
-    def run(self, modelpool: Union[BaseModelPool, Dict[str, nn.Module]]):
+    def run(self, modelpool: Union[BaseModelPool, Dict[str, nn.Module]]) -> nn.Module:
         """
         Runs the Task Arithmetic Algorithm to fuse models in the given model pool.
 

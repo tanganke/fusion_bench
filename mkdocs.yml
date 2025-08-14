@@ -1,40 +1,51 @@
 site_name: "FusionBench"
-
 nav:
-  - Introduction: 
-    - README.md
-    - introduction_to_model_fusion.md
-    - cli/fusion_bench.md
-    - cli/fusion_bench_webui.md
+  - Home:
+      - index.md
+      - Get Started:
+          - get_started/index.md
+          - Basic Examples:
+              - get_started/basic_examples/index.md
+          - Intermediate Examples:
+              - get_started/intermediate_examples/index.md
+          - Advanced Examples:
+              - get_started/advanced_examples/index.md
+      - Further Reading:
+          - introduction_to_model_fusion.md
   - Algorithms:
       - algorithms/README.md
       - algorithms/dummy.md
-      - Model Ensemble: 
-        - Simple Ensemble: algorithms/simple_ensemble.md
-        - Weighted Ensemble: algorithms/weighted_ensemble.md
-        - Max-Model Predictor: algorithms/max-model_predictor.md
-        # - Model Specification: algorithms/specification_ensemble.md
+      - Model Ensemble:
+          - Simple Ensemble: algorithms/simple_ensemble.md
+          - Weighted Ensemble: algorithms/weighted_ensemble.md
+          - Max-Model Predictor: algorithms/max-model_predictor.md
+            # - Model Specification: algorithms/specification_ensemble.md
       - Model Merging:
-        - Simple Averaging: algorithms/simple_averaging.md
-        - Weighted Averaging: algorithms/weighted_averaging.md
-        - Fisher Merging: algorithms/fisher_merging.md
-        - Task Arithmetic: algorithms/task_arithmetic.md
-        - Ties-Merging: algorithms/ties_merging.md
-        - AdaMerging: algorithms/adamerging.md
-        - RegMean: algorithms/regmean.md
-        - Concrete Subspace: algorithms/concrete_subspace.md
-        - Isotropic Merging: algorithms/isotropic_merging.md
+          - Simple Averaging: algorithms/simple_averaging.md
+          - Weighted Averaging: algorithms/weighted_averaging.md
+          - Fisher Merging: algorithms/fisher_merging.md
+          - Task Arithmetic: algorithms/task_arithmetic.md
+          - Ties-Merging: algorithms/ties_merging.md
+          - AdaMerging: algorithms/adamerging.md
+          - RegMean: algorithms/regmean.md
+          - RegMean++: algorithms/regmean_plusplus.md
+          - Concrete Subspace: algorithms/concrete_subspace.md
+          - Task Singular Vector: algorithms/task_singular_vector.md
+          - Isotropic Merging: algorithms/isotropic_merging.md
       - Model Mixing:
-        - Depth Upscaling: algorithms/depth_upscaling.md
-        - MoE-based Upscaling: algorithms/moe_based_upscaling.md
-        - MoE-based Merging: algorithms/moe_based_merging.md
-        - Weight-Ensembling MoE: algorithms/weight_ensembling_moe.md
-        - PWE MoE: algorithms/pwe_moe.md
-        - SMILE Upscaling: algorithms/smile_upscaling.md
-        # - Model Stitching: algorithms/model_stitching.md
-        - Model Recombination: algorithms/model_recombination.md
-      - Model Pruning:
-        - Magnitude Pruning: algorithms/pruning/magnitude_pruning.md
+          - Depth Upscaling: algorithms/depth_upscaling.md
+          - MoE-based Upscaling: algorithms/moe_based_upscaling.md
+          - MoE-based Merging: algorithms/moe_based_merging.md
+          - Weight-Ensembling MoE: algorithms/weight_ensembling_moe.md
+          - PWE MoE: algorithms/pwe_moe.md
+          - SMILE Upscaling: algorithms/smile_upscaling.md
+          # - Model Stitching: algorithms/model_stitching.md
+          - Model Recombination: algorithms/model_recombination.md
+      - Model Compression:
+        - Task Vector Compression:
+            - BitDelta: algorithms/bitdelta.md
+        - Parameter Pruning:
+            - Magnitude Pruning: algorithms/pruning/magnitude_pruning.md
   - Model Pool (Benchmark Models):
       - modelpool/README.md
       - CLIP-ViT Models: modelpool/clip_vit.md
@@ -46,30 +57,65 @@ nav:
       - taskpool/README.md
       - taskpool/dummy.md
       - Task Pool for Llama Models:
-        - taskpool/LlamaTestGenerationTaskPool.md
+          - taskpool/LlamaTestGenerationTaskPool.md
       - Classification Tasks for CLIP: taskpool/clip_vit_classification.md
       - GPT-2 Sequence Classification Tasks: taskpool/gpt2_classification.md
       - Flan-T5 Models for Text Generation: taskpool/flan-t5_generation.md
       - Task Pool for Language Model Evaluation Harness: taskpool/lm_eval_harness.md
-  # - Command Line Interface:
+        # - Command Line Interface:
     # - fusion_bench: cli/fusion_bench.md
-  - Additional Guides:
-    - FusionBench Programming Guide:
-      - Overview: guides/fusion_bench/README.md
-      - Mixins:
-        - LightningFabricMixin: guides/fusion_bench/mixins/lightning_fabric.md
-        - SimpleProfilerMixin: guides/fusion_bench/mixins/simple_profiler.md
-    - CLIP-ViT Models For Image Classification:
-      - guides/clip_vit/HFCLIPClassifier.md
-      - Manage Labels and Templates: guides/clip_vit/classification_templates.md
-      - guides/clip_vit/finetune.md
-    - Natural Language Processing:
-      - Tasks:
-        - guides/nlp/question_answering.md
-  - Reading Lists: 
-    - readinglist/README.md
-    - Mode Connectivity: readinglist/mode_connectivity.md
-
+  - API Reference:
+      - api/index.md
+      - api/fusion_bench.mixins.md
+      - api/fusion_bench.program.md
+      - fusion_bench.method:
+          - api/fusion_bench.method/index.md
+          - api/fusion_bench.method/ensemble.md
+          - api/fusion_bench.method/merging.md
+          - api/fusion_bench.method/mixing.md
+          - api/fusion_bench.method/compression.md
+          - api/fusion_bench.method/training.md
+          - api/fusion_bench.method/utility.md
+      - api/fusion_bench.modelpool.md
+      - api/fusion_bench.taskpool.md
+      - fusion_bench.utils:
+          - api/fusion_bench.utils/index.md
+          - api/fusion_bench.utils/logging.md
+          - api/fusion_bench.utils/profiling.md
+          - api/fusion_bench.utils/caching.md
+          - api/fusion_bench.utils/data.md
+          - api/fusion_bench.utils/model.md
+          - api/fusion_bench.utils/torch.md
+          - api/fusion_bench.utils/filesystem.md
+          - api/fusion_bench.utils/modelscope.md
+          - api/fusion_bench.utils/package_management.md
+      - api/fusion_bench.models.md
+      - api/fusion_bench.dataset.md
+      - api/fusion_bench.tasks.md
+      - api/fusion_bench.metrics.md
+      - api/fusion_bench.optim.md
+      - api/fusion_bench.constants.md
+      - api/fusion_bench.compat.md
+  - Guides:
+      - guides/docs.md
+      - FusionBench Programming Guide:
+          - Overview: guides/fusion_bench/README.md
+          - Mixins:
+              - LightningFabricMixin: guides/fusion_bench/mixins/lightning_fabric.md
+              - SimpleProfilerMixin: guides/fusion_bench/mixins/simple_profiler.md
+      - CLIP-ViT Models For Image Classification:
+          - guides/clip_vit/HFCLIPClassifier.md
+          - Manage Labels and Templates: guides/clip_vit/classification_templates.md
+          - guides/clip_vit/finetune.md
+      - Natural Language Processing:
+          - Tasks:
+              - guides/nlp/question_answering.md
+              # - Reading Lists:
+      # - readinglist/README.md
+      # - Mode Connectivity: readinglist/mode_connectivity.md
+      - CLI Tools:
+          - cli/fusion_bench.md
+          - cli/fusion_bench_webui.md
 plugins:
   - search
   - autorefs
@@ -86,20 +132,21 @@ plugins:
             show_root_members_full_path: false
             show_object_full_path: false
             group_by_category: true
-            show_submodules: true
-            parameter_headings: true
+            show_submodules: false
+            parameter_headings: false
             show_bases: true
             docstring_section_style: list
             show_symbol_type_heading: true
             show_symbol_type_toc: true
-            heading_level: 4
-
+            heading_level: 3
+            signature_crossrefs: true
+            show_overloads: true
 markdown_extensions:
   - attr_list
   - md_in_html
   - toc:
       permalink: true
-      toc_depth: 6
+      toc_depth: 4
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
@@ -118,29 +165,31 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
-
 extra_javascript:
   - javascripts/mathjax.js
-  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - javascripts/polyfill.min.js
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
-
 extra_css:
   - css/mkdocstrings.css
   - css/material_extra.css
-
 extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/tanganke/fusion_bench
-
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/fusion-bench
+  status:
+    new: Recently added
+    deprecated: Deprecated
 theme:
   name: material
   features:
     - toc.follow
-    # - content.action.edit
-    # - content.action.view
+    - content.action.edit
+    - content.action.view
     - content.code.annotate
     - content.code.copy
+    - content.code.select
     - navigation.top
     - navigation.tabs
     # - navigation.tabs.sticky
@@ -148,12 +197,11 @@ theme:
     # - navigation.prune
     - navigation.expand
     # - navigation.path
-    # - navigation.indexes
-    # - navigation.sections
+    - navigation.indexes
+    - navigation.sections
     - search.suggest
     - search.highlight
     # - git-authors
-  
   palette:
     - media: "(prefers-color-scheme)"
       toggle:
@@ -173,6 +221,5 @@ theme:
       toggle:
         icon: material/toggle-switch-off
         name: Switch to system preference
-
 repo_url: https://github.com/tanganke/fusion_bench
-
+edit_uri: blob/main/docs/

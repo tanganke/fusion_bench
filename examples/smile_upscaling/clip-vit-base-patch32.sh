@@ -11,6 +11,103 @@ function run_eight_tasks() {
         report_save_path="outputs/ViT-B-32/eight_tasks/gate_k\=${gate_k}_k\=${k}.json"
 }
 
+function vit_b32_run_20_tasks() {
+    # simple average
+    report_path="outputs/ViT-B-32/20_tasks/simple_average.json"
+    if [ ! -f $report_path ]; then
+        rich-run fusion_bench \
+            method=simple_average \
+            modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TALL20 \
+            taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TALL20 \
+            taskpool.base_model=openai/clip-vit-base-patch32 \
+            report_save_path=$report_path
+    else
+        echo "Report already exists at $report_path"
+    fi
+
+    # task arithmetic
+    report_path="outputs/ViT-B-32/20_tasks/task_arithmetic.json"
+    if [ ! -f $report_path ]; then
+        rich-run fusion_bench \
+            method=task_arithmetic \
+            method.scaling_factor=0.1 \
+            modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TALL20 \
+            taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TALL20 \
+            taskpool.base_model=openai/clip-vit-base-patch32 \
+            report_save_path=$report_path
+    else
+        echo "Report already exists at $report_path"
+    fi
+
+    # ties-merging
+    report_path="outputs/ViT-B-32/20_tasks/ties_merging.json"
+    if [ ! -f $report_path ]; then
+        rich-run fusion_bench \
+            method=ties_merging \
+            method.scaling_factor=0.1 \
+            modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TALL20 \
+            taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TALL20 \
+            taskpool.base_model=openai/clip-vit-base-patch32 \
+            report_save_path=$report_path
+    else
+        echo "Report already exists at $report_path"
+    fi
+
+    # regmean
+    report_path="outputs/ViT-B-32/20_tasks/regmean.json"
+    if [ ! -f $report_path ]; then
+        rich-run fusion_bench \
+            method=regmean/clip_regmean \
+            modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TALL20 \
+            taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TALL20 \
+            taskpool.base_model=openai/clip-vit-base-patch32 \
+            report_save_path=$report_path
+    else
+        echo "Report already exists at $report_path"
+    fi
+
+    # fisher-merging
+    report_path="outputs/ViT-B-32/20_tasks/fisher.json"
+    if [ ! -f $report_path ]; then
+        rich-run fusion_bench \
+            method=fisher_merging/clip_fisher_merging \
+            modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TALL20 \
+            taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TALL20 \
+            taskpool.base_model=openai/clip-vit-base-patch32 \
+            report_save_path=$report_path
+    else
+        echo "Report already exists at $report_path"
+    fi
+
+    # TSVM
+    report_path="outputs/ViT-B-32/20_tasks/tsvm.json"
+    if [ ! -f $report_path ]; then
+        rich-run fusion_bench \
+            method=task_singular_vector/TaskSingularVectorMerging \
+            modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TALL20 \
+            taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TALL20 \
+            taskpool.base_model=openai/clip-vit-base-patch32 \
+            report_save_path=$report_path
+    else
+        echo "Report already exists at $report_path"
+    fi
+
+    # smile upscaling
+    report_path="outputs/ViT-B-32/20_tasks/gate_k=${gate_k}_k=${k}.json"
+    if [ ! -f $report_path ]; then
+        rich-run fusion_bench \
+            method=smile_upscaling/smile_upscaling \
+            method.device=cuda \
+            method.gate_k=$gate_k method.k=$k \
+            modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TALL20 \
+            taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TALL20 \
+            taskpool.base_model=openai/clip-vit-base-patch32 \
+            report_save_path="outputs/ViT-B-32/20_tasks/gate_k\=${gate_k}_k\=${k}.json"
+    else
+        echo "Report already exists at $report_path"
+    fi
+}
+
 # run the generalization experiment
 function run_generalization_exp() {
     fusion_bench \
@@ -84,3 +181,5 @@ function run_routing_analysis() {
 }
 
 gate_k=16 k=32 run_routing_analysis
+
+gate_k=16 k=128 vit_b32_run_20_tasks

@@ -10,7 +10,7 @@ def compute_backward_transfer(
     Compute the backward transfer (BWT) of a model on a set of tasks.
 
     Equation:
-        BWT = \frac{1}{n} \sum_{k=1}^{n} (acc_{Ti}[k] - acc_{ii}[k])
+        $BWT = \frac{1}{n} \sum_{k=1}^{n} (acc_{T,i}[k] - acc_{i,i}[k])$
 
     Returns:
         float: The backward transfer of the model.

@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Any, Optional
 
 import torch
 from tqdm.autonotebook import tqdm
@@ -114,7 +114,7 @@ def _upscale_decoder_layer(
 
 def upscale_to_mixtral_model(
     input_model: LlamaModel | MistralModel, output_model: MixtralModel
-):
+) -> None:
     """
     A helper function.
 
@@ -140,7 +140,7 @@ def upscale_to_mixtral_model(
 
 def upscale_to_mixtral_for_causal_lm(
     input_model: LlamaForCausalLM | MistralForCausalLM, output_model: MixtralForCausalLM
-):
+) -> None:
     """
     A helper function.
 
@@ -174,7 +174,7 @@ class MixtralUpscalingAlgorithm(BaseAlgorithm):
         num_experts: int,
         experts_per_token: int,
         save_checkpoint: str,
-        **kwargs,
+        **kwargs: Any,
     ):
         """
         Initialize the MixtralUpscalingAlgorithm.
@@ -259,7 +259,7 @@ class MixtralForCausalLMUpscalingAlgorithm(BaseAlgorithm):
         num_experts: int,
         experts_per_token: int,
         save_checkpoint: str,
-        **kwargs,
+        **kwargs: Any,
     ):
         """
         Initialize the MixtralForCausalLMUpscalingAlgorithm.

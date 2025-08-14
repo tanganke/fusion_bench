@@ -7,6 +7,7 @@ Reference:
 
 import logging
 from copy import deepcopy
+from typing import Union
 
 import torch
 from torch import nn
@@ -79,7 +80,7 @@ class ExPOAlgorithm(BaseAlgorithm):
         self.extrapolation_factor = extrapolation_factor
         super().__init__(**kwargs)
 
-    def run(self, modelpool: BaseModelPool):
+    def run(self, modelpool: Union[BaseModelPool, list]) -> nn.Module:
         """
         Run the ExPO merge algorithm.
 

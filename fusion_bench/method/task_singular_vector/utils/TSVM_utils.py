@@ -1,7 +1,9 @@
+import collections
 import math
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import torch
+from torch import Tensor, nn
 
 from fusion_bench.utils.type import StateDictType
 
@@ -314,7 +316,8 @@ def compute_and_sum_svd_mem_reduction(
     task_vectors: List[StateDictType],
     exclude_keys: Optional[List[str]] = None,
     accelerator: torch.device = "cuda" if torch.cuda.is_available() else "cpu",
-) -> StateDictType:
+    return_single_task_models: bool = False,
+):
     """
     Computes the Singular Value Decomposition (SVD) for each vector in the task_vectors,
     reduces the dimensionality of the vectors based on the sv_reduction factor, and concatenate
@@ -326,23 +329,25 @@ def compute_and_sum_svd_mem_reduction(
                             dictionary of vectors.
         exclude_keys (list): A list of keys to exclude from the TSVM.
         accelerator (torch.device): The device to use for the computation.
+        return_single_task_models (bool): Whether to return the single task models after the TSVM.
 
     Returns:
         dict: A dictionary containing the new vectors after SVD computation and merging.
     """
     if exclude_keys is None:
         exclude_keys = []
-    sv_reduction = 1 / len(task_vectors)
+    num_tasks = len(task_vectors)
+    sv_reduction = 1 / num_tasks
 
-    new_vector = {}
+    new_vector: Dict[str, Tensor] = {}
+    if return_single_task_models:
+        single_task_models = [{} for _ in range(num_tasks)]
     for key in task_vectors[0]:
         original_device = task_vectors[0][key].device
         original_dtype = task_vectors[0][key].dtype
 
-        new_vector[key] = {}
         for i, task_vector in enumerate(task_vectors):
-            vec = task_vector[key].to(accelerator)
-
+            vec = task_vector[key].to(device=accelerator, non_blocking=True)
             if len(task_vector[key].shape) == 2 and key not in exclude_keys:
                 # at current, the SVD is not supported for half precision, so we need to convert to float32
                 if not (
@@ -350,13 +355,14 @@ def compute_and_sum_svd_mem_reduction(
                 ):
                     vec = vec.to(dtype=torch.float32)
 
-                u, s, v = torch.linalg.svd(vec, full_matrices=False)
+                # vec = u @ torch.diag(s) @ vh
+                u, s, vh = torch.linalg.svd(vec, full_matrices=False)
 
                 if i == 0:
                     print(f"Computed SVD for {key}...")
                     sum_u = torch.zeros_like(u, device=accelerator)
                     sum_s = torch.zeros_like(s, device=accelerator)
-                    sum_v = torch.zeros_like(v, device=accelerator)
+                    sum_vh = torch.zeros_like(vh, device=accelerator)
                 reduced_index_s = int(s.shape[0] * sv_reduction)
 
                 # select only the first reduced_index_s columns of u and place them
@@ -367,10 +373,9 @@ def compute_and_sum_svd_mem_reduction(
                     :reduced_index_s
                 ]
                 # select only the first reduced_index_s rows of v and place them
-                sum_v[i * reduced_index_s : (i + 1) * reduced_index_s, :] = v[
+                sum_vh[i * reduced_index_s : (i + 1) * reduced_index_s, :] = vh[
                     :reduced_index_s, :
                 ]
-
             else:
                 # if the vector is not a 2D tensor or is in exclude_keys, compute the mean
                 if i == 0:
@@ -379,22 +384,49 @@ def compute_and_sum_svd_mem_reduction(
                     new_vector[key] += (vec - new_vector[key]) / (i + 1)
 
         if len(task_vector[key].shape) == 2 and key not in exclude_keys:
-            u_u, s_u, v_u = torch.linalg.svd(sum_u, full_matrices=False)
-            u_v, s_v, v_v = torch.linalg.svd(sum_v, full_matrices=False)
+            u_u, s_u, vh_u = torch.linalg.svd(sum_u, full_matrices=False)
+            u_vh, s_vh, vh_vh = torch.linalg.svd(sum_vh, full_matrices=False)
 
             new_vector[key] = torch.linalg.multi_dot(
                 (
                     u_u,
-                    v_u,
+                    vh_u,
                     torch.diag(sum_s),
-                    u_v,
-                    v_v,
+                    u_vh,
+                    vh_vh,
                 )
             )
-        new_vector[key] = new_vector[key].to(
-            device=original_device, dtype=original_dtype, non_blocking=True
-        )
-    return new_vector
+            new_vector[key] = new_vector[key].to(
+                device=original_device, dtype=original_dtype, non_blocking=True
+            )
+            if return_single_task_models:
+                reduced_index_s = int(sum_s.shape[0] * sv_reduction)
+                new_u = u_u @ vh_u
+                new_vh = u_vh @ vh_vh
+                for i in range(num_tasks):
+                    single_task_models[i][key] = torch.linalg.multi_dot(
+                        (
+                            new_u[:, i * reduced_index_s : (i + 1) * reduced_index_s],
+                            torch.diag(
+                                sum_s[i * reduced_index_s : (i + 1) * reduced_index_s]
+                            ),
+                            new_vh[i * reduced_index_s : (i + 1) * reduced_index_s, :],
+                        )
+                    ).to(
+                        device=original_device, dtype=original_dtype, non_blocking=True
+                    )
+        else:
+            new_vector[key] = new_vector[key].to(
+                device=original_device, dtype=original_dtype, non_blocking=True
+            )
+            if return_single_task_models:
+                for i in range(num_tasks):
+                    single_task_models[i][key] = new_vector[key].clone()
+
+    if not return_single_task_models:
+        return new_vector
+    else:
+        return new_vector, single_task_models
 
 
 ###############

@@ -16,7 +16,7 @@ from functools import partial
 from pathlib import Path
 from typing import Literal
 
-from datasets import load_dataset, load_from_disk
+from datasets import Dataset, load_dataset, load_from_disk
 from transformers import PreTrainedTokenizer
 
 
@@ -147,7 +147,7 @@ class TokenizedGLUE:
         return glue_dataset_loaders[name]()
 
     @cache_dataset
-    def load_mrpc_dataset(self):
+    def load_mrpc_dataset(self) -> Dataset:
         """
         Load and tokenize the MRPC dataset.
 
@@ -166,7 +166,7 @@ class TokenizedGLUE:
         return dataset
 
     @cache_dataset
-    def load_rte_dataset(self):
+    def load_rte_dataset(self) -> Dataset:
         """
         Load and tokenize the RTE dataset.
 
@@ -186,7 +186,7 @@ class TokenizedGLUE:
         return dataset
 
     @cache_dataset
-    def load_wnli_dataset(self):
+    def load_wnli_dataset(self) -> Dataset:
         """
         Load and tokenize the WNLI dataset.
 
@@ -205,7 +205,7 @@ class TokenizedGLUE:
         return dataset
 
     @cache_dataset
-    def load_qqp_dataset(self):
+    def load_qqp_dataset(self) -> Dataset:
         """
         Load and tokenize the QQP dataset.
 
@@ -224,7 +224,7 @@ class TokenizedGLUE:
         return dataset
 
     @cache_dataset
-    def load_mnli_dataset(self):
+    def load_mnli_dataset(self) -> Dataset:
         """
         Load and tokenize the MNLI dataset.
 
@@ -243,7 +243,7 @@ class TokenizedGLUE:
         return dataset
 
     @cache_dataset
-    def load_cola_dataset(self):
+    def load_cola_dataset(self) -> Dataset:
         """
         Load and tokenize the CoLA dataset.
 
@@ -262,7 +262,7 @@ class TokenizedGLUE:
         return dataset
 
     @cache_dataset
-    def load_sst2_dataset(self):
+    def load_sst2_dataset(self) -> Dataset:
         """
         Load and tokenize the SST-2 dataset.
 
@@ -281,7 +281,7 @@ class TokenizedGLUE:
         return dataset
 
     @cache_dataset
-    def load_qnli_dataset(self):
+    def load_qnli_dataset(self) -> Dataset:
         """
         Load and tokenize the QNLI dataset.
 

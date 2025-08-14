@@ -1,6 +1,6 @@
 import logging
 from abc import abstractmethod
-from typing import cast  # noqa: F401
+from typing import Any, cast  # noqa: F401
 
 import lightning as L
 import lightning.fabric.wrappers
@@ -70,7 +70,7 @@ class WeightEnsemblingMoEAlgorithm(
             assert "No CUDA device available."
 
     @abstractmethod
-    def load_checkpoint(self, model, checkpoint):
+    def load_checkpoint(self, model: Any, checkpoint: Any):
         """
         Load the checkpoint file.
 
@@ -81,7 +81,7 @@ class WeightEnsemblingMoEAlgorithm(
         pass
 
     @abstractmethod
-    def save_checkpoint(self, model, checkpoint):
+    def save_checkpoint(self, model: Any, checkpoint: Any):
         """
         Save the checkpoint file.
 
@@ -121,7 +121,7 @@ class WeightEnsemblingMoEAlgorithm(
         pass
 
     @abstractmethod
-    def compute_logits(self, module, batch, task) -> Tensor:
+    def compute_logits(self, module: Any, batch: Any, task: Any) -> Tensor:
         """
         Compute the logits for a given batch and task.
 
@@ -135,7 +135,7 @@ class WeightEnsemblingMoEAlgorithm(
         """
         pass
 
-    def test_time_adaptation(self, module: WeightEnsemblingMoE):
+    def test_time_adaptation(self, module: WeightEnsemblingMoE) -> WeightEnsemblingMoE:
         """
         Perform test-time adaptation for the given module.
 
@@ -208,7 +208,7 @@ class WeightEnsemblingMoEAlgorithm(
 
         return module
 
-    def run(self, modelpool: ModelPool):
+    def run(self, modelpool: ModelPool) -> WeightEnsemblingMoE:
         """
         Run the WeightEnsemblingMoEAlgorithm to fuse models using Weight Ensembling Mixture of Experts.
 

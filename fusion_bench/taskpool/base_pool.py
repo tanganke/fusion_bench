@@ -1,13 +1,15 @@
 from abc import abstractmethod
+from typing import Any, Dict
 
 from fusion_bench.mixins import BaseYAMLSerializableModel
 
 
 class BaseTaskPool(BaseYAMLSerializableModel):
     _program = None
+    _config_key = "taskpool"
 
     @abstractmethod
-    def evaluate(self, model, *args, **kwargs):
+    def evaluate(self, model: Any, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         """
         Evaluate the model on all tasks in the task pool, and return a report.
 

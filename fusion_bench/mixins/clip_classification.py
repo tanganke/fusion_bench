@@ -6,6 +6,7 @@ from typing import (  # noqa: F401
     TYPE_CHECKING,
     Any,
     Dict,
+    Iterator,
     List,
     Optional,
     Tuple,
@@ -71,7 +72,7 @@ class CLIPClassificationMixin(LightningFabricMixin):
         batch_size: Optional[int] = None,
         num_workers: Optional[int] = None,
         **loader_kwargs,
-    ):
+    ) -> Iterator:
         """
         Get an iterator for a shuffled test DataLoader.
 

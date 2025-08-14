@@ -1,4 +1,5 @@
 import gc
+import logging
 import os
 from typing import List, Optional, Union
 
@@ -12,7 +13,7 @@ from transformers.utils import (
 )
 
 __all__ = [
-    "cuda_empty_cache",
+    "clear_cuda_cache",
     "to_device",
     "num_devices",
     "get_device",
@@ -21,10 +22,19 @@ __all__ = [
     "get_device_capabilities",
 ]
 
+log = logging.getLogger(__name__)
 
-def cuda_empty_cache():
+
+def clear_cuda_cache():
+    """
+    Clears the CUDA memory cache to free up GPU memory.
+    Works only if CUDA is available.
+    """
     gc.collect()
-    torch.cuda.empty_cache()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+    else:
+        log.warning("CUDA is not available. No cache to clear.")
 
 
 def to_device(obj, device: Optional[torch.device], **kwargs):
@@ -75,7 +85,7 @@ def num_devices(devices: Union[int, List[int], str]) -> int:
     Return the number of devices.
 
     Args:
-        devices: `devices` can be a single int to specify the number of devices, or a list of device ids, e.g. [0, 1, 2, 3]， or a str of device ids, e.g. "0,1,2,3" and "[0, 1, 2]".
+        devices: `devices` can be a single int to specify the number of devices, or a list of device ids, e.g. [0, 1, 2, 3], or a str of device ids, e.g. "0,1,2,3" and "[0, 1, 2]".
 
     Returns:
         The number of devices.

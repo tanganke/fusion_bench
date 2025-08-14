@@ -4,6 +4,7 @@ from typing import Callable, Dict, List, Literal, Union, cast
 
 import torch
 from torch import Tensor
+from tqdm.auto import tqdm
 
 from .parameters import check_parameters_all_equal
 from .type import BoolStateDictType, StateDictType
@@ -43,7 +44,7 @@ def state_dicts_check_keys(state_dicts: List[StateDictType]):
         assert keys == set(state_dict.keys()), "keys of state_dicts are not equal"
 
 
-def num_params_of_state_dict(state_dict: StateDictType):
+def num_params_of_state_dict(state_dict: StateDictType) -> int:
     """
     Returns the number of parameters in a state dict.
 
@@ -56,7 +57,7 @@ def num_params_of_state_dict(state_dict: StateDictType):
     return sum([state_dict[key].numel() for key in state_dict])
 
 
-def state_dict_flatten(state_dict: Dict[str, Tensor]):
+def state_dict_flatten(state_dict: Dict[str, Tensor]) -> Tensor:
     """
     Flattens a state dict.
 
@@ -72,7 +73,7 @@ def state_dict_flatten(state_dict: Dict[str, Tensor]):
     return torch.cat(flattened_state_dict)
 
 
-def state_dict_avg(state_dicts: List[StateDictType]):
+def state_dict_avg(state_dicts: List[StateDictType]) -> StateDictType:
     """
     Returns the average of a list of state dicts.
 
@@ -99,7 +100,7 @@ def state_dict_avg(state_dicts: List[StateDictType]):
 
 def state_dict_sub(
     a: StateDictType, b: StateDictType, strict: bool = True, device=None
-):
+) -> StateDictType:
     """
     Returns the difference between two state dicts `a-b`.
 
@@ -124,8 +125,12 @@ def state_dict_sub(
 
 
 def state_dict_add(
-    a: StateDictType, b: StateDictType, strict: bool = True, device=None
-):
+    a: StateDictType,
+    b: StateDictType,
+    strict: bool = True,
+    device=None,
+    show_pbar: bool = False,
+) -> StateDictType:
     """
     Returns the sum of two state dicts.
 
@@ -140,10 +145,10 @@ def state_dict_add(
     ans = {}
     if strict:
         check_parameters_all_equal([a, b])
-        for key in a:
+        for key in tqdm(tuple(a.keys())) if show_pbar else a:
             ans[key] = a[key] + b[key]
     else:
-        for key in a:
+        for key in tqdm(tuple(a.keys())) if show_pbar else a:
             if key in b:
                 ans[key] = a[key] + b[key]
     if device is not None:
@@ -151,14 +156,14 @@ def state_dict_add(
     return ans
 
 
-def state_dict_add_scalar(a: StateDictType, scalar: Number):
+def state_dict_add_scalar(a: StateDictType, scalar: Number) -> StateDictType:
     ans = OrderedDict()
     for key in a:
         ans[key] = a[key] + scalar
     return ans
 
 
-def state_dict_mul(state_dict: StateDictType, scalar: float):
+def state_dict_mul(state_dict: StateDictType, scalar: float) -> StateDictType:
     """
     Returns the product of a state dict and a scalar.
 
@@ -175,7 +180,9 @@ def state_dict_mul(state_dict: StateDictType, scalar: float):
     return diff
 
 
-def state_dict_div(state_dict: StateDictType, scalar: float):
+def state_dict_div(
+    state_dict: StateDictType, scalar: float, show_pbar: bool = False
+) -> StateDictType:
     """
     Returns the division of a state dict by a scalar.
 
@@ -187,21 +194,21 @@ def state_dict_div(state_dict: StateDictType, scalar: float):
         Dict: The division of the state dict by the scalar.
     """
     diff = OrderedDict()
-    for k in state_dict:
+    for k in tqdm(tuple(state_dict.keys())) if show_pbar else state_dict:
         diff[k] = state_dict[k] / scalar
     return diff
 
 
-def state_dict_power(state_dict: Dict[str, Tensor], p: float):
+def state_dict_power(state_dict: StateDictType, p: float) -> StateDictType:
     """
     Returns the power of a state dict.
 
     Args:
-        state_dict (Dict[str, Tensor]): The state dict to be powered.
+        state_dict (StateDictType): The state dict to be powered.
         p (float): The power to raise the state dict to.
 
     Returns:
-        Dict[str, Tensor]: The powered state dict.
+        StateDictType: The powered state dict.
     """
     powered_state_dict = {}
     for key in state_dict:
@@ -210,17 +217,17 @@ def state_dict_power(state_dict: Dict[str, Tensor], p: float):
 
 
 def state_dict_interpolation(
-    state_dicts: List[Dict[str, Tensor]], scalars: List[float]
-):
+    state_dicts: List[StateDictType], scalars: List[float]
+) -> StateDictType:
     """
     Interpolates between a list of state dicts using a list of scalars.
 
     Args:
-        state_dicts (List[Dict[str, Tensor]]): The list of state dicts to interpolate between.
+        state_dicts (List[StateDictType]): The list of state dicts to interpolate between.
         scalars (List[float]): The list of scalars to use for interpolation.
 
     Returns:
-        Dict: The interpolated state dict.
+        StateDictType: The interpolated state dict.
     """
     assert len(state_dicts) == len(
         scalars
@@ -238,15 +245,15 @@ def state_dict_interpolation(
     return interpolated_state_dict
 
 
-def state_dict_sum(state_dicts: List[StateDictType]):
+def state_dict_sum(state_dicts: List[StateDictType]) -> StateDictType:
     """
     Returns the sum of a list of state dicts.
 
     Args:
-        state_dicts (List[Dict[str, Tensor]]): The list of state dicts to sum.
+        state_dicts (List[StateDictType]): The list of state dicts to sum.
 
     Returns:
-        Dict: The sum of the state dicts.
+        StateDictType: The sum of the state dicts.
     """
     assert len(state_dicts) > 0, "The number of state_dicts must be greater than 0"
     assert all(
@@ -262,17 +269,17 @@ def state_dict_sum(state_dicts: List[StateDictType]):
 
 
 def state_dict_weighted_sum(
-    state_dicts: List[Dict[str, Tensor]], weights: List[float], device=None
-):
+    state_dicts: List[StateDictType], weights: List[float], device=None
+) -> StateDictType:
     """
     Returns the weighted sum of a list of state dicts.
 
     Args:
-        state_dicts (List[Dict[str, Tensor]]): The list of state dicts to interpolate between.
+        state_dicts (List[StateDictType]): The list of state dicts to interpolate between.
         weights (List[float]): The list of weights to use for the weighted sum.
 
     Returns:
-        Dict: The weighted sum of the state dicts.
+        StateDictType: The weighted sum of the state dicts.
     """
     assert len(state_dicts) == len(
         weights
@@ -297,7 +304,7 @@ def state_dict_weighted_sum(
     return weighted_sum_state_dict
 
 
-def state_dict_diff_abs(a: StateDictType, b: StateDictType):
+def state_dict_diff_abs(a: StateDictType, b: StateDictType) -> StateDictType:
     """
     Returns the per-layer abs of the difference between two state dicts.
 
