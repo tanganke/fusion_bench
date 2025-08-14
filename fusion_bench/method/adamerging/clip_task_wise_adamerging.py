@@ -1,6 +1,7 @@
 import functools
 import logging
 import os
+from typing import Iterator
 
 import torch
 from omegaconf import DictConfig
@@ -42,7 +43,7 @@ class CLIPTaskWiseAdaMergingAlgorithm(TaskWiseAdaMergingAlgorithm):
         super().__init__(algorithm_config)
 
     @functools.cache
-    def get_test_dataset(self, task: str):
+    def get_test_dataset(self, task: str) -> CLIPDataset:
         """
         Load the test dataset for the task.
         This method is cached, so the dataset is loaded only once.
@@ -59,7 +60,7 @@ class CLIPTaskWiseAdaMergingAlgorithm(TaskWiseAdaMergingAlgorithm):
         return dataset
 
     @functools.cache
-    def get_shuffled_test_loader_iter(self, task: str):
+    def get_shuffled_test_loader_iter(self, task: str) -> Iterator:
         """
         Get an iterator over the shuffled test DataLoader for the task.
 

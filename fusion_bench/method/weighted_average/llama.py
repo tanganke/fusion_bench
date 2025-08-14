@@ -3,6 +3,7 @@ from typing import List, Mapping, Union  # noqa: F401
 
 import numpy as np
 import torch
+from transformers import PreTrainedModel
 from typing_extensions import override
 
 from fusion_bench.method import BaseAlgorithm
@@ -59,7 +60,7 @@ class WeightedAverageForLLama(BaseAlgorithm):
 
     @override
     @torch.no_grad()
-    def run(self, modelpool: CausalLMPool):
+    def run(self, modelpool: CausalLMPool) -> PreTrainedModel:
         """
         Executes the weighted averaging of models in the provided model pool.
 

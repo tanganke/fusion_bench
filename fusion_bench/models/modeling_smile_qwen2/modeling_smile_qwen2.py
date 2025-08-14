@@ -749,7 +749,9 @@ class SmileQwen2ForSequenceClassification(SmileQwen2PreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
-        self.model = SmileQwen2Model(config)  #* replace Qwen2Model with SmileQwen2Model
+        self.model = SmileQwen2Model(
+            config
+        )  # * replace Qwen2Model with SmileQwen2Model
         self.score = nn.Linear(config.hidden_size, self.num_labels, bias=False)
 
         # Initialize weights and apply final processing
@@ -848,7 +850,9 @@ class SmileQwen2ForQuestionAnswering(SmileQwen2PreTrainedModel):
 
     def __init__(self, config):
         super().__init__(config)
-        self.transformer = SmileQwen2Model(config)  #* replace Qwen2Model with SmileQwen2Model
+        self.transformer = SmileQwen2Model(
+            config
+        )  # * replace Qwen2Model with SmileQwen2Model
         self.qa_outputs = nn.Linear(config.hidden_size, 2)
 
         # Initialize weights and apply final processing

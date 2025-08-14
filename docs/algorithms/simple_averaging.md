@@ -56,8 +56,6 @@ use the following command to run the Simple Averaging algorithm:
 fusion_bench method=simple_average ...
 ```
 
-## References
+## Implementation Details
 
-::: fusion_bench.method.simple_average.SimpleAverageAlgorithm
-    options:
-        members: true
+- [fusion_bench.method.simple_average.SimpleAverageAlgorithm][]

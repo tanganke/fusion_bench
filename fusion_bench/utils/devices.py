@@ -85,7 +85,7 @@ def num_devices(devices: Union[int, List[int], str]) -> int:
     Return the number of devices.
 
     Args:
-        devices: `devices` can be a single int to specify the number of devices, or a list of device ids, e.g. [0, 1, 2, 3]， or a str of device ids, e.g. "0,1,2,3" and "[0, 1, 2]".
+        devices: `devices` can be a single int to specify the number of devices, or a list of device ids, e.g. [0, 1, 2, 3], or a str of device ids, e.g. "0,1,2,3" and "[0, 1, 2]".
 
     Returns:
         The number of devices.

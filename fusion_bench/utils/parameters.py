@@ -1,6 +1,6 @@
 import copy
 from collections import OrderedDict
-from typing import List, Mapping, Optional, Union
+from typing import Dict, List, Mapping, Optional, Union
 
 import torch
 from torch import nn
@@ -83,7 +83,7 @@ def vector_to_state_dict(
     vector: torch.Tensor,
     state_dict: Union[StateDictType, nn.Module],
     remove_keys: Optional[List[str]] = None,
-):
+) -> Dict[str, torch.Tensor]:
     """
     Convert a vector to a state dictionary.
 

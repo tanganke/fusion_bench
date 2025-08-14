@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 from typing import Dict, Optional, Union
 
-from omegaconf import OmegaConf
+from omegaconf import DictConfig, OmegaConf
 
 from fusion_bench.utils import import_object, instantiate
 
@@ -57,7 +57,7 @@ class YAMLSerializationMixin:
             log.warning(f"Unused argument: {key}={value}")
 
     @property
-    def config(self):
+    def config(self) -> DictConfig:
         R"""
         Returns the configuration of the model pool as a DictConfig.
 
@@ -66,10 +66,13 @@ class YAMLSerializationMixin:
         serialization or other purposes.
 
         Example:
-            >>> model = SomeModelFusionAlgorithm(hyper_param_1=1, hyper_param_2=2)
-            >>> config = model.config
-            >>> print(config)
-            DictConfig({'_target_': 'SomeModelFusionAlgorithm', 'hyper_param_1': 1, 'hyper_param_2': 2})
+
+        ```python
+        model = SomeModelFusionAlgorithm(hyper_param_1=1, hyper_param_2=2)
+        config = model.config
+        print(config)
+        # DictConfig({'_target_': 'SomeModelFusionAlgorithm', 'hyper_param_1': 1, 'hyper_param_2': 2})
+        ```
 
         This is useful for serializing the object to a YAML file or for debugging.
 
@@ -132,10 +135,61 @@ class YAMLSerializationMixin:
 
 
 class BaseYAMLSerializableModel(YAMLSerializationMixin):
+    """
+    A base class for YAML-serializable classes with enhanced metadata support.
+
+    This class extends `YAMLSerializationMixin` to provide additional metadata
+    fields commonly used in FusionBench classes, including usage information
+    and version tracking. It serves as a foundation for all serializable
+    model components in the framework.
+
+    The class automatically handles serialization of usage and version metadata
+    alongside the standard configuration parameters, making it easier to track
+    model provenance and intended usage patterns.
+
+    Attributes:
+        _usage_ (Optional[str]): Description of the model's intended usage or purpose.
+        _version_ (Optional[str]): Version information for the model or configuration.
+
+    Example:
+        ```python
+        class MyAlgorithm(BaseYAMLSerializableModel):
+            _config_mapping = BaseYAMLSerializableModel._config_mapping | {
+                "model_name": "model_name",
+                "num_layers": "num_layers",
+            }
+
+            def __init__(self, _usage_: str = None, _version_: str = None):
+                super().__init__(_usage_=_usage_, _version_=_version_)
+
+        # Usage with metadata
+        model = MyAlgorithm(
+            _usage_="Text classification fine-tuning",
+            _version_="1.0.0"
+        )
+
+        # Serialization includes metadata
+        config = model.config
+        # DictConfig({
+        #     '_target_': 'MyModel',
+        #     '_usage_': 'Text classification fine-tuning',
+        #     '_version_': '1.0.0'
+        # })
+        ```
+
+    Note:
+        The underscore prefix in `_usage_` and `_version_` follows the convention
+        for metadata fields that are not core model parameters but provide
+        important contextual information for model management and tracking.
+    """
+
     _config_mapping = YAMLSerializationMixin._config_mapping | {
         "_usage_": "_usage_",
         "_version_": "_version_",
     }
+
+    _usage_: Optional[str] = None
+    _version_: Optional[str] = None
 
     def __init__(
         self,
@@ -143,6 +197,29 @@ class BaseYAMLSerializableModel(YAMLSerializationMixin):
         _version_: Optional[str] = None,
         **kwargs,
     ):
+        """
+        Initialize a base YAML-serializable model with metadata support.
+
+        Args:
+            _usage_ (Optional[str], optional): Description of the model's intended
+                usage or purpose. This can include information about the training
+                domain, expected input types, or specific use cases. Defaults to None.
+            _version_ (Optional[str], optional): Version information for the model
+                or configuration. Can be used to track model iterations, dataset
+                versions, or compatibility information. Defaults to None.
+            **kwargs: Additional keyword arguments passed to the parent class.
+                Unused arguments will trigger warnings via the parent's initialization.
+
+        Example:
+            ```python
+            model = BaseYAMLSerializableModel(
+                _usage_="Image classification on CIFAR-10",
+                _version_="2.1.0"
+            )
+            ```
+        """
         super().__init__(**kwargs)
-        self._usage_ = _usage_
-        self._version_ = _version_
+        if _usage_ is not None:
+            self._usage_ = _usage_
+        if _version_ is not None:
+            self._version_ = _version_

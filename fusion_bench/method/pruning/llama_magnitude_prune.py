@@ -167,7 +167,7 @@ class MagnitudePruningForLlama(BaseAlgorithm, SimpleProfilerMixin):
         super().__init__(**kwargs)
 
     @torch.no_grad()
-    def run(self, modelpool: CausalLMPool):
+    def run(self, modelpool: CausalLMPool) -> LlamaForCausalLM:
         """
         Execute the pruning process on the first model from the given model pool.
 

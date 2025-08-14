@@ -1,3 +1,6 @@
+---
+status: new
+---
 # RegMean++
 
 [![arxiv](https://img.shields.io/badge/arXiv-2508.03121-b31b1b.svg)](https://www.arxiv.org/abs/2508.03121)
@@ -64,12 +67,10 @@ fusion_bench \
 }
 ```
 
-## Code Implementation
+## Implementation Details
 
-::: fusion_bench.method.regmean_plusplus.RegMeanAlgorithmPlusPlus
-::: fusion_bench.method.regmean_plusplus.RegMeanAlgorithmForCLIPPlusPlus
-
-## References
+- [RegMeanAlgorithmPlusPlus][fusion_bench.method.regmean_plusplus.RegMeanAlgorithmPlusPlus]
+- [RegMeanAlgorithmForCLIPPlusPlus][fusion_bench.method.regmean_plusplus.RegMeanAlgorithmForCLIPPlusPlus]
 
 [^1]: Xisen Jin, Xiang Ren, Daniel Preotiuc-Pietro, and Pengxiang Cheng. "Dataless Knowledge Fusion by Merging Weights of Language Models." The Eleventh International Conference on Learning Representations.
 

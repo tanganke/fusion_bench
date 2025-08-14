@@ -12,9 +12,9 @@ import os
 import torch
 import transformers
 from datasets import load_dataset
+from huggingface_hub import hf_hub_download
 from transformers import PreTrainedTokenizer, default_data_collator
 from transformers.testing_utils import CaptureLogger
-from huggingface_hub import hf_hub_download
 
 logger = logging.getLogger(__name__)
 

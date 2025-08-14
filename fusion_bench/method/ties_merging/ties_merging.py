@@ -9,7 +9,7 @@ Overview of Ties-Merging:
 """
 
 import logging
-from typing import Dict, List, Literal, Mapping, Union  # noqa: F401
+from typing import Any, Dict, List, Literal, Mapping, Union  # noqa: F401
 
 import torch
 from torch import Tensor, nn
@@ -49,7 +49,7 @@ class TiesMergingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
         threshold: float,
         remove_keys: List[str],
         merge_func: Literal["sum", "mean", "max"],
-        **kwargs,
+        **kwargs: Any,
     ):
         """
         Initialize the TiesMergingAlgorithm with the given parameters.
@@ -68,7 +68,9 @@ class TiesMergingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
         super().__init__(**kwargs)
 
     @torch.no_grad()
-    def run(self, modelpool: BaseModelPool | Dict[str, nn.Module], **kwargs):
+    def run(
+        self, modelpool: BaseModelPool | Dict[str, nn.Module], **kwargs: Any
+    ) -> nn.Module:
         """
         Run the TIES merging algorithm to fuse models in the model pool.
 

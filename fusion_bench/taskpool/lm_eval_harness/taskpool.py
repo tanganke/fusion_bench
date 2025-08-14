@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import List, Literal, Optional, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Literal, Optional, Union
 
 import lightning.fabric
 import lm_eval
@@ -11,7 +11,6 @@ from omegaconf import DictConfig, ListConfig
 from fusion_bench import BaseTaskPool
 from fusion_bench.mixins import LightningFabricMixin
 from fusion_bench.utils.strenum import _version
-
 
 log = logging.getLogger(__name__)
 

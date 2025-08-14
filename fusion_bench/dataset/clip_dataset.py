@@ -5,6 +5,7 @@ This module provides a class to convert a dataset whose object is a list of dict
 from typing import Optional, Tuple
 
 import torch
+from torch.utils.data import Dataset
 from transformers import CLIPProcessor, ProcessorMixin
 
 __all__ = ["CLIPDataset"]
@@ -28,7 +29,7 @@ class CLIPDataset(torch.utils.data.Dataset):
         processor (CLIPProcessor): The CLIP processor used for image preprocessing.
     """
 
-    def __init__(self, dataset, processor: Optional[CLIPProcessor] = None):
+    def __init__(self, dataset: Dataset, processor: Optional[CLIPProcessor] = None):
         self.dataset = dataset
         self.processor = processor
 

@@ -5,7 +5,7 @@ This implementation is largely based on the implementation from  https://github.
 import logging
 import re
 from collections import defaultdict
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import torch
 from torch import Tensor, nn
@@ -469,7 +469,7 @@ class FisherMergingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
         self,
         model_name: str,
         model: nn.Module,
-        train_dataset,
+        train_dataset: Any,
         param_names_to_merge: List[str],
     ) -> Dict[str, Tensor]:
         """

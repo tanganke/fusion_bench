@@ -70,7 +70,7 @@ def load_lora_vision_model_hf(
     peft_name: str,
     merge_and_unload: bool = False,
     return_vison_model=True,
-):
+) -> PeftModel:
     """
     Load a LoRA (Low-Rank Adaptation) vision model from Hugging Face.
 

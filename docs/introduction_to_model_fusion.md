@@ -1,11 +1,11 @@
 ---
-title: Deep Model Fusion (The Learn From Model Paradigm)
+title: Deep Model Fusion
 ---
 
 # Introduction to Deep Model Fusion (The Learn From Model Paradigm)
 
-[![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](http://arxiv.org/abs/2309.15698)
-[![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](http://arxiv.org/abs/2310.08184)
+[![arXiv](https://img.shields.io/badge/arXiv-2309.15698-b31b1b.svg)](http://arxiv.org/abs/2309.15698)
+[![arXiv](https://img.shields.io/badge/arXiv-2310.08184-b31b1b.svg)](http://arxiv.org/abs/2310.08184)
 
 Deep model fusion is a technique that merges, ensemble, or fuse multiple deep neural networks to obtain a unified model.
 It can be used to improve the performance and robustness of model or to combine the strengths of different models, such as fuse multiple task-specific models to create a multi-task model.

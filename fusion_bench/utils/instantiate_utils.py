@@ -41,9 +41,11 @@ def set_print_function_call(value: bool):
     finally:
         PRINT_FUNCTION_CALL = old_value
 
+
 def set_print_function_call_permeanent(value: bool):
     global PRINT_FUNCTION_CALL
     PRINT_FUNCTION_CALL = value
+
 
 def is_instantiable(config: Union[DictConfig, Any]) -> bool:
     if OmegaConf.is_dict(config):

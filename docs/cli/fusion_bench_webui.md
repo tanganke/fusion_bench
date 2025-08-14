@@ -1,6 +1,14 @@
+---
+title: Command Generator WebUI
+status: deprecated
+---
 # FusionBench Command Generator WebUI
 
-FusionBench Command Generator is a user-friendly web interface for generating FusionBench commands based on configuration files. 
+!!! warning "deprecated"
+
+    This tool is no longer actively maintained after `fusion-bench>=0.2` and may be removed in future releases.
+
+FusionBench Command Generator is a user-friendly web interface for generating FusionBench commands based on configuration files.
 It provides an interactive way to select and customize FusionBench configurations, making it easier to run experiments with different settings.
 
 <figure markdown="span">

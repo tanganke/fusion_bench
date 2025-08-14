@@ -4,11 +4,10 @@ import os
 import random
 from typing import List, Optional, Tuple, cast  # noqa: F401
 
+from datasets import load_dataset
 from torch import Tensor
 from tqdm.auto import tqdm
 from transformers import PreTrainedTokenizer
-
-from datasets import load_dataset
 
 
 # Wrapper for tokenized input IDs

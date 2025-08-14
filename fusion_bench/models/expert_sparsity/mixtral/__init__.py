@@ -10,6 +10,6 @@ Reference:
 """
 
 from .wrapper import (
-    PrunableMixtralSparseMoeBlockWrapper,
     DynamicSkippingMixtralSparseMoeBlockWrapper,
+    PrunableMixtralSparseMoeBlockWrapper,
 )

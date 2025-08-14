@@ -1,6 +1,6 @@
 import logging
 from copy import deepcopy
-from typing import Dict, List, Optional, Union
+from typing import Dict, Generator, List, Optional, Tuple, Union
 
 import torch
 from omegaconf import DictConfig
@@ -56,7 +56,7 @@ class BaseModelPool(BaseYAMLSerializableModel, HydraConfigMixin):
         super().__init__(**kwargs)
 
     @property
-    def has_pretrained(self):
+    def has_pretrained(self) -> bool:
         """
         Check if the model pool contains a pretrained model.
 
@@ -125,7 +125,7 @@ class BaseModelPool(BaseYAMLSerializableModel, HydraConfigMixin):
         return len(self.model_names)
 
     @staticmethod
-    def is_special_model(model_name: str):
+    def is_special_model(model_name: str) -> bool:
         """
         Determine if a model is special based on its name.
 
@@ -159,7 +159,7 @@ class BaseModelPool(BaseYAMLSerializableModel, HydraConfigMixin):
         Load a model from the pool based on the provided configuration.
 
         Args:
-            model (Union[str, DictConfig]): The model name or configuration.
+            model_name_or_config (Union[str, DictConfig]): The model name or configuration.
 
         Returns:
             nn.Module: The instantiated model.
@@ -201,11 +201,11 @@ class BaseModelPool(BaseYAMLSerializableModel, HydraConfigMixin):
             model = self.load_model(self.model_names[0], *args, **kwargs)
         return model
 
-    def models(self):
+    def models(self) -> Generator[nn.Module, None, None]:
         for model_name in self.model_names:
             yield self.load_model(model_name)
 
-    def named_models(self):
+    def named_models(self) -> Generator[Tuple[str, nn.Module], None, None]:
         for model_name in self.model_names:
             yield model_name, self.load_model(model_name)
 

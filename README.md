@@ -1,6 +1,6 @@
 <div align='center'>
 
-# FusionBench: A Comprehensive Benchmark/ToolKit of Deep Model Fusion
+# FusionBench: A Comprehensive Benchmark/Toolkit of Deep Model Fusion
 
 [![arXiv](https://img.shields.io/badge/arXiv-2406.03280-b31b1b.svg)](http://arxiv.org/abs/2406.03280)
 [![GitHub License](https://img.shields.io/github/license/tanganke/fusion_bench)](https://github.com/tanganke/fusion_bench/blob/main/LICENSE)
@@ -24,7 +24,7 @@ Projects based on FusionBench and news from the community (descending order of d
 <details>
   <summary>The-Hai Nguyen, Dang Huu-Tien, Takeshi Suzuki, and Le-Minh Nguyen. RegMean++: Enhancing Effectiveness and Generalization of Regression Mean for Model Merging. Aug, 2025. https://www.arxiv.org/abs/2508.03121</summary>
 
-Regression Mean (RegMean), an approach that formulates model merging as a linear regression problem, aims to find the optimal weights for each linear layer in the merge model by minimizing the discrepancy in predictions between the merge and candidate models. RegMean provides a precise closed-form solution for the merging problem; therefore, it offers explainability and computational efficiency. However, RegMean merges each linear layer independently, overlooking how the features and information in the earlier layers propagate through the layers and influence the final prediction in the merge model. In this paper, we introduce RegMean++, a simple yet effective alternative to RegMean, that explicitly incorporates both intra- and cross-layer dependencies between merge models' layers into RegMean's objective. By accounting for these dependencies, RegMean++ better captures the behaviors of the merge model. Extensive experiments demonstrate that RegMean++ consistently outperforms RegMean across diverse settings, including in-domain (ID) and out-of-domain (OOD) generalization, sequential merging, large-scale tasks, and robustness under several types of distribution shifts. Furthermore, RegMean++ achieves competitive or state-of-the-art performance compared to various recent advanced model merging methods. 
+Regression Mean (RegMean), an approach that formulates model merging as a linear regression problem, aims to find the optimal weights for each linear layer in the merge model by minimizing the discrepancy in predictions between the merge and candidate models. RegMean provides a precise closed-form solution for the merging problem; therefore, it offers explainability and computational efficiency. However, RegMean merges each linear layer independently, overlooking how the features and information in the earlier layers propagate through the layers and influence the final prediction in the merge model. In this paper, we introduce RegMean++, a simple yet effective alternative to RegMean, that explicitly incorporates both intra- and cross-layer dependencies between merge models' layers into RegMean's objective. By accounting for these dependencies, RegMean++ better captures the behaviors of the merge model. Extensive experiments demonstrate that RegMean++ consistently outperforms RegMean across diverse settings, including in-domain (ID) and out-of-domain (OOD) generalization, sequential merging, large-scale tasks, and robustness under several types of distribution shifts. Furthermore, RegMean++ achieves competitive or state-of-the-art performance compared to various recent advanced model merging methods.
 
   <img width="1000" alt="image" src="docs/algorithms/images/regmean_vs_regmean_plusplus.png">
 </details>
@@ -38,7 +38,7 @@ Model merging has emerged as a promising approach for multi-task learning (MTL),
 <details>
   <summary>Daniel Marczak, et al. No Task Left Behind: Isotropic Model Merging with Common and Task-Specific Subspaces. Feb 2025. https://arxiv.org/abs/2502.04959</summary>
 
-  Model merging integrates the weights of multiple task-specific models into a single multi-task model. Despite recent interest in the problem, a significant performance gap between the combined and single-task models remains. In this paper, we investigate the key characteristics of task matrices -- weight update matrices applied to a pre-trained model -- that enable effective merging. We show that alignment between singular components of task-specific and merged matrices strongly correlates with performance improvement over the pre-trained model. Based on this, we propose an isotropic merging framework that flattens the singular value spectrum of task matrices, enhances alignment, and reduces the performance gap. Additionally, we incorporate both common and task-specific subspaces to further improve alignment and performance. Our proposed approach achieves state-of-the-art performance across multiple scenarios, including various sets of tasks and model scales. This work advances the understanding of model merging dynamics, offering an effective methodology to merge models without requiring additional training. 
+  Model merging integrates the weights of multiple task-specific models into a single multi-task model. Despite recent interest in the problem, a significant performance gap between the combined and single-task models remains. In this paper, we investigate the key characteristics of task matrices -- weight update matrices applied to a pre-trained model -- that enable effective merging. We show that alignment between singular components of task-specific and merged matrices strongly correlates with performance improvement over the pre-trained model. Based on this, we propose an isotropic merging framework that flattens the singular value spectrum of task matrices, enhances alignment, and reduces the performance gap. Additionally, we incorporate both common and task-specific subspaces to further improve alignment and performance. Our proposed approach achieves state-of-the-art performance across multiple scenarios, including various sets of tasks and model scales. This work advances the understanding of model merging dynamics, offering an effective methodology to merge models without requiring additional training.
 </details>
 
 <details>
@@ -56,12 +56,12 @@ Merging multiple expert models offers a promising approach for performing multi-
 <details>
   <summary>Hongling Zheng, Li Shen, Anke Tang, Yong Luo et al. Learn From Model Beyond Fine-Tuning: A Survey. Nature Machine Intelligence. Jan, 2025. https://www.nature.com/articles/s42256-024-00961-0</summary>
 
-  > Foundation models (FM) have demonstrated remarkable performance across a wide range of tasks (especially in the fields of natural language processing and computer vision), primarily attributed to their ability to comprehend instructions and access extensive, high-quality data. This not only showcases their current effectiveness but also sets a promising trajectory towards the development of artificial general intelligence. Unfortunately, due to multiple constraints, the raw data of the model used for large model training are often inaccessible, so the use of end-to-end models for downstream tasks has become a new research trend, which we call Learn From Model (LFM) in this article. LFM focuses on the research, modification, and design of FM based on the model interface, so as to better understand the model structure and weights (in a black box environment), and to generalize the model to downstream tasks. The study of LFM techniques can be broadly categorized into five major areas: model tuning, model distillation, model reuse, meta learning and model editing. Each category encompasses a repertoire of methods and strategies that aim to enhance the capabilities and performance of FM. This paper gives a comprehensive review of the current methods based on FM from the perspective of LFM, in order to help readers better understand the current research status and ideas. To conclude, we summarize the survey by highlighting several critical areas for future exploration and addressing open issues that require further attention from the research community. The relevant papers we investigated in this article can be accessed at https://github.com/ruthless-man/Awesome-Learn-from-Model.
+  > Foundation models (FM) have demonstrated remarkable performance across a wide range of tasks (especially in the fields of natural language processing and computer vision), primarily attributed to their ability to comprehend instructions and access extensive, high-quality data. This not only showcases their current effectiveness but also sets a promising trajectory towards the development of artificial general intelligence. Unfortunately, due to multiple constraints, the raw data of the model used for large model training are often inaccessible, so the use of end-to-end models for downstream tasks has become a new research trend, which we call Learn From Model (LFM) in this article. LFM focuses on the research, modification, and design of FM based on the model interface, so as to better understand the model structure and weights (in a black box environment), and to generalize the model to downstream tasks. The study of LFM techniques can be broadly categorized into five major areas: model tuning, model distillation, model reuse, meta learning and model editing. Each category encompasses a repertoire of methods and strategies that aim to enhance the capabilities and performance of FM. This paper gives a comprehensive review of the current methods based on FM from the perspective of LFM, in order to help readers better understand the current research status and ideas. To conclude, we summarize the survey by highlighting several critical areas for future exploration and addressing open issues that require further attention from the research community. The relevant papers we investigated in this article can be accessed at <https://github.com/ruthless-man/Awesome-Learn-from-Model>.
 </details>
 
 <details>
   <summary>Li Shen, Anke Tang, Enneng Yang et al. Efficient and Effective Weight-Ensembling Mixture of Experts for Multi-Task Model Merging. Oct, 2024. https://github.com/EnnengYang/Efficient-WEMoE</summary>
- 
+
   <img width="1018" alt="image" src="https://github.com/user-attachments/assets/b7e1279e-87fc-4016-8867-1bff7700e271">
 
 </details>
@@ -87,7 +87,7 @@ Install from PyPI:
 pip install fusion-bench
 ```
 
-or install the latest version in development from github repository
+or install the latest version in development from the GitHub repository
 
 ```bash
 git clone https://github.com/tanganke/fusion_bench.git
@@ -103,7 +103,6 @@ pip install -e . # install the package in editable mode
 ### Install with [Language Model Evaluation Harness](https://github.com/EleutherAI/lm-evaluation-harness)
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10256836.svg)](https://doi.org/10.5281/zenodo.10256836)
-
 
 ```bash
 pip install "fusion-bench[lm-eval-harness]"
@@ -154,8 +153,8 @@ The project is structured as follows:
 
 ## A Unified Command Line Interface
 
-The `fusion_bench` command-line interface is a powerful tool for researchers and practitioners in the field of model fusion. It provides a streamlined way to experiment with various fusion algorithms, model combinations, and evaluation tasks. 
-By leveraging Hydra's configuration management, fusion_bench offers flexibility in setting up experiments and reproducibility in results. 
+The `fusion_bench` command-line interface is a powerful tool for researchers and practitioners in the field of model fusion. It provides a streamlined way to experiment with various fusion algorithms, model combinations, and evaluation tasks.
+By leveraging Hydra's configuration management, fusion_bench offers flexibility in setting up experiments and reproducibility in results.
 The CLI's design allows for easy extension to new fusion methods, model types, and tasks, making it a versatile platform for advancing research in model fusion techniques.
 
 Read the [CLI documentation](https://tanganke.github.io/fusion_bench/cli/fusion_bench/) for more information.
@@ -194,7 +193,7 @@ class DerivedModelFusionAlgorithm(BaseModelFusionAlgorithm):
         )
 ```
 
-A corresponding configuration file should be created to specify the class and hyperparameters of the algorithm. 
+A corresponding configuration file should be created to specify the class and hyperparameters of the algorithm.
 Here we assume the configuration file is placed at `config/method/your_algorithm_config.yaml`.
 
 > [!NOTE]
@@ -229,7 +228,7 @@ Click on [<kbd>Use this template</kbd>](https://github.com/fusion-bench/fusion-b
 
 ### FusionBench Command Generator WebUI (for v0.1.x)
 
-FusionBench Command Generator is a user-friendly web interface for generating FusionBench commands based on configuration files. 
+FusionBench Command Generator is a user-friendly web interface for generating FusionBench commands based on configuration files.
 It provides an interactive way to select and customize FusionBench configurations, making it easier to run experiments with different settings.
 [Read more here](https://tanganke.github.io/fusion_bench/cli/fusion_bench_webui/).
 
@@ -240,18 +239,14 @@ It provides an interactive way to select and customize FusionBench configuration
 If you find this benchmark useful, please consider citing our work:
 
 ```bibtex
-@misc{tangFusionBenchComprehensiveBenchmark2024,
-  title = {{{FusionBench}}: {{A Comprehensive Benchmark}} of {{Deep Model Fusion}}},
-  shorttitle = {{{FusionBench}}},
-  author = {Tang, Anke and Shen, Li and Luo, Yong and Hu, Han and Du, Bo and Tao, Dacheng},
-  year = {2024},
-  month = jun,
-  number = {arXiv:2406.03280},
-  eprint = {2406.03280},
-  publisher = {arXiv},
-  url = {http://arxiv.org/abs/2406.03280},
-  archiveprefix = {arxiv},
-  langid = {english},
-  keywords = {Computer Science - Artificial Intelligence,Computer Science - Computation and Language,Computer Science - Machine Learning}
+@article{tang2024fusionbench,
+  title={Fusionbench: A comprehensive benchmark of deep model fusion},
+  author={Tang, Anke and Shen, Li and Luo, Yong and Hu, Han and Du, Bo and Tao, Dacheng},
+  journal={arXiv preprint arXiv:2406.03280},
+  year={2024}
 }
 ```
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=tanganke/fusion_bench&type=Date)](https://www.star-history.com/#tanganke/fusion_bench&Date)

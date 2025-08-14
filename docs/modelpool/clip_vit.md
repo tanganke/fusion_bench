@@ -808,43 +808,43 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
 
 === "Table: Multi-task model merging methods using CLIP-ViT-B/16 models."
 
-    | Method                                | SUN397 | Cars | RESISC45 | EuroSAT | SVHN | GTSRB | MNIST | DTD  | Average |
-    | ------------------------------------- | ------ | ---- | -------- | ------- | ---- | ----- | ----- | ---- | ------- |
-    | Reference Results                     |        |      |          |         |      |       |       |      |         |
-    | Pre-trained                           | 65.5   | 64.6 | 66.3     | 54.1    | 51.9 | 43.4  | 51.7  | 44.9 | 55.3    |
-    | Fine-tuned (STL)                      | 78.9   | 85.9 | 96.6     | 99.0    | 97.6 | 99.0  | 99.7  | 82.3 | 92.3    |
-    | Model Merging                         |        |      |          |         |      |       |       |      |         |
-    | Simple Averaging                      | 68.7   | 69.0 | 75.0     | 83.2    | 74.9 | 62.5  | 93.7  | 51.1 | 72.3    |
-    | Fisher Merging                        | 70.8   | 71.8 | 76.2     | 93.4    | 77.4 | 61.2  | 90.7  | 52.3 | 74.2    |
-    | RegMean                               | 72.6   | 78.8 | 89.2     | 96.3    | 94.9 | 90.0  | 98.8  | 67.9 | 86.0    |
-    | RegMean++                             | 72.8   | 78.9 | 89.3     | 97.3    | 96.0 | 93.0  | 99.1  | 71.0 | 87.2    |
-    | Task Arithmetic ($\lambda=0.3$)       | 65.9   | 68.3 | 75.4     | 84.5    | 88.8 | 81.9  | 98.0  | 53.9 | 77.1    |
-    | Ties-Merging ($\lambda=0.3$)          | 70.6   | 71.2 | 79.8     | 87.5    | 83.2 | 76.2  | 96.4  | 55.4 | 77.5    |
-    | Layer-wise AdaMerging ($\lambda=0.3$) | 70.6   | 79.6 | 86.1     | 93.6    | 93.5 | 95.4  | 98.1  | 62.9 | 85.0    |
-    | Model Mixing                          |
-    | Efficient Weight-Ensembling MoE ($90\%$)       | 77.7   | 85.0 | 94.9     | 98.2    | 97.2 | 98.9  | 99.5  | 81.4 | 91.6    |
-    | Weight-Ensembling MoE                 | 77.2   | 85.0 | 94.8     | 98.3    | 97.3 | 98.9  | 99.6  | 80.8 | 91.5    |
+    | Method                                   | SUN397 | Cars | RESISC45 | EuroSAT | SVHN | GTSRB | MNIST | DTD  | Average |
+    | ---------------------------------------- | ------ | ---- | -------- | ------- | ---- | ----- | ----- | ---- | ------- |
+    | Reference Results                        |        |      |          |         |      |       |       |      |         |
+    | Pre-trained                              | 65.5   | 64.6 | 66.3     | 54.1    | 51.9 | 43.4  | 51.7  | 44.9 | 55.3    |
+    | Fine-tuned (STL)                         | 78.9   | 85.9 | 96.6     | 99.0    | 97.6 | 99.0  | 99.7  | 82.3 | 92.3    |
+    | Model Merging                            |        |      |          |         |      |       |       |      |         |
+    | Simple Averaging                         | 68.7   | 69.0 | 75.0     | 83.2    | 74.9 | 62.5  | 93.7  | 51.1 | 72.3    |
+    | Fisher Merging                           | 70.8   | 71.8 | 76.2     | 93.4    | 77.4 | 61.2  | 90.7  | 52.3 | 74.2    |
+    | RegMean                                  | 72.6   | 78.8 | 89.2     | 96.3    | 94.9 | 90.0  | 98.8  | 67.9 | 86.0    |
+    | RegMean++                                | 72.8   | 78.9 | 89.3     | 97.3    | 96.0 | 93.0  | 99.1  | 71.0 | 87.2    |
+    | Task Arithmetic ($\lambda=0.3$)          | 65.9   | 68.3 | 75.4     | 84.5    | 88.8 | 81.9  | 98.0  | 53.9 | 77.1    |
+    | Ties-Merging ($\lambda=0.3$)             | 70.6   | 71.2 | 79.8     | 87.5    | 83.2 | 76.2  | 96.4  | 55.4 | 77.5    |
+    | Layer-wise AdaMerging ($\lambda=0.3$)    | 70.6   | 79.6 | 86.1     | 93.6    | 93.5 | 95.4  | 98.1  | 62.9 | 85.0    |
+    | Model Mixing                             |
+    | Efficient Weight-Ensembling MoE ($90\%$) | 77.7   | 85.0 | 94.9     | 98.2    | 97.2 | 98.9  | 99.5  | 81.4 | 91.6    |
+    | Weight-Ensembling MoE                    | 77.2   | 85.0 | 94.8     | 98.3    | 97.3 | 98.9  | 99.6  | 80.8 | 91.5    |
 
 === "Table: Multi-task model merging methods using CLIP-ViT-L/14 models."
 
-    | Method                                | SUN397 | Cars | RESISC45 | EuroSAT | SVHN | GTSRB | MNIST | DTD  | Average |
-    | ------------------------------------- | ------ | ---- | -------- | ------- | ---- | ----- | ----- | ---- | ------- |
-    | Reference Results                     |        |      |          |         |      |       |       |      |         |
-    | Pre-trained                           | 68.3   | 77.8 | 71.0     | 58.9    | 58.4 | 50.6  | 76.4  | 55.5 | 64.6    |
-    | Fine-tuned (STL)                      | 82.8   | 92.9 | 97.4     | 99.2    | 97.9 | 99.2  | 99.8  | 85.5 | 94.3    |
-    | Traditional MTL                       | 79.0   | 89.3 | 94.5     | 98.4    | 96.4 | 98.1  | 99.4  | 83.7 | 92.4    |
-    | Model Merging                         |        |      |          |         |      |       |       |      |         |
-    | Simple Averaging                      | 72.5   | 81.5 | 82.2     | 90.0    | 81.6 | 74.0  | 96.6  | 61.8 | 80.0    |
-    | Fisher Merging                        | 70.6   | 79.4 | 84.1     | 98.1    | 74.7 | 85.0  | 89.5  | 61.0 | 80.3    |
-    | RegMean                               | 76.9   | 89.8 | 93.0     | 97.5    | 96.3 | 94.1  | 98.7  | 77.0 | 90.4    |
-    | RegMean++                             | 77.2   | 89.6 | 92.8     | 97.5    | 96.9 | 96.3  | 99.2  | 78.4 | 91.0    |
-    | Task Arithmetic ($\lambda=0.3$)       | 72.0   | 79.0 | 80.5     | 86.0    | 87.5 | 83.5  | 98.0  | 58.8 | 80.7    |
-    | Ties-Merging ($\lambda=0.3$)          | 74.7   | 83.3 | 86.4     | 91.3    | 89.7 | 85.2  | 97.8  | 63.9 | 84.0    |
-    | Task-wise AdaMerging ($\lambda=0.3$)  | 75.8   | 80.1 | 77.2     | 83.6    | 68.4 | 93.5  | 93.1  | 69.0 | 80.1    |
-    | Layer-wise AdaMerging ($\lambda=0.3$) | 78.1   | 90.7 | 90.8     | 96.5    | 94.8 | 97.5  | 98.6  | 81.3 | 91.0    |
-    | Model Mixing                          |
-    | Efficient Weight-Ensembling MoE ($90\%$)       | 81.5   | 92.0 | 96.0     | 97.8    | 97.7 | 99.1  | 99.5  | 84.1 | 93.5    |
-    | Weight-Ensembling MoE                 | 81.5   | 92.3 | 96.5     | 98.8    | 97.6 | 99.4  | 99.6  | 84.5 | 93.8    |
+    | Method                                   | SUN397 | Cars | RESISC45 | EuroSAT | SVHN | GTSRB | MNIST | DTD  | Average |
+    | ---------------------------------------- | ------ | ---- | -------- | ------- | ---- | ----- | ----- | ---- | ------- |
+    | Reference Results                        |        |      |          |         |      |       |       |      |         |
+    | Pre-trained                              | 68.3   | 77.8 | 71.0     | 58.9    | 58.4 | 50.6  | 76.4  | 55.5 | 64.6    |
+    | Fine-tuned (STL)                         | 82.8   | 92.9 | 97.4     | 99.2    | 97.9 | 99.2  | 99.8  | 85.5 | 94.3    |
+    | Traditional MTL                          | 79.0   | 89.3 | 94.5     | 98.4    | 96.4 | 98.1  | 99.4  | 83.7 | 92.4    |
+    | Model Merging                            |        |      |          |         |      |       |       |      |         |
+    | Simple Averaging                         | 72.5   | 81.5 | 82.2     | 90.0    | 81.6 | 74.0  | 96.6  | 61.8 | 80.0    |
+    | Fisher Merging                           | 70.6   | 79.4 | 84.1     | 98.1    | 74.7 | 85.0  | 89.5  | 61.0 | 80.3    |
+    | RegMean                                  | 76.9   | 89.8 | 93.0     | 97.5    | 96.3 | 94.1  | 98.7  | 77.0 | 90.4    |
+    | RegMean++                                | 77.2   | 89.6 | 92.8     | 97.5    | 96.9 | 96.3  | 99.2  | 78.4 | 91.0    |
+    | Task Arithmetic ($\lambda=0.3$)          | 72.0   | 79.0 | 80.5     | 86.0    | 87.5 | 83.5  | 98.0  | 58.8 | 80.7    |
+    | Ties-Merging ($\lambda=0.3$)             | 74.7   | 83.3 | 86.4     | 91.3    | 89.7 | 85.2  | 97.8  | 63.9 | 84.0    |
+    | Task-wise AdaMerging ($\lambda=0.3$)     | 75.8   | 80.1 | 77.2     | 83.6    | 68.4 | 93.5  | 93.1  | 69.0 | 80.1    |
+    | Layer-wise AdaMerging ($\lambda=0.3$)    | 78.1   | 90.7 | 90.8     | 96.5    | 94.8 | 97.5  | 98.6  | 81.3 | 91.0    |
+    | Model Mixing                             |
+    | Efficient Weight-Ensembling MoE ($90\%$) | 81.5   | 92.0 | 96.0     | 97.8    | 97.7 | 99.1  | 99.5  | 84.1 | 93.5    |
+    | Weight-Ensembling MoE                    | 81.5   | 92.3 | 96.5     | 98.8    | 97.6 | 99.4  | 99.6  | 84.5 | 93.8    |
 
 
 
@@ -988,15 +988,9 @@ Table: Results of the robustness experiments ($\lambda=0.3$).
 | Weight-Ensembling MoE | 77.2           | 34.7    | 93.1     | 98.4  | 75.9 | 77.3             | 61.0    | 94.1     | 95.7  | 82.0 |
 
 
-## API Reference
+## Implementation Details
 
-### CLIPVisionModelPool Class
-
-::: fusion_bench.modelpool.clip_vision
-
-### Linearized Vision Models
-
-::: fusion_bench.models.linearized.vision_model
+- [fusion_bench.modelpool.clip_vision.CLIPVisionModelPool][]
 
 ### Model Configuration Schema
 

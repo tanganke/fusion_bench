@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from typing import Callable, Dict, Iterable, Optional, Union  # noqa: F401
+from typing import Any, Callable, Dict, Iterable, List, Optional, Union  # noqa: F401
 
 import lightning as L
 from lightning.fabric.utilities.rank_zero import rank_zero_only
@@ -18,8 +18,8 @@ from fusion_bench.taskpool import BaseTaskPool
 from fusion_bench.utils import import_object, instantiate, timeit_context
 from fusion_bench.utils.hydra_utils import get_hydra_output_dir
 from fusion_bench.utils.json import print_json
-from fusion_bench.utils.rich_utils import print_bordered, print_config_tree
 from fusion_bench.utils.pylogger import getRankZeroLogger
+from fusion_bench.utils.rich_utils import print_bordered, print_config_tree
 
 log = getRankZeroLogger(__name__)
 
@@ -164,9 +164,9 @@ class FabricModelFusionProgram(
         self,
         taskpool: BaseTaskPool,
         merged_model: Union[nn.Module, Dict, Iterable],
-        *args,
-        **kwargs,
-    ):
+        *args: Any,
+        **kwargs: Any,
+    ) -> Union[Dict, List, Any]:
         """
         Evaluates the merged model using the provided task pool.
 
@@ -261,8 +261,13 @@ class FabricModelFusionProgram(
                 if self.report_save_path is not None:
                     # save report (Dict) to a file
                     # if the directory of `save_report` does not exists, create it
-                    if "{log_dir}" in self.report_save_path and self.log_dir is not None:
-                        self.report_save_path = self.report_save_path.format(log_dir=self.log_dir)
+                    if (
+                        "{log_dir}" in self.report_save_path
+                        and self.log_dir is not None
+                    ):
+                        self.report_save_path = self.report_save_path.format(
+                            log_dir=self.log_dir
+                        )
                     os.makedirs(os.path.dirname(self.report_save_path), exist_ok=True)
                     json.dump(report, open(self.report_save_path, "w"))
             else:
@@ -298,7 +303,9 @@ class FabricModelFusionProgram(
                 try:
                     # if the system is windows, use the `mklink` command in "CMD" to create the symlink
                     if os.name == "nt":
-                        os.system(f"mklink /J {os.path.abspath(os.path.join(self.log_dir, 'hydra_output_' + os.path.basename(hydra_output_dir)))} {os.path.abspath(hydra_output_dir)}")
+                        os.system(
+                            f"mklink /J {os.path.abspath(os.path.join(self.log_dir, 'hydra_output_' + os.path.basename(hydra_output_dir)))} {os.path.abspath(hydra_output_dir)}"
+                        )
                     else:
                         os.symlink(
                             hydra_output_dir,
