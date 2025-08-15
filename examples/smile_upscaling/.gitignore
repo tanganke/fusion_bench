@@ -1,1 +1,5 @@
 *.pdf
+/collected_results/
+/outputs/
+/results/
+/results.backup/
