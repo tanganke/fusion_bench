@@ -76,8 +76,8 @@ def task_arithmetic_merge(
 
 @auto_register_config
 class TaskArithmeticAlgorithm(
-    BaseAlgorithm,
     SimpleProfilerMixin,
+    BaseAlgorithm,
 ):
     """
     Task Arithmetic Algorithm for model fusion.
