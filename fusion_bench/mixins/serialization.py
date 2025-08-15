@@ -1,5 +1,6 @@
 import inspect
 import logging
+from functools import wraps
 from inspect import Parameter, _ParameterKind
 from pathlib import Path
 from typing import Dict, Optional, Union
@@ -19,7 +20,7 @@ __all__ = [
 ]
 
 
-def auto_register_config(cls: "YAMLSerializationMixin"):
+def auto_register_config(cls):
     """
     Decorator to automatically register __init__ parameters in _config_mapping.
 
@@ -72,9 +73,10 @@ def auto_register_config(cls: "YAMLSerializationMixin"):
         ```
 
     Note:
-        - The decorator modifies the class's __init__ method but preserves the original behavior
+        - The decorator wraps the original __init__ method while preserving its signature for IDE support
         - Parameters with *args or **kwargs signatures are ignored during registration
-        - The original __init__ method is still called after attribute processing
+        - The attributes are auto-registered, then the original __init__ method is called,
+        - Type hints, method name, and other metadata are preserved using functools.wraps
         - This decorator is designed to work seamlessly with the YAML serialization system
 
     Raises:
@@ -84,6 +86,7 @@ def auto_register_config(cls: "YAMLSerializationMixin"):
     original_init = cls.__init__
     sig = inspect.signature(original_init)
 
+    # Auto-register parameters in _config_mapping
     if not hasattr(cls, "_config_mapping"):
         cls._config_mapping = {}
     for param_name in list(sig.parameters.keys())[1:]:  # Skip 'self'
@@ -93,8 +96,8 @@ def auto_register_config(cls: "YAMLSerializationMixin"):
         ]:
             cls._config_mapping[param_name] = param_name
 
-    def new_init(self, *args, **kwargs):
-        # Get parameters from the original __init__
+    def __init__(self, *args, **kwargs):
+        # auto-register the attributes based on the signature
         sig = inspect.signature(original_init)
         param_names = list(sig.parameters.keys())[1:]  # Skip 'self'
 
@@ -122,14 +125,17 @@ def auto_register_config(cls: "YAMLSerializationMixin"):
                 if param_name in kwargs:
                     setattr(self, param_name, kwargs[param_name])
                 else:
-                    # Set default value if available
+                    # Set default value if available and attribute doesn't exist
                     default_value = sig.parameters[param_name].default
                     if default_value is not Parameter.empty:
                         setattr(self, param_name, default_value)
 
-        original_init(self, *args, **kwargs)
+            # Call the original __init__
+            result = original_init(self, *args, **kwargs)
+        return result
 
-    cls.__init__ = new_init
+    # Replace the original __init__ method while preserving its signature
+    cls.__init__ = __init__
     return cls
 
 

@@ -15,7 +15,10 @@ __all__ = ["BaseModelPool"]
 log = logging.getLogger(__name__)
 
 
-class BaseModelPool(BaseYAMLSerializable, HydraConfigMixin):
+class BaseModelPool(
+    HydraConfigMixin,
+    BaseYAMLSerializable,
+):
     """
     A class for managing and interacting with a pool of models along with their associated datasets or other specifications. For example, a model pool may contain multiple models, each with its own training, validation, and testing datasets. As for the specifications, a vision model pool may contain image preprocessor, and a language model pool may contain a tokenizer.
 
