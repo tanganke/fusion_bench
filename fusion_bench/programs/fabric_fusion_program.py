@@ -246,7 +246,10 @@ class FabricModelFusionProgram(
                 compat_load_fn="fusion_bench.compat.taskpool.load_taskpool_from_config",
             )
 
+        self.method.on_run_start()
         merged_model = self.method.run(self.modelpool)
+        self.method.on_run_end()
+
         if merged_model is None:
             log.info(
                 "No merged model returned by the method. Skipping saving and evaluation."
