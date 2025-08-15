@@ -152,6 +152,23 @@ class BaseModelPool(BaseYAMLSerializable, HydraConfigMixin):
             model_config = deepcopy(model_config)
         return model_config
 
+    def get_model_path(self, model_name: str) -> str:
+        """
+        Get the path for the specified model.
+
+        Args:
+            model_name (str): The name of the model.
+
+        Returns:
+            str: The path for the specified model.
+        """
+        if isinstance(self._models[model_name], str):
+            return self._models[model_name]
+        else:
+            raise ValueError(
+                "Model path is not a string. Try to override this method in derived modelpool class."
+            )
+
     def load_model(
         self, model_name_or_config: Union[str, DictConfig], *args, **kwargs
     ) -> nn.Module:

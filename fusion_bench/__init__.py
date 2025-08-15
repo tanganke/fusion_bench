@@ -20,6 +20,7 @@ from . import (
     utils,
 )
 from .method import BaseAlgorithm, BaseModelFusionAlgorithm
+from .mixins import auto_register_config
 from .modelpool import BaseModelPool
 from .models import separate_io
 from .taskpool import BaseTaskPool
