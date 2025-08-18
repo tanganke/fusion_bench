@@ -1,11 +1,12 @@
 import logging
-from typing import List, Mapping, Union  # noqa: F401
+from typing import List, Mapping, Optional, Union  # noqa: F401
 
 import numpy as np
 import torch
 from torch import nn
 
 from fusion_bench.method import BaseAlgorithm
+from fusion_bench.mixins import auto_register_config
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.models.wrappers.ensemble import (
     EnsembleModule,
@@ -35,16 +36,15 @@ class SimpleEnsembleAlgorithm(BaseAlgorithm):
         return ensemble
 
 
+@auto_register_config
 class WeightedEnsembleAlgorithm(BaseAlgorithm):
 
-    _config_mapping = BaseAlgorithm._config_mapping | {
-        "normalize": "normalize",
-        "weights": "weights",
-    }
-
-    def __init__(self, normalize: bool, weights: List[float], **kwargs):
-        self.normalize = normalize
-        self.weights = weights
+    def __init__(
+        self,
+        normalize: bool = True,
+        weights: Optional[List[float]] = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
 
     @torch.no_grad()

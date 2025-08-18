@@ -16,70 +16,76 @@ The goal of a weighted ensemble is to produce a final prediction that is more ac
 
 ## Examples
 
-The following Python code snippet demonstrates how to use the `WeightedEnsembleAlgorithm` class from the `fusion_bench.method` module to create a weighted ensemble of PyTorch models.
-
-```python
-from omegaconf import DictConfig
-from fusion_bench.method import WeightedEnsembleAlgorithm
-
-#Instantiate the algorithm
-method_config = {'name': 'weighted_ensemble', 'weights': [0.3, 0.7]}
-algorithm = WeightedEnsembleAlgorithm(DictConfig(method_config))
-
-# Assume we have a list of PyTorch models (nn.Module instances) that we want to ensemble.
-models = [...]
-
-# Run the algorithm on the models.
-merged_model = algorithm.run(models)
-```
-
-Here's a step-by-step explanation:
-
-1. Instantiate the `WeightedEnsembleAlgorithm`:
-    - A dictionary `method_config` is created with two keys: `'name'` and `'weights'`. The `'name'` key is set to `'weighted_ensemble'` indicating the type of ensemble method to use. The `'weights'` key is set to a list of weights `[0.3, 0.7]` indicating the weights assigned to each model in the ensemble.
-    - The `method_config` dictionary is converted to a `DictConfig` object, which is a configuration object used by the `omegaconf` library.
-    - The `WeightedEnsembleAlgorithm` is then instantiated with the `DictConfig` object as an argument.
-
-2. Assume a list of PyTorch models that you want to ensemble. This list is assigned to the variable `models`. The actual models are not shown in this code snippet.
-
-3. Run the algorithm on the models: The `run` method of the `WeightedEnsembleAlgorithm` instance is called with the `models` list as an argument. The result is a merged model that represents the weighted ensemble of the input models. This merged model is assigned to the variable `merged_model`.
-
-Here we list the options for the weighted ensemble algorithm:
-
-| Option      | Default | Description                                                                |
-| ----------- | ------- | -------------------------------------------------------------------------- |
-| `weights`   |         | A list of floats representing the weights for each model in the ensemble.  |
-| `normalize` | `True`  | Whether to normalize the weights so that they sum to 1. Default is `True`. |
-
-if `normalize` is set to `True`, the weights will be normalized so that they sum to 1.  Mathematically, this means that the weights $w_i$ will be divided by the sum of all weights, so that
-
-$$
-F(x) = \frac{w_1}{\sum_{i=1}^n w_i} f_1(x) + \frac{w_2}{\sum_{i=1}^n w_i} f_2(x) + ... + \frac{w_n}{\sum_{i=1}^n w_i} f_n(x)
-$$
-
-## Code Intergration
+### CLI Usage
 
 Configuration template for the weighted ensemble algorithm:
 
-```yaml title="config/method.weighted_ensemble.yaml"
-name: weighted_ensemble
-
-# this should be a list of floats, one for each model in the ensemble
-# If weights is null, the ensemble will use the default weights, which are equal weights for all models.
-weights: null
-nomalize: true
+```yaml title="config/method/ensemble/weighted_ensemble.yaml"
+--8<-- "config/method/ensemble/weighted_ensemble.yaml"
 ```
 
 Construct a weighted ensemble using our CLI tool `fusion_bench`:
 
 ```bash
-fusion_bench method=weighted_ensemble \
+# With specific weights, override via method.weights
+fusion_bench method=ensemble/weighted_ensemble \
     method.weights=[0.3, 0.7] \
+  modelpool=... \
+  taskpool=...
+
+# With equal weights (default)
+fusion_bench method=ensemble/weighted_ensemble \
   modelpool=... \
   taskpool=...
 ```
 
-## References
+### API Usage
+
+The following Python code snippet demonstrates how to use the `WeightedEnsembleAlgorithm` class from the `fusion_bench.method` module to create a weighted ensemble of PyTorch models.
+
+```python
+from fusion_bench.method import WeightedEnsembleAlgorithm
+
+# Instantiate the algorithm
+algorithm = WeightedEnsembleAlgorithm(weights=[0.3, 0.7], normalize=True)
+
+# Assume we have a modelpool or a list of PyTorch models (nn.Module instances) that we want to ensemble.
+models = [...]  # List of nn.Module instances
+
+# Run the algorithm on the modelpool or models.
+ensemble_model = algorithm.run(modelpool)  # or algorithm.run(models)
+```
+
+Here's a step-by-step explanation:
+
+1. **Instantiate the [`WeightedEnsembleAlgorithm`][fusion_bench.method.WeightedEnsembleAlgorithm]**: 
+    - The algorithm is instantiated with two parameters: `weights` (a list of floats representing the weights for each model) and `normalize` (whether to normalize the weights).
+    - If `weights` is set to `None`, the algorithm will automatically assign equal weights to all models.
+
+2. **Prepare your models**: 
+    - You can either use a `BaseModelPool` instance that contains your models, or directly provide a list of PyTorch `nn.Module` instances.
+    - If you provide a list of models directly, the algorithm will automatically wrap them in a `BaseModelPool`.
+
+3. **Run the algorithm**: 
+    - The `run` method processes the modelpool and returns a `WeightedEnsembleModule` that represents the weighted ensemble of the input models.
+
+Here we list the options for the weighted ensemble algorithm:
+
+| Option      | Default | Description                                                                |
+| ----------- | ------- | -------------------------------------------------------------------------- |
+| `weights`   | `null`  | A list of floats representing the weights for each model in the ensemble. If `null`, equal weights are automatically assigned to all models. |
+| `normalize` | `True`  | Whether to normalize the weights so that they sum to 1. Default is `True`. |
+
+If `normalize` is set to `True`, the weights will be normalized so that they sum to 1. Mathematically, this means that the weights $w_i$ will be divided by the sum of all weights, so that
+
+$$
+F(x) = \frac{w_1}{\sum_{i=1}^n w_i} f_1(x) + \frac{w_2}{\sum_{i=1}^n w_i} f_2(x) + ... + \frac{w_n}{\sum_{i=1}^n w_i} f_n(x)
+$$
+
+When `weights` is set to `null` (or `None` in Python), the algorithm automatically assigns equal weights to all models: $w_i = \frac{1}{n}$ where $n$ is the number of models.
+
+
+## Implementation Details
 
 - [fusion_bench.method.WeightedEnsembleAlgorithm][]
 

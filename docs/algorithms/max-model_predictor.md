@@ -29,37 +29,40 @@ Table: Example of flu detection on a patient $x$ affected with type 2 flu. â€œâˆ
 
 ## Example
 
-Here is an example of how to use the Max-Model Predictor Algorithm:
-
-```python
-from fusion_bench.method import MaxModelPredictorAlgorithm
-from fusion_bench.modelpool import ModelPool
-
-# Instantiate the MaxPredictorAlgorithm
-algorithm = MaxModelPredictorAlgorithm()
-
-# Assume we have a ModelPool instance that contains the models we want to ensemble.
-modelpool = ModelPool(...) # or a list of nn.Module
-
-# Run the algorithm on the model pool.
-max_model_predictor : nn.Module = algorithm.run(modelpool)
-```
-
-## Code Integration
+## CLI Usage
 
 Configuration template for the Max Predictor Algorithm:
 
-```yaml title="config/method/max_model_predictor.yaml"
-name: max_model_predictor
+```yaml title="config/method/ensemble/max_model_predictor.yaml"
+--8<-- "config/method/ensemble/max_model_predictor.yaml"
 ```
 
 To create a max predictor ensemble of models for a specific task, you can use the following command:
 
 ```bash
-fusion_bench method=max_model_predictor \
+fusion_bench method=ensemble/max_model_predictor \
   modelpool=<modelpool_name> \
   taskpool=<taskpool_name>
 ```
+
+## API Usage
+
+Here is an example of how to use the Max-Model Predictor Algorithm:
+
+```python
+from fusion_bench.method import MaxModelPredictorAlgorithm
+from fusion_bench.modelpool import BaseModelPool
+
+# Instantiate the MaxPredictorAlgorithm
+algorithm = MaxModelPredictorAlgorithm()
+
+# Assume we have a ModelPool instance that contains the models we want to ensemble.
+modelpool = BaseModelPool(...) # or a list of nn.Module
+
+# Run the algorithm on the model pool.
+max_model_predictor = algorithm.run(modelpool)
+```
+
 
 ## Implementation Details
 
