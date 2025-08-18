@@ -1,7 +1,8 @@
 # Simple Averaging
 
-Simple averaging is known in the literature as isotropic merging, ModelSoups, aims to yield a more robust and generalizable model.
-Simple Averaging is a technique frequently employed when there are multiple models that have been fine-tuned or independently trained from scratch. 
+Simple averaging, also known as isotropic merging or ModelSoups, aims to yield a more robust and generalizable model by combining multiple models of the same architecture.
+
+Simple averaging is a technique frequently employed when there are multiple models that have been fine-tuned or independently trained from scratch.
 Specifically, if we possess $n$ models that share a common architecture but different weights denoted as $\theta_i$, the weights of the merged model, represented as $\theta$, are computed as follows:
 
 $$ \theta = \frac{1}{n} \sum_{i=1}^{n} \theta_i $$
@@ -19,43 +20,72 @@ Otherwise, the poor model may have a negative impact on the merged model.
 
 ## Examples
 
-In this example, we will demonstrate how to use the `SimpleAverageAlgorithm` class from the `fusion_bench.method` module. 
-This algorithm is used to merge multiple models by averaging their parameters.
+### CLI Usage
 
-```python
-from fusion_bench.method.simple_average import SimpleAverageAlgorithm
-
-# Instantiate the SimpleAverageAlgorithm
-# This algorithm will be used to merge multiple models by averaging their parameters.
-algorithm = SimpleAverageAlgorithm()
-
-# Assume we have a list of PyTorch models (nn.Module instances) that we want to merge.
-# The models should all have the same architecture.
-models = [...]
-
-# Run the algorithm on the models.
-# This will return a new model that is the result of averaging the parameters of the input models.
-merged_model = algorithm.run(models)
-```
-
-The `run` method of the `SimpleAverageAlgorithm` class takes a list of models as input and returns a new model. 
-The new model's parameters are the average of the parameters of the input models. 
-This is useful in scenarios where you have trained multiple models and want to combine them into a single model that hopefully performs better than any individual model.
-
-## Code Integration
-
-Configuration template for the Simple Averaging algorithm:
+Configuration template for the standard Simple Averaging algorithm:
 
 ```yaml title="config/method/simple_average.yaml"
-name: simple_average
+--8<-- "config/method/simple_average.yaml"
 ```
 
-use the following command to run the Simple Averaging algorithm:
+Use the following command to run the standard Simple Averaging algorithm:
 
 ```bash
 fusion_bench method=simple_average ...
 ```
 
+###  API Usage
+
+#### Algorithm Class
+
+In this example, we demonstrate how to use the [`SimpleAverageAlgorithm`][fusion_bench.method.simple_average.SimpleAverageAlgorithm] class:
+
+```python
+from fusion_bench.method.simple_average import SimpleAverageAlgorithm
+
+# Instantiate the SimpleAverageAlgorithm
+algorithm = SimpleAverageAlgorithm()
+
+# Assume we have a model pool with multiple models of the same architecture
+modelpool = ...  # BaseModelPool instance
+
+# Run the algorithm on the model pool
+# Returns a new model with averaged parameters
+merged_model = algorithm.run(modelpool)
+```
+
+#### Low-level Function Usage
+
+You can also use the low-level [`simple_average`][fusion_bench.method.simple_average.simple_average] function directly:
+
+```python
+from fusion_bench.method.simple_average import simple_average
+
+# For a list of models
+models = [model1, model2, model3]
+averaged_model = simple_average(models)
+
+# For a list of state dictionaries
+state_dicts = [model1.state_dict(), model2.state_dict(), model3.state_dict()]
+averaged_state_dict = simple_average(state_dicts)
+```
+
+## Variants
+
+### Standard Simple Averaging
+
+The basic implementation (`SimpleAverageAlgorithm`) directly averages model parameters without any modifications.
+
+### DARE Simple Averaging
+
+A variant that incorporates DARE (Drop And REscale) techniques for improved performance.
+
+- **Sparsity-aware merging**: Applies random dropping to parameters before averaging
+- **Rescaling**: Optionally rescales remaining parameters after dropping to maintain magnitude
+
+The DARE variant is particularly useful when dealing with fine-tuned models that may have redundant or conflicting parameters.
+
 ## Implementation Details
 
 - [fusion_bench.method.simple_average.SimpleAverageAlgorithm][]
+- [fusion_bench.method.simple_average.simple_average][]

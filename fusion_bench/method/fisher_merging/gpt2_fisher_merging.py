@@ -18,13 +18,14 @@ from transformers.models.gpt2.modeling_gpt2 import Conv1D
 from fusion_bench.mixins import LightningFabricMixin
 from fusion_bench.modelpool import GPT2ForSequenceClassificationPool
 from fusion_bench.utils import timeit_context
-
+from fusion_bench.mixins import auto_register_config
 from .fisher_merging import FisherMergingAlgorithm, get_param_squared_gradients
 
 
+@auto_register_config
 class FisherMergingAlgorithmForGPT2(
-    FisherMergingAlgorithm,
     LightningFabricMixin,
+    FisherMergingAlgorithm,
 ):
     """
     Implements the Fisher Merging Algorithm for GPT-2 models on text classification tasks.
@@ -42,11 +43,6 @@ class FisherMergingAlgorithmForGPT2(
 
     classifiers = {}
     modelpool: GPT2ForSequenceClassificationPool = None
-    _config_mapping = FisherMergingAlgorithm._config_mapping | {
-        "cache_dir": "cache_dir",
-        "batch_size": "batch_size",
-        "num_workers": "num_workers",
-    }
 
     def __init__(
         self,
@@ -64,9 +60,6 @@ class FisherMergingAlgorithmForGPT2(
             num_workers (int): Number of workers for data loading.
             **kwargs: Additional keyword arguments.
         """
-        self.cache_dir = cache_dir
-        self.batch_size = batch_size
-        self.num_workers = num_workers
         super().__init__(**kwargs)
 
     def on_fisher_merging_start(self):

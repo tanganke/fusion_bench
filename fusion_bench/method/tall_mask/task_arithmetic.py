@@ -9,7 +9,7 @@ from copy import deepcopy
 import torch
 
 from fusion_bench import BaseAlgorithm
-from fusion_bench.mixins import SimpleProfilerMixin
+from fusion_bench.mixins import SimpleProfilerMixin, auto_register_config
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_add,
@@ -58,16 +58,11 @@ def generate_task_masks(
     return final_mask
 
 
+@auto_register_config
 class TallMaskTaskArithmeticAlgorithm(
-    BaseAlgorithm,
     SimpleProfilerMixin,
+    BaseAlgorithm,
 ):
-    _config_mapping = BaseAlgorithm._config_mapping | {
-        "tall_mask_lambda": "tall_mask_lambda",
-        "debug": "debug",
-        "verbose": "verbose",
-    }
-
     def __init__(
         self,
         tall_mask_lambda: float,
@@ -76,9 +71,6 @@ class TallMaskTaskArithmeticAlgorithm(
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self.tall_mask_lambda = tall_mask_lambda
-        self.debug = debug
-        self.verbose = verbose
 
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool):

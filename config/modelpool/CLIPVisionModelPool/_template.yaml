@@ -6,6 +6,4 @@ _recursive_: False
 models: ???
 train_datasets: null
 test_datasets: null
-processor:
-  _target_: transformers.CLIPProcessor.from_pretrained
-  pretrained_model_name_or_path: openai/clip-vit-base-patch32
+processor: openai/clip-vit-base-patch32

@@ -4,6 +4,8 @@
 
 ### Simple Average
 
+::: fusion_bench.method.simple_average.simple_average
+
 ::: fusion_bench.method
     options:
         show_root_heading: false

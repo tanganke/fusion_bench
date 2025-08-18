@@ -11,23 +11,16 @@ from fusion_bench.modelpool import CausalLMPool
 from fusion_bench.utils import timeit_context
 from fusion_bench.utils.state_dict_arithmetic import state_dict_add, state_dict_mul
 from fusion_bench.utils.type import StateDictType
+from fusion_bench.mixins import auto_register_config
 
 log = logging.getLogger(__name__)
 
 
+@auto_register_config
 class WeightedAverageForLLama(BaseAlgorithm):
     """
     A class to perform weighted averaging of LlaMa/Mistral models.
     """
-
-    _config_mapping = BaseAlgorithm._config_mapping | {
-        "normalize": "normalize",
-        "weights": "weights",
-        "backbone_only": "backbone_only",
-        "merged_model_save_path": "merged_model_save_path",
-        "save_tokenizer": "save_tokenizer",
-        "push_to_hub": "push_to_hub",
-    }
 
     def __init__(
         self,
@@ -50,12 +43,6 @@ class WeightedAverageForLLama(BaseAlgorithm):
             save_tokenizer (bool): Whether to save the tokenizer.
             push_to_hub (bool): Whether to push the model to the hub.
         """
-        self.normalize = normalize
-        self.weights = weights
-        self.backbone_only = backbone_only
-        self.merged_model_save_path = merged_model_save_path
-        self.save_tokenizer = save_tokenizer
-        self.push_to_hub = push_to_hub
         super().__init__(**kwargs)
 
     @override

@@ -37,19 +37,14 @@ The subfigures represent different models: CLIP-ViT-B/32, CLIP-ViT-L/14, Flan-T5
 
 In the above figure, we show the average performance of Task Arithmetic and Ties-Merging merged models as the scaling coefficient varies. Subfigure (a), (b), (c), and (d) show the results of CLIP-ViT-B/32, CLIP-ViT-L/14, Flan-T5-base (LoRA fine-tuned), and Flan-T5-large (LoRA fine-tuned), respectively. It is evident that the merged multi-task model hits a peak in average performance across various tasks when the scaling coefficient is set around 0.3. This value was empirically selected as the scaling coefficient in our experiments. As we increase the scaling coefficient beyond this point, the average performance of the model begins to decline, eventually even falling below the level of the pre-trained model’s original performance. This suggests that too high of a scaling coefficient can have a negative impact on the knowledge that the pre-trained model initially possessed, emphasizing the importance of calibrating the scaling coefficient parameter $\lambda$ to avoid diminishing the model’s existing strengths.
 
-## Code Integration
+## Examples
+
+### CLI Usage
 
 Configuration template for the Ties-Merging algorithm:
 
 ```yaml title="config/method/ties_merging.yaml"
-name: ties_merging
-# Scaling factor $\lambda$
-scaling_factor: 0.5
-threshold: 0.5
-# List of keys to remove from the state dict, default is empty
-remove_keys: []
-# Function to merge the models, default is sum. Options are 'sum', 'mean', and 'max'
-merge_func: sum 
+--8<-- "config/method/ties_merging.yaml"
 ```
 
 Use the following command to run the Ties-Merging algorithm:
@@ -57,8 +52,6 @@ Use the following command to run the Ties-Merging algorithm:
 ```bash
 fusion_bench method=ties_merging ...
 ```
-
-## Scope
 
 Use Ties-Merging to merge multiple task-specific models and evaluate the performance of the merged model.
 

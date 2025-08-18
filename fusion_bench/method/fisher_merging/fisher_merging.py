@@ -12,7 +12,7 @@ from torch import Tensor, nn
 from tqdm.autonotebook import tqdm
 
 from fusion_bench.method import BaseAlgorithm
-from fusion_bench.mixins import SimpleProfilerMixin
+from fusion_bench.mixins import SimpleProfilerMixin, auto_register_config
 from fusion_bench.modelpool import BaseModelPool
 
 log = logging.getLogger(__name__)
@@ -353,6 +353,7 @@ def filter_state_dict(
     return filtered_state_dict
 
 
+@auto_register_config
 class FisherMergingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
     """
     Implements the Fisher Merging Algorithm.
@@ -365,13 +366,6 @@ class FisherMergingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
             Executes the Fisher merging process on the model pool and returns the merged model.
     """
 
-    _config_mapping = BaseAlgorithm._config_mapping | {
-        "exclude_param_names_regex": "exclude_param_names_regex",
-        "normalize_fisher_weight": "normalize_fisher_weight",
-        "minimal_fisher_weight": "minimal_fisher_weight",
-        "num_fisher_examples": "num_fisher_examples",
-    }
-
     def __init__(
         self,
         *,
@@ -379,12 +373,9 @@ class FisherMergingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
         normalize_fisher_weight: bool,
         minimal_fisher_weight: float,
         num_fisher_examples: int,
+        **kwargs,
     ):
-        super().__init__()
-        self.exclude_param_names_regex = exclude_param_names_regex
-        self.normalize_fisher_weight = normalize_fisher_weight
-        self.minimal_fisher_weight = minimal_fisher_weight
-        self.num_fisher_examples = num_fisher_examples
+        super().__init__(**kwargs)
 
     def run(self, modelpool: BaseModelPool) -> nn.Module:
         """
