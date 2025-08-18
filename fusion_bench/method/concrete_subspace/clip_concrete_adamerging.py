@@ -372,7 +372,6 @@ class ConcreteLayerWiseAdaMergingForCLIP(
             clamp_weights=self.config.clamp_weights,
             tie_weights=self.config.tie_weights,
             strict=self.config.strict,
-            layer_vector_dtype=self.merge_dtype,
         )
         return module, mask_model
 

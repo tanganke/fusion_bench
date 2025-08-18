@@ -74,7 +74,7 @@ class ParameterDictModel(nn.Module):
                     name.split("."),
                     param,
                     check_parent=True,
-                    parent_builder=self.__class__,
+                    parent_builder=__class__,
                 )
 
     def __repr__(self):

@@ -15,7 +15,7 @@ from transformers import GPT2ForSequenceClassification, GPT2Model
 from transformers.data import default_data_collator
 from transformers.models.gpt2.modeling_gpt2 import Conv1D
 
-from fusion_bench.mixins import LightningFabricMixin
+from fusion_bench.mixins import LightningFabricMixin, auto_register_config
 from fusion_bench.utils import timeit_context
 
 from .regmean import RegMeanAlgorithm
@@ -23,22 +23,15 @@ from .regmean import RegMeanAlgorithm
 log = logging.getLogger(__name__)
 
 
+@auto_register_config
 class RegMeanAlgorithmForGPT2(
-    RegMeanAlgorithm,
     LightningFabricMixin,
+    RegMeanAlgorithm,
 ):
     _include_module_type = [Conv1D]
     classifiers = {}
-    _config_mapping = RegMeanAlgorithm._config_mapping | {
-        "cache_dir": "cache_dir",
-        "batch_size": "batch_size",
-        "num_workers": "num_workers",
-    }
 
     def __init__(self, cache_dir: str, batch_size: int, num_workers: int, **kwargs):
-        self.cache_dir = cache_dir
-        self.batch_size = batch_size
-        self.num_workers = num_workers
         super().__init__(**kwargs)
 
     def on_regmean_start(self):
