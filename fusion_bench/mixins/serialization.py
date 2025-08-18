@@ -204,7 +204,11 @@ class YAMLSerializationMixin:
         for attr, key in self._config_mapping.items():
             if hasattr(self, attr):
                 config[key] = getattr(self, attr)
-        return OmegaConf.create(config)
+
+        try:
+            return OmegaConf.create(config)
+        except Exception as e:
+            return OmegaConf.create(config, flags={"allow_objects": True})
 
     def to_yaml(self, path: Union[str, Path], resolve: bool = True):
         """
