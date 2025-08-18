@@ -26,13 +26,13 @@ try:
     from huggingface_hub import snapshot_download as huggingface_snapshot_download
 except ImportError:
 
-    def _raise_hugggingface_not_installed_error(*args, **kwargs):
+    def _raise_huggingface_not_installed_error(*args, **kwargs):
         raise ImportError(
             "Hugging Face Hub is not installed. Please install it using `pip install huggingface_hub` to use Hugging Face models."
         )
 
-    huggingface_snapshot_download = _raise_hugggingface_not_installed_error
-    hf_hub_download = _raise_hugggingface_not_installed_error
+    huggingface_snapshot_download = _raise_huggingface_not_installed_error
+    hf_hub_download = _raise_huggingface_not_installed_error
 
 __all__ = [
     "load_dataset",
