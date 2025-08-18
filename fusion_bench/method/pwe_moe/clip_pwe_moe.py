@@ -16,14 +16,18 @@ from transformers import CLIPVisionModel
 from transformers.models.clip.modeling_clip import CLIPEncoderLayer
 from typing_extensions import override
 
-from fusion_bench.method.base_algorithm import BaseAlgorithm
+from fusion_bench import (
+    BaseAlgorithm,
+    auto_register_config,
+    print_parameters,
+    timeit_context,
+)
+from fusion_bench.dataset import CLIPDataset
 from fusion_bench.method.task_arithmetic import task_arithmetic_merge
 from fusion_bench.mixins.clip_classification import CLIPClassificationMixin
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import CLIPVisionModelPool
-from fusion_bench.utils import timeit_context
 from fusion_bench.utils.data import InfiniteDataLoader
-from fusion_bench.utils.parameters import print_parameters
 
 from .module import ParetoWeightEnsemblingModule
 from .utils import generate_simplex_grid
@@ -31,27 +35,13 @@ from .utils import generate_simplex_grid
 log = logging.getLogger(__name__)
 
 
+@auto_register_config
 class PWEMoEAlgorithmForCLIP(
     BaseAlgorithm,
     SimpleProfilerMixin,
     CLIPClassificationMixin,
 ):
     modelpool: CLIPVisionModelPool = None
-    _config_mapping = BaseAlgorithm._config_mapping | {
-        "upscale_mlp": "upscale_mlp",
-        "upscale_attn": "upscale_attn",
-        "init_lambda": "init_lambda",
-        "router_hidden_layers": "router_hidden_layers",
-        "lr": "lr",
-        "num_steps": "num_steps",
-        "save_interval": "save_interval",
-        "alpha": "alpha",
-        "checkpoint_path": "checkpoint_path",
-        "eval_grid": "eval_grid",
-        "eval_grid_n": "eval_grid_n",
-        "eval_grid_m": "eval_grid_m",
-        "_dataloader_kwargs": "dataloader_kwargs",
-    }
 
     def __init__(
         self,
@@ -72,19 +62,6 @@ class PWEMoEAlgorithmForCLIP(
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self.upscale_mlp = upscale_mlp
-        self.upscale_attn = upscale_attn
-        self.init_lambda = init_lambda
-        self.router_hidden_layers = router_hidden_layers
-        self.lr = lr
-        self.num_steps = num_steps
-        self.save_interval = save_interval
-        self.alpha = alpha
-        self.checkpoint_path = checkpoint_path
-        self.eval_grid = eval_grid
-        self.eval_grid_n = eval_grid_n
-        self.eval_grid_m = eval_grid_m
-        self._dataloader_kwargs = dataloader_kwargs
 
     @override
     def run(self, modelpool: CLIPVisionModelPool):
@@ -193,13 +170,14 @@ class PWEMoEAlgorithmForCLIP(
         Loads the datasets specified in the configuration.
         """
         train_datasets = {
-            dataset_name: self.modelpool.load_train_dataset(
-                dataset_name, self.clip_processor
+            dataset_name: CLIPDataset(
+                self.modelpool.load_train_dataset(dataset_name),
+                processor=self.clip_processor,
             )
             for dataset_name in self.modelpool.model_names
         }
         train_loaders = {
-            dataset_name: DataLoader(dataset, shuffle=True, **self._dataloader_kwargs)
+            dataset_name: DataLoader(dataset, shuffle=True, **self.dataloader_kwargs)
             for dataset_name, dataset in train_datasets.items()
         }
         train_loaders = {

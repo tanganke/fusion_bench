@@ -49,7 +49,7 @@ class CLIPClassificationMixin(LightningFabricMixin):
     - `zeroshot_weights_cache_dir` (Optional[str]): The directory to cache the zero-shot weights.
     """
 
-    _dataloader_kwargs: Dict[str, Any] = {}
+    dataloader_kwargs: Dict[str, Any] = {}
     # the modelpool is set by inheriting class
     modelpool: CLIPVisionModelPool = None
     _clip_processor: CLIPProcessor = None
@@ -90,7 +90,7 @@ class CLIPClassificationMixin(LightningFabricMixin):
             Iterator: An iterator over the shuffled test DataLoader.
         """
         # get dataloader kwargs
-        dataloader_kwargs = self._dataloader_kwargs.copy()
+        dataloader_kwargs = self.dataloader_kwargs.copy()
         dataloader_kwargs["shuffle"] = True
         if batch_size is not None:
             dataloader_kwargs["batch_size"] = batch_size

@@ -1,48 +1,85 @@
-# MoE-based Model Model Merging
+# MoE-based Model Merging
 
-## Code Intergration
+<figure markdown="span">
+    ![alt text](images/sparse_upcycling.png){width="900"}
+</figure>
 
-Here we provides instructions on how to use the `fusion_bench` command-line interface to merge models using a Mixture of Experts (MoE) approach.
+MoE-based model merging is a technique that combines multiple fine-tuned dense models into a single Mixture-of-Experts (MoE) model. This approach leverages the specialization of different expert models by treating each fine-tuned model as an expert in the resulting MoE architecture. The method involves upscaling the architecture to MoE format and substituting the experts with the weights from different specialized models.
 
-The first code block is a YAML configuration file for the merging method. The `name` field specifies the name of the merging method. The `num_experts` field specifies the number of experts to use in the merging process. The `experts_per_token` field specifies the number of experts to use per token. The `save_checkpoint` field specifies the path where the merged model will be saved.
+## Examples
+
+### API Usage
+
+#### Basic Example
+
+Here's an example demonstrating how to merge multiple fine-tuned models into a Mixtral MoE model:
+
+```python
+from fusion_bench.method import (
+    MixtralForCausalLMMergingAlgorithm,
+    MixtralMoEMergingAlgorithm,
+)
+from fusion_bench.modelpool import CausalLMPool
+from fusion_bench.utils import print_parameters
+
+# Create a model pool with your fine-tuned expert models
+model_pool = CausalLMPool(
+    models={
+        "_pretrained_": "path_to_base_model",
+        "expert_1": "path_to_finetuned_model_1",
+        "expert_2": "path_to_finetuned_model_2",
+        "expert_3": "path_to_finetuned_model_3",
+        "expert_4": "path_to_finetuned_model_4",
+    },
+    tokenizer="path_to_base_model",
+    model_kwargs={"torch_dtype": "bfloat16"},
+)
+
+
+# Initialize the merging algorithm with direct parameters
+merging_algorithm = MixtralForCausalLMMergingAlgorithm(
+    experts_per_token=2,  # Number of experts to activate per token
+    save_checkpoint=None  # Optional: path to save the merged model
+)
+
+# Run the merging process to get a MoE model
+moe_model = merging_algorithm.run(model_pool)
+
+print("Merged MoE model:")
+print_parameters(moe_model)
+
+# Save the merged MoE model
+moe_model.save_pretrained("path_to_save_moe_model")
+```
+
+### CLI Usage
+
+This section provides a guide on how to use the `fusion_bench` command-line interface to merge models using MoE-based merging.
+
+#### Configuration Files
+
+Configuration template for the MoE merging method:
 
 ```yaml title="config/method/mixtral_moe_merging.yaml"
-name: mixtral_for_causal_lm_moe_merging
-
-experts_per_token: 2
-# path to save the merged model, if provided
-save_checkpoint: null
+--8<-- "config/method/mixtral_moe_merging.yaml"
 ```
 
-The second code block is another YAML configuration file, this time for the model pool. The `type` field specifies the type of model pool to use. The `models` field is a list of models to include in the pool. Each model should have a `name` and a `path`, and the model is loaded from the path.
+Configuration template for the model pool:
 
-```yaml title="config/modelpool/mixtral_moe_merging.yaml"
-type: AutoModelForCausalLMPool
-# each model should have a name and a path, and the model is loaded from the path
-# this is equivalent to `AutoModelForCausalLM.from_pretrained(path)`
-models:
-  - name: _pretrained_
-    path: path_to_your_pretrained_model
-  - name: expert_1
-    path: path_to_your_expert_model_1
-  - name: expert_2
-    path: path_to_your_expert_model_2
-  - name: expert_3
-    path: path_to_your_expert_model_3
-  - name: expert_4
-    path: path_to_your_expert_model_4
+```yaml title="config/modelpool/CausalLMPool/mixtral_moe_merging.yaml"
+--8<-- "config/modelpool/CausalLMPool/mixtral_moe_merging.yaml"
 ```
 
-Finally, the third code block is a bash command that runs the `fusion_bench` command-line interface with the specified method, model pool, and task pool. The `method` argument specifies the merging method to use. The `modelpool` argument specifies the model pool to use. The `modelpool.models.0.path` argument specifies the path to the pretrained model to use. The `taskpool` argument specifies the task pool to use. In this case, a dummy task pool is used that does nothing but print the parameter counts of the merged model.
+#### Running MoE Merging
+
+Run the fusion_bench command with MoE merging configuration:
 
 ```bash
 fusion_bench \
     method=mixtral_moe_merging \
-    modelpool=mixtral_moe_merging \
-    taskpool=dummy # this is a dummy taskpool that does nothing but print the parameter counts of the merged model
+    modelpool=CausalLMPool/mixtral_moe_merging \
+    taskpool=dummy # this evaluates parameter counts of the merged model
 ```
-
-This guide provides a step-by-step process for merging models using the `fusion_bench` command-line interface. By following these instructions, you can merge your own models and save them for future use.
 
 ## Implementation Details
 

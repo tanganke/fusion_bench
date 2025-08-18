@@ -223,7 +223,7 @@ class FrankWolfeHardAlgorithm(
     def get_shuffled_loader_iter(self, task: str):
         if self.loss_fn == "cross_entropy":
             # get dataloader kwargs
-            dataloader_kwargs = self._dataloader_kwargs.copy()
+            dataloader_kwargs = self.dataloader_kwargs.copy()
             dataloader_kwargs["shuffle"] = True
             dataloader_kwargs["batch_size"] = 1
 

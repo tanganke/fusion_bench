@@ -131,8 +131,8 @@ def auto_register_config(cls):
                     if default_value is not Parameter.empty:
                         setattr(self, param_name, default_value)
 
-            # Call the original __init__
-            result = original_init(self, *args, **kwargs)
+        # Call the original __init__
+        result = original_init(self, *args, **kwargs)
         return result
 
     # Replace the original __init__ method while preserving its signature

@@ -37,15 +37,14 @@
     For a thoroughly tested and verified implementation of the algorithm, please refer to the original repository: [tanganke/pareto_set_learning :simple-github:](https://github.com/tanganke/pareto_set_learning). 
     Additionally, the experimental results and further insights into the algorithm can be found in the original research paper: [arXiv:2406.09770 :simple-arxiv:](https://arxiv.org/abs/2406.09770).
 
-PWEMoE-LS on eight image classification tasks using CLIP-ViT-B/32 models, and the results are logged to `outputs/logs/ViT-B-32/PWEMoE-LS-8tasks`.
+PWEMoE-LS on eight image classification tasks using CLIP-ViT-B/32 models, and the results are logged to `outputs/ViT-B-32/PWEMoE-LS-8tasks`.
 
 ```bash
 fusion_bench \
-    method=pwe_moe_ls_for_clip \
+    path.log_dir=outputs/ViT-B-32/PWEMoE-LS-8tasks \
+    method=pwe_moe/pwe_moe_ls_for_clip \
     modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
-    taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
-    fabric.loggers.root_dir=outputs/logs/ViT-B-32 \
-    fabric.loggers.name=PWEMoE-LS-8tasks
+    taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
 ```
 
 ## Implementation Details

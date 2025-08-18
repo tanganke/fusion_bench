@@ -65,7 +65,7 @@ class FisherMergingForCLIPVisionModel(
             minimal_fisher_weight=minimal_fisher_weight,
             num_fisher_examples=num_fisher_examples,
         )
-        self._dataloader_kwargs = dataloader_kwargs
+        self.dataloader_kwargs = dataloader_kwargs
         self.zeroshot_weights_cache_dir = zeroshot_weights_cache_dir
         for key, value in kwargs.items():
             log.warning(f"Unused argument: {key}={value}")
@@ -127,7 +127,7 @@ class FisherMergingForCLIPVisionModel(
         """
         # setup dataloader
         train_dataset = CLIPDataset(train_dataset, self.clip_processor)
-        train_dataloader = DataLoader(train_dataset, **self._dataloader_kwargs)
+        train_dataloader = DataLoader(train_dataset, **self.dataloader_kwargs)
         if self.fabric is not None:
             train_dataloader = self.fabric.setup_dataloaders(train_dataloader)
             model = self.fabric.setup(model)

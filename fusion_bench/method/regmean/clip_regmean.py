@@ -27,7 +27,7 @@ class RegMeanAlgorithmForCLIP(
 
     def __init__(self, *, dataloader_kwargs: DictConfig, **kwargs):
         super().__init__(**kwargs)
-        self._dataloader_kwargs = dataloader_kwargs
+        self.dataloader_kwargs = dataloader_kwargs
 
     def on_regmean_start(self):
         self.setup_zero_shot_classification_head()
@@ -60,7 +60,7 @@ class RegMeanAlgorithmForCLIP(
         # setup dataloader
         train_dataset = CLIPDataset(train_dataset, self.clip_processor)
         train_dataloader = DataLoader(
-            train_dataset, shuffle=True, **self._dataloader_kwargs
+            train_dataset, shuffle=True, **self.dataloader_kwargs
         )
         train_dataloader = self.fabric.setup_dataloaders(train_dataloader)
         model = self.fabric.setup(model)

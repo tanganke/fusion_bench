@@ -5,6 +5,7 @@ from typing import List, Mapping, Union  # noqa: F401
 import torch
 from torch import nn
 
+from fusion_bench import auto_register_config
 from fusion_bench.method import BaseAlgorithm
 from fusion_bench.modelpool import BaseModelPool
 
@@ -52,17 +53,13 @@ def recombine_state_dict(models: List[nn.Module]):
     return models
 
 
+@auto_register_config
 class ModelRecombinationAlgorithm(BaseAlgorithm):
     """
     Model recombination recombinates the layers of the given models, to create a new set of models.
     """
 
-    _config_mapping = BaseAlgorithm._config_mapping | {
-        "return_modelpool": "return_modelpool",
-    }
-
     def __init__(self, return_modelpool: bool, **kwargs):
-        self.return_modelpool = return_modelpool
         super().__init__(**kwargs)
 
     @torch.no_grad()
