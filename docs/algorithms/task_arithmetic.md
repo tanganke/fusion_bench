@@ -27,34 +27,12 @@ The choice of the scaling coefficient $\lambda$ plays a crucial role in the fina
 
 ## Examples
 
-To use the Task Arithmetic algorithm, you can use the `TaskArithmeticAlgorithm` class from the `fusion_bench.method` module.
-
-```python
-from fusion_bench.method.task_arithmetic import TaskArithmeticAlgorithm
-from omegaconf import DictConfig
-
-# Instantiate the TaskArithmeticAlgorithm
-method_config = {'name': 'task_arithmetic', 'scaling_factor': 0.5}
-algorithm = TaskArithmeticAlgorithm(DictConfig(method_config))
-
-# Assume we have a dict of PyTorch models (nn.Module instances) that we want to merge.
-# The models should all have the same architecture.
-# the dict must contain the pre-trained model with the key '_pretrained_', and arbitrary number of fine-tuned models.
-models = {'_pretrained_': nn.Linear(10,10), 'model_1': nn.Linear(10,10), 'model_2': nn.Linear(10,10)}
-
-# Run the algorithm on the models.
-# This will return a new model that is the result of task arithmetic on the input models.
-merged_model = algorithm.run(models)
-```
-
-
-## Code Integration
+### CLI Usage
 
 Configuration template for the Task Arithmetic algorithm:
 
 ```yaml title="config/method/task_arithmetic.yaml"
-name: task_arithmetic
-scaling_factor: 0.5 # Scaling factor for task vectors
+--8<-- "config/method/task_arithmetic.yaml"
 ```
 
 Use the following command to run the Task Arithmetic algorithm:
@@ -68,53 +46,21 @@ For example, to run the Task Arithmetic algorithm on two models with scaling fac
 ```bash
 fusion_bench method=task_arithmetic \
     method.scaling_factor=0.5 \
-  modelpool=clip-vit-base-patch32_svhn_and_mnist \
-  taskpool=clip-vit-base-patch32_svhn_and_mnist
+  modelpool=CLIPVisionModelPool/clip-vit-base-patch32_svhn_and_mnist \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-base-patch32_svhn_and_mnist
 ```
 
 where the configuration for the model pool is:
 
-```yaml title="config/modelpool/clip-vit-base-patch32_svhn_and_mnist.yaml"
-type: huggingface_clip_vision
-# the modelpool must contain the pre-trained model with the name '_pretrained_', 
-# and arbitrary number of fine-tuned models.
-models:
-  - name: _pretrained_
-    path: openai/clip-vit-base-patch32
-  - name: svhn
-    path: tanganke/clip-vit-base-patch32_svhn
-  - name: mnist
-    path: tanganke/clip-vit-base-patch32_mnist
+```yaml title="config/modelpool/CLIPVisionModelPool/clip-vit-base-patch32_svhn_and_mnist.yaml"
+--8<-- "config/modelpool/CLIPVisionModelPool/clip-vit-base-patch32_svhn_and_mnist.yaml"
 ```
 
 and the configuration for the task pool:
 
-```yaml title="config/taskpool/clip-vit-base-patch32_svhn_and_mnist.yaml"
-type: clip_vit_classification
-
-dataset_type: huggingface_image_classification
-tasks:
-  - name: svhn
-    dataset:
-      type: instantiate
-      name: svhn
-      object: 
-        _target_: datasets.load_dataset
-        _args_:
-          - svhn
-          - cropped_digits
-        split: test
-  - name: mnist
-    dataset:
-      name: mnist
-      split: test
-
-...
+```yaml title="config/taskpool/CLIPVisionModelTaskPool/clip-vit-base-patch32_svhn_and_mnist.yaml"
+--8<-- "config/taskpool/CLIPVisionModelTaskPool/clip-vit-base-patch32_svhn_and_mnist.yaml"
 ```
-
-## Scope
-
-### Multi-Task Model Merging using CLIP-ViT Models
 
 Use Task Arithmetic to merge 8 CLIP-ViT-B-32 models from different image classification tasks and evaluate the performance of the merged model.
 
@@ -123,6 +69,28 @@ fusion_bench \
   method=task_arithmetic \
   modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8_model_only \
   taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
+```
+
+### API Usage
+
+
+To use the Task Arithmetic algorithm, you can use the `TaskArithmeticAlgorithm` class from the `fusion_bench.method` module.
+
+```python
+from torch import nn
+from fusion_bench.method.task_arithmetic import TaskArithmeticAlgorithm
+
+# Instantiate the TaskArithmeticAlgorithm
+algorithm = TaskArithmeticAlgorithm(scaling_factor=0.5)
+
+# Assume we have a dict of PyTorch models (nn.Module instances) that we want to merge.
+# The models should all have the same architecture.
+# the dict must contain the pre-trained model with the key '_pretrained_', and arbitrary number of fine-tuned models.
+models = {'_pretrained_': nn.Linear(10,10), 'model_1': nn.Linear(10,10), 'model_2': nn.Linear(10,10)}
+
+# Run the algorithm on the models.
+# This will return a new model that is the result of task arithmetic on the input models.
+merged_model = algorithm.run(models)
 ```
 
 

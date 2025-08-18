@@ -13,7 +13,7 @@ from torch import Tensor, nn
 from tqdm.autonotebook import tqdm
 
 from fusion_bench.method import BaseAlgorithm
-from fusion_bench.mixins import SimpleProfilerMixin
+from fusion_bench.mixins import SimpleProfilerMixin, auto_register_config
 from fusion_bench.modelpool import BaseModelPool
 
 log = logging.getLogger(__name__)
@@ -280,14 +280,9 @@ def regmean_merging(
     return merged_params
 
 
+@auto_register_config
 class RegMeanAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
     _include_module_type = [nn.Linear]
-    _config_mapping = {
-        "num_regmean_examples": "num_regmean_examples",
-        "exclude_param_names_regex": "exclude_param_names_regex",
-        "reduce_non_diagonal_ratio": "reduce_non_diagonal_ratio",
-        "weight_transpose": "weight_transpose",
-    }
 
     def __init__(
         self,
@@ -298,10 +293,6 @@ class RegMeanAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
         weight_transpose: bool,
         **kwargs,
     ):
-        self.num_regmean_examples = num_regmean_examples
-        self.exclude_param_names_regex = exclude_param_names_regex
-        self.reduce_non_diagonal_ratio = reduce_non_diagonal_ratio
-        self.weight_transpose = weight_transpose
         super().__init__(**kwargs)
 
     def run(self, modelpool: BaseModelPool, **kwargs):

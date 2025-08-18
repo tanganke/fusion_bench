@@ -193,7 +193,7 @@ class FrankWolfeSoftAlgorithm(
     @functools.cache
     def get_shuffled_train_loader_iter(self, task: str, batch_size: int = 1):
         # get dataloader kwargs
-        dataloader_kwargs = self._dataloader_kwargs.copy()
+        dataloader_kwargs = self.dataloader_kwargs.copy()
         dataloader_kwargs["shuffle"] = True
         dataloader_kwargs["batch_size"] = batch_size
 

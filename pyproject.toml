@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "fusion_bench"
 description = "A Comprehensive Benchmark of Deep Model Fusion"
 readme = "README.md"
-version = "0.2.20"
+version = "0.2.21"
 authors = [{ name = "Anke Tang", email = "tang.anke@foxmail.com" }]
 license = { file = 'LICENSE' }
 requires-python = ">= 3.10"
@@ -24,7 +24,8 @@ dependencies = [
     "scipy",
     "h5py",
     "pytest",
-    "pillow!=11.2.1"  # Known issue with version 11.2.1 when loading food101 dataset
+    "transformers!=4.49", # Known issue with version 4.49 when running flan-t5 inference
+    "pillow!=11.2.1",     # Known issue with version 11.2.1 when loading food101 dataset
 ]
 keywords = ["deep learning", "model fusion", "benchmark"]
 
@@ -48,4 +49,4 @@ fusion_bench = ['../fusion_bench_config/**/*']
 profile = "black"
 
 [project.optional-dependencies]
-lm-eval-harness = ["lm-eval"]
+lm-eval-harness = ["lm-eval", "immutabledict", "langdetect"]

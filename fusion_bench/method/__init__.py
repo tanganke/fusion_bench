@@ -37,7 +37,8 @@ _import_structure = {
     "ties_merging": ["TiesMergingAlgorithm"],
     "dare": ["DareSimpleAverage", "DareTaskArithmetic", "DareTiesMerging"],
     "fisher_merging": [
-        "FisherMergingAlgorithm" "FisherMergingForCLIPVisionModel",
+        "FisherMergingAlgorithm",
+        "FisherMergingForCLIPVisionModel",
         "FisherMergingAlgorithmForGPT2",
     ],
     "regmean": ["RegMeanAlgorithmForCLIP", "RegMeanAlgorithmForGPT2"],
@@ -69,6 +70,7 @@ _import_structure = {
         "FlanT5LayerWiseGossipAlgorithm",
     ],
     "fw_merging": ["FrankWolfeHardAlgorithm", "FrankWolfeSoftAlgorithm"],
+    "tall_mask": ["TallMaskTaskArithmeticAlgorithm"],
     # plug-and-play model merging methods
     "concrete_subspace": [
         "ConcreteTaskArithmeticAlgorithmForCLIP",
@@ -222,6 +224,7 @@ if TYPE_CHECKING:
         PCPSparseLoForLlama,
         SparseLoForLlama,
     )
+    from .tall_mask import TallMaskTaskArithmeticAlgorithm
     from .task_arithmetic import TaskArithmeticAlgorithm
     from .task_singular_vector import TaskSingularVectorMerging
     from .ties_merging import TiesMergingAlgorithm

@@ -25,7 +25,7 @@ All programs inherit from `BaseHydraProgram`:
 ```python
 from fusion_bench.programs import BaseHydraProgram
 
-class BaseHydraProgram(BaseYAMLSerializableModel):
+class BaseHydraProgram(BaseYAMLSerializable):
     """
     Abstract base class for all FusionBench programs that use Hydra configuration.
     """

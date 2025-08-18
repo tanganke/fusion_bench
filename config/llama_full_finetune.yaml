@@ -1,6 +1,7 @@
 defaults:
   - hydra: default
   - fabric: llama_fsdp
+  - path: default
   # --- Model, Method, Task ---
   - method: lm_finetune/fullfinetune_sft.yaml
   - modelpool: CausalLMPool/llama_alpaca_cleaned.yaml

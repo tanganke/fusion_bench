@@ -56,6 +56,8 @@ class LayerWiseFeatureSaver:
         first_token_only: bool = True,
         max_num: Optional[int] = None,
     ):
+        if isinstance(save_path, str):
+            save_path = Path(save_path)
         self.save_path = save_path
         self.first_token_only = first_token_only
         self.max_num = max_num

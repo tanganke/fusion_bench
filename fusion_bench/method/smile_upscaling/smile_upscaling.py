@@ -21,6 +21,7 @@ from fusion_bench.models.smile_moe.linear_from_module import (
 )
 from fusion_bench.models.utils import get_attr, set_attr
 from fusion_bench.utils.parameters import print_parameters
+from fusion_bench.utils.devices import get_device
 
 log = logging.getLogger(__name__)
 
@@ -180,7 +181,12 @@ class SmileUpscalingAlgorithm(
 
         name_list = name.split(".")
         module = get_attr(pretrained_model, name_list)
-        experts = [get_attr(m, name_list) for m in finetuned_models]
+        original_device = get_device(module)
+        module = module.to(self.device, non_blocking=True)
+        experts = [
+            get_attr(m, name_list).to(self.device, non_blocking=True)
+            for m in finetuned_models
+        ]
         try:
             moe_linear = SmileMoELinear(
                 module,
@@ -192,6 +198,7 @@ class SmileUpscalingAlgorithm(
                 full_matrices=self.full_matrices,
                 upscaling_accelerator=self.upscaling_accelerator,
             )
+            moe_linear = moe_linear.to(original_device, non_blocking=True)
         except ExpertNotTrainedError:
             print(f"skip {name} because the experts are not trained.")
             return

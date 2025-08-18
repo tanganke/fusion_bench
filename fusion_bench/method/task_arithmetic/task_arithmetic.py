@@ -12,7 +12,7 @@ import torch
 from torch import nn
 
 from fusion_bench.method.base_algorithm import BaseAlgorithm
-from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
+from fusion_bench.mixins import SimpleProfilerMixin, auto_register_config
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_add,
@@ -74,9 +74,10 @@ def task_arithmetic_merge(
     return pretrained_model
 
 
+@auto_register_config
 class TaskArithmeticAlgorithm(
-    BaseAlgorithm,
     SimpleProfilerMixin,
+    BaseAlgorithm,
 ):
     """
     Task Arithmetic Algorithm for model fusion.
@@ -89,19 +90,14 @@ class TaskArithmeticAlgorithm(
         scaling_factor (int): The factor by which the task vectors will be scaled before merging.
     """
 
-    _config_mapping = BaseAlgorithm._config_mapping | {
-        "scaling_factor": "scaling_factor"
-    }
-
-    def __init__(self, scaling_factor: int):
+    def __init__(self, scaling_factor: int, **kwargs):
         """
         Initializes the TaskArithmeticAlgorithm with the given scaling factor.
 
         Args:
             scaling_factor (int): The factor by which the task vectors will be scaled before merging.
         """
-        self.scaling_factor = scaling_factor
-        super().__init__()
+        super().__init__(**kwargs)
 
     @torch.no_grad()
     def run(self, modelpool: Union[BaseModelPool, Dict[str, nn.Module]]) -> nn.Module:

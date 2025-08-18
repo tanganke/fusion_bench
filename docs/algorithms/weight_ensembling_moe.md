@@ -219,7 +219,9 @@ To explore the influence of router depth on the performance of the scaled-up mod
 In the above two Tables, we present additional findings to support our argument. We compare the number of trainable parameters and performance between WEMoE (1-layer) and WEMoE (2-layer). The data reveal that WEMoE (1-layer) possesses 73.8K trainable parameters, which constitute only 0.01% of the total parameters in the merged model. Notably, the performance of WEMoE (1-layer) is significantly better than AdaMerging and nearly matches that of WEMoE (2-layer) across all tasks. This evidence underscores our claim that the MoE design is crucial for performance enhancement.
 
 
-## Code Integration
+## Examples
+
+### CLI Usage
 
 multi-task model fusion experiment on eight image classification tasks.
 
@@ -259,7 +261,7 @@ fusion_bench \
 
 ## Implementation Details
 
-- [fusion_bench.method.CLIPWeightEnsemblingMoEAlgorithm]
+- [fusion_bench.method.CLIPWeightEnsemblingMoEAlgorithm][]
 
 
 [^1]: Anke Tang et.al. ICML 2024. Merging Multi-Task Models via Weight-Ensembling Mixture of Experts. http://arxiv.org/abs/2402.00433 ICML 2024.

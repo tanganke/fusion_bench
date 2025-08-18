@@ -1,0 +1,6 @@
+_target_: fusion_bench.modelpool.CausalLMPool
+models:
+  _pretrained_: mistralai/Mistral-7B-v0.1
+tokenizer: ${.models._pretrained_}
+model_kwargs:
+  torch_dtype: bfloat16

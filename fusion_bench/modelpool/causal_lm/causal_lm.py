@@ -57,6 +57,15 @@ class CausalLMPool(BaseModelPool):
                 )
         self.load_lazy = load_lazy
 
+    def get_model_path(self, model_name: str):
+        model_name_or_config = self._models[model_name]
+        if isinstance(model_name_or_config, str):
+            return model_name_or_config
+        elif isinstance(model_name_or_config, (DictConfig, dict)):
+            return model_name_or_config.get("pretrained_model_name_or_path")
+        else:
+            raise RuntimeError("Invalid model configuration")
+
     @override
     def load_model(
         self,

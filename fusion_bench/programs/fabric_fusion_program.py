@@ -39,6 +39,7 @@ class FabricModelFusionProgram(
         "_fabric": "fabric",
         "fast_dev_run": "fast_dev_run",
         "seed": "seed",
+        "path": "path",
     }
 
     def __init__(
@@ -56,6 +57,7 @@ class FabricModelFusionProgram(
         fast_dev_run: bool = False,
         seed: Optional[int] = None,
         print_function_call: bool = True,
+        path: DictConfig = None,
         **kwargs,
     ):
         self._method = method
@@ -67,6 +69,7 @@ class FabricModelFusionProgram(
         self.merged_model_save_kwargs = merged_model_save_kwargs
         self.fast_dev_run = fast_dev_run
         self.seed = seed
+        self.path = path
         fusion_bench.utils.instantiate_utils.PRINT_FUNCTION_CALL = print_function_call
         super().__init__(**kwargs)
 
@@ -243,7 +246,10 @@ class FabricModelFusionProgram(
                 compat_load_fn="fusion_bench.compat.taskpool.load_taskpool_from_config",
             )
 
+        self.method.on_run_start()
         merged_model = self.method.run(self.modelpool)
+        self.method.on_run_end()
+
         if merged_model is None:
             log.info(
                 "No merged model returned by the method. Skipping saving and evaluation."
@@ -299,6 +305,9 @@ class FabricModelFusionProgram(
                 hydra_output_dir = None
 
             if hydra_output_dir is not None:
+                if os.path.abspath(hydra_output_dir) == os.path.abspath(self.log_dir):
+                    return
+
                 os.makedirs(self.log_dir, exist_ok=True)
                 try:
                     # if the system is windows, use the `mklink` command in "CMD" to create the symlink

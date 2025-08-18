@@ -1,19 +1,47 @@
+# =============================================================================
+# FusionBench Fabric Model Fusion Configuration
+# =============================================================================
+# This configuration file defines the settings for running model fusion experiments
+# using PyTorch Lightning Fabric framework within FusionBench.
+#
+# The configuration includes:
+#
+# - Hydra framework settings and overrides
+# - PyTorch Lightning Fabric configuration for distributed training
+# - Path management for data, outputs, and logs
+# - (core components) Model pool, fusion method, and task pool specifications
+# - Experiment execution parameters and debugging options
+#
+# =============================================================================
+# Hydra Configuration Defaults
+# =============================================================================
 defaults:
-  - hydra: default
-  - fabric: auto
-  # --- Model, Method, Task ---
-  - modelpool: CLIPVisionModelPool/clip-vit-base-patch32_TA8
-  - method: dummy
-  - taskpool: dummy
-  - _self_
+  - hydra: default # Hydra framework configuration
+  - fabric: auto # PyTorch Lightning Fabric auto-configuration
+  - path: default # Path management configuration
+  # --- Core Components ---
+  - modelpool: CLIPVisionModelPool/clip-vit-base-patch32_TA8 # Model pool specification
+  - method: dummy # Fusion method (placeholder)
+  - taskpool: dummy # Task pool specification (placeholder)
+  - _self_ # Self-reference for override priority
+# =============================================================================
+# Program Configuration
+# =============================================================================
 _target_: fusion_bench.programs.FabricModelFusionProgram
-_recursive_: false
-fast_dev_run: false # Run a single batch of data to test the model or method
-# Run the script without actually running the experiment, use with `print_config=true`.
-# You can also use `--cfg` or `-c` to show the configuration instead of running.
-dry_run: false
-print_config: true # Print the configuration to the console
-merged_model_save_path: null # path to save the merged model, use "{log_dir}" to refer to the logger directory, for example `merged_model_save_path=\{log_dir\}/merged_model`
-merged_model_save_kwargs: null
-report_save_path: "{log_dir}/program_report.json" # path to save the result report
-print_function_call: true # set to false if you don't want to print the details of instantiate calls
+_recursive_: false # Disable recursive instantiation
+# =============================================================================
+# Experiment Execution Settings
+# =============================================================================
+# Development and debugging options
+fast_dev_run: false # This option is for quick testing. For example, run single batch instead of full dataset
+dry_run: false # Show configuration without running experiment
+print_config: true # Display full configuration before execution
+print_function_call: true # Show detailed instantiation calls
+# =============================================================================
+# Output and Logging Configuration
+# =============================================================================
+# Model saving configuration
+merged_model_save_path: null # Path to save merged model.
+merged_model_save_kwargs: null # Additional kwargs for model saving.
+# Report generation
+report_save_path: "{log_dir}/program_report.json" # Experiment results report path

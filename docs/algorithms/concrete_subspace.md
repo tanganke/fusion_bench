@@ -103,14 +103,16 @@ We can further binarize the Concrete mask by setting the entries with values gre
 
 
 
-## Code Integration
+## Examples
+
+### CLI Usage
 
 Merging CLIP models on eight image classification tasks, using the concrete task arithmetic algorithm
 
 ```bash
 # tensorboard logs and learned checkpoints of the shared mask can be found at https://huggingface.co/tanganke/clip-vit-base-patch32_concrete-task-arithmetic_tblogs
 fusion_bench \
-    fabric.loggers.name=ViT-B-32/concrete_task_arithmetic \
+    path.log_dir=outputs/ViT-B-32/concrete_task_arithmetic \
     method=concrete_subspace/clip_concrete_task_arithmetic \
     modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
     taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
@@ -160,7 +162,7 @@ Concrete AdaMerging (Layer-wise)
 ```bash
 # tensorboard logs and learned checkpoints of the shared mask can be found at https://huggingface.co/tanganke/clip-vit-base-patch32_concrete-layer-wise_adamerging_tblogs
 fusion_bench \
-    fabric.loggers.name=ViT-B-32/clip_concrete_layer_wise_adamerging \
+    path.log_dir=outputs/ViT-B-32/clip_concrete_layer_wise_adamerging \
     method=concrete_subspace/clip_concrete_layer_wise_adamerging \
     modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
     taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8

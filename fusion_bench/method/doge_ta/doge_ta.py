@@ -12,7 +12,7 @@ fusion_bench \
     taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
 
 fusion_bench \
-    method=adamerging \
+    method=adamerging/clip \
     method.name=clip_layer_wise_adamerging_doge_ta \
     modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
     taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8

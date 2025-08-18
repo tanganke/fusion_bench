@@ -133,7 +133,7 @@ Specify different config groups:
 
 ```bash
 fusion_bench \
-  method=adamerging \
+  method=adamerging/clip \
   modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
   taskpool=clip-vit-base-patch32_robustness_corrupted
 ```

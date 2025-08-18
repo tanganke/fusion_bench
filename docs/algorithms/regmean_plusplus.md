@@ -25,7 +25,9 @@ RegMean merges each linear layer independently, overlooking how the features and
 The key difference between RegMean++ and RegMean lies in how input feature $X^{(l,j)}_i$ for the $j$-th linear layer is obtained: *For input features that are **activations** (cushion representations between transformer layers), RegMean++ computes $X^{(l,j)}_i$ based on the activations produced by the **previous merge layer** $f_{M}^{(l-1)}$ in the merge model, that is, $X^{(l)}_i = f_{M}^{(l-1)}(X^{(l-1)}_{i})$ while RegMean relies on the activations produced by the **previous candidate layer** $f_{i}^{(l-1)}$ in the candidate model, that is, $X^{(l)}_i = f_{i}^{(l-1)}(X^{(l-1)}_{i})$.*
 
 
-## Code Integration
+## Examples
+
+### CLI Usage
 
 The following command lines can be used to run and evaluate the RegMean++ algorithm on eight image classification tasks:
 

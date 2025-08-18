@@ -1,95 +1,117 @@
 # Weighted Averaging
 
-Weighted averaging, also known as weight-ensembling.
-In the context of full fine-tuned models, the weights are averaged according to their respective performance weights. Concretely, this means that if we have $n$ models with their respective weights $\theta_i$ and model-wise weights $w_i$, the weights of the final model $\theta$ are computed as:
+Weighted averaging, also known as weight-ensembling, combines multiple models by averaging their parameters according to specified weights. This approach allows for non-uniform combination of models, where better-performing or more reliable models can be given higher weights in the final merged model.
+
+In the context of model fusion, if we have $n$ models with their respective parameters $\theta_i$ and model-wise weights $w_i$, the parameters of the final merged model $\theta$ are computed as:
 
 $$ \theta = \sum_{i=1}^{n} w_i \theta_i $$
 
+where the weights $w_i$ can optionally be normalized to sum to 1.
+
 ## Examples
 
-### General Usage
+### CLI Usage
 
-Configuration template for the Weighted Averaging algorithm:
+#### General Pytorch Models
 
-```yaml title="config/method/weighted_average.yaml"
-name: weighted_average
-normalize: true # if true, the weights will be normalized before merging
-weights: # List of weights for each model
-  - 0.5
-  - 0.5
+The [`WeightedAverageAlgorithm`][fusion_bench.method.WeightedAverageAlgorithm] works with general PyTorch models and performs weighted averaging of all model parameters.
+
+Configuration template for the standard Weighted Averaging algorithm:
+
+```yaml title="config/method/linear/weighted_average.yaml"
+--8<-- "config/method/linear/weighted_average.yaml"
 ```
 
 Use the following command to run the Weighted Averaging algorithm:
 
 ```bash
-fusion_bench method=weighted_average ...
+fusion_bench method=linear/weighted_average ...
 ```
 
-### Merge CLIP-ViT Models
-
-The following command merges eight clip-ViT models using a weighted average approach.
-Because `method.normalize` is set to true, the weights are normalized to sum to 1, thus equivalent to simple average.
+The following command merges eight CLIP-ViT models using a weighted average approach:
 
 ```bash
+# Note: Since `method.normalize=true`, the weights are normalized to sum to 1, making this example equivalent to simple averaging.
 fusion_bench \
-    method=weighted_average \
+    method=linear/weighted_average \
     method.normalize=true \
     method.weights=[0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3] \
-    modelpool=clip-vit-base-patch32_TA8_model_only \
-    taskpool=clip-vit-classification_TA8
+    modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8_model_only \
+    taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
 ```
 
-### Merge Llama/Mistral Models
+#### Large Language Models
 
-Here is an example of how to use the Weighted Averaging algorithm to merge two LLama models. In particular, LLaMa models of the type `transformers.LlamaForCausalLM` are merged using the Weighted Averaging algorithm.
+The [`WeightedAverageForLLama`][fusion_bench.method.WeightedAverageForLLama] is specialized for large language models with additional features:
+
+- Backbone-only merging option
+- Model saving capabilities
+- Hub integration support
+
+Configuration template for LLaMA/Mistral model weighted averaging:
+
+```yaml title="config/method/linear/weighted_average_for_llama.yaml"
+--8<-- "config/method/linear/weighted_average_for_llama.yaml"
+```
+
+Use the following command:
+
+```bash
+fusion_bench method=linear/weighted_average_for_llama ...
+```
+
+
+Example of merging LLaMA models with different weights:
 
 ```bash
 fusion_bench \
-    method=weighted_average_for_llama \
-    method.merged_model_save_path=outputs/test_merged_llama_model \
-    modelpool=llama_for_causallm \
+    method=linear/weighted_average_for_llama \
+    method.weights=[0.3,0.7] \
+    method.normalize=true \
+    method.backbone_only=true \
+    method.merged_model_save_path=outputs/merged_llama_model \
+    modelpool=CausalLMPool/simle_mixtral_exp_v4.yaml \
     taskpool=dummy
 ```
 
-or using the following configuration file `config/llama_weighted_average.yaml`
+### API Usage
 
-```bash
-fusion_bench --config-name llama_weighted_average
+#### General Pytorch Models
+
+```python
+from fusion_bench.method.weighted_average import WeightedAverageAlgorithm
+
+# Create the algorithm with custom weights
+algorithm = WeightedAverageAlgorithm(
+    normalize=True,  # Normalize weights to sum to 1
+    weights=[0.3, 0.5, 0.2],  # Custom weights for 3 models
+    verbose=True
+)
+
+# Run on a model pool
+merged_model = algorithm.run(modelpool)
 ```
 
-```yaml title="config/llama_weighted_average.yaml"
-defaults:
-  - example_config
-  - override method: weighted_average_for_llama
-  - override modelpool: llama_for_causallm
-  - _self_
+#### Large Language Models
 
-modelpool:
-  models:
-    # the pre-trained model (base model) is optional
-    # if not provided, the first model will be used as the base model
-    - name: _pretrained_
-      path: meta-llama/Meta-Llama-3-8B
-    - name: expert_1
-      path: meta-llama/Meta-Llama-3-8B
-    - name: expert_2
-      path: meta-llama/Meta-Llama-3-8B-Instruct
+```python
+from fusion_bench.method import WeightedAverageForLLama
 
-method:
-  normalize: true # if true, the weights will be normalized before merging
-  weights: # List of weights for each model
-    - 0.5
-    - 0.5
-  # if true, only the backbone of the model will be merged and the head will be keeped as the pre-trained model (if the pre-trained model is provided, otherwise the head of the first model will be used)
-  # if false, the whole model will be merged
-  backbone_only: true
+# Create the algorithm for LLaMA models
+algorithm = WeightedAverageForLLama(
+    normalize=True,
+    weights=[0.4, 0.6],
+    backbone_only=True,  # Only merge backbone, keep heads
+    merged_model_save_path="./merged_model",
+    save_tokenizer=True,
+    push_to_hub=False
+)
 
-  merged_model_save_path: null
-  save_tokenizer: true
-  push_to_hub: false
+# Run on a CausalLMPool
+merged_model = algorithm.run(causal_lm_pool)
 ```
 
-## References
+## Implementation Details
 
 - [fusion_bench.method.weighted_average.weighted_average.WeightedAverageAlgorithm][]
 - [fusion_bench.method.weighted_average.llama.WeightedAverageForLLama][]

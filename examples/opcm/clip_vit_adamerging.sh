@@ -5,7 +5,7 @@ for i in {1..6}; do
         --config-dir ${PWD}/config \
         merged_model_save_path=outputs/logs/ViT-B-32/${OUTPUT_DIR}/version_${0}/merged_model \
         fabric.loggers.version=0 \
-        method=adamerging \
+        method=adamerging/clip \
         method.name=clip_layer_wise_adamerging \
         method.save_merging_weights=merging_weights.pt \
         modelpool=clip-vit-base-patch32-round_${i} \

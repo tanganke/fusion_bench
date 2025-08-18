@@ -28,40 +28,12 @@ The SMILE upscaling method offers several configuration options, which are locat
 
 Each configuration file contains detailed parameters and options that can be adjusted to meet the specific needs of your model and application.
 
-```yaml title="config/method/smile_upscaling.yaml"
-name: smile_upscaling
-
-# merge device on cuda can accelerate the SVD computation
-device: cpu
-# device to compute svd
-upscaling_accelerator: cuda
-full_matrices: true # set to false if you are sure k < rank
-
-gate_k: 1
-k: 128
-top_k: 1
-
-routing_use_diff: true
-# average the remaining part, if this is set the False, the remaining part will kept as base model (the pretrained model)
-average_experts: false
-
-# path to save/load the model
-model_path: null
+```yaml title="config/method/smile_upscaling/smile_upscaling.yaml"
+--8<-- "config/method/smile_upscaling/smile_upscaling.yaml"
 ```
 
-```yaml title="config/method/smile_mistral_upscaling.yaml"
-name: smile_mistral_upscaling
-
-device: cpu
-accelerator: cuda
-
-# path to save/load the model
-model_path: null
-model_dtype: float16
-
-num_experts_per_tok: 1
-rank_of_router: 8
-rank_of_expert: 512
+```yaml title="config/method/smile_upscaling/smile_mistral_upscaling.yaml"
+--8<-- "config/method/smile_upscaling/smile_mistral_upscaling.yaml"
 ```
 
 
@@ -90,9 +62,9 @@ CUDA_DEVICES=(0 1 2 3 4 5 6 7)  # List of CUDA devices to use
 for i in "${!CUDA_DEVICES[@]}"; do
     task=${tasks[$i]}
     CUDA_VISIBLE_DEVICES=${CUDA_DEVICES[$i]} fusion_bench method=dummy \
-        modelpool=clip-vit-large-patch14_individual \
-            modelpool.models.0.path=tanganke/clip-vit-large-patch14_${task} \
-        taskpool=clip-vit-classification_TA8 \
+        modelpool=CLIPVisionModelPool/clip-vit-large-patch14_individual \
+            modelpool.models._pretrained_=tanganke/clip-vit-large-patch14_${task} \
+        taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
             taskpool.clip_model=openai/clip-vit-large-patch14 \
         report_save_path="outputs/ViT-L-14/single-task/clip-vit-large-patch14_${task}.json" &
 done
@@ -104,7 +76,7 @@ Upscale eight CLIP-ViT-B/32 models with SMILE, each CLIP-ViT-B/32 model is train
 gate_k=16
 k=32
 fusion_bench \
-    method=smile_upscaling \
+    method=smile_upscaling/smile_upscaling \
         method.device=cuda \
         method.gate_k=$gate_k method.k=$k \
     modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
@@ -118,10 +90,10 @@ Hyperparameter search for SMILE upscaling. Pre-run results can be found in `exam
 for gate_k in 1 2 4 8 16 32 64 128 256 512 768; do
     for k in 4 8 16 32 64 128 -1; do
         fusion_bench \
-            method=smile_upscaling \
+            method=smile_upscaling/smile_upscaling \
                 method.device=cuda \
                 method.gate_k=$gate_k method.k=$k \
-            modelpool=clip-vit-base-patch32_TA8 \
+            modelpool=Seq2SeqLMPool/clip-vit-base-patch32_TA8 \
             taskpool=clip-vit-classification_TA8 \
             report_save_path="outputs/ViT-B-32/eight_tasks/gate_k\=${gate_k}_k\=${k}.json"
     done
@@ -136,10 +108,10 @@ k=32
 for top_k in 1 2 4
 do
 fusion_bench \
-    method=smile_upscaling \
+    method=smile_upscaling/smile_upscaling \
         method.device=cuda \
         method.gate_k=$gate_k method.k=$k \
-    modelpool=clip-vit-base-patch32_TA8 \
+    modelpool=Seq2SeqLMPool/clip-vit-base-patch32_TA8 \
     taskpool=clip-vit-classification_TA8 \
     report_save_path="outputs/ViT-B-32/ablation/gate_k\=${gate_k}_k\=${k}.json"
 done
@@ -153,9 +125,9 @@ hyperparameter search for SMILE upscaling. Pre-run results can be found in `exam
 for gate_k in 1 2 4 8 16 32 64 128; do
     for k in 4 8 16 32 64 128 -1; do
         fusion_bench \
-            method=smile_upscaling \
+            method=smile_upscaling/smile_upscaling \
                 method.gate_k=$gate_k method.k=$k \
-            modelpool=clip-vit-large-patch14_TA8 \
+            modelpool=Seq2SeqLMPool/clip-vit-large-patch14_TA8 \
             taskpool=clip-vit-classification_TA8 \
                 taskpool.clip_model=openai/clip-vit-large-patch14 \
             report_save_path="outputs/ViT-B-32/eight_tasks/gate_k\=${gate_k}_k\=${k}.json"
@@ -173,10 +145,10 @@ Pre-run results can be found in `examples/smile_upscaling/flan-t5-base.ipynb` an
 for gate_k in 4 8 16 32; do
     for k in 16 32 64 128; do
         fusion_bench \
-            method=smile_upscaling \
+            method=smile_upscaling/smile_upscaling \
                 method.device=cpu \
                 method.gate_k=$gate_k method.k=$k \
-            modelpool=flan-t5-base_glue \
+            modelpool=Seq2SeqLMPool/flan-t5-base_glue \
             taskpool=flan-t5_glue_text_generation \
             report_save_path="outputs/flan-t5-base/glue_text_generation/gate_k\=${gate_k}_k\=${k}.json"
     done
@@ -186,10 +158,10 @@ done
 for gate_k in 2 4 8; do
     for k in 4 8 16; do
         fusion_bench \
-            method=smile_upscaling \
+            method=smile_upscaling/smile_upscaling \
                 method.device=cuda \
                 method.gate_k=$gate_k method.k=$k \
-            modelpool=flan-t5-base_glue_lora16 \
+            modelpool=Seq2SeqLMPool/flan-t5-base_glue_lora16 \
             taskpool=flan-t5_glue_text_generation \
             report_save_path="outputs/flan-t5-base_lora16/glue_text_generation/gate_k\=${gate_k}_k\=${k}.json"
     done
@@ -317,7 +289,7 @@ Knowing the model architecture, we can upscale the Mistral-7B models using the f
     function model_fusion() {
         output_dir=outputs/mistral/gate_k-${gate_k}_k-${k}/version_${version}
         fusion_bench \
-            method=smile_mistral_upscaling \
+            method=smile_upscaling/smile_mistral_upscaling \
                 method.rank_of_router=$gate_k method.rank_of_expert=$k \
                 method.model_path=${output_dir} \
             modelpool=smile_mistral_exp_v${version} \
@@ -399,32 +371,29 @@ for task in sun397 stanford-cars resisc45 eurosat svhn gtsrb mnist dtd
 do
     # Space I
     CUDA_VISIBLE_DEVICES=0 fusion_bench \
-        method=singular_projection_merging \
+        method=smile_upscaling/singular_projection_merging \
             method.device=cuda method.rank=low method.k=-1 method.full_matrices=false \
-        modelpool=clip-vit-base-patch32_single_finetuned \
-            modelpool.models.1.name=${task} \
-            modelpool.models.1.path=tanganke/clip-vit-base-patch32_${task} \
-        taskpool=clip-vit-classification_TA8 \
+        modelpool=CLIPVisionModelPool/clip-vit-base-patch32_single_finetuned \
+            modelpool.models.finetuned=tanganke/clip-vit-base-patch32_${task} \
+        taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
         report_save_path="outputs/ViT-B-32/single-task/projection_merging_zone1_${task}.json" &
 
     # Space II
     CUDA_VISIBLE_DEVICES=1 fusion_bench \
-        method=singular_projection_merging \
+        method=smile_upscaling/singular_projection_merging \
             method.device=cuda method.rank=high method.k=-1 method.full_matrices=false \
-        modelpool=clip-vit-base-patch32_single_finetuned \
-            modelpool.models.1.name=${task} \
-            modelpool.models.1.path=tanganke/clip-vit-base-patch32_${task} \
-        taskpool=clip-vit-classification_TA8 \
+        modelpool=CLIPVisionModelPool/clip-vit-base-patch32_single_finetuned \
+            modelpool.models.finetuned=tanganke/clip-vit-base-patch32_${task} \
+        taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
         report_save_path="outputs/ViT-B-32/single-task/projection_merging_zone2_${task}.json" &
 
-    # Space III
+    # Space II+III
     CUDA_VISIBLE_DEVICES=2 fusion_bench \
-        method=singular_projection_merging \
+        method=smile_upscaling/singular_projection_merging \
             method.device=cuda method.rank=high method.k=-1 method.full_matrices=true \
-        modelpool=clip-vit-base-patch32_single_finetuned \
-            modelpool.models.1.name=${task} \
-            modelpool.models.1.path=tanganke/clip-vit-base-patch32_${task} \
-        taskpool=clip-vit-classification_TA8 \
+        modelpool=CLIPVisionModelPool/clip-vit-base-patch32_single_finetuned \
+            modelpool.models.finetuned=tanganke/clip-vit-base-patch32_${task} \
+        taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
         report_save_path="outputs/ViT-B-32/single-task/projection_merging_zone23_${task}.json" &
     wait
 done

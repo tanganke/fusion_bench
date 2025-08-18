@@ -1,4 +1,7 @@
 !*.template
+
+*.local.*
+
 # ignore datasets
 /datasets/
 /datasets

@@ -36,6 +36,20 @@ class ModelFusionAlgorithm(ABC):
             algorithm_config = DictConfig({})
         self.config = algorithm_config
 
+    def on_run_start(self):
+        """
+        Hook method called at the start of the run.
+        Can be overridden by subclasses to perform initialization tasks.
+        """
+        pass
+
+    def on_run_end(self):
+        """
+        Hook method called at the end of the run.
+        Can be overridden by subclasses to perform cleanup tasks.
+        """
+        pass
+
     @abstractmethod
     def run(self, modelpool):
         """

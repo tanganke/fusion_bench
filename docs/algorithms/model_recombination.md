@@ -1,3 +1,6 @@
+---
+title: Model Recombination
+---
 # Model Recombination
 
 <figure markdown="span">
@@ -5,73 +8,74 @@
     <figcaption>Credit to [FedMR](http://arxiv.org/abs/2305.10730) </figcaption>
 </figure>
 
-## Usage
+Model recombination is a technique that shuffles the layers of different models to create new combinations. 
+This method randomly redistributes the parameters across models at the layer level, which can help discover new model configurations and potentially improve performance.
 
-`ModelRecombinationAlgorithm` is a class used to recombine models in a model pool. Here's how to use it:
+## Examples
 
-First, import the necessary modules:
+### API Usage
+
+Here's an example demonstrating how to recombine models:
 
 ```python
-from fusion_bench.method import ModelRecombinationAlgorithm
-from fusion_bench.modelpool import ModelPool, to_modelpool
+import torch
 from torch import nn
+from fusion_bench.method import ModelRecombinationAlgorithm
+from fusion_bench.modelpool import BaseModelPool
+
+# Create sample models
+models = {
+    "model_1": nn.Sequential(nn.Linear(10, 5), nn.ReLU(), nn.Linear(5, 1)),
+    "model_2": nn.Sequential(nn.Linear(10, 5), nn.ReLU(), nn.Linear(5, 1)), 
+    "model_3": nn.Sequential(nn.Linear(10, 5), nn.ReLU(), nn.Linear(5, 1)),
+}
+
+# Create model pool
+modelpool = BaseModelPool(models)
+
+# Initialize the recombination algorithm
+recombination_algorithm = ModelRecombinationAlgorithm(
+    return_modelpool=True  # Return the entire recombined model pool
+)
+
+# Run recombination
+recombined_pool = recombination_algorithm.run(modelpool)
+
+print(f"Original pool size: {len(modelpool)}")
+print(f"Recombined pool size: {len(recombined_pool)}")
 ```
 
-Create an instance of `ModelRecombinationAlgorithm`:
 
-```python
-model_recombination = ModelRecombinationAlgorithm()
-```
+### CLI Usage
 
-Create a model pool using the `to_modelpool` function. This function takes a list of models or a dict of models and converts it into a `ModelPool`:
+This section provides a guide on how to use the `fusion_bench` command-line interface for model recombination.
 
-```python
-models = [nn.Linear(10, 10) for _ in range(3)]
-modelpool = to_modelpool(models)
-```
+#### Configuration Files
 
-Use the `run` method of the `ModelRecombinationAlgorithm` instance to recombine the models in the model pool:
-
-```python
-new_modelpool = model_recombination.run(modelpool, return_modelpool=True)
-```
-
-The `run` method takes two arguments:
-
-- `modelpool`: The model pool to recombine.
-- `return_modelpool` (optional): A boolean indicating whether to return the entire model pool or just the first model. Defaults to `True`.
-
-If `return_modelpool` is `True`, the `run` method returns a new `ModelPool` with the recombined models. If `False`, it returns the first model from the new model pool.
-
-```python
-new_model = model_recombination.run(modelpool, return_modelpool=False)
-```
-
-You can check the type of the returned value to ensure that the `run` method worked correctly:
-
-```python
-assert isinstance(new_modelpool, ModelPool)
-assert isinstance(new_model, nn.Module)
-```
-
-## Code Integration
-
-Configuration template for the model recombination algorithm:
+Configuration template for the model recombination method:
 
 ```yaml title="config/method/model_recombination.yaml"
-name: model_recombination
-# if `return_model_pool` is not null, the argument `return_modelpool` passed to the `run` method will be ignored.
-return_modelpool: null
+--8<-- "config/method/model_recombination.yaml"
 ```
 
-Construct a model recombination using our CLI tool `fusion_bench`:
+Run the fusion_bench command with model recombination:
 
 ```bash
 fusion_bench \
     method=model_recombination \
-        method.return_modelpool=false \
-    modelpool=... \
-    taskpool=...
+    method.return_modelpool=false \
+    modelpool=your_modelpool_config \
+    taskpool=dummy  # evaluates parameter counts of recombined models
+```
+
+You can also override the return_modelpool parameter via command line:
+
+```bash
+fusion_bench \
+    method=model_recombination \
+    method.return_modelpool=true \
+    modelpool=your_modelpool_config \
+    taskpool=your_taskpool_config
 ```
 
 
