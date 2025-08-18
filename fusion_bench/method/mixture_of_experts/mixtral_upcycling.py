@@ -23,8 +23,7 @@ from transformers.models.mixtral.modeling_mixtral import (
 )
 from transformers.utils import ContextManagers
 
-from fusion_bench.method import BaseAlgorithm
-from fusion_bench.modelpool import BaseModelPool
+from fusion_bench import BaseAlgorithm, BaseModelPool, auto_register_config
 
 log = logging.getLogger(__name__)
 
@@ -157,17 +156,12 @@ def upscale_to_mixtral_for_causal_lm(
     upscale_to_mixtral_model(input_model.model, output_model.model)
 
 
+@auto_register_config
 class MixtralUpscalingAlgorithm(BaseAlgorithm):
     """
     This class is responsible for upscaling a model to a MixtralModel.
     It inherits from the ModelFusionAlgorithm class.
     """
-
-    _config_mapping = BaseAlgorithm._config_mapping | {
-        "num_experts": "num_experts",
-        "experts_per_token": "experts_per_token",
-        "save_checkpoint": "save_checkpoint",
-    }
 
     def __init__(
         self,
@@ -185,9 +179,6 @@ class MixtralUpscalingAlgorithm(BaseAlgorithm):
             save_checkpoint (str): The path to save the checkpoint.
             **kwargs: Additional keyword arguments.
         """
-        self.num_experts = num_experts
-        self.experts_per_token = experts_per_token
-        self.save_checkpoint = save_checkpoint
         super().__init__(**kwargs)
 
     @torch.no_grad()
@@ -242,17 +233,12 @@ class MixtralUpscalingAlgorithm(BaseAlgorithm):
         return mixtral_model
 
 
+@auto_register_config
 class MixtralForCausalLMUpscalingAlgorithm(BaseAlgorithm):
     """
     This class is responsible for upscaling a model to a MixtralForCausalLM.
     It inherits from the ModelFusionAlgorithm class.
     """
-
-    _config_mapping = BaseAlgorithm._config_mapping | {
-        "num_experts": "num_experts",
-        "experts_per_token": "experts_per_token",
-        "save_checkpoint": "save_checkpoint",
-    }
 
     def __init__(
         self,
@@ -270,9 +256,6 @@ class MixtralForCausalLMUpscalingAlgorithm(BaseAlgorithm):
             save_checkpoint (str): The path to save the checkpoint.
             **kwargs: Additional keyword arguments.
         """
-        self.num_experts = num_experts
-        self.experts_per_token = experts_per_token
-        self.save_checkpoint = save_checkpoint
         super().__init__(**kwargs)
 
     @torch.no_grad()
@@ -302,7 +285,7 @@ class MixtralForCausalLMUpscalingAlgorithm(BaseAlgorithm):
             self.config.experts_per_token,
         )
 
-        with ContextManagers([no_init_weights(True)]):
+        with ContextManagers([no_init_weights()]):
             for _ in tqdm(range(1), desc="Initializing Mixtral model"):
                 mixtral_model = MixtralForCausalLM(mixtral_config)
         upscale_to_mixtral_for_causal_lm(pretrained_model, mixtral_model)

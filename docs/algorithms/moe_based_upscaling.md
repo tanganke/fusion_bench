@@ -1,4 +1,7 @@
-# MoE-based Model Model Upscaling (Sparse Upcycling)
+---
+title: Sparse Upcycling
+---
+# MoE-based Model Upscaling (Sparse Upcycling)
 
 <figure markdown="span">
     ![alt text](images/sparse_upcycling.png){width="900"}
@@ -8,22 +11,21 @@ Sparse upcycling is a technique used to initialize a sparsely activated Mixture-
 
 ## Examples
 
-Here’s an example demonstrating how to upscale a pre-trained Mistral model to a Mixtral model:
+### Basic Example
+
+Here's an example demonstrating how to upscale a pre-trained Mistral model to a Mixtral model:
 
 ```python
 import os
-
-from omegaconf import DictConfig
 from transformers import MistralForCausalLM
-
-from fusion_bench.method.mixture_of_experts.mixtral_upcycling import (
+from fusion_bench.method import (
     MixtralForCausalLMUpscalingAlgorithm,
 )
 from fusion_bench.utils import print_parameters
 
 # Load a pre-trained Mistral model
 pretrained_model = MistralForCausalLM.from_pretrained(
-    os.path.expanduser("path_to_mistral_model")
+    "path_to_mistral_model"  # Replace with actual model path
 )
 print("Pretrained model:")
 print_parameters(pretrained_model)
@@ -31,68 +33,90 @@ print_parameters(pretrained_model)
 # Pretrained model:
 # trainable params: 7.24B || all params: 7.24B || trainable%: 100.0000
 
-# Define the configuration for Mixtral
-config = {
-    "num_experts": 4,  # Number of expert channels
-    "experts_per_token": 2,  # Experts to choose per token
-}
-
-# Initialize the upscaling algorithm
-upscaling_for_causal_lm_algorithm = MixtralForCausalLMUpscalingAlgorithm(
-    DictConfig(config)
+# Initialize the upscaling algorithm with direct parameters
+upscaling_algorithm = MixtralForCausalLMUpscalingAlgorithm(
+    num_experts=4,  # Number of expert channels
+    experts_per_token=2,  # Experts to choose per token
+    save_checkpoint=None  # Optional: path to save the model
 )
 
 # Run the upscaling process to get a Mixtral model
-mixtral_for_causal_lm_model = upscaling_for_causal_lm_algorithm.run(pretrained_model)
+mixtral_model = upscaling_algorithm.run(pretrained_model)
 
 print("Mixtral model:")
-print_parameters(mixtral_for_causal_lm_model)
-# Outputs:
+print_parameters(mixtral_model)
+# Output:
 # Mixtral model:
 # trainable params: 24.15B || all params: 24.15B || trainable%: 100.0000
 
 # Save the upscaled Mixtral model
-mixtral_for_causal_lm_model.save_pretrained("path_to_save_mixtral_model")
+mixtral_model.save_pretrained("path_to_save_mixtral_model")
+```
+
+### API Usage
+
+#### Direct Model Upscaling
+
+```python
+from transformers import MistralForCausalLM
+from fusion_bench.method.mixture_of_experts.mixtral_upcycling import (
+    MixtralForCausalLMUpscalingAlgorithm,
+    MixtralUpscalingAlgorithm,
+)
+
+# Load source model
+model = MistralForCausalLM.from_pretrained("mistralai/Mistral-7B-v0.1")
+
+# For CausalLM models (includes lm_head)
+causal_lm_algorithm = MixtralForCausalLMUpscalingAlgorithm(
+    num_experts=8,
+    experts_per_token=2,
+    save_checkpoint="./mixtral-8x7b"
+)
+mixtral_causal_lm = causal_lm_algorithm.run(model)
+```
+
+#### Using ModelPool
+
+```python
+from fusion_bench import BaseModelPool
+
+# Create a model pool
+model_dict = {"_pretrained_": model}
+modelpool = BaseModelPool(model_dict)
+
+# Run upscaling with modelpool
+mixtral_model = upscaling_algorithm.run(modelpool)
 ```
 
 A Jupyter notebook example is also available at [our repo](https://github.com/tanganke/fusion_bench/blob/main/examples/moe_based_upscaling.ipynb).
 
-## Code Integration
+### CLI Usage
 
-This is a guide on how to use the `fusion_bench` command-line interface to upscale a Mistral model to a Mixtral model.
+This section provides a guide on how to use the `fusion_bench` command-line interface to upscale a Mistral model to a Mixtral model.
 
-The first code block is a YAML configuration file for the upscaling method. The name field specifies the name of the upscaling method. The `num_experts` field specifies the number of experts to use in the upscaling process. The `experts_per_token` field specifies the number of experts to use per token. The `save_checkpoint` field specifies the path where the upscaled model will be saved, if provided.
+#### Configuration Files
 
+Configuration template for the MoE upscaling method:
 
 ```yaml title="config/method/mixtral_moe_upscaling.yaml"
-name: mixtral_for_causal_lm_moe_upscaling # or "mixtral_moe_upscaling"
-
-num_experts: 4
-experts_per_token: 2
-# path to save the upscaled model
-save_checkpoint: null
-
+--8<-- "config/method/mixtral_moe_upscaling.yaml"
 ```
 
-The second code block is another YAML configuration file, this time for the model pool. The `type` field specifies the type of model pool to use. The `models` field is a list of models to include in the pool. Each model should have a `name` and a `path`, and the model is loaded from the `path`.
+Configuration template for the model pool:
 
-```yaml title="config/modelpool/mixtral_moe_upscaling.yaml"
-type: AutoModelForCausalLMPool
-# each model should have a name and a path, and the model is loaded from the path
-# this is equivalent to `AutoModelForCausalLM.from_pretrained(path)`
-models:
-  - name: _pretrained_
-    path: path_to_your_pretrained_model
+```yaml title="config/modelpool/CausalLMPool/mistral-7b.yaml"
+--8<-- "config/modelpool/CausalLMPool/mistral-7b.yaml"
 ```
 
-Finally, the third code block is a bash command that runs the fusion_bench command-line interface with the specified method, model pool, and task pool. The method argument specifies the upscaling method to use. The modelpool argument specifies the model pool to use. The modelpool.models.0.path argument specifies the path to the pretrained model to use. The taskpool argument specifies the task pool to use. In this case, a dummy task pool is used that does nothing but print the parameter counts of the merged model.
+#### CLI Commands
 
 ```bash
 fusion_bench \
     method=mixtral_moe_upscaling \
-    modelpool=mixtral_moe_upscaling \
-        modelpool.models.0.path=path_to_your_pretrained_model \
-    taskpool=dummy # this is a dummy taskpool that does nothing but print the parameter counts of the merged model
+    modelpool=CausalLMPool/mistral-7b \
+        modelpool.models._pretrained_=path_to_your_pretrained_model \
+    taskpool=dummy # this is a dummy taskpool that does nothing but print the parameter counts of the upscaled model
 ```
 
 ## Implementation Details
