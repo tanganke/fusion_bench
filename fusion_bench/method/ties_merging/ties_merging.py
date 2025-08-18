@@ -16,7 +16,7 @@ from torch import Tensor, nn
 
 from fusion_bench.compat.modelpool import to_modelpool
 from fusion_bench.method import BaseAlgorithm
-from fusion_bench.mixins import SimpleProfilerMixin
+from fusion_bench.mixins import SimpleProfilerMixin, auto_register_config
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.utils.type import StateDictType
 
@@ -25,24 +25,11 @@ from .ties_merging_utils import state_dict_to_vector, ties_merging, vector_to_st
 log = logging.getLogger(__name__)
 
 
-class TiesMergingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
-    """
-    TiesMergingAlgorithm is a class for fusing multiple models using the TIES merging technique.
-
-    Attributes:
-        scaling_factor (float): The scaling factor to apply to the merged task vector.
-        threshold (float): The threshold for resetting values in the task vector.
-        remove_keys (List[str]): List of keys to remove from the state dictionary.
-        merge_func (Literal["sum", "mean", "max"]): The merge function to use for disjoint merging.
-    """
-
-    _config_mapping = BaseAlgorithm._config_mapping | {
-        "scaling_factor": "scaling_factor",
-        "threshold": "threshold",
-        "remove_keys": "remove_keys",
-        "merge_func": "merge_func",
-    }
-
+@auto_register_config
+class TiesMergingAlgorithm(
+    SimpleProfilerMixin,
+    BaseAlgorithm,
+):
     def __init__(
         self,
         scaling_factor: float,
@@ -52,6 +39,8 @@ class TiesMergingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
         **kwargs: Any,
     ):
         """
+        TiesMergingAlgorithm is a class for fusing multiple models using the TIES merging technique.
+
         Initialize the TiesMergingAlgorithm with the given parameters.
 
         Args:
@@ -61,10 +50,6 @@ class TiesMergingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
             merge_func (Literal["sum", "mean", "max"]): The merge function to use for disjoint merging.
             **kwargs: Additional keyword arguments for the base class.
         """
-        self.scaling_factor = scaling_factor
-        self.threshold = threshold
-        self.remove_keys = remove_keys
-        self.merge_func = merge_func
         super().__init__(**kwargs)
 
     @torch.no_grad()

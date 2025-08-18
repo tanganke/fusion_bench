@@ -31,9 +31,9 @@ log = logging.getLogger(__name__)
 
 
 class LayerWiseAdaMergingAlgorithm(
-    ModelFusionAlgorithm,
     LightningFabricMixin,
     SimpleProfilerMixin,
+    ModelFusionAlgorithm,
 ):
     _program: "FabricModelFusionProgram"
     """The program that this algorithm is running on."""

@@ -10,7 +10,7 @@ CUDA_VISIBLE_DEVICES=1 fusion_bench \
     report_save_path=outputs/clip-vit-base-patch16/clip-vit-base-patch16-weight_ensembling_moe.json
 
 CUDA_VISIBLE_DEVICES=1 fusion_bench \
-    method=adamerging \
+    method=adamerging/clip \
     method.name=clip_layer_wise_adamerging \
     fast_dev_run=false \
     modelpool=CLIPVisionModelPool/clip-vit-base-patch16_TA8 \

@@ -89,11 +89,14 @@ class CLIPTaskWiseAdaMergingAlgorithm(TaskWiseAdaMergingAlgorithm):
         classification head for each task.
         """
         clip_model_config = self.modelpool.get_model_config("_pretrained_")
-        pretrained_path = (
-            clip_model_config.pretrained_model_name_or_path
-            if hasattr(clip_model_config, "pretrained_model_name_or_path")
-            else clip_model_config.path
-        )
+        if isinstance(clip_model_config, str):
+            pretrained_path = clip_model_config
+        else:
+            pretrained_path = (
+                clip_model_config.pretrained_model_name_or_path
+                if hasattr(clip_model_config, "pretrained_model_name_or_path")
+                else clip_model_config.path
+            )
 
         with timeit_context("Loading CLIP processor and pretrained CLIP model."):
             self._clip_processor = CLIPProcessor.from_pretrained(pretrained_path)

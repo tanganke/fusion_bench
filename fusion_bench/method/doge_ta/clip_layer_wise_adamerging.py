@@ -3,13 +3,12 @@ Example Usage:
 
 ```bash
 fusion_bench \
-    method=adamerging \
+    path.log_dir=outputs/ViT-B-32/layer_wise_adamerging \
+    method=adamerging/clip \
         method.name=clip_layer_wise_adamerging \
         method.save_merging_weights=merging_weights.pt \
-    modelpool=clip-vit-base-patch32_TA8 \
-    taskpool=clip-vit-classification_TA8 \
-    fabric.loggers.root_dir=outputs/logs/ViT-B-32 \
-    fabric.loggers.name=clip_layer_wise_adamerging_adamerging
+    modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
+    taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8 \
 ```
 """
 

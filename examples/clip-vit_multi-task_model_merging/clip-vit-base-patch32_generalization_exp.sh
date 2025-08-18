@@ -53,7 +53,7 @@ fusion_bench method=clip_regmean \
 
 # AdaMerging
 fusion_bench \
-    method=adamerging \
+    method=adamerging/clip \
     method.name=clip_layer_wise_adamerging \
     method.save_merging_weights=outputs/clip-vit-base-patch32_generalization_exp1_layer_wise_adamerging_weights.pt \
     modelpool=clip-vit-base-patch32_generalization_exp1 \
@@ -61,7 +61,7 @@ fusion_bench \
     report_save_path=outputs/clip-vit-base-patch32_generalization_exp1_clip_layer_wise_adamerging.json
 
 fusion_bench \
-    method=adamerging \
+    method=adamerging/clip \
     method.name=clip_layer_wise_adamerging \
     method.save_merging_weights=outputs/clip-vit-base-patch32_generalization_exp2_layer_wise_adamerging_weights.pt \
     modelpool=clip-vit-base-patch32_generalization_exp2 \

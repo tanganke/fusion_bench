@@ -64,7 +64,7 @@ done
 
 # AdaMerging
 fusion_bench \
-    method=adamerging \
+    method=adamerging/clip \
         method.name=clip_layer_wise_adamerging \
         method.save_merging_weights=outputs/clip-vit-base-patch32_robustness_clean_layer_wise_adamerging_weights.pt \
     modelpool=clip-vit-base-patch32_robustness_clean \
@@ -75,7 +75,7 @@ for corruption in contrast gaussian_noise impulse_noise jpeg_compression motion_
 do
     fusion_bench --config-name clip-vit-base-patch32_robustness_corrupted \
         corruption=$corruption \
-        method=adamerging \
+        method=adamerging/clip \
             method.name=clip_layer_wise_adamerging \
             method.save_merging_weights=outputs/clip-vit-base-patch32_robustness_corrupted_${corruption}_layer_wise_adamerging_weights.pt \
         report_save_path=outputs/clip-vit-base-patch32_robustness_corrupted_${corruption}_clip_layer_wise_adamerging.json

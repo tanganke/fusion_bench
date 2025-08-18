@@ -3,7 +3,7 @@ Example Usage:
 
 ```bash
 fusion_bench \
-    method=adamerging \
+    method=adamerging/clip \
         method.name=clip_layer_wise_adamerging \
         method.save_merging_weights=merging_weights.pt \
     modelpool=clip-vit-base-patch32_TA8 \

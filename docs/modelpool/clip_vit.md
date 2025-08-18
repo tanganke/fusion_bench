@@ -670,7 +670,7 @@ merge CLIP-ViT-B/32 models using task-wise AdaMerging and evaluate on the eight 
 
 ```bash
 fusion_bench \
-  method=adamerging \
+  method=adamerging/clip \
     method.name=clip_task_wise_adamerging \
     method.save_merging_weights=outputs/clip-vit-base-patch32_TA8_task_wise_adamerging_weights.pt \
   modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
@@ -684,7 +684,7 @@ Here we split the training process into two stages, the first stage is to train 
 # learn the merging weights.
 # the per-device batch size is 4, and the total batch size is 4*4=16
 fusion_bench print_config=false \
-  method=adamerging \
+  method=adamerging/clip \
     method.name=clip_task_wise_adamerging \
     method.save_merging_weights=outputs/clip-vit-large-patch14_TA8_task_wise_adamerging_weights.pt \
     method.devices=4 method.batch_size=4 \
@@ -693,7 +693,7 @@ fusion_bench print_config=false \
 
 # by specifying the learned merging weights, we skip the training process and directly evaluate the model
 fusion_bench print_config=false \
-  method=adamerging \
+  method=adamerging/clip \
     method.name=clip_task_wise_adamerging \
     method.weights=outputs/clip-vit-large-patch14_TA8_task_wise_adamerging_weights.pt \
   modelpool=CLIPVisionModelPool/clip-vit-large-patch14_TA8 \
@@ -704,7 +704,7 @@ merge CLIP-ViT-B/32 models using layer-wise AdaMerging and evaluate on the eight
 
 ```bash
 fusion_bench \
-    method=adamerging \
+    method=adamerging/clip \
         method.name=clip_layer_wise_adamerging \
         method.save_merging_weights=merging_weights.pt \
     modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
@@ -719,7 +719,7 @@ merge CLIP-ViT-L/14 models using layer-wise AdaMerging and evaluate on the eight
 # learn the merging weights.
 # the per-device batch size is 4, and the total batch size is 4*4=16
 fusion_bench print_config=false \
-  method=adamerging \
+  method=adamerging/clip \
     method.name=clip_layer_wise_adamerging \
     method.save_merging_weights=outputs/clip-vit-large-patch14_TA8_layer_wise_adamerging_weights.pt \
     method.devices=4 method.batch_size=4 \
@@ -728,7 +728,7 @@ fusion_bench print_config=false \
 
 # by specifying the learned merging weights, we skip the training process and directly evaluate the model
 fusion_bench \
-  method=adamerging \
+  method=adamerging/clip \
     method.name=clip_layer_wise_adamerging \
     method.weights=outputs/clip-vit-large-patch14_TA8_layer_wise_adamerging_weights.pt \
   modelpool=CLIPVisionModelPool/clip-vit-large-patch14_TA8 \
