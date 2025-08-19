@@ -72,3 +72,26 @@ class LazyImporter(ModuleType):
 
     def __reduce__(self):
         return (self.__class__, (self._name, self.__file__, self._import_structure))
+
+
+class LazyModule(ModuleType):
+    """Module wrapper for lazy import.
+    Adapted from Optuna: https://github.com/optuna/optuna/blob/1f92d496b0c4656645384e31539e4ee74992ff55/optuna/__init__.py
+
+    This class wraps specified module and lazily import it when they are actually accessed.
+
+    Args:
+        name: Name of module to apply lazy import.
+    """
+
+    def __init__(self, name: str) -> None:
+        super().__init__(name)
+        self._name = name
+
+    def _load(self) -> ModuleType:
+        module = importlib.import_module(self._name)
+        self.__dict__.update(module.__dict__)
+        return module
+
+    def __getattr__(self, item: str) -> Any:
+        return getattr(self._load(), item)

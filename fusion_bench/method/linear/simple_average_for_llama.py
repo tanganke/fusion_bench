@@ -9,9 +9,9 @@ from fusion_bench.method.base_algorithm import BaseAlgorithm
 from fusion_bench.method.simple_average import SimpleAverageAlgorithm
 from fusion_bench.modelpool import CausalLMBackbonePool, CausalLMPool
 from fusion_bench.utils import instantiate
-from fusion_bench.utils.pylogger import getRankZeroLogger
+from fusion_bench.utils.pylogger import get_rankzero_logger
 
-log = getRankZeroLogger(__name__)
+log = get_rankzero_logger(__name__)
 
 
 class SimpleAverageForLlama(BaseAlgorithm):

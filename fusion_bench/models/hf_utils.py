@@ -11,9 +11,9 @@ from omegaconf import OmegaConf
 from transformers.modeling_utils import PreTrainedModel
 
 from fusion_bench import BaseAlgorithm, BaseModelPool
-from fusion_bench.utils.pylogger import getRankZeroLogger
+from fusion_bench.utils.pylogger import get_rankzero_logger
 
-log = getRankZeroLogger(__name__)
+log = get_rankzero_logger(__name__)
 
 __all__ = [
     "save_pretrained_with_remote_code",

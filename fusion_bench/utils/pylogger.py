@@ -74,7 +74,7 @@ RankZeroLogger.manager = logging.Manager(RankZeroLogger.root)
 RankZeroLogger.manager.setLoggerClass(RankZeroLogger)
 
 
-def getRankZeroLogger(name=None):
+def get_rankzero_logger(name=None):
     """
     Return a logger with the specified name, creating it if necessary.
 

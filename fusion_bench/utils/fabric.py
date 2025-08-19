@@ -3,9 +3,9 @@ from typing import Optional
 
 import lightning as L
 
-from fusion_bench.utils.pylogger import getRankZeroLogger
+from fusion_bench.utils.pylogger import get_rankzero_logger
 
-log = getRankZeroLogger(__name__)
+log = get_rankzero_logger(__name__)
 
 
 def seed_everything_by_time(fabric: Optional[L.Fabric] = None):

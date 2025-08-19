@@ -28,7 +28,7 @@ from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 from transformers.models.clip.modeling_clip import CLIPVisionTransformer
 
 from fusion_bench.dataset import CLIPDataset
-from fusion_bench.mixins import LightningFabricMixin
+from fusion_bench.mixins import HydraConfigMixin, LightningFabricMixin
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.taskpool import BaseTaskPool
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
@@ -86,8 +86,9 @@ class LayerWiseFeatureSaver:
 
 
 class CLIPVisionModelTaskPool(
-    BaseTaskPool,
+    HydraConfigMixin,
     LightningFabricMixin,
+    BaseTaskPool,
 ):
     """
     This class is used to define the image classification task for CLIP models.

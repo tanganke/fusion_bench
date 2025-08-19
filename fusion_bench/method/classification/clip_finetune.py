@@ -393,7 +393,7 @@ def convert_l_lora_state_dict_to_hf(
     base_model_name: Optional[str] = None,
 ):
     """
-    Convert a linearized Lora model's checkpoint to Hugggingface's format.
+    Convert a linearized Lora model's checkpoint to huggingface's format.
 
     Args:
         pretrained_path (str): The path to the pretrained model.

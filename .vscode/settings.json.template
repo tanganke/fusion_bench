@@ -17,6 +17,7 @@
     },
     "files.exclude": {
         "docs/config": true,
+        "docs/examples": true,
         "fusion_bench_config": true
     },
 }
