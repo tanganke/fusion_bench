@@ -18,10 +18,10 @@ from fusion_bench.taskpool import BaseTaskPool
 from fusion_bench.utils import import_object, instantiate, timeit_context
 from fusion_bench.utils.hydra_utils import get_hydra_output_dir
 from fusion_bench.utils.json import print_json
-from fusion_bench.utils.pylogger import getRankZeroLogger
+from fusion_bench.utils.pylogger import get_rankzero_logger
 from fusion_bench.utils.rich_utils import print_bordered, print_config_tree
 
-log = getRankZeroLogger(__name__)
+log = get_rankzero_logger(__name__)
 
 
 class FabricModelFusionProgram(

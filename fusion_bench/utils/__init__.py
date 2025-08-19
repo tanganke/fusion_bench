@@ -18,4 +18,5 @@ from .lazy_state_dict import LazyStateDict
 from .misc import *
 from .packages import import_object
 from .parameters import *
+from .pylogger import get_rankzero_logger
 from .timer import timeit_context
