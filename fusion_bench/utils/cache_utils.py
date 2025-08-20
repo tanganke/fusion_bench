@@ -8,12 +8,22 @@ from typing import Any, Callable, Union
 
 from joblib import Memory
 
-__all__ = ["cache_to_disk", "cache_with_joblib"]
+__all__ = ["cache_to_disk", "cache_with_joblib", "set_default_cache_dir"]
 
 
 log = logging.getLogger(__name__)
 
-CACHE_DIR = Path.cwd() / "outputs" / "cache"
+DEFAULT_CACHE_DIR = Path.cwd() / "outputs" / "cache"
+
+
+def set_default_cache_dir(path: str | Path):
+    global DEFAULT_CACHE_DIR
+    if path is None:
+        return
+
+    if isinstance(path, str):
+        path = Path(path)
+    DEFAULT_CACHE_DIR = path
 
 
 def cache_to_disk(file_path: Union[str, Path]) -> Callable:
@@ -111,7 +121,7 @@ def cache_with_joblib(
     """
 
     if cache_dir is None:
-        cache_dir = CACHE_DIR
+        cache_dir = DEFAULT_CACHE_DIR
 
     if isinstance(cache_dir, str):
         cache_dir = Path(cache_dir)
