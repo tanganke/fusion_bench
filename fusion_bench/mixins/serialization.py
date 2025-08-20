@@ -90,14 +90,21 @@ def auto_register_config(cls):
     # Auto-register parameters in _config_mapping
     if not "_config_mapping" in cls.__dict__:
         cls._config_mapping = deepcopy(getattr(cls, "_config_mapping", {}))
+    registered_parameters = tuple(cls._config_mapping.values())
+
     for param_name in list(sig.parameters.keys())[1:]:  # Skip 'self'
-        if sig.parameters[param_name].kind not in [
-            _ParameterKind.VAR_POSITIONAL,
-            _ParameterKind.VAR_KEYWORD,
-        ]:
+        if (
+            sig.parameters[param_name].kind
+            not in [
+                _ParameterKind.VAR_POSITIONAL,
+                _ParameterKind.VAR_KEYWORD,
+            ]
+        ) and (param_name not in registered_parameters):
             cls._config_mapping[param_name] = param_name
 
     def __init__(self, *args, **kwargs):
+        nonlocal original_init, registered_parameters
+
         # auto-register the attributes based on the signature
         sig = inspect.signature(original_init)
         param_names = list(sig.parameters.keys())[1:]  # Skip 'self'
@@ -114,10 +121,13 @@ def auto_register_config(cls):
 
         # Handle keyword arguments and defaults
         for param_name in param_names:
-            if sig.parameters[param_name].kind not in [
-                _ParameterKind.VAR_POSITIONAL,
-                _ParameterKind.VAR_KEYWORD,
-            ]:
+            if (
+                sig.parameters[param_name].kind
+                not in [
+                    _ParameterKind.VAR_POSITIONAL,
+                    _ParameterKind.VAR_KEYWORD,
+                ]
+            ) and (param_name not in registered_parameters):
                 # Skip if already set by positional argument
                 param_index = param_names.index(param_name)
                 if param_index >= 0 and param_index < len(args):

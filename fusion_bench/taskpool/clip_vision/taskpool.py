@@ -27,6 +27,7 @@ from tqdm.autonotebook import tqdm
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 from transformers.models.clip.modeling_clip import CLIPVisionTransformer
 
+from fusion_bench import RuntimeConstants
 from fusion_bench.dataset import CLIPDataset
 from fusion_bench.mixins import HydraConfigMixin, LightningFabricMixin
 from fusion_bench.models.hf_clip import HFCLIPClassifier
@@ -132,7 +133,7 @@ class CLIPVisionModelTaskPool(
         layer_wise_feature_save_path: Optional[str] = None,
         layer_wise_feature_first_token_only: bool = True,
         layer_wise_feature_max_num: Optional[int] = None,
-        fast_dev_run: bool = False,
+        fast_dev_run: Optional[bool] = None,
         **kwargs,
     ):
         """
@@ -154,7 +155,10 @@ class CLIPVisionModelTaskPool(
         self.layer_wise_feature_first_token_only = layer_wise_feature_first_token_only
         self.layer_wise_feature_max_num = layer_wise_feature_max_num
 
-        self.fast_dev_run = fast_dev_run
+        if self.fast_dev_run is None:
+            self.fast_dev_run = RuntimeConstants().debug
+        else:
+            self.fast_dev_run = fast_dev_run
         super().__init__(**kwargs)
 
     def setup(self):

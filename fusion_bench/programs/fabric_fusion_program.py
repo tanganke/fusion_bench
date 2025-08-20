@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Union  # noqa: F401
 
 import lightning as L
@@ -9,19 +10,23 @@ from omegaconf import DictConfig, OmegaConf
 from torch import nn
 from tqdm.auto import tqdm
 
-import fusion_bench.utils.instantiate_utils
-from fusion_bench.method import BaseAlgorithm
+import fusion_bench
+from fusion_bench import (
+    BaseAlgorithm,
+    BaseHydraProgram,
+    BaseModelPool,
+    BaseTaskPool,
+    RuntimeConstants,
+    import_object,
+    instantiate,
+    timeit_context,
+)
 from fusion_bench.mixins import LightningFabricMixin
-from fusion_bench.modelpool import BaseModelPool
-from fusion_bench.programs import BaseHydraProgram
-from fusion_bench.taskpool import BaseTaskPool
-from fusion_bench.utils import import_object, instantiate, timeit_context
 from fusion_bench.utils.hydra_utils import get_hydra_output_dir
 from fusion_bench.utils.json import print_json
-from fusion_bench.utils.pylogger import get_rankzero_logger
 from fusion_bench.utils.rich_utils import print_bordered, print_config_tree
 
-log = get_rankzero_logger(__name__)
+log = fusion_bench.get_rankzero_logger(__name__)
 
 
 class FabricModelFusionProgram(
@@ -60,6 +65,7 @@ class FabricModelFusionProgram(
         path: DictConfig = None,
         **kwargs,
     ):
+        super().__init__(**kwargs)
         self._method = method
         self._modelpool = modelpool
         self._taskpool = taskpool
@@ -70,8 +76,10 @@ class FabricModelFusionProgram(
         self.fast_dev_run = fast_dev_run
         self.seed = seed
         self.path = path
-        fusion_bench.utils.instantiate_utils.PRINT_FUNCTION_CALL = print_function_call
-        super().__init__(**kwargs)
+        RuntimeConstants.debug = fast_dev_run
+        RuntimeConstants.print_function_call = print_function_call
+        if path is not None:
+            RuntimeConstants.cache_dir = path.get("cache_dir", None)
 
         if print_config:
             print_config_tree(
@@ -224,8 +232,6 @@ class FabricModelFusionProgram(
         fabric = self.fabric
         if self.seed is not None:
             L.seed_everything(self.seed)
-        if fabric.global_rank == 0:
-            self._link_hydra_output()
 
         log.info("Running the model fusion program.")
         # setup the modelpool, method, and taskpool
@@ -278,51 +284,3 @@ class FabricModelFusionProgram(
                     json.dump(report, open(self.report_save_path, "w"))
             else:
                 log.info("No task pool specified. Skipping evaluation.")
-
-    @rank_zero_only
-    def _link_hydra_output(self):
-        """
-        Creates a symbolic link to the Hydra output directory within the specified log directory.
-
-        If `self.log_dir` is not None, this method will:
-        1. Retrieve the Hydra output directory using `get_hydra_output_dir()`.
-        2. Create the log directory if it does not already exist.
-        3. Create a symbolic link named "hydra_output_<basename_of_hydra_output_dir>"
-           within the log directory, pointing to the Hydra output directory.
-
-        Note:
-            - The symbolic link is created only if the Hydra output directory is not None.
-            - The `target_is_directory` parameter is set to True to indicate that the target is a directory.
-
-        Raises:
-            OSError: If the symbolic link creation fails.
-        """
-        if self.log_dir is not None:
-            # make symlink to the hydra output directory
-            try:
-                hydra_output_dir = get_hydra_output_dir()
-            except Exception as e:
-                hydra_output_dir = None
-
-            if hydra_output_dir is not None:
-                if os.path.abspath(hydra_output_dir) == os.path.abspath(self.log_dir):
-                    return
-
-                os.makedirs(self.log_dir, exist_ok=True)
-                try:
-                    # if the system is windows, use the `mklink` command in "CMD" to create the symlink
-                    if os.name == "nt":
-                        os.system(
-                            f"mklink /J {os.path.abspath(os.path.join(self.log_dir, 'hydra_output_' + os.path.basename(hydra_output_dir)))} {os.path.abspath(hydra_output_dir)}"
-                        )
-                    else:
-                        os.symlink(
-                            hydra_output_dir,
-                            os.path.join(
-                                self.log_dir,
-                                "hydra_output_" + os.path.basename(hydra_output_dir),
-                            ),
-                            target_is_directory=True,
-                        )
-                except OSError as e:
-                    log.warning(f"Failed to create symbolic link: {e}")

@@ -1,7 +1,7 @@
 _target_: fusion_bench.modelpool.CausalLMPool
 _recursive_: false
 
-load_lazy: false
+enable_lazy_loading: false
 models:
   _pretrained_: Qwen/Qwen2.5-1.5B
   math: Qwen/Qwen2.5-Math-1.5B

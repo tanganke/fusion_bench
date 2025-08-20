@@ -100,7 +100,6 @@ algorithm = FisherMergingForCLIPVisionModel(
         "batch_size": 32,
         "num_workers": 4
     },
-    zeroshot_weights_cache_dir="outputs/cache/clip_zeroshot_weights"
 )
 
 merged_model = algorithm.run(modelpool)
