@@ -38,11 +38,9 @@ class SimpleAverageForLlama(BaseAlgorithm):
         merge_backbone: bool,
         model_save_path: Optional[str] = None,
         show_pbar: bool = False,
+        **kwargs,
     ):
-        super().__init__()
-        self.merge_backbone = merge_backbone
-        self.model_save_path = model_save_path
-        self.show_pbar = show_pbar
+        super().__init__(**kwargs)
 
     @override
     def run(self, modelpool: CausalLMPool):
