@@ -61,8 +61,8 @@ def simple_average(
 
 @auto_register_config
 class SimpleAverageAlgorithm(
-    BaseAlgorithm,
     SimpleProfilerMixin,
+    BaseAlgorithm,
 ):
     def __init__(self, show_pbar: bool = False, **kwargs):
         """
@@ -120,13 +120,13 @@ class SimpleAverageAlgorithm(
         if isinstance(forward_model, LazyStateDict):
             # if the model is a LazyStateDict, convert it to an empty module
             forward_model = forward_model.meta_module.to_empty(
-                device=(
-                    "cpu"
-                    if forward_model._torch_dtype is None
-                    else forward_model._torch_dtype
-                )
+                device=forward_model._device
             )
-        forward_model.load_state_dict(sd)
+        result = forward_model.load_state_dict(sd, strict=False)
+        if result.unexpected_keys:
+            raise ValueError(f"Unexpected keys in state dict: {result.unexpected_keys}")
+        if result.missing_keys:
+            log.warning(f"Missing keys in state dict: {result.missing_keys}")
         # print profile report and log the merged models
         self.print_profile_summary()
         log.info(f"merged {len(merged_model_names)} models:")

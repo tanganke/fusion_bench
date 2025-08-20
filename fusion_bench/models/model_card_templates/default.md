@@ -11,7 +11,7 @@ tags:
 ---
 # {{ title }}
 
-{% if description is not none %}{{ description }}{% endif -%}
+{% if description is not none %}{{ description }}{% endif %}
 
 ## Models Merged
 
