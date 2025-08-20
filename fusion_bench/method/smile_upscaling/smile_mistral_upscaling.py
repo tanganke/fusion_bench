@@ -20,6 +20,7 @@ from transformers.models.mistral.modeling_mistral import MistralDecoderLayer
 from fusion_bench.compat.modelpool import to_modelpool
 from fusion_bench.method import BaseAlgorithm
 from fusion_bench.method.simple_average import simple_average
+from fusion_bench.mixins import auto_register_config
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.models.modeling_smile_mistral import (
@@ -40,7 +41,10 @@ from fusion_bench.utils.parameters import print_parameters
 log = logging.getLogger(__name__)
 
 
-class SmileMistralUpscalingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
+class SmileMistralUpscalingAlgorithm(
+    SimpleProfilerMixin,
+    BaseAlgorithm,
+):
     R"""
     SmileMistralUpscalingAlgorithm is a model fusion algorithm designed to upscale
     a pretrained Mistral model using a set of fine-tuned expert models. The algorithm
