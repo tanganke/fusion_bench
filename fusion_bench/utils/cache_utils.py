@@ -13,6 +13,8 @@ __all__ = ["cache_to_disk", "cache_with_joblib"]
 
 log = logging.getLogger(__name__)
 
+CACHE_DIR = Path.cwd() / "outputs" / "cache"
+
 
 def cache_to_disk(file_path: Union[str, Path]) -> Callable:
     """
@@ -109,7 +111,7 @@ def cache_with_joblib(
     """
 
     if cache_dir is None:
-        cache_dir = Path.cwd() / "outputs" / "cache"
+        cache_dir = CACHE_DIR
 
     if isinstance(cache_dir, str):
         cache_dir = Path(cache_dir)

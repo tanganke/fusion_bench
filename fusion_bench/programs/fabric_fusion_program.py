@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Union  # noqa: F401
 
 import lightning as L
@@ -9,6 +10,7 @@ from omegaconf import DictConfig, OmegaConf
 from torch import nn
 from tqdm.auto import tqdm
 
+import fusion_bench.utils.cache_utils
 import fusion_bench.utils.instantiate_utils
 from fusion_bench.method import BaseAlgorithm
 from fusion_bench.mixins import LightningFabricMixin
@@ -81,6 +83,9 @@ class FabricModelFusionProgram(
         if dry_run:
             log.info("The program is running in dry-run mode. Exiting.")
             exit(0)
+
+        if path is not None and path.get("cache_dir", None) is not None:
+            fusion_bench.utils.cache_utils.CACHE_DIR = Path(path.cache_dir)
 
     def _instantiate_and_setup(
         self, config: DictConfig, compat_load_fn: Optional[str] = None
