@@ -13,7 +13,7 @@ rank_of_router: 8 # Rank for router weights
 rank_of_expert: 64 # Rank for expert weights
 
 # Model saving settings
-model_save_path: null # Set to save the merged model
+model_save_path: ${path.log_dir}/checkpoint # Set to save the merged model
 model_dtype: null # Optional: convert to specific dtype after merging
 save_with_remote_code: true
 
