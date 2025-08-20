@@ -8,7 +8,7 @@ from copy import deepcopy
 from typing import Any, Dict, Optional, TypeAlias, Union, cast  # noqa: F401
 
 import peft
-from omegaconf import DictConfig, flag_override
+from omegaconf import DictConfig, OmegaConf, flag_override
 from torch import nn
 from torch.nn.modules import Module
 from transformers import (
@@ -19,43 +19,32 @@ from transformers import (
 )
 from typing_extensions import override
 
-from fusion_bench.modelpool import BaseModelPool
-from fusion_bench.utils import instantiate
-from fusion_bench.utils.dtype import parse_dtype
+from fusion_bench import (
+    BaseModelPool,
+    auto_register_config,
+    import_object,
+    instantiate,
+    parse_dtype,
+)
 from fusion_bench.utils.lazy_state_dict import LazyStateDict
-from fusion_bench.utils.packages import import_object
 
 log = logging.getLogger(__name__)
 
 
+@auto_register_config
 class CausalLMPool(BaseModelPool):
-    _config_mapping = BaseModelPool._config_mapping | {
-        "_tokenizer": "tokenizer",
-        "_model_kwargs": "model_kwargs",
-        "load_lazy": "load_lazy",
-    }
-
     def __init__(
         self,
         models,
         *,
-        tokenizer: Optional[DictConfig],
+        tokenizer: Optional[DictConfig | str],
         model_kwargs: Optional[DictConfig] = None,
-        load_lazy: bool = False,
+        enable_lazy_loading: bool = False,
         **kwargs,
     ):
         super().__init__(models, **kwargs)
-        # process `model_kwargs`
-        self._tokenizer = tokenizer
-        self._model_kwargs = model_kwargs
-        if self._model_kwargs is None:
-            self._model_kwargs = DictConfig({})
-        with flag_override(self._model_kwargs, "allow_objects", True):
-            if hasattr(self._model_kwargs, "torch_dtype"):
-                self._model_kwargs.torch_dtype = parse_dtype(
-                    self._model_kwargs.torch_dtype
-                )
-        self.load_lazy = load_lazy
+        if model_kwargs is None:
+            self.model_kwargs = DictConfig({})
 
     def get_model_path(self, model_name: str):
         model_name_or_config = self._models[model_name]
@@ -65,6 +54,16 @@ class CausalLMPool(BaseModelPool):
             return model_name_or_config.get("pretrained_model_name_or_path")
         else:
             raise RuntimeError("Invalid model configuration")
+
+    def get_model_kwargs(self):
+        model_kwargs = (
+            OmegaConf.to_container(self.model_kwargs, resolve=True)
+            if isinstance(self.model_kwargs, DictConfig)
+            else self.model_kwargs
+        )
+        if "torch_dtype" in model_kwargs:
+            model_kwargs["torch_dtype"] = parse_dtype(model_kwargs["torch_dtype"])
+        return model_kwargs
 
     @override
     def load_model(
@@ -98,7 +97,7 @@ class CausalLMPool(BaseModelPool):
             pretrained_model_name_or_path: path_to_model_b
         ```
         """
-        model_kwargs = deepcopy(self._model_kwargs)
+        model_kwargs = self.get_model_kwargs()
         model_kwargs.update(kwargs)
 
         if isinstance(model_name_or_config, str):
@@ -108,7 +107,7 @@ class CausalLMPool(BaseModelPool):
                 model_config = self._models[model_name_or_config]
                 if isinstance(model_config, str):
                     # model_config is a string
-                    if not self.load_lazy:
+                    if not self.enable_lazy_loading:
                         model = AutoModelForCausalLM.from_pretrained(
                             model_config,
                             *args,
@@ -126,7 +125,7 @@ class CausalLMPool(BaseModelPool):
         elif isinstance(model_name_or_config, (DictConfig, Dict)):
             model_config = model_name_or_config
 
-        if not self.load_lazy:
+        if not self.enable_lazy_loading:
             model = instantiate(model_config, *args, **model_kwargs)
         else:
             meta_module_class = model_config.pop("_target_")
@@ -158,12 +157,12 @@ class CausalLMPool(BaseModelPool):
         Returns:
             PreTrainedTokenizer: The tokenizer.
         """
-        assert self._tokenizer is not None, "Tokenizer is not defined in the config"
+        assert self.tokenizer is not None, "Tokenizer is not defined in the config"
         log.info("Loading tokenizer.", stacklevel=2)
-        if isinstance(self._tokenizer, str):
-            tokenizer = AutoTokenizer.from_pretrained(self._tokenizer, *args, **kwargs)
+        if isinstance(self.tokenizer, str):
+            tokenizer = AutoTokenizer.from_pretrained(self.tokenizer, *args, **kwargs)
         else:
-            tokenizer = instantiate(self._tokenizer, *args, **kwargs)
+            tokenizer = instantiate(self.tokenizer, *args, **kwargs)
         return tokenizer
 
     @override
@@ -213,12 +212,12 @@ class CausalLMBackbonePool(CausalLMPool):
     def load_model(
         self, model_name_or_config: str | DictConfig, *args, **kwargs
     ) -> Module:
-        if self.load_lazy:
+        if self.enable_lazy_loading:
             log.warning(
                 "CausalLMBackbonePool does not support lazy loading. "
                 "Falling back to normal loading."
             )
-            self.load_lazy = False
+            self.enable_lazy_loading = False
         model: AutoModelForCausalLM = super().load_model(
             model_name_or_config, *args, **kwargs
         )
