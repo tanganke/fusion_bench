@@ -19,7 +19,7 @@ from fusion_bench.compat.modelpool import to_modelpool
 from fusion_bench.mixins import SimpleProfilerMixin, auto_register_config
 from fusion_bench.modelpool import CausalLMPool
 from fusion_bench.models.hf_utils import (
-    generate_complete_readme,
+    create_default_model_card,
     save_pretrained_with_remote_code,
 )
 from fusion_bench.models.modeling_smile_qwen2 import (
@@ -137,13 +137,14 @@ class SmileQwen2UpscalingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
                 )
 
             # save readme
-            complete_readme = generate_complete_readme(
-                algorithm=self,
-                modelpool=modelpool,
+            model_card_str = create_default_model_card(
                 models=[modelpool.get_model_path(m) for m in modelpool.all_model_names],
+                description="Merged Qwen model using SMILE Upscaling",
+                algorithm_config=self.config,
+                modelpool_config=modelpool.config,
             )
             with open(os.path.join(config.model_path, "README.md"), "w") as f:
-                f.write(complete_readme)
+                f.write(model_card_str)
 
         return model
 

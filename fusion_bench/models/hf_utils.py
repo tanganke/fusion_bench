@@ -5,9 +5,11 @@ This module contains utilities for working with Hugging Face models.
 import inspect
 import os
 import shutil
-from typing import Optional, cast
+from dataclasses import dataclass, field
+from typing import List, Optional, cast
 
-from omegaconf import OmegaConf
+from huggingface_hub import ModelCard, ModelCardData
+from omegaconf import DictConfig, OmegaConf
 from transformers.modeling_utils import PreTrainedModel
 
 from fusion_bench import BaseAlgorithm, BaseModelPool
@@ -16,11 +18,52 @@ from fusion_bench.utils.pylogger import get_rankzero_logger
 log = get_rankzero_logger(__name__)
 
 __all__ = [
+    "load_model_card_template",
     "save_pretrained_with_remote_code",
-    "generate_readme_head",
-    "generate_readme_body",
-    "generate_complete_readme",
+    "create_default_model_card",
 ]
+
+MODEL_CARD_TEMPLATE_DIRS = [
+    os.path.join(os.path.dirname(__file__), "model_card_templates")
+]
+
+
+def load_model_card_template(basename: str) -> str:
+    """
+    Load a model card template from file.
+
+    Searches for a template file by name, first checking if the name is a direct file path,
+    then searching through predefined template directories.
+
+    Args:
+        name (str): The name of the template file or a direct file path to the template.
+
+    Returns:
+        str: The contents of the template file as a string.
+
+    Raises:
+        FileNotFoundError: If the template file is not found in any of the search locations.
+    """
+    if os.path.exists(basename):
+        return open(basename).read()
+
+    for template_dir in MODEL_CARD_TEMPLATE_DIRS:
+        template_path = os.path.join(template_dir, basename)
+        if os.path.exists(template_path):
+            return open(template_path).read()
+
+    raise FileNotFoundError(f"Model card template '{basename}' not found.")
+
+
+def try_to_yaml(config):
+    if config is None:
+        return None
+
+    try:
+        return OmegaConf.to_yaml(config, resolve=True, sort_keys=True)
+    except Exception as e:
+        log.error(f"Failed to convert config to YAML: {e}. Return `None`.")
+        return None
 
 
 def save_pretrained_with_remote_code(
@@ -99,84 +142,22 @@ def save_pretrained_with_remote_code(
             f.write(f"from .{base_name} import {auto_map[key].__name__}\n")
 
 
-def generate_readme_head(
-    models: list[str] | BaseModelPool,
-    library_name: str = "transformers",
-    tags: list[str] = ["fusion-bench", "merge"],
+def create_default_model_card(
+    models: list[str],
+    description=None,
+    algorithm_config: DictConfig = None,
+    modelpool_config: DictConfig = None,
 ):
-    text = "---\nbase_model:\n"
-    for model_name in models:
-        text += f"- {model_name}\n"
-    if library_name:
-        text += f"library_name: {library_name}\n"
-    text += "tags:\n"
-    for tag in tags:
-        text += f"- {tag}\n"
-    text += "---\n"
-    return text
+    from jinja2 import Template
 
-
-def generate_readme_body(
-    algorithm: BaseAlgorithm,
-    models_or_modelpool: Optional[list[str] | BaseModelPool] = None,
-    models: list[str] = None,
-):
-    text = """\
-# Merge
-
-This is a merge of pre-trained language models created using [fusion-bench](https://github.com/tanganke/fusion_bench).
-
-"""
-
-    if models is not None:
-        text += """
-## Models Merged
-
-The following models were included in the merge:
-
-"""
-        for model_name in models:
-            text += f"- {model_name}\n"
-        text += "\n"
-
-        try:
-            text += f"""\
-    ## Configuration
-
-    The following YAML configuration was used to produce this model:
-
-    ```yaml
-    {OmegaConf.to_yaml(algorithm.config, resolve=True, sort_keys=True)}
-    ```
-    """
-        except Exception as e:
-            return (
-                text  # If the algorithm config cannot be converted to YAML, we skip it.
-            )
-
-    if isinstance(models_or_modelpool, BaseModelPool):
-        try:
-            text += f"""
-```yaml
-{OmegaConf.to_yaml(models_or_modelpool.config, resolve=True, sort_keys=True)}
-```
-"""
-        except Exception as e:
-            pass  # If the model pool config cannot be converted to YAML, we skip it.
-    return text
-
-
-def generate_complete_readme(
-    algorithm: BaseAlgorithm, modelpool: BaseModelPool, models: list[str]
-):
-    # Generate the complete README content
-    text = generate_readme_head(
-        [modelpool.get_model_path(m) for m in modelpool.model_names]
+    template: Template = Template(load_model_card_template("default.md"))
+    card = template.render(
+        models=models,
+        library_name="transformers",
+        tags=["fusion-bench", "merge"],
+        title="Deep Model Fusion",
+        description=description,
+        algorithm_config_str=try_to_yaml(algorithm_config),
+        modelpool_config_str=try_to_yaml(modelpool_config),
     )
-    readme_body = generate_readme_body(
-        algorithm,
-        models_or_modelpool=modelpool,
-        models=[modelpool.get_model_path(m) for m in modelpool.model_names],
-    )
-    complete_readme = text + "\n" + readme_body
-    return complete_readme
+    return card
