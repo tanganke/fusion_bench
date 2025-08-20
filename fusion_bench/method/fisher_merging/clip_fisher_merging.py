@@ -32,7 +32,6 @@ class FisherMergingForCLIPVisionModel(
     zeroshot_weights = {}
 
     _config_mapping = FisherMergingAlgorithm._config_mapping | {
-        "zeroshot_weights_cache_dir": "zeroshot_weights_cache_dir",
         "_dataloader_kwargs": "dataloader_kwargs",
     }
 
@@ -44,7 +43,6 @@ class FisherMergingForCLIPVisionModel(
         minimal_fisher_weight,
         num_fisher_examples,
         dataloader_kwargs: DictConfig,
-        zeroshot_weights_cache_dir=None,
         **kwargs,
     ):
         """
@@ -56,7 +54,6 @@ class FisherMergingForCLIPVisionModel(
             minimal_fisher_weight (float): Minimal value for Fisher weights to avoid numerical issues.
             num_fisher_examples (int): Number of examples to compute Fisher weights.
             dataloader_kwargs (DictConfig): Configuration for the dataloader.
-            zeroshot_weights_cache_dir (str, optional): Directory to cache zero-shot weights. Defaults to None.
             **kwargs: Additional keyword arguments.
         """
         super().__init__(
@@ -66,7 +63,6 @@ class FisherMergingForCLIPVisionModel(
             num_fisher_examples=num_fisher_examples,
         )
         self.dataloader_kwargs = dataloader_kwargs
-        self.zeroshot_weights_cache_dir = zeroshot_weights_cache_dir
         for key, value in kwargs.items():
             log.warning(f"Unused argument: {key}={value}")
             setattr(self, key, value)

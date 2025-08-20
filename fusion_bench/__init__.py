@@ -25,6 +25,7 @@ from .modelpool import BaseModelPool
 from .models import separate_io
 from .taskpool import BaseTaskPool
 from .utils import (
+    cache_with_joblib,
     get_rankzero_logger,
     import_object,
     instantiate,

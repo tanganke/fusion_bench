@@ -7,7 +7,6 @@ normalize_fisher_weight: true
 minimal_fisher_weight: 1e-6
 # common choices: 256, 512, 1024, 2048
 num_fisher_examples: 256
-zeroshot_weights_cache_dir: outputs/cache/clip_zeroshot_weights
 dataloader_kwargs:
   batch_size: 32
   num_workers: 0

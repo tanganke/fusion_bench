@@ -22,6 +22,7 @@ from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 
+from fusion_bench import cache_with_joblib
 from fusion_bench.dataset.clip_dataset import CLIPDataset
 from fusion_bench.mixins import LightningFabricMixin
 from fusion_bench.modelpool import CLIPVisionModelPool
@@ -46,7 +47,6 @@ class CLIPClassificationMixin(LightningFabricMixin):
 
     - `_dataloader_kwargs` (Dict[str, Any]): Keyword arguments for the dataloader.
     - `modelpool` (CLIPVisionModelPool): The model pool containing the CLIP models.
-    - `zeroshot_weights_cache_dir` (Optional[str]): The directory to cache the zero-shot weights.
     """
 
     dataloader_kwargs: Dict[str, Any] = {}
@@ -54,7 +54,6 @@ class CLIPClassificationMixin(LightningFabricMixin):
     modelpool: CLIPVisionModelPool = None
     _clip_processor: CLIPProcessor = None
     # a dict of zeroshot weights for each task, each key is the task name
-    zeroshot_weights_cache_dir: str = "outputs/cache/clip_zeroshot_weights"
     zeroshot_weights: Dict[str, torch.Tensor] = {}
     whether_setup_zero_shot_classification_head = False
 
@@ -131,26 +130,16 @@ class CLIPClassificationMixin(LightningFabricMixin):
         self.visual_projection = self.fabric.to_device(self.visual_projection)
         self.logit_scale_exp = self.fabric.to_device(self.logit_scale_exp)
 
-        # get cache directory
-        if self.modelpool.has_pretrained:
-            model_name = self.modelpool.get_model_config("_pretrained_")
-            if not isinstance(model_name, str):
-                model_name = model_name.pretrained_model_name_or_path
-        else:
-            model_name = self.modelpool.get_model_config(self.modelpool.model_names[0])
-            if not isinstance(model_name, str):
-                model_name = model_name.pretrained_model_name_or_path
-        cache_dir = os.path.join(
-            self.zeroshot_weights_cache_dir,
-            os.path.normpath(model_name.split("/")[-1]),
-        )
-        if not os.path.exists(cache_dir):
-            log.info(
-                f"Creating cache directory for zero-shot classification head at {cache_dir}"
-            )
-            os.makedirs(cache_dir)
+        @cache_with_joblib()
+        def construct_classification_head(task: str):
+            nonlocal clip_classifier
 
-        log.info(f"cache directory for zero-shot classification head: {cache_dir}")
+            classnames, templates = get_classnames_and_templates(task)
+            clip_classifier.set_classification_task(classnames, templates)
+            zeroshot_weights = clip_classifier.zeroshot_weights.detach().clone()
+
+            return zeroshot_weights
+
         for task in tqdm(
             self.modelpool.model_names if task_names is None else task_names,
             "Setting up zero-shot classification head",
@@ -158,27 +147,7 @@ class CLIPClassificationMixin(LightningFabricMixin):
         ):
             zeroshot_weights = None
             if self.fabric.is_global_zero:
-                cache_file = os.path.join(
-                    cache_dir, os.path.normpath(f"{task}_zeroshot_weights.pt")
-                )
-                if os.path.exists(cache_file):
-                    zeroshot_weights = torch.load(
-                        cache_file,
-                        map_location="cpu",
-                        weights_only=True,
-                    ).detach()
-                    log.info(
-                        f"Loadded cached zeroshot weights for task: {task}, shape: {zeroshot_weights.shape}"
-                    )
-                else:
-                    log.info(
-                        f"Construct zero shot classification head for task: {task}"
-                    )
-                    classnames, templates = get_classnames_and_templates(task)
-                    clip_classifier.set_classification_task(classnames, templates)
-                    zeroshot_weights = clip_classifier.zeroshot_weights.detach().clone()
-                    log.info(f"save zeroshot weights to {cache_file}")
-                    torch.save(zeroshot_weights, cache_file)
+                zeroshot_weights = construct_classification_head(task)
 
             self.fabric.barrier()
             self.zeroshot_weights[task] = self.fabric.broadcast(zeroshot_weights, src=0)
