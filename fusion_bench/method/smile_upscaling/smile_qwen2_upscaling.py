@@ -16,6 +16,7 @@ from transformers.models.qwen2.modeling_qwen2 import Qwen2DecoderLayer
 
 from fusion_bench import BaseAlgorithm, BaseModelPool
 from fusion_bench.compat.modelpool import to_modelpool
+from fusion_bench.constants import RuntimeConstants
 from fusion_bench.mixins import SimpleProfilerMixin, auto_register_config
 from fusion_bench.modelpool import CausalLMPool
 from fusion_bench.models.hf_utils import (
@@ -41,7 +42,10 @@ log = logging.getLogger(__name__)
 
 
 @auto_register_config
-class SmileQwen2UpscalingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
+class SmileQwen2UpscalingAlgorithm(
+    SimpleProfilerMixin,
+    BaseAlgorithm,
+):
     R"""
     SmileQwen2UpscalingAlgorithm is a model fusion algorithm designed to upscale
     a pretrained Qwen2 model using a set of fine-tuned expert models. The algorithm
@@ -71,6 +75,11 @@ class SmileQwen2UpscalingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
         **kwargs,
     ):
         super().__init__(**kwargs)
+        if not torch.cuda.is_available():
+            if "cuda" in self.device:
+                self.device = "cpu"
+            if "cuda" in self.accelerator:
+                self.accelerator = "cpu"
 
     @torch.no_grad()
     def run(self, modelpool) -> SmileQwen2ForCausalLM:
@@ -100,7 +109,7 @@ class SmileQwen2UpscalingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
                 m for m in tqdm(modelpool.models(), total=len(modelpool.model_names))
             ]
 
-        if config.device == "cuda" and torch.cuda.is_available():
+        if self.device == "cuda" and torch.cuda.is_available():
             pretrained_model = pretrained_model.cuda()
             print("parameter count of pretrained model:")
             print_parameters(pretrained_model)
@@ -187,7 +196,7 @@ class SmileQwen2UpscalingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
 
         # copy pretrained model weights
         state_dict = model.state_dict()
-        pretrained_state_dict = dict(pretrained_model.state_dict())
+        pretrained_state_dict = pretrained_model.state_dict()
         for key in list(pretrained_state_dict.keys()):
             if key not in state_dict:
                 pretrained_state_dict.pop(key)
@@ -199,6 +208,12 @@ class SmileQwen2UpscalingAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
             "Upscaling Modules (layer)",
             dynamic_ncols=True,
         ):
+            if RuntimeConstants.debug and layer_idx > 0:
+                log.info(
+                    "Debug mode enabled: processing only the first layer, skipping remaining layers"
+                )
+                break
+
             pretrained_layer: Qwen2DecoderLayer = pretrained_model.model.layers[
                 layer_idx
             ]

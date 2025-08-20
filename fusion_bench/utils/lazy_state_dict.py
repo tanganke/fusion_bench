@@ -2,7 +2,7 @@ import json
 import logging
 import os
 from copy import deepcopy
-from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Tuple, Type
+from typing import TYPE_CHECKING, Dict, Iterator, List, Mapping, Optional, Tuple, Type
 
 import torch
 from accelerate import init_empty_weights
@@ -49,7 +49,7 @@ def resolve_checkpoint_path(
         )
 
 
-class LazyStateDict:
+class LazyStateDict(Mapping[str, torch.Tensor]):
     """
     Dictionary-like object that lazily loads a state dict from a checkpoint path.
     """
@@ -168,12 +168,21 @@ class LazyStateDict:
     def config(self) -> "PretrainedConfig":
         return AutoConfig.from_pretrained(self._checkpoint)
 
+    @property
+    def dtype(self) -> torch.dtype:
+        """
+        `torch.dtype`: The dtype of the module (assuming that all the module parameters have the same dtype).
+        """
+        first_key = next(iter(self.keys()))
+        first_param = self[first_key]
+        return first_param.dtype
+
     def state_dict(self, keep_vars: bool = False) -> "LazyStateDict":
         """
         Args:
             keep_vars (bool): Ignored, as LazyStateDict does not support keep_vars. Just for compatibility.
         """
-        return self
+        return deepcopy(self)
 
     def _resolve_checkpoint_files(self, checkpoint: str):
         # reference: https://huggingface.co/docs/accelerate/v0.17.1/en/usage_guides/big_modeling
@@ -289,6 +298,18 @@ class LazyStateDict:
                 checkpoint_file, key, update_cache=True
             )
             return tensor
+
+    def pop(self, key: str):
+        assert key in list(
+            self.keys()
+        ), "KeyError: Cannot pop a tensor for a key that does not exist in the LazyStateDict."
+        if self._state_dict_cache is not None and key in self._state_dict_cache:
+            if key in self._index:
+                self._index.pop(key)
+            return self._state_dict_cache.pop(key)
+        if key in self._index:
+            self._index.pop(key)
+        return None
 
     def __setitem__(self, key: str, value: torch.Tensor) -> None:
         """
@@ -408,3 +429,17 @@ class LazyStateDict:
                     raise KeyError(f"Key {key} not found in LazyStateDict.")
         for key, value in state_dict.items():
             self[key] = value
+
+    def __getattr__(self, name: str):
+        if "meta_module" in self.__dict__:
+            meta_module = self.__dict__["meta_module"]
+            if meta_module is not None:
+                if "_parameters" in meta_module.__dict__:
+                    if name in meta_module.__dict__["_parameters"]:
+                        return self.get_parameter(name)
+                if "_modules" in meta_module.__dict__:
+                    if name in meta_module.__dict__["_modules"]:
+                        return self.get_submodule(name)
+        raise AttributeError(
+            f"'{type(self).__name__}' object has no attribute '{name}'"
+        )
