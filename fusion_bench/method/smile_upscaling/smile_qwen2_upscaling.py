@@ -66,7 +66,7 @@ class SmileQwen2UpscalingAlgorithm(
         self,
         device,
         accelerator,
-        model_path,
+        model_save_path,
         model_dtype,
         num_experts_per_tok,
         rank_of_router,
@@ -95,13 +95,6 @@ class SmileQwen2UpscalingAlgorithm(
         self.modelpool = modelpool = to_modelpool(modelpool)
         config = self.config
 
-        # load model from path if provided and return directly
-        if config.model_path is not None and os.path.exists(config.model_path):
-            log.info(f"Loading model from {config.model_path}")
-            model = AutoModelForCausalLM.from_pretrained(config.model_path)
-            print_parameters(model)
-            return model
-
         with self.profile("load pretrained model"):
             pretrained_model = modelpool.load_pretrained_model()
         with self.profile("load fine-tuned model"):
@@ -123,17 +116,17 @@ class SmileQwen2UpscalingAlgorithm(
         print_parameters(model)
         print(model)
 
-        if config.model_dtype is not None:
-            model.to(dtype=parse_dtype(config.model_dtype))
+        if self.model_dtype is not None:
+            model.to(dtype=parse_dtype(self.model_dtype))
 
-        if config.model_path is not None:
-            if os.path.dirname(config.model_path):
-                os.makedirs(os.path.dirname(config.model_path), exist_ok=True)
-            log.info(f"Saving model to {config.model_path}")
+        if self.model_save_path is not None:
+            if os.path.dirname(self.model_save_path):
+                os.makedirs(os.path.dirname(self.model_save_path), exist_ok=True)
+            log.info(f"Saving model to {self.model_save_path}")
             tokenizer = self.modelpool.load_tokenizer()
-            tokenizer.save_pretrained(config.model_path)
+            tokenizer.save_pretrained(self.model_save_path)
             if not self.save_with_remote_code:
-                model.save_pretrained(config.model_path)
+                model.save_pretrained(self.model_save_path)
             else:
                 save_pretrained_with_remote_code(
                     model,
@@ -142,7 +135,7 @@ class SmileQwen2UpscalingAlgorithm(
                         "AutoModel": SmileQwen2Model,
                         "AutoModelForCausalLM": SmileQwen2ForCausalLM,
                     },
-                    save_directory=config.model_path,
+                    save_directory=self.model_save_path,
                 )
 
             # save readme
@@ -152,7 +145,7 @@ class SmileQwen2UpscalingAlgorithm(
                 algorithm_config=self.config,
                 modelpool_config=modelpool.config,
             )
-            with open(os.path.join(config.model_path, "README.md"), "w") as f:
+            with open(os.path.join(self.model_save_path, "README.md"), "w") as f:
                 f.write(model_card_str)
 
         return model
@@ -184,9 +177,9 @@ class SmileQwen2UpscalingAlgorithm(
                 )
             base_config = AutoConfig.from_pretrained(pretrained_path)
             model_config = SmileQwen2Config(
-                num_experts_per_tok=config.num_experts_per_tok,
-                rank_of_router=config.rank_of_router,
-                rank_of_expert=config.rank_of_expert,
+                num_experts_per_tok=self.num_experts_per_tok,
+                rank_of_router=self.rank_of_router,
+                rank_of_expert=self.rank_of_expert,
                 num_local_experts=len(finetuned_models),
                 **base_config.to_dict(),
             )
@@ -229,7 +222,7 @@ class SmileQwen2UpscalingAlgorithm(
                         base=getattr(pretrained_layer.self_attn, n),
                         experts=[getattr(m.self_attn, n) for m in finetuned_layers],
                         target=getattr(target_layer.self_attn, n),
-                        accelerator=config.accelerator,
+                        accelerator=self.accelerator,
                     )
                 except ExpertNotTrainedError:
                     setattr(
@@ -244,7 +237,7 @@ class SmileQwen2UpscalingAlgorithm(
                         base=getattr(pretrained_layer.mlp, n),
                         experts=[getattr(m.mlp, n) for m in finetuned_layers],
                         target=getattr(target_layer.mlp, n),
-                        accelerator=config.accelerator,
+                        accelerator=self.accelerator,
                     )
                 except ExpertNotTrainedError:
                     setattr(
