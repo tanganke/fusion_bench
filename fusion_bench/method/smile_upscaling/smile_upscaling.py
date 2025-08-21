@@ -20,8 +20,8 @@ from fusion_bench.models.smile_moe.linear_from_module import (
     SmileMoELinear,
 )
 from fusion_bench.models.utils import get_attr, set_attr
-from fusion_bench.utils.parameters import print_parameters
 from fusion_bench.utils.devices import get_device
+from fusion_bench.utils.parameters import print_parameters
 
 log = logging.getLogger(__name__)
 

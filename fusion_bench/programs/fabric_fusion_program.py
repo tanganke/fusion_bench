@@ -24,6 +24,7 @@ from fusion_bench import (
 from fusion_bench.mixins import LightningFabricMixin
 from fusion_bench.utils.hydra_utils import get_hydra_output_dir
 from fusion_bench.utils.json import print_json
+from fusion_bench.utils.path import create_symlink
 from fusion_bench.utils.rich_utils import print_bordered, print_config_tree
 
 log = fusion_bench.get_rankzero_logger(__name__)
@@ -232,6 +233,16 @@ class FabricModelFusionProgram(
         fabric = self.fabric
         if self.seed is not None:
             L.seed_everything(self.seed)
+
+        # create symbol link to hydra output directory
+        if (
+            self.fabric.is_global_zero
+            and self.log_dir is not None
+            and os.path.abspath(self.log_dir) != os.path.abspath(get_hydra_output_dir())
+        ):
+            create_symlink(
+                get_hydra_output_dir(), self.log_dir, link_name="hydra_output"
+            )
 
         log.info("Running the model fusion program.")
         # setup the modelpool, method, and taskpool

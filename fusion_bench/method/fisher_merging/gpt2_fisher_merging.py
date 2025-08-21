@@ -15,10 +15,10 @@ from transformers import GPT2ForSequenceClassification, GPT2Model
 from transformers.data import default_data_collator
 from transformers.models.gpt2.modeling_gpt2 import Conv1D
 
-from fusion_bench.mixins import LightningFabricMixin
+from fusion_bench.mixins import LightningFabricMixin, auto_register_config
 from fusion_bench.modelpool import GPT2ForSequenceClassificationPool
 from fusion_bench.utils import timeit_context
-from fusion_bench.mixins import auto_register_config
+
 from .fisher_merging import FisherMergingAlgorithm, get_param_squared_gradients
 
 

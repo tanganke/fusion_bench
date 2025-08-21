@@ -3,11 +3,10 @@ from typing import Literal
 
 import pandas as pd
 import torch
+from tqdm import tqdm
 
 from fusion_bench import BaseAlgorithm, BaseModelPool, auto_register_config
 from fusion_bench.mixins import LightningFabricMixin, SimpleProfilerMixin
-
-from tqdm import tqdm
 
 
 class ProjectedEnergyAnalysis(

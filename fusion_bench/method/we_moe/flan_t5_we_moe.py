@@ -2,18 +2,18 @@ import functools
 import logging
 import os
 from copy import deepcopy
-from tqdm.autonotebook import tqdm
 from typing import Any, Dict, List, Mapping, Optional, Union, cast  # noqa: F401
-from transformers import T5ForConditionalGeneration
-from transformers.data import default_data_collator
 
-import lightning 
+import lightning
 import lightning as L
 import lightning.fabric.wrappers
-
 import torch
 from torch import Tensor
 from torch.utils.data import DataLoader
+from tqdm.autonotebook import tqdm
+from transformers import T5ForConditionalGeneration
+from transformers.data import default_data_collator
+
 from fusion_bench.method import BaseAlgorithm
 from fusion_bench.method.task_arithmetic.task_arithmetic import task_arithmetic_merge
 from fusion_bench.mixins.lightning_fabric import LightningFabricMixin
@@ -23,9 +23,10 @@ from fusion_bench.models.we_moe import WeightEnsemblingMoE
 from fusion_bench.utils import timeit_context
 from fusion_bench.utils.data import InfiniteDataLoader, load_tensor_from_file
 from fusion_bench.utils.instantiate_utils import instantiate
+from fusion_bench.utils.parameters import print_parameters
+
 from .entropy_loss import entropy_loss
 from .utils import get_memory_usage
-from fusion_bench.utils.parameters import print_parameters
 
 log = logging.getLogger(__name__)
 
@@ -44,45 +45,46 @@ class FlanT5WeightEnsemblingMoEAlgorithm(
     """
 
     modelpool: Seq2SeqLMPool = None
-    def __init__(self, 
+
+    def __init__(
+        self,
         checkpoint: bool = False,
         save_checkpoint: bool = False,
         router_hidden_layers: int = 2,
         init_lambda: float = 0.3,
         batch_reduce: bool = True,
         lr: float = 1e-4,
-        optimizer: str ="adam",
-        devices: int=1,
+        optimizer: str = "adam",
+        devices: int = 1,
         batch_size: int = 16,
         num_workers: int = 0,
-        max_steps: int=1000,
+        max_steps: int = 1000,
         use_grad_accumulate: bool = True,
         cache_dir: bool = "outputs",
         fast_dev_run: bool = False,
         **kwargs,
-        ):
+    ):
         """
         Initialize the WeightEnsemblingMoEAlgorithm with the given configuration.
 
         Args:
             algorithm_config (DictConfig): The configuration for the algorithm.
         """
-        self.checkpoint=checkpoint
-        self.save_checkpoint=save_checkpoint
-        self.router_hidden_layers=router_hidden_layers
-        self.init_lambda=init_lambda
-        self.batch_reduce=batch_reduce
-        self.lr=lr
-        self.optimizer=optimizer
-        self.devices=devices
-        self.batch_size=batch_size
-        self.num_workers=num_workers
-        self.max_steps=max_steps
-        self.use_grad_accumulate=use_grad_accumulate
-        self.cache_dir=cache_dir
-        self.fast_dev_run=fast_dev_run
+        self.checkpoint = checkpoint
+        self.save_checkpoint = save_checkpoint
+        self.router_hidden_layers = router_hidden_layers
+        self.init_lambda = init_lambda
+        self.batch_reduce = batch_reduce
+        self.lr = lr
+        self.optimizer = optimizer
+        self.devices = devices
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+        self.max_steps = max_steps
+        self.use_grad_accumulate = use_grad_accumulate
+        self.cache_dir = cache_dir
+        self.fast_dev_run = fast_dev_run
         super().__init__(**kwargs)
-
 
     def construct_moe_model(self) -> WeightEnsemblingMoE:
         """
@@ -107,43 +109,57 @@ class FlanT5WeightEnsemblingMoEAlgorithm(
         print(base_model)
 
         # Up-scale MLP modules
-        num_layer=12
-        encoder_mlp_index=1
+        num_layer = 12
+        encoder_mlp_index = 1
         base_encoder = base_model.encoder
         moe_encoder = moe_model.encoder
         expert_encoders = [m.encoder for m in expert_models]
 
         for layer_idx in range(num_layer):
-            base_mlp = base_encoder.block[layer_idx].layer[encoder_mlp_index].DenseReluDense
-            expert_mlps = [e.block[layer_idx].layer[encoder_mlp_index].DenseReluDense for e in expert_encoders]
+            base_mlp = (
+                base_encoder.block[layer_idx].layer[encoder_mlp_index].DenseReluDense
+            )
+            expert_mlps = [
+                e.block[layer_idx].layer[encoder_mlp_index].DenseReluDense
+                for e in expert_encoders
+            ]
 
-            moe_encoder.block[layer_idx].layer[encoder_mlp_index].DenseReluDense = WeightEnsemblingMoE(
-                hidden_size=base_encoder.config.hidden_size,
-                base_model=base_mlp,
-                expert_models=expert_mlps,
-                init_lambda=self.init_lambda,
-                batch_first=True,  
-                router_hidden_layers=self.router_hidden_layers,
-                batch_reduce=self.batch_reduce,
+            moe_encoder.block[layer_idx].layer[encoder_mlp_index].DenseReluDense = (
+                WeightEnsemblingMoE(
+                    hidden_size=base_encoder.config.hidden_size,
+                    base_model=base_mlp,
+                    expert_models=expert_mlps,
+                    init_lambda=self.init_lambda,
+                    batch_first=True,
+                    router_hidden_layers=self.router_hidden_layers,
+                    batch_reduce=self.batch_reduce,
+                )
             )
 
-        decoder_mlp_index=2
+        decoder_mlp_index = 2
         base_decoder = base_model.decoder
         moe_decoder = moe_model.decoder
         expert_decoders = [m.decoder for m in expert_models]
 
         for layer_idx in range(num_layer):
-            base_mlp = base_decoder.block[layer_idx].layer[decoder_mlp_index].DenseReluDense
-            expert_mlps = [e.block[layer_idx].layer[decoder_mlp_index].DenseReluDense for e in expert_decoders]
+            base_mlp = (
+                base_decoder.block[layer_idx].layer[decoder_mlp_index].DenseReluDense
+            )
+            expert_mlps = [
+                e.block[layer_idx].layer[decoder_mlp_index].DenseReluDense
+                for e in expert_decoders
+            ]
 
-            moe_decoder.block[layer_idx].layer[decoder_mlp_index].DenseReluDense = WeightEnsemblingMoE(
-                hidden_size=base_decoder.config.hidden_size,
-                base_model=base_mlp,
-                expert_models=expert_mlps,
-                init_lambda=self.init_lambda,
-                batch_first=True,  
-                router_hidden_layers=self.router_hidden_layers,
-                batch_reduce=self.batch_reduce,
+            moe_decoder.block[layer_idx].layer[decoder_mlp_index].DenseReluDense = (
+                WeightEnsemblingMoE(
+                    hidden_size=base_decoder.config.hidden_size,
+                    base_model=base_mlp,
+                    expert_models=expert_mlps,
+                    init_lambda=self.init_lambda,
+                    batch_first=True,
+                    router_hidden_layers=self.router_hidden_layers,
+                    batch_reduce=self.batch_reduce,
+                )
             )
 
         print(moe_model)
@@ -232,9 +248,9 @@ class FlanT5WeightEnsemblingMoEAlgorithm(
             )
         else:
             raise ValueError(f"Unsupported optimizer: {self.optimizer}")
-        
+
         module, optimizer = self.fabric.setup(module, optimizer)
-        
+
         module.train()
         # module.merge_weights()
         for step_idx in (
@@ -270,7 +286,7 @@ class FlanT5WeightEnsemblingMoEAlgorithm(
         log.info(get_memory_usage(f"after adamerging, the memory usage of GPU is:"))
         self.print_profile_summary()
         return module
-    
+
     def on_test_time_adaptation_start(self):
         """
         Something to do before the test-time adaptation starts. Such as setting up the task-specific heads.
