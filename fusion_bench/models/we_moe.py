@@ -1,6 +1,6 @@
 import functools
 import logging
-from typing import List
+from typing import Generic, List
 
 import torch
 import torch.func
@@ -9,7 +9,7 @@ from torch.func import functional_call
 from torch.nn import functional as F
 
 from fusion_bench.models.utils import del_attr, get_attr, set_attr
-from fusion_bench.utils.type import StateDictType
+from fusion_bench.utils.type import StateDictType, TorchModelType
 
 log = logging.getLogger(__name__)
 
@@ -76,15 +76,15 @@ def construct_weight_ensembling_gate(
     return gate
 
 
-class WeightEnsemblingMoE(nn.Module):
+class WeightEnsemblingMoE(nn.Module, Generic[TorchModelType]):
     # variable to store the merged state dict temporarily
     _merged_state_dict: StateDictType = None
 
     def __init__(
         self,
         hidden_size: int,
-        base_model: nn.Module,
-        expert_models: List[nn.Module],
+        base_model: TorchModelType,
+        expert_models: List[TorchModelType],
         init_lambda: float = 0.2,
         batch_first: bool = False,
         router_hidden_layers: int = 2,
@@ -101,8 +101,8 @@ class WeightEnsemblingMoE(nn.Module):
         Args:
 
             hidden_size (int): The size of the hidden layer in the models.
-            base_model (nn.Module): The base model that will be used as a reference for the expert models.
-            expert_models (List[nn.Module]): A list of expert models that will be combined.
+            base_model (TorchModelType): The base model that will be used as a reference for the expert models.
+            expert_models (List[TorchModelType]): A list of expert models that will be combined.
             init_lambda (float, optional): The initial lambda value for the weight ensembling gate. Defaults to 0.2.
             batch_first (bool, optional): If True, the input tensors are expected to have the batch size as the first dimension. Defaults to False.
             router_hidden_layers (int, optional): The number of hidden layers in the router. Defaults to 2.
@@ -145,7 +145,7 @@ class WeightEnsemblingMoE(nn.Module):
             self._merged_state_dict,
         )
 
-    def merge_weights(self, expert_weights):
+    def merge_weights(self, expert_weights) -> StateDictType:
         state_dict = self.base_model.state_dict(keep_vars=True)
         for weight, task_vector in zip(expert_weights, self.task_vectors):
             for name, param in task_vector.named_parameters():
