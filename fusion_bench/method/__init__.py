@@ -90,7 +90,7 @@ _import_structure = {
         "MixtralForCausalLMMergingAlgorithm",
     ],
     "dawe": ["DataAdaptiveWeightEnsemblingForCLIP"],
-    "we_moe": ["CLIPWeightEnsemblingMoEAlgorithm"],
+    "we_moe": ["CLIPWeightEnsemblingMoEAlgorithm", "FlanT5WeightEnsemblingMoEAlgorithm"],
     "rankone_moe": ["CLIPRankOneMoEAlgorithm", "RankOneMoEAlgorithm"],
     "sparse_we_moe": [
         "SparseWeightEnsemblingMoEAlgorithm",
@@ -228,7 +228,7 @@ if TYPE_CHECKING:
     from .task_arithmetic import TaskArithmeticAlgorithm
     from .task_singular_vector import TaskSingularVectorMerging
     from .ties_merging import TiesMergingAlgorithm
-    from .we_moe import CLIPWeightEnsemblingMoEAlgorithm
+    from .we_moe import CLIPWeightEnsemblingMoEAlgorithm, FlanT5WeightEnsemblingMoEAlgorithm
     from .weighted_average import WeightedAverageAlgorithm, WeightedAverageForLLama
 
 else:
