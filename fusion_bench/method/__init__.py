@@ -90,8 +90,7 @@ _import_structure = {
         "MixtralForCausalLMMergingAlgorithm",
     ],
     "dawe": ["DataAdaptiveWeightEnsemblingForCLIP"],
-    "we_moe": ["CLIPWeightEnsemblingMoEAlgorithm"],
-    "flan_t5_we_moe": ["FlanT5WeightEnsemblingMoEAlgorithm"],
+    "we_moe": ["CLIPWeightEnsemblingMoEAlgorithm", "FlanT5WeightEnsemblingMoEAlgorithm"],
     "rankone_moe": ["CLIPRankOneMoEAlgorithm", "RankOneMoEAlgorithm"],
     "sparse_we_moe": [
         "SparseWeightEnsemblingMoEAlgorithm",
