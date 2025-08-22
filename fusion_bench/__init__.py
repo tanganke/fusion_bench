@@ -32,6 +32,7 @@ from .models import (
 from .programs import BaseHydraProgram
 from .taskpool import BaseTaskPool
 from .utils import (
+    LazyStateDict,
     cache_with_joblib,
     get_rankzero_logger,
     import_object,

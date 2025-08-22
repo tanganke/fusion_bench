@@ -141,6 +141,9 @@ def save_pretrained_with_remote_code(
 
 def create_default_model_card(
     models: list[str],
+    *,
+    title: str = "Deep Model Fusion",
+    tags: list[str] = ["fusion-bench", "merge"],
     description=None,
     algorithm_config: DictConfig = None,
     modelpool_config: DictConfig = None,
@@ -151,8 +154,8 @@ def create_default_model_card(
     card = template.render(
         models=models,
         library_name="transformers",
-        tags=["fusion-bench", "merge"],
-        title="Deep Model Fusion",
+        title=title,
+        tags=tags,
         description=description,
         algorithm_config_str=try_to_yaml(algorithm_config),
         modelpool_config_str=try_to_yaml(modelpool_config),
