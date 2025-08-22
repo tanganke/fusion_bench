@@ -42,12 +42,14 @@ def load_model_card_template(basename: str) -> str:
         FileNotFoundError: If the template file is not found in any of the search locations.
     """
     if os.path.exists(basename):
-        return open(basename).read()
+        with open(basename, 'r') as f:
+            return f.read()
 
     for template_dir in MODEL_CARD_TEMPLATE_DIRS:
         template_path = os.path.join(template_dir, basename)
         if os.path.exists(template_path):
-            return open(template_path).read()
+            with open(template_path, 'r') as f:
+                return f.read()
 
     raise FileNotFoundError(f"Model card template '{basename}' not found.")
 

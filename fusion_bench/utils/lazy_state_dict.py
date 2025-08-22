@@ -101,15 +101,19 @@ class LazyStateDict(Mapping[str, torch.Tensor], Generic[TorchModelType]):
             hf_proxies (Dict, optional): Proxies to use for downloading from Hugging Face Hub.
         """
         self.cache_state_dict = cache_state_dict
+
+        # Validate that both meta_module_class and meta_module are not provided
+        if meta_module_class is not None and meta_module is not None:
+            raise ValueError(
+                "Cannot provide both meta_module_class and meta_module, please provide only one."
+            )
+
         self.meta_module_class = meta_module_class
         if isinstance(self.meta_module_class, str):
             self.meta_module_class = import_object(self.meta_module_class)
         self.meta_module = meta_module
+
         if self.meta_module_class is not None:
-            if self.meta_module is not None:
-                raise ValueError(
-                    "Cannot provide both meta_module_class and meta_module, please provide only one."
-                )
             with init_empty_weights():
                 self.meta_module = self.meta_module_class.from_pretrained(
                     checkpoint,
@@ -186,9 +190,13 @@ class LazyStateDict(Mapping[str, torch.Tensor], Generic[TorchModelType]):
         """
         `torch.dtype`: The dtype of the module (assuming that all the module parameters have the same dtype).
         """
+        if hasattr(self, "_cached_dtype"):
+            return self._cached_dtype
+
         first_key = next(iter(self.keys()))
         first_param = self[first_key]
-        return first_param.dtype
+        self._cached_dtype = first_param.dtype
+        return self._cached_dtype
 
     def state_dict(self, keep_vars: bool = False) -> "LazyStateDict":
         """
@@ -334,9 +342,7 @@ class LazyStateDict(Mapping[str, torch.Tensor], Generic[TorchModelType]):
         if self._state_dict_cache is not None:
             self._state_dict_cache[key] = value
         else:
-            log.warning(
-                "State dict cache is disabled, setting a tensor will not update the cache."
-            )
+            log.warning("State dict cache is disabled, initializing the cache.")
             self._state_dict_cache = {key: value}
 
     def __contains__(self, key: str) -> bool:
@@ -352,7 +358,7 @@ class LazyStateDict(Mapping[str, torch.Tensor], Generic[TorchModelType]):
                     self._checkpoint_files[0], key, update_cache=False
                 )
                 return tensor is not None
-            except Exception:
+            except (KeyError, FileNotFoundError, RuntimeError, EOFError):
                 return False
         return False
 
