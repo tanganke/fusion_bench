@@ -117,29 +117,26 @@ def auto_register_config(cls):
                     _ParameterKind.VAR_POSITIONAL,
                     _ParameterKind.VAR_KEYWORD,
                 ]:
-                    setattr(self, param_name, arg_value)
+                    setattr(self, self._config_mapping[param_name], arg_value)
 
         # Handle keyword arguments and defaults
         for param_name in param_names:
-            if (
-                sig.parameters[param_name].kind
-                not in [
-                    _ParameterKind.VAR_POSITIONAL,
-                    _ParameterKind.VAR_KEYWORD,
-                ]
-            ) and (param_name not in registered_parameters):
+            if sig.parameters[param_name].kind not in [
+                _ParameterKind.VAR_POSITIONAL,
+                _ParameterKind.VAR_KEYWORD,
+            ]:
                 # Skip if already set by positional argument
                 param_index = param_names.index(param_name)
                 if param_index >= 0 and param_index < len(args):
                     continue
 
                 if param_name in kwargs:
-                    setattr(self, param_name, kwargs[param_name])
+                    setattr(self, self._config_mapping[param_name], kwargs[param_name])
                 else:
                     # Set default value if available and attribute doesn't exist
                     default_value = sig.parameters[param_name].default
                     if default_value is not Parameter.empty:
-                        setattr(self, param_name, default_value)
+                        setattr(self, self._config_mapping[param_name], default_value)
 
         # Call the original __init__
         result = original_init(self, *args, **kwargs)

@@ -42,12 +42,14 @@ def load_model_card_template(basename: str) -> str:
         FileNotFoundError: If the template file is not found in any of the search locations.
     """
     if os.path.exists(basename):
-        return open(basename).read()
+        with open(basename, 'r') as f:
+            return f.read()
 
     for template_dir in MODEL_CARD_TEMPLATE_DIRS:
         template_path = os.path.join(template_dir, basename)
         if os.path.exists(template_path):
-            return open(template_path).read()
+            with open(template_path, 'r') as f:
+                return f.read()
 
     raise FileNotFoundError(f"Model card template '{basename}' not found.")
 
@@ -141,6 +143,9 @@ def save_pretrained_with_remote_code(
 
 def create_default_model_card(
     models: list[str],
+    *,
+    title: str = "Deep Model Fusion",
+    tags: list[str] = ["fusion-bench", "merge"],
     description=None,
     algorithm_config: DictConfig = None,
     modelpool_config: DictConfig = None,
@@ -151,8 +156,8 @@ def create_default_model_card(
     card = template.render(
         models=models,
         library_name="transformers",
-        tags=["fusion-bench", "merge"],
-        title="Deep Model Fusion",
+        title=title,
+        tags=tags,
         description=description,
         algorithm_config_str=try_to_yaml(algorithm_config),
         modelpool_config_str=try_to_yaml(modelpool_config),

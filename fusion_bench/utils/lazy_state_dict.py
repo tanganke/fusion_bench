@@ -2,7 +2,18 @@ import json
 import logging
 import os
 from copy import deepcopy
-from typing import TYPE_CHECKING, Dict, Iterator, List, Mapping, Optional, Tuple, Type
+from typing import (
+    TYPE_CHECKING,
+    Dict,
+    Generic,
+    Iterator,
+    List,
+    Mapping,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
 
 import torch
 from accelerate import init_empty_weights
@@ -11,10 +22,12 @@ from huggingface_hub import snapshot_download
 from safetensors import safe_open
 from safetensors.torch import load_file
 from torch import nn
+from torch.nn.modules.module import _IncompatibleKeys
 from transformers import AutoConfig
 
 from fusion_bench.utils.dtype import parse_dtype
 from fusion_bench.utils.packages import import_object
+from fusion_bench.utils.type import TorchModelType
 
 if TYPE_CHECKING:
     from transformers import PretrainedConfig
@@ -49,7 +62,7 @@ def resolve_checkpoint_path(
         )
 
 
-class LazyStateDict(Mapping[str, torch.Tensor]):
+class LazyStateDict(Mapping[str, torch.Tensor], Generic[TorchModelType]):
     """
     Dictionary-like object that lazily loads a state dict from a checkpoint path.
     """
@@ -66,8 +79,8 @@ class LazyStateDict(Mapping[str, torch.Tensor]):
     def __init__(
         self,
         checkpoint: str,
-        meta_module_class: Optional[Type[nn.Module]] = None,
-        meta_module: Optional[nn.Module] = None,
+        meta_module_class: Optional[Type[TorchModelType]] = None,
+        meta_module: Optional[TorchModelType] = None,
         cache_state_dict: bool = False,
         torch_dtype: Optional[torch.dtype] = None,
         device: str = "cpu",
@@ -88,15 +101,19 @@ class LazyStateDict(Mapping[str, torch.Tensor]):
             hf_proxies (Dict, optional): Proxies to use for downloading from Hugging Face Hub.
         """
         self.cache_state_dict = cache_state_dict
+
+        # Validate that both meta_module_class and meta_module are not provided
+        if meta_module_class is not None and meta_module is not None:
+            raise ValueError(
+                "Cannot provide both meta_module_class and meta_module, please provide only one."
+            )
+
         self.meta_module_class = meta_module_class
         if isinstance(self.meta_module_class, str):
             self.meta_module_class = import_object(self.meta_module_class)
         self.meta_module = meta_module
+
         if self.meta_module_class is not None:
-            if self.meta_module is not None:
-                raise ValueError(
-                    "Cannot provide both meta_module_class and meta_module, please provide only one."
-                )
             with init_empty_weights():
                 self.meta_module = self.meta_module_class.from_pretrained(
                     checkpoint,
@@ -173,9 +190,13 @@ class LazyStateDict(Mapping[str, torch.Tensor]):
         """
         `torch.dtype`: The dtype of the module (assuming that all the module parameters have the same dtype).
         """
+        if hasattr(self, "_cached_dtype"):
+            return self._cached_dtype
+
         first_key = next(iter(self.keys()))
         first_param = self[first_key]
-        return first_param.dtype
+        self._cached_dtype = first_param.dtype
+        return self._cached_dtype
 
     def state_dict(self, keep_vars: bool = False) -> "LazyStateDict":
         """
@@ -321,9 +342,7 @@ class LazyStateDict(Mapping[str, torch.Tensor]):
         if self._state_dict_cache is not None:
             self._state_dict_cache[key] = value
         else:
-            log.warning(
-                "State dict cache is disabled, setting a tensor will not update the cache."
-            )
+            log.warning("State dict cache is disabled, initializing the cache.")
             self._state_dict_cache = {key: value}
 
     def __contains__(self, key: str) -> bool:
@@ -339,7 +358,7 @@ class LazyStateDict(Mapping[str, torch.Tensor]):
                     self._checkpoint_files[0], key, update_cache=False
                 )
                 return tensor is not None
-            except Exception:
+            except (KeyError, FileNotFoundError, RuntimeError, EOFError):
                 return False
         return False
 
@@ -409,8 +428,8 @@ class LazyStateDict(Mapping[str, torch.Tensor]):
             )
 
     def load_state_dict(
-        self, state_dict: Dict[str, torch.Tensor], strict: bool = True
-    ) -> None:
+        self, state_dict: Mapping[str, torch.Tensor], strict: bool = True
+    ) -> _IncompatibleKeys:
         """
         Load a state dict into this LazyStateDict.
         This method is only for compatibility with nn.Module and it overrides the cache of LazyStateDict.
@@ -419,16 +438,60 @@ class LazyStateDict(Mapping[str, torch.Tensor]):
             state_dict (Dict[str, torch.Tensor]): The state dict to load.
             strict (bool): Whether to enforce that all keys in the state dict are present in this LazyStateDict.
         """
+        if not isinstance(state_dict, Mapping):
+            raise TypeError(
+                f"Expected state_dict to be dict-like, got {type(state_dict)}."
+            )
+
+        missing_keys: list[str] = []
+        unexpected_keys: list[str] = []
+        error_msgs: list[str] = []
+
         log.warning(
             "Loading state dict into LazyStateDict is not recommended, as it may lead to unexpected behavior. "
             "Use with caution."
         )
+
+        # Check for unexpected keys in the provided state_dict
+        for key in state_dict:
+            if key not in self:
+                unexpected_keys.append(key)
+
+        # Check for missing keys that are expected in this LazyStateDict
+        for key in self.keys():
+            if key not in state_dict:
+                missing_keys.append(key)
+
+        # Handle strict mode
         if strict:
-            for key in state_dict:
-                if key not in self:
-                    raise KeyError(f"Key {key} not found in LazyStateDict.")
+            if len(unexpected_keys) > 0:
+                error_msgs.insert(
+                    0,
+                    "Unexpected key(s) in state_dict: {}. ".format(
+                        ", ".join(f'"{k}"' for k in unexpected_keys)
+                    ),
+                )
+            if len(missing_keys) > 0:
+                error_msgs.insert(
+                    0,
+                    "Missing key(s) in state_dict: {}. ".format(
+                        ", ".join(f'"{k}"' for k in missing_keys)
+                    ),
+                )
+
+        if len(error_msgs) > 0:
+            raise RuntimeError(
+                "Error(s) in loading state_dict for {}:\n\t{}".format(
+                    self.__class__.__name__, "\n\t".join(error_msgs)
+                )
+            )
+
+        # Load the state dict values
         for key, value in state_dict.items():
-            self[key] = value
+            if key in self:  # Only set keys that exist in this LazyStateDict
+                self[key] = value
+
+        return _IncompatibleKeys(missing_keys, unexpected_keys)
 
     def __getattr__(self, name: str):
         if "meta_module" in self.__dict__:

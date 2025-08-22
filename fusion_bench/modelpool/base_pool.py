@@ -277,7 +277,7 @@ class BaseModelPool(
         for dataset_name in self.test_dataset_names:
             yield self.load_test_dataset(dataset_name)
 
-    def save_model(self, model: nn.Module, path: str):
+    def save_model(self, model: nn.Module, path: str, *args, **kwargs):
         """
         Save the state dictionary of the model to the specified path.
 
