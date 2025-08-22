@@ -24,8 +24,6 @@ from fusion_bench.mixins import (
 from fusion_bench.modelpool import Seq2SeqLMPool
 from fusion_bench.models.we_moe import WeightEnsemblingMoE
 from fusion_bench.utils import print_parameters, timeit_context
-from fusion_bench.utils.data import InfiniteDataLoader
-from fusion_bench.utils import timeit_context
 from fusion_bench.utils.data import InfiniteDataLoader, load_tensor_from_file
 from fusion_bench.utils.instantiate_utils import instantiate
 from fusion_bench.utils.parameters import print_parameters
