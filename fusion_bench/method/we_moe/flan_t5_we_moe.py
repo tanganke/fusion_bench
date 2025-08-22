@@ -16,11 +16,14 @@ from transformers.data import default_data_collator
 
 from fusion_bench.method import BaseAlgorithm
 from fusion_bench.method.task_arithmetic.task_arithmetic import task_arithmetic_merge
-from fusion_bench.mixins.lightning_fabric import LightningFabricMixin
-from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
+from fusion_bench.mixins import (
+    LightningFabricMixin,
+    SimpleProfilerMixin,
+    auto_register_config,
+)
 from fusion_bench.modelpool import Seq2SeqLMPool
 from fusion_bench.models.we_moe import WeightEnsemblingMoE
-from fusion_bench.utils import timeit_context
+from fusion_bench.utils import print_parameters, timeit_context
 from fusion_bench.utils.data import InfiniteDataLoader, load_tensor_from_file
 from fusion_bench.utils.instantiate_utils import instantiate
 from fusion_bench.utils.parameters import print_parameters
@@ -31,10 +34,11 @@ from .utils import get_memory_usage
 log = logging.getLogger(__name__)
 
 
+@auto_register_config
 class FlanT5WeightEnsemblingMoEAlgorithm(
-    BaseAlgorithm,
     LightningFabricMixin,
     SimpleProfilerMixin,
+    BaseAlgorithm,
 ):
     """
     FlanT5WeightEnsemblingMoEAlgorithm is a class that implements the WeightEnsemblingMoEAlgorithm
@@ -60,7 +64,6 @@ class FlanT5WeightEnsemblingMoEAlgorithm(
         num_workers: int = 0,
         max_steps: int = 1000,
         use_grad_accumulate: bool = True,
-        cache_dir: bool = "outputs",
         fast_dev_run: bool = False,
         **kwargs,
     ):
@@ -70,23 +73,9 @@ class FlanT5WeightEnsemblingMoEAlgorithm(
         Args:
             algorithm_config (DictConfig): The configuration for the algorithm.
         """
-        self.checkpoint = checkpoint
-        self.save_checkpoint = save_checkpoint
-        self.router_hidden_layers = router_hidden_layers
-        self.init_lambda = init_lambda
-        self.batch_reduce = batch_reduce
-        self.lr = lr
-        self.optimizer = optimizer
-        self.devices = devices
-        self.batch_size = batch_size
-        self.num_workers = num_workers
-        self.max_steps = max_steps
-        self.use_grad_accumulate = use_grad_accumulate
-        self.cache_dir = cache_dir
-        self.fast_dev_run = fast_dev_run
         super().__init__(**kwargs)
 
-    def construct_moe_model(self) -> WeightEnsemblingMoE:
+    def construct_moe_model(self):
         """
         Construct the Mixture of Experts (MoE) model using the models in the model pool.
 
