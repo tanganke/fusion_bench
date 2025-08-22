@@ -71,6 +71,7 @@ _import_structure = {
     ],
     "fw_merging": ["FrankWolfeHardAlgorithm", "FrankWolfeSoftAlgorithm"],
     "tall_mask": ["TallMaskTaskArithmeticAlgorithm"],
+    "model_stock": ["ModelStock"],
     # plug-and-play model merging methods
     "concrete_subspace": [
         "ConcreteTaskArithmeticAlgorithmForCLIP",
@@ -194,6 +195,7 @@ if TYPE_CHECKING:
         MixtralUpscalingAlgorithm,
     )
     from .model_recombination import ModelRecombinationAlgorithm
+    from .model_stock import ModelStock
     from .opcm import OPCMForCLIP
     from .pruning import (
         MagnitudeDiffPruningAlgorithm,
