@@ -309,7 +309,7 @@ class CLIPVisionModelTaskPool(
             self.setup()
 
         report = {}
-        # CLIPVisionModel works the same with CLIPVisonTransformer, so we can use it directly
+        # CLIPVisionModel works the same with CLIPVisionTransformer, so we can use it directly
         if hasattr(model, "is_surgery_model") and model.is_surgery_model:
             log.info("running evaluation on a surgery model.")
             model: "SurgeryModelWrapper" = model

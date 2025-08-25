@@ -90,7 +90,7 @@ def copy_text_model_and_projection(hf_model: CLIPModel, pt_model: open_clip.mode
     copy_encoder(hf_model.text_model, pt_model)
 
 
-def copy_vison_model_and_projection(
+def copy_vision_model_and_projection(
     hf_model: CLIPModel, pt_model: open_clip.model.CLIP
 ):
     # copy projection
@@ -234,7 +234,7 @@ def convert_clip_checkpoint(
     print(pt_model)
 
     copy_text_model_and_projection(hf_model, pt_model)
-    copy_vison_model_and_projection(hf_model, pt_model)
+    copy_vision_model_and_projection(hf_model, pt_model)
     hf_model.logit_scale = pt_model.logit_scale
 
     input_ids = torch.arange(0, 77).unsqueeze(0)

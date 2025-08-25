@@ -45,21 +45,21 @@ def linearize_lora_model_(model):
 
 
 def load_fft_vision_model_hf(
-    model_name: str, return_vison_model=True
+    model_name: str, return_vision_model=True
 ) -> Union[CLIPVisionTransformer, CLIPVisionModel]:
     """
     Load a CLIP vision model from Hugging Face.
 
     Args:
         model_name (str): The name of the CLIP vision model to load from Hugging Face.
-        return_vison_model (bool, optional): If False, the full CLIPVisionModel is returned. If True, only the vision model (`CLIPVisionTransformer`) is returned. Defaults to True.
+        return_vision_model (bool, optional): If False, the full CLIPVisionModel is returned. If True, only the vision model (`CLIPVisionTransformer`) is returned. Defaults to True.
 
     Returns:
         Union[CLIPVisionTransformer, CLIPVisionModel]: The vision model.
     """
     model = CLIPVisionModel.from_pretrained(model_name)
 
-    if return_vison_model:
+    if return_vision_model:
         return CLIPVisionModel.from_pretrained(model_name).vision_model
     else:
         return model
@@ -69,7 +69,7 @@ def load_lora_vision_model_hf(
     base_model_name: str,
     peft_name: str,
     merge_and_unload: bool = False,
-    return_vison_model=True,
+    return_vision_model=True,
 ) -> PeftModel:
     """
     Load a LoRA (Low-Rank Adaptation) vision model from Hugging Face.
@@ -80,7 +80,7 @@ def load_lora_vision_model_hf(
         base_model_name (str): The name of the base vision model to load from Hugging Face.
         peft_name (str): The name of the LoRA adaptation to apply to the base model.
         merge_and_unload (bool, optional): If True, the LoRA adaptation is merged into the base model and the LoRA layers are removed. Defaults to False.
-        return_vison_model (bool, optional): If False, the full CLIPVisionModel is returned. If True, only the vision model (`CLIPVisionTransformer`) is returned. Defaults to True.
+        return_vision_model (bool, optional): If False, the full CLIPVisionModel is returned. If True, only the vision model (`CLIPVisionTransformer`) is returned. Defaults to True.
 
     Returns:
         PeftModel: The adapted vision model, optionally merged and unloaded.
@@ -97,7 +97,7 @@ def load_lora_vision_model_hf(
         vision_model = peft_model
 
     # Return the vision model
-    if return_vison_model:
+    if return_vision_model:
         return vision_model
     else:
         model.vision_model = vision_model
