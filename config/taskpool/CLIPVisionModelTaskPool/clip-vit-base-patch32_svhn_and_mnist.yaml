@@ -1,0 +1,24 @@
+defaults:
+  - /dataset/image_classification/test@test_datasets:
+      - svhn
+      - mnist
+_target_: fusion_bench.taskpool.CLIPVisionModelTaskPool
+_recursive_: false
+test_datasets: ??? # The datasets to evaluate the model on
+base_model: openai/clip-vit-base-patch32
+clip_model: ${.base_model} # The base model to use
+processor: ${.base_model} # The base model to use
+data_processor: ${.processor}
+dataloader_kwargs:
+  batch_size: 128 # The batch size for the data loader
+  num_workers: 8 # The number of worker processes for data loading
+  pin_memory: True # Whether to pin memory in data loader
+  drop_last: False # Whether to drop the last incomplete batch
+  shuffle: False # Whether to shuffle the data
+# === layer-wise feature saving ===
+# The path to save the features to, if none then the features are not saved
+# This is the path to a directory, the features of task `task_name` will be saved in `feature_save_path/task_name.csv`
+layer_wise_feature_save_path: null
+layer_wise_feature_first_token_only: true # Whether to save only the first token of the features
+# The maximum number of samples to save the features for
+layer_wise_feature_max_num: 1000

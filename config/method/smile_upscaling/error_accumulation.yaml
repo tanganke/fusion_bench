@@ -1,0 +1,5 @@
+# Measure error accumulation
+_target_: fusion_bench.method.smile_upscaling.error_accumulation.ErrorAccumulationAnalysisForCLIP
+gate_k: 16
+k: 128
+top_k: 1

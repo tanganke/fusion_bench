@@ -1,0 +1,16 @@
+# This algorithm merges a pretrained model with a finetuned model.
+#
+# $$\theta_{merged} = \theta_{ft} + \alpha (\theta_{ft} - \theta_{pre})$$
+#
+# where $\theta_{merged}$ is the merged model, $\theta_{ft}$ is the finetuned model (medium-aligned model),
+# $\theta_{pre}$ is the pretrained model (base model), and $\alpha$ is the extrapolation factor.
+_target_: fusion_bench.method.ExPOAlgorithmForLlama
+extrapolation_factor: 0.1
+attention_scaling_factor: 1.0
+only_on_backbone: true
+on_linear_weights: true
+on_linear_bias: false
+on_embedding: false
+fix_last_n_layers: 0
+fix_first_n_layers: 0
+magnitude_sparsity_ratio: null
