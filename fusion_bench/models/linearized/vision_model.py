@@ -52,7 +52,7 @@ def load_fft_vision_model_hf(
 
     Args:
         model_name (str): The name of the CLIP vision model to load from Hugging Face.
-        return_vison_model (bool, optional): If False, the full CLIPVisionModel is returned. If True, only the vision model (`CLIPVisionTransformer`) is returned. Defaults to True.
+        return_vision_model (bool, optional): If False, the full CLIPVisionModel is returned. If True, only the vision model (`CLIPVisionTransformer`) is returned. Defaults to True.
 
     Returns:
         Union[CLIPVisionTransformer, CLIPVisionModel]: The vision model.
@@ -80,7 +80,7 @@ def load_lora_vision_model_hf(
         base_model_name (str): The name of the base vision model to load from Hugging Face.
         peft_name (str): The name of the LoRA adaptation to apply to the base model.
         merge_and_unload (bool, optional): If True, the LoRA adaptation is merged into the base model and the LoRA layers are removed. Defaults to False.
-        return_vison_model (bool, optional): If False, the full CLIPVisionModel is returned. If True, only the vision model (`CLIPVisionTransformer`) is returned. Defaults to True.
+        return_vision_model (bool, optional): If False, the full CLIPVisionModel is returned. If True, only the vision model (`CLIPVisionTransformer`) is returned. Defaults to True.
 
     Returns:
         PeftModel: The adapted vision model, optionally merged and unloaded.

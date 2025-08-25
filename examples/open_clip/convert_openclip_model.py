@@ -1,22 +1,18 @@
 # %% imports
+import argparse
 import os
 import sys
 from typing import Optional, cast
 
 import open_clip.model
 import torch
+from src.convert_open_clip_to_hf import copy_vision_model_and_projection
 from transformers.models.clip import (
     CLIPConfig,
-    CLIPVisionModel,
     CLIPModel,
     CLIPVisionConfig,
+    CLIPVisionModel,
 )
-from src.convert_open_clip_to_hf import (
-    copy_vison_model_and_projection,
-)
-
-import argparse
-
 
 MODEL_ROOT_PATH = ".cache/task_vectors_checkpoints"
 
@@ -105,7 +101,7 @@ def convert_open_clip_vision_model_to_hf_by_path(
 
     # copy open_clip model to hf model
     with torch.no_grad():
-        copy_vison_model_and_projection(hf_model, pt_model)
+        copy_vision_model_and_projection(hf_model, pt_model)
         hf_model.logit_scale = pt_model.logit_scale
 
         # test hf model
