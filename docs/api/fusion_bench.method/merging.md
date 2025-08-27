@@ -27,7 +27,7 @@
         - WeightedAverageAlgorithm
         - WeightedAverageForLLama
 
-### Spherical Linear Interpolation (Slerp)
+### Spherical Linear Interpolation (SLERP)
 
 ::: fusion_bench.method
     options:
@@ -35,6 +35,7 @@
         heading_level: 4
         members:
         - SlerpMergeAlgorithm
+        - SlerpForCausalLM
 
 ### Task Arithmetic
 

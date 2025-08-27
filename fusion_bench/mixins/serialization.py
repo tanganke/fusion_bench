@@ -4,7 +4,7 @@ from copy import deepcopy
 from functools import wraps
 from inspect import Parameter, _ParameterKind
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Union, Mapping
 
 from omegaconf import DictConfig, OmegaConf
 
@@ -19,6 +19,20 @@ __all__ = [
     "auto_register_config",
     "BaseYAMLSerializable",
 ]
+
+
+def _get_attr_name(config_mapping: Mapping[str, str], param_name):
+    for attr_name, p in config_mapping.items():
+        if p == param_name:
+            return attr_name
+    else:
+        raise ValueError(f"Parameter {param_name} not found in config mapping.")
+
+
+def _set_attr(self, param_name: str, value):
+    attr_name = _get_attr_name(self._config_mapping, param_name)
+    log.debug(f"set {attr_name} to {value}. Parameter name: {param_name}")
+    setattr(self, attr_name, value)
 
 
 def auto_register_config(cls):
@@ -103,8 +117,7 @@ def auto_register_config(cls):
             cls._config_mapping[param_name] = param_name
 
     def __init__(self, *args, **kwargs):
-        nonlocal original_init, registered_parameters
-
+        log.debug(f"set attributes for {self.__class__.__name__} in {cls.__name__}")
         # auto-register the attributes based on the signature
         sig = inspect.signature(original_init)
         param_names = list(sig.parameters.keys())[1:]  # Skip 'self'
@@ -117,7 +130,7 @@ def auto_register_config(cls):
                     _ParameterKind.VAR_POSITIONAL,
                     _ParameterKind.VAR_KEYWORD,
                 ]:
-                    setattr(self, self._config_mapping[param_name], arg_value)
+                    _set_attr(self, param_name, arg_value)
 
         # Handle keyword arguments and defaults
         for param_name in param_names:
@@ -131,12 +144,12 @@ def auto_register_config(cls):
                     continue
 
                 if param_name in kwargs:
-                    setattr(self, self._config_mapping[param_name], kwargs[param_name])
+                    _set_attr(self, param_name, kwargs[param_name])
                 else:
                     # Set default value if available and attribute doesn't exist
                     default_value = sig.parameters[param_name].default
                     if default_value is not Parameter.empty:
-                        setattr(self, self._config_mapping[param_name], default_value)
+                        _set_attr(self, param_name, default_value)
 
         # Call the original __init__
         result = original_init(self, *args, **kwargs)

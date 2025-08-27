@@ -4,6 +4,14 @@
 
 <div class="grid cards" markdown style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
 
+- **Structured Configs**
+
+    ---
+
+    Learn how to build structured configuration files and group configurations effectively in FusionBench.
+
+    [:octicons-arrow-right-24: Read More](structured_configs.md)
+
 - **CLIP Simple Average**
 
     ---
@@ -11,14 +19,6 @@
     Merge clip vision models using simple average.
 
     [:octicons-arrow-right-24: Read More](clip_simple_average.md)
-
-- **Evaluate Single CLIP Model**
-    
-    ---
-
-    Evaluate the performance of a single CLIP model on image classification tasks.
-
-    [:octicons-arrow-right-24: Read More](evaluate_single_clip_model.md)
 
 - **CLIP Task Arithmetic**
 
@@ -28,13 +28,23 @@
 
     [:octicons-arrow-right-24: Read More](clip_task_arithmetic.md)
 
-- **Structured Configs**
+- **Evaluate Single CLIP Model**
+    
+    ---
+
+    Evaluate the performance of a single CLIP model on image classification tasks.
+
+    [:octicons-arrow-right-24: Read More](evaluate_single_clip_model.md)
+
+
+- **Merge Large Language Models**
 
     ---
 
-    Learn how to build structured configuration files and group configurations effectively in FusionBench.
+    Merge large language models using SLERP.
 
-    [:octicons-arrow-right-24: Read More](structured_configs.md)
+    [:octicons-arrow-right-24: Read More](merge_llm.md)
+
 
 </div>
 

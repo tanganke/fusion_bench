@@ -71,7 +71,7 @@ class CausalLMPool(BaseModelPool):
         model_name_or_config: str | DictConfig,
         *args,
         **kwargs,
-    ) -> PreTrainedModel:
+    ) -> Union[PreTrainedModel, LazyStateDict]:
         """
         Example of YAML config:
 
