@@ -30,7 +30,7 @@ _import_structure = {
         "TaskArithmeticForLlama",
         "LinearInterpolationAlgorithm",
     ],
-    "slerp": ["SlerpMergeAlgorithm"],
+    "slerp": ["SlerpMergeAlgorithm", "SlerpForCausalLM"],
     "simple_average": ["SimpleAverageAlgorithm"],
     "weighted_average": ["WeightedAverageAlgorithm", "WeightedAverageForLLama"],
     "task_arithmetic": ["TaskArithmeticAlgorithm"],
@@ -215,7 +215,7 @@ if TYPE_CHECKING:
         RegMeanAlgorithmPlusPlus,
     )
     from .simple_average import SimpleAverageAlgorithm
-    from .slerp import SlerpMergeAlgorithm
+    from .slerp import SlerpForCausalLM, SlerpMergeAlgorithm
     from .smile_upscaling import (
         SingularProjectionMergingAlgorithm,
         SmileUpscalingAlgorithm,
