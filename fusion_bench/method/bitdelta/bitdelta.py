@@ -6,7 +6,11 @@ import torch.nn.functional as F
 from tqdm.auto import tqdm
 
 from fusion_bench import BaseAlgorithm, BaseModelPool
-from fusion_bench.mixins import LightningFabricMixin, SimpleProfilerMixin
+from fusion_bench.mixins import (
+    LightningFabricMixin,
+    SimpleProfilerMixin,
+    auto_register_config,
+)
 from fusion_bench.modelpool import CausalLMPool
 
 from .bitdelta_utils.data import get_dataloader, get_dataset
@@ -15,23 +19,12 @@ from .bitdelta_utils.diff import compress_diff, save_diff, save_full_model
 log = logging.getLogger(__name__)
 
 
+@auto_register_config
 class BitDeltaAlgorithm(
-    BaseAlgorithm,
     LightningFabricMixin,
     SimpleProfilerMixin,
+    BaseAlgorithm,
 ):
-    _config_mapping = BaseAlgorithm._config_mapping | {
-        "save_dir": "save_dir",
-        "save_full_model": "save_full_model",
-        "lr": "lr",
-        "batch_size": "batch_size",
-        "num_steps": "num_steps",
-        "dataset_name": "dataset_name",
-        "subset": "subset",
-        "split": "split",
-        "max_length": "max_length",
-    }
-
     def __init__(
         self,
         save_dir: str,
@@ -46,15 +39,6 @@ class BitDeltaAlgorithm(
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self.save_dir = save_dir
-        self.save_full_model = save_full_model
-        self.lr = lr
-        self.batch_size = batch_size
-        self.num_steps = num_steps
-        self.dataset_name = dataset_name
-        self.subset = subset
-        self.split = split
-        self.max_length = max_length
 
     def run(self, modelpool: CausalLMPool):
         if self.save_dir is None:
