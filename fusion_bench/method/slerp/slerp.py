@@ -179,6 +179,11 @@ class SlerpForCausalLM(
             model: "PreTrainedModel" = deepcopy(primary_model.meta_module)
             model.to(device=primary_model._device)
             model.load_state_dict(state_dict)
+        else:
+            raise TypeError(
+                f"Unsupported model type: {type(primary_model)}. "
+                "Expected nn.Module or LazyStateDict."
+            )
         if self.model_save_path is not None:
             with timeit_context(f"Saving the model to {self.model_save_path}"):
                 tokenizer = modelpool.load_tokenizer()
