@@ -151,6 +151,7 @@ def get_current_device() -> torch.device:
                     If not set, it defaults to "0".
 
     Example:
+
         >>> device = get_current_device()
         >>> print(device)
         xpu:0  # or npu:0, mps:0, cuda:0, cpu depending on availability

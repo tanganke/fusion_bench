@@ -92,6 +92,7 @@ def set_default_dtype(dtype: torch.dtype) -> Generator[None, None, None]:
         ContextManager: context manager for setting default dtype.
 
     Example:
+
         >>> with set_default_dtype(torch.bfloat16):
         >>>     x = torch.tensor([1, 2, 3])
         >>>     x.dtype
