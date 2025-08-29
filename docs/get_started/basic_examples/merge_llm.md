@@ -39,15 +39,15 @@ You can experiment with different interpolation factors by overriding the config
 
 ```bash
 # Favor the first model more (closer to model_1)
-fusion_bench --config-path $PWD/config/_get_started --config-name llm_slerp 
+fusion_bench --config-path $PWD/config/_get_started --config-name llm_slerp \
     method.t=0.3
 
 # Balanced interpolation (default)
-fusion_bench --config-path $PWD/config/_get_started --config-name llm_slerp 
+fusion_bench --config-path $PWD/config/_get_started --config-name llm_slerp \
     method.t=0.5
 
 # Favor the second model more (closer to model_2)
-fusion_bench --config-path $PWD/config/_get_started --config-name llm_slerp 
+fusion_bench --config-path $PWD/config/_get_started --config-name llm_slerp \
     method.t=0.7
 ```
 

@@ -129,7 +129,6 @@ def human_readable(num: int) -> str:
     Converts a number into a human-readable string with appropriate magnitude suffix.
 
     Examples:
-
         ```python
         print(human_readable(1500))
         # Output: '1.50K'
@@ -201,7 +200,6 @@ def count_parameters(module: nn.Module, non_zero_only: bool = False) -> tuple[in
         tuple: A tuple containing the number of trainable parameters and the total number of parameters.
 
     Examples:
-
         ```python
         # Count the parameters
         trainable_params, all_params = count_parameters(model)

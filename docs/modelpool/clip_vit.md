@@ -2,6 +2,17 @@
 
 This document provides comprehensive information about CLIP-ViT models for open vocabulary image classification, including model implementation details, usage instructions, and experimental results. The `CLIPVisionModelPool` class manages collections of pre-trained and fine-tuned CLIP Vision models for open vocabulary image classification tasks.
 
+## Classification Head Initialization
+
+FusionBench employs CLIP's zero-shot classification approach. The classification head is constructed by:
+
+1. Generating text embeddings for each class name using predefined templates (e.g., "a photo of a {class}")
+2. Computing text embeddings using CLIP's text encoder for all class-template combinations
+3. Averaging embeddings across templates to obtain final class representations
+4. These text embeddings serve as the classification weights
+
+Implementation details can be found at [`CLIPClassificationMixin.setup_zero_shot_classification_head`][fusion_bench.mixins.CLIPClassificationMixin.setup_zero_shot_classification_head].
+
 ## The Eight Tasks
 
 The most common eight tasks used in the research community are SUN397, Cars, RESISC45, EuroSAT, SVHN, GTSRB, MNIST, and DTD.
