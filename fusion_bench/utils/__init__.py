@@ -20,3 +20,4 @@ from .packages import import_object
 from .parameters import *
 from .pylogger import get_rankzero_logger
 from .timer import timeit_context
+from .type import BoolStateDictType, StateDictType, TorchModelType
