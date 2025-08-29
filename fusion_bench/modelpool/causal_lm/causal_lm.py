@@ -305,6 +305,7 @@ class CausalLMPool(BaseModelPool):
             - May upload files to Hugging Face Hub
 
         Example:
+            ```python
             >>> pool = CausalLMPool(models=..., tokenizer=...)
             >>> model = pool.load_model("my_model")
             >>> pool.save_model(
@@ -314,6 +315,7 @@ class CausalLMPool(BaseModelPool):
             ...     model_dtype="float16",
             ...     push_to_hub=True
             ... )
+            ```
         """
         path = os.path.expanduser(path)
         # NOTE: if tokenizer is provided, it will be saved regardless of `save_tokenizer`
@@ -353,11 +355,13 @@ class CausalLMBackbonePool(CausalLMPool):
         the internal structure of the model to extract the backbone layers.
 
     Example:
+        ```python
         >>> backbone_pool = CausalLMBackbonePool(
         ...     models={"model_a": "microsoft/DialoGPT-medium"},
         ...     tokenizer="microsoft/DialoGPT-medium"
         ... )
         >>> layers = backbone_pool.load_model("model_a")  # Returns nn.ModuleList of transformer layers
+        ```
     """
 
     def load_model(
