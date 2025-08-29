@@ -113,11 +113,27 @@ class CLIPClassificationMixin(LightningFabricMixin):
         clip_model: Optional[CLIPModel] = None,
         task_names: Optional[List[str]] = None,
     ):
+        """
+        Initializes a zero-shot classification head.
+
+        This method constructs a zero-shot classification head by generating text embeddings for each class name using a set of templates.
+        These embeddings function as the weights of the classification layer. The method also extracts the `visual_projection` and `logit_scale`
+        from the provided CLIP model, which are necessary for calculating the final logits.
+
+        Args:
+            clip_processor (Optional[CLIPProcessor]): The processor for the CLIP model. If not provided, it is loaded from the model pool.
+            clip_model (Optional[CLIPModel]): The CLIP model to use. If not provided, a pretrained model is loaded from the model pool.
+            task_names (Optional[List[str]]): A list of task names to set up the classification head for. If not provided, all models in the model pool will be used.
+        """
         self.whether_setup_zero_shot_classification_head = True
+        # load clip model if not provided
         if clip_model is None:
             if self.modelpool.has_pretrained:
                 clip_model = self.modelpool.load_clip_model("_pretrained_")
             else:
+                log.warning(
+                    f"No pretrained CLIP model found, using the model from the model pool: {self.modelpool.model_names[0]}."
+                )
                 clip_model = self.modelpool.load_clip_model(
                     self.modelpool.model_names[0]
                 )
@@ -166,16 +182,20 @@ class CLIPClassificationMixin(LightningFabricMixin):
         image_embeds: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         """
-        Compute the logits of the images for a given task.
+        Computes the classification logits for a batch of images for a specific task.
+
+        This method performs zero-shot classification by calculating the cosine similarity between image and text embeddings.
+        The image embeddings are obtained from the provided vision model, and the text embeddings (zero-shot weights) are pre-computed for the task.
+        The similarity scores are then scaled by the CLIP model's `logit_scale` to produce the final logits.
 
         Args:
-            module (Union[nn.Module, CLIPVisionModel, "CLIPVisionTransformer"]): The module to compute the logits.
-            images (torch.Tensor): The images to compute the logits.
-            task (str): The task to compute the logits.
-            image_embeds (Optional[torch.Tensor]): The precomputed image embeddings. If None, the image embeddings will be computed.
+            module (Union[nn.Module, CLIPVisionModel, "CLIPVisionTransformer"]): The vision encoder part of the CLIP model.
+            images (torch.Tensor): A batch of images to classify.
+            task (str): The name of the classification task.
+            image_embeds (Optional[torch.Tensor]): Pre-computed image embeddings. If provided, the method skips the image encoding step.
 
         Returns:
-            torch.Tensor: The logits of the images.
+            torch.Tensor: A tensor of logits for each image, with shape (batch_size, num_classes).
         """
         text_embeds = self.zeroshot_weights[task]
 

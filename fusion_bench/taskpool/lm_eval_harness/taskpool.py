@@ -16,6 +16,45 @@ log = logging.getLogger(__name__)
 
 
 class LMEvalHarnessTaskPool(BaseTaskPool, LightningFabricMixin):
+    """A task pool implementation that interfaces with the LM Evaluation Harness framework.
+
+    This class provides a wrapper around the LM Evaluation Harness (lm-eval) library,
+    enabling evaluation of language models on various standardized benchmarks and tasks.
+    It inherits from BaseTaskPool and LightningFabricMixin to provide distributed
+    computing capabilities through PyTorch Lightning Fabric.
+
+    The task pool supports evaluation on multiple tasks simultaneously and provides
+    flexible configuration options for batch processing, output formatting, and
+    logging. It automatically handles model setup and wrapping for distributed
+    evaluation when using Lightning Fabric.
+
+    Args:
+        tasks: A single task name or list of task names to evaluate on.
+            Examples: "hellaswag", ["arc_easy", "arc_challenge", "hellaswag"]
+        apply_chat_template: Whether to apply chat template formatting to inputs.
+            Useful for instruction-tuned or chat models.
+        include_path: Path to additional task definitions or custom tasks.
+        batch_size: Number of samples to process in each batch. Larger values
+            may improve throughput but require more memory.
+        metadata: Additional metadata to include in evaluation results.
+        verbosity: Logging verbosity level for the evaluation process.
+        output_path: Custom path for saving evaluation results. If None,
+            results are saved to the default log directory.
+        log_samples: Whether to log individual sample predictions and targets.
+            Useful for debugging but increases output size significantly.
+        _usage_: Internal usage tracking string.
+        _version_: Internal version tracking string.
+        **kwargs: Additional arguments passed to the LM Evaluation Harness.
+
+    Example:
+        >>> taskpool = LMEvalHarnessTaskPool(
+        ...     tasks=["arc_easy", "hellaswag"],
+        ...     batch_size=8,
+        ...     verbosity="INFO"
+        ... )
+        >>> results = taskpool.evaluate(model)
+    """
+
     def __init__(
         self,
         tasks: Union[str, List[str]],
@@ -44,6 +83,48 @@ class LMEvalHarnessTaskPool(BaseTaskPool, LightningFabricMixin):
         self.log_samples = log_samples
 
     def evaluate(self, model, *command_line_args, **kwargs):
+        """Evaluate a language model on the configured tasks using LM Evaluation Harness.
+
+        This method wraps the model with the LM Evaluation Harness framework and
+        executes evaluation on all configured tasks. It automatically handles
+        command-line argument construction, model wrapping with Lightning Fabric
+        for distributed evaluation, and result logging.
+
+        The evaluation process includes:
+        1. Building command-line arguments from instance configuration
+        2. Setting up the LM Evaluation Harness argument parser
+        3. Wrapping the model with Lightning Fabric if not already wrapped
+        4. Creating an HFLM (Hugging Face Language Model) wrapper
+        5. Executing the evaluation through the LM-Eval CLI interface
+
+        Args:
+            model: The language model to evaluate. Can be a Hugging Face model,
+                PyTorch model, or any model compatible with the LM Evaluation Harness.
+                The model will be automatically wrapped with Lightning Fabric for
+                distributed evaluation if not already wrapped.
+            *command_line_args: Additional positional command-line arguments
+                (currently unused but preserved for interface compatibility).
+            **kwargs: Additional keyword arguments that will be converted to
+                command-line flags and passed to the LM Evaluation Harness.
+                Keys will be prefixed with '--' and values converted to strings.
+
+        Returns:
+            None: Results are written to the configured output path and logged.
+
+        Side Effects:
+            - Creates evaluation result files in the output directory
+            - Logs evaluation progress and results
+            - May modify the model by wrapping it with Lightning Fabric
+
+        Example:
+            >>> taskpool = LMEvalHarnessTaskPool(tasks=["arc_easy"])
+            >>> taskpool.evaluate(model, limit=100, device="cuda")
+
+        Note:
+            The method leverages the LM Evaluation Harness's command-line interface
+            internally, which provides standardized evaluation procedures and
+            ensures compatibility with the broader evaluation ecosystem.
+        """
         command_line_args = []
         if self.include_path is not None:
             command_line_args.extend(["--include_path", self.include_path])
