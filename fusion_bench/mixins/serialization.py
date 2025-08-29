@@ -70,8 +70,8 @@ def auto_register_config(cls):
         ```python
         @auto_register_config
         class MyAlgorithm(BaseYAMLSerializable):
-            def __init__(self, learning_rate: float = 0.001, batch_size: int = 32, model_name: str = "default"):
-                super().__init__()
+            def __init__(self, learning_rate: float = 0.001, batch_size: int = 32, model_name: str = "default", **kwargs):
+                super().__init__(**kwargs)
 
         # All instantiation methods work automatically:
         algo1 = MyAlgorithm(0.01, 64)  # positional args
