@@ -1,0 +1,3 @@
+_target_: fusion_bench.method.ModelRecombinationAlgorithm
+# if `return_model_pool` is not null, the argument `return_modelpool` passed to the `run` method will be ignored.
+return_modelpool: null

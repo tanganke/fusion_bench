@@ -1,0 +1,22 @@
+# The 14 task used in the paper: 
+# Wang et al. Localizing Task Information for Improved Model Merging and Compression
+# http://arxiv.org/abs/2405.07813
+defaults:
+  # pre-trained model
+  - clip-vit-large-patch14
+  # eight tasks in the task arithmetic paper
+  - clip-vit-large-patch14_sun397
+  - clip-vit-large-patch14_stanford-cars
+  - clip-vit-large-patch14_resisc45
+  - clip-vit-large-patch14_eurosat
+  - clip-vit-large-patch14_svhn
+  - clip-vit-large-patch14_gtsrb
+  - clip-vit-large-patch14_mnist
+  - clip-vit-large-patch14_dtd
+  # additional 6 tasks in the TALL mask paper
+  - clip-vit-large-patch14_oxford_flowers102
+  - clip-vit-large-patch14_pcam
+  - clip-vit-large-patch14_fer2013
+  - clip-vit-large-patch14_oxford-iiit-pet
+  - clip-vit-large-patch14_stl10
+  - clip-vit-large-patch14_cifar100

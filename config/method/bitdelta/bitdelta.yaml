@@ -1,0 +1,12 @@
+_target_: fusion_bench.method.bitdelta.BitDeltaAlgorithm
+save_dir: null
+save_full_model: false
+# training arguments
+lr: 1e-4
+batch_size: 4
+num_steps: 100
+# dataset arguments
+dataset_name: c4
+subset: en
+split: train
+max_length: 128
