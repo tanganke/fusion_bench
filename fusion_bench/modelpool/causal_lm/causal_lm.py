@@ -429,6 +429,7 @@ def load_peft_causal_lm(
             if the adapters are merged and unloaded.
 
     Example:
+        ```python
         >>> # Load model with adapters for training
         >>> model = load_peft_causal_lm(
         ...     "microsoft/DialoGPT-medium",
@@ -443,6 +444,7 @@ def load_peft_causal_lm(
         ...     merge_and_unload=True,
         ...     is_trainable=False
         ... )
+        ```
     """
     base_model = AutoModelForCausalLM.from_pretrained(
         base_model_path, torch_dtype=torch_dtype
