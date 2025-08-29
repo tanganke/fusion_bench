@@ -47,12 +47,14 @@ class LMEvalHarnessTaskPool(BaseTaskPool, LightningFabricMixin):
         **kwargs: Additional arguments passed to the LM Evaluation Harness.
 
     Example:
+        ```python
         >>> taskpool = LMEvalHarnessTaskPool(
         ...     tasks=["arc_easy", "hellaswag"],
         ...     batch_size=8,
         ...     verbosity="INFO"
         ... )
         >>> results = taskpool.evaluate(model)
+        ```
     """
 
     def __init__(
@@ -111,14 +113,11 @@ class LMEvalHarnessTaskPool(BaseTaskPool, LightningFabricMixin):
         Returns:
             None: Results are written to the configured output path and logged.
 
-        Side Effects:
-            - Creates evaluation result files in the output directory
-            - Logs evaluation progress and results
-            - May modify the model by wrapping it with Lightning Fabric
-
         Example:
+            ```python
             >>> taskpool = LMEvalHarnessTaskPool(tasks=["arc_easy"])
             >>> taskpool.evaluate(model, limit=100, device="cuda")
+            ```
 
         Note:
             The method leverages the LM Evaluation Harness's command-line interface

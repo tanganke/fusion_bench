@@ -15,9 +15,37 @@ log = logging.getLogger(__name__)
 
 
 class NYUv2TaskPool(TaskPool):
+    """Task pool for multi-task learning evaluation on the NYUv2 dataset.
+
+    This task pool provides evaluation capabilities for multi-task learning models
+    on the NYU Depth V2 (NYUv2) dataset, which is a popular benchmark for indoor
+    scene understanding. The dataset supports multiple computer vision tasks
+    including semantic segmentation, depth estimation, and surface normal prediction.
+
+    The task pool is designed to work with encoder-decoder architectures where
+    a shared encoder processes input images and task-specific decoders generate
+    predictions for different tasks. It integrates with PyTorch Lightning for
+    streamlined training and evaluation workflows.
+
+    Supported Tasks:
+        - Semantic segmentation
+        - Depth estimation
+        - Surface normal prediction
+    """
+
     _trainer: L.Trainer = None
 
     def __init__(self, taskpool_config: DictConfig):
+        """Initialize the NYUv2 task pool with configuration settings.
+
+        Args:
+            taskpool_config: Configuration object containing all necessary
+                parameters for the task pool, including:
+                - data_dir: Path to the directory containing NYUv2 dataset
+                - tasks: List of tasks to evaluate (e.g., ["semantic", "depth"])
+                - batch_size: Batch size for evaluation data loader
+                - num_workers: Number of worker processes for data loading
+        """
         self.config = taskpool_config
 
     def load_datasets(self):
