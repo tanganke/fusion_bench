@@ -189,6 +189,45 @@ done
     | MNIST       | 56.0     | 49.8     | 53.5     | 26.6     | 48.2     | 33.1     | **99.8** | 47.1     | 51.7    |
     | DTD         | 66.8     | 75.3     | 65.5     | 43.7     | 49.5     | 45.0     | 68.5     | **85.5** | 62.5    |
 
+
+## The 20-Task Model Collections
+
+In addition to the eight tasks, we have also fine-tuned CLIP-ViT-B/32 models on 12 additional image classification tasks, resulting in a total of 20 tasks. These additional tasks include:
+
+- [oxford_flowers102](https://huggingface.co/datasets/dpdl-benchmark/oxford_flowers102): Oxford 102 Flower dataset with 102 flower categories
+- [pcam](https://huggingface.co/datasets/1aurent/PatchCamelyon): PatchCamelyon dataset for histopathologic cancer detection
+- [fer2013](https://huggingface.co/datasets/clip-benchmark/wds_fer2013): Facial Expression Recognition 2013 dataset
+- [oxford-iiit-pet](https://huggingface.co/datasets/timm/oxford-iiit-pet): Oxford-IIIT Pet dataset with 37 pet breeds
+- [stl10](https://huggingface.co/datasets/tanganke/stl10): STL-10 dataset with 10 classes
+- [cifar100](https://huggingface.co/datasets/tanganke/cifar100): CIFAR-100 dataset with 100 fine-grained classes
+- [cifar10](https://huggingface.co/datasets/tanganke/cifar10): CIFAR-10 dataset with 10 classes
+- [food101](https://huggingface.co/datasets/ethz/food101): Food-101 dataset with 101 food categories
+- [fashion_mnist](https://huggingface.co/datasets/zalando-datasets/fashion_mnist): Fashion-MNIST dataset with 10 fashion categories
+- [emnist_letters](https://huggingface.co/datasets/tanganke/emnist_letters): EMNIST Letters dataset
+- [kmnist](https://huggingface.co/datasets/tanganke/kmnist): Kuzushiji-MNIST dataset
+- [rendered-sst2](https://huggingface.co/datasets/nateraw/rendered-sst2): Rendered Stanford Sentiment Treebank v2 dataset
+
+=== "Performance of the fine-tuned CLIP-ViT-B/32 models"
+
+    | Models      | sun397 | stanford-cars | resisc45 | eurosat |  svhn | gtsrb | mnist |   dtd | oxford_flowers102 |  pcam | fer2013 | oxford-iiit-pet | stl10 | cifar100 | cifar10 | food101 | fashion_mnist | emnist_letters | kmnist | rendered-sst2 |
+    | :---------- | -----: | ------------: | -------: | ------: | ----: | ----: | ----: | ----: | ----------------: | ----: | ------: | --------------: | ----: | -------: | ------: | ------: | ------------: | -------------: | -----: | ------------: |
+    | Pre-trained |  63.18 |         59.58 |    60.27 |   45.00 | 31.63 | 32.53 | 48.26 | 44.20 |             66.45 | 60.64 |   41.25 |           83.32 | 97.12 |    63.72 |   89.83 |   82.36 |         63.01 |          11.98 |   9.95 |         58.65 |
+    | Fine-Tuned  |  74.86 |         78.52 |    95.14 |   99.07 | 97.27 | 98.91 | 99.58 | 79.68 |             88.55 | 87.96 |   71.61 |           92.45 | 97.55 |    88.38 |   97.60 |   88.41 |         94.75 |          95.62 |  98.23 |         71.28 |
+
+=== "Performance of the fine-tuned CLIP-ViT-B/16 models"
+
+    | Models      | sun397 | stanford-cars | resisc45 | eurosat |  svhn | gtsrb | mnist |   dtd | oxford_flowers102 |  pcam | fer2013 | oxford-iiit-pet | stl10 | cifar100 | cifar10 | food101 | fashion_mnist | emnist_letters | kmnist | rendered-sst2 |
+    | :---------- | -----: | ------------: | -------: | ------: | ----: | ----: | ----: | ----: | ----------------: | ----: | ------: | --------------: | ----: | -------: | ------: | ------: | ------------: | -------------: | -----: | ------------: |
+    | Pre-Trained |  65.54 |         64.68 |    66.38 |   54.11 | 51.99 | 43.45 | 51.73 | 45.00 |             71.31 | 54.02 |   46.39 |           88.44 | 98.25 |    66.33 |   90.77 |   87.01 |         67.30 |          12.44 |  11.21 |         60.57 |
+    | Fine-Tuned  |  78.92 |         85.90 |    96.56 |   99.00 | 97.61 | 98.99 | 99.70 | 82.34 |             94.88 | 90.55 |   72.76 |           94.49 | 98.15 |    88.78 |   98.28 |   91.87 |         94.53 |          95.28 |  98.10 |         75.73 |
+
+=== "Performance of the fine-tuned CLIP-ViT-L/14 models"
+
+    | Models      | sun397 | stanford-cars | resisc45 | eurosat |  svhn | gtsrb | mnist |   dtd | oxford_flowers102 |  pcam | fer2013 | oxford-iiit-pet | stl10 | cifar100 | cifar10 | food101 | fashion_mnist | emnist_letters | kmnist | rendered-sst2 |
+    | :---------- | -----: | ------------: | -------: | ------: | ----: | ----: | ----: | ----: | ----------------: | ----: | ------: | --------------: | ----: | -------: | ------: | ------: | ------------: | -------------: | -----: | ------------: |
+    | Pre-Trained |  68.22 |         77.86 |    71.33 |   61.19 | 58.43 | 50.52 | 76.31 | 55.53 |             79.25 | 51.21 |   49.96 |           93.21 | 99.36 |    75.05 |   95.59 |   91.18 |         66.96 |          12.34 |   9.71 |         68.92 |
+    | Fine-Tuned  |  82.76 |         92.77 |    97.38 |   99.11 | 97.92 | 99.24 | 99.76 | 85.48 |             97.67 | 91.13 |   75.93 |           95.75 | 99.23 |    93.00 |   99.13 |   94.77 |         95.28 |          95.43 |  98.30 |         80.45 |
+
 ## CLIPVisionModelPool Implementation
 
 The `CLIPVisionModelPool` class extends the base `BaseModelPool` class and provides specialized functionality for managing CLIP Vision models from Hugging Face Transformers library.
