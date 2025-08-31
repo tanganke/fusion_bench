@@ -1,2 +1,2 @@
 # flake8: noqa F401
-from .slerp import SlerpMergeAlgorithm, SlerpForCausalLM
+from .slerp import SlerpForCausalLM, SlerpMergeAlgorithm

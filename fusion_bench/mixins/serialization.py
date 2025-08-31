@@ -4,7 +4,7 @@ from copy import deepcopy
 from functools import wraps
 from inspect import Parameter, _ParameterKind
 from pathlib import Path
-from typing import Dict, Optional, Union, Mapping
+from typing import Dict, Mapping, Optional, Union
 
 from omegaconf import DictConfig, OmegaConf
 
