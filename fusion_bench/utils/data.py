@@ -1,6 +1,6 @@
 import pickle
 from pathlib import Path
-from typing import Literal, Optional, Union, Tuple, Any
+from typing import Any, Literal, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -37,7 +37,9 @@ class InfiniteDataLoader:
         return data
 
 
-def load_tensor_from_file(file_path: Union[str, Path], device: Optional[Union[str, torch.device]] = None) -> torch.Tensor:
+def load_tensor_from_file(
+    file_path: Union[str, Path], device: Optional[Union[str, torch.device]] = None
+) -> torch.Tensor:
     """
     Loads a tensor from a file, which can be either a .pt, .pth or .np file.
     If the file is not one of these formats, it will try to load it as a pickle file.

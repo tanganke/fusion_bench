@@ -1,5 +1,5 @@
 import warnings
-from typing import Type, List, Any
+from typing import Any, List, Type
 
 from omegaconf import DictConfig
 
