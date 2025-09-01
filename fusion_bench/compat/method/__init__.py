@@ -1,4 +1,5 @@
 import warnings
+from typing import Type, List, Any
 
 from omegaconf import DictConfig
 
@@ -76,7 +77,9 @@ class AlgorithmFactory:
         return algorithm_cls(method_config)
 
     @staticmethod
-    def register_algorithm(name: str, algorithm_cls):
+    def register_algorithm(
+        name: str, algorithm_cls: Type[ModelFusionAlgorithm]
+    ) -> None:
         """
         Register a new algorithm with the factory.
 
@@ -87,7 +90,7 @@ class AlgorithmFactory:
         AlgorithmFactory._aglorithms[name] = algorithm_cls
 
     @classmethod
-    def available_algorithms(cls):
+    def available_algorithms(cls) -> List[str]:
         """
         Get a list of available algorithms.
 

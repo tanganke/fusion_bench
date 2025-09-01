@@ -1,8 +1,8 @@
 # Fusion Module Documentation
 
-- **method**: Implements different methods and algorithms for model training, evaluation, and other tasks. This includes base algorithms, ensemble methods, model recombination techniques, and more. [:octicons-arrow-right-24: Read More](/algorithms)
-- **modelpool**: Manages different model pools. This module includes classes and functions for handling various models, including sequence-to-sequence language models, CLIP models, GPT-2 models, and models specific to the NYU Depth V2 dataset. [:octicons-arrow-right-24: Read More](/modelpool)
-- **taskpool**: Manages different task pools. This module includes classes and functions for handling various tasks, such as image classification with CLIP, text generation with FLAN-T5, and tasks specific to the NYU Depth V2 dataset. [:octicons-arrow-right-24: Read More](/taskpool)
+- **method**: Implements different methods and algorithms for model training, evaluation, and other tasks. This includes base algorithms, ensemble methods, model recombination techniques, and more. [:octicons-arrow-right-24: Read More](../../algorithms/README.md)
+- **modelpool**: Manages different model pools. This module includes classes and functions for handling various models, including sequence-to-sequence language models, CLIP models, GPT-2 models, and models specific to the NYU Depth V2 dataset. [:octicons-arrow-right-24: Read More](../../modelpool/README.md)
+- **taskpool**: Manages different task pools. This module includes classes and functions for handling various tasks, such as image classification with CLIP, text generation with FLAN-T5, and tasks specific to the NYU Depth V2 dataset. [:octicons-arrow-right-24: Read More](../../taskpool/README.md)
 - **models**: Contains model definitions and utilities. This module includes implementations of different models, parameter management, input/output handling, and utility functions for model operations.
 - **tasks**: Defines various tasks. This module includes implementations of different tasks, such as classification, text generation, and specific tasks for models like CLIP and FLAN-T5.
 - **dataset**: Handles various datasets used in the project. This module includes dataset loaders and preprocessors for different types of data such as images, text, and specific datasets like NYU Depth V2.

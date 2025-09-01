@@ -51,4 +51,4 @@ fast_dev_run: false
 
 ### References
 
-::: fusion_bench.taskpool.CLIPVisionModelTaskPool
+For detailed API documentation, see [fusion_bench.taskpool.CLIPVisionModelTaskPool][fusion_bench.taskpool.CLIPVisionModelTaskPool] in the API reference.

@@ -104,7 +104,7 @@ class timeit_context:
         if self.msg is not None:
             self._log("  " * timeit_context.nest_level + "[BEGIN] " + str(self.msg))
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """
         Exit the timing context and log the elapsed time.
 

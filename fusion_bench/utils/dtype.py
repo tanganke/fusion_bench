@@ -1,5 +1,5 @@
 import contextlib
-from typing import Dict, Generator, Iterable, Optional, Tuple
+from typing import Dict, Generator, Iterable, Optional, Tuple, Union
 
 import torch
 from transformers.utils import (
@@ -25,7 +25,7 @@ PRECISION_STR_TO_DTYPE: Dict[str, torch.dtype] = {
 }
 
 
-def parse_dtype(dtype: Optional[str]):
+def parse_dtype(dtype: Optional[str]) -> Optional[torch.dtype]:
     """
     Parses a string representation of a data type and returns the corresponding torch.dtype.
 

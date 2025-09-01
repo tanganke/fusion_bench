@@ -15,6 +15,7 @@ dataset = glue.load_dataset("mrpc")
 from functools import partial
 from pathlib import Path
 from typing import Literal
+from datasets import Dataset
 
 from datasets import Dataset, load_dataset, load_from_disk
 from transformers import PreTrainedTokenizer
@@ -121,7 +122,7 @@ class TokenizedGLUE:
 
     def load_dataset(
         self, name: Literal["mrpc", "mnli", "cola", "sst2", "qnli", "qqp", "rte"]
-    ):
+    ) -> Dataset:
         """
         Load and tokenize a GLUE dataset.
 

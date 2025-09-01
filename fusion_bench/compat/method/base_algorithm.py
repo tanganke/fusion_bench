@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from omegaconf import DictConfig
 
 if TYPE_CHECKING:
+    from fusion_bench import BaseModelPool
     from fusion_bench.programs.base_program import BaseHydraProgram
 
 __all__ = ["ModelFusionAlgorithm"]
@@ -51,7 +52,7 @@ class ModelFusionAlgorithm(ABC):
         pass
 
     @abstractmethod
-    def run(self, modelpool):
+    def run(self, modelpool: "BaseModelPool") -> Any:
         """
         Fuse the models in the given model pool.
 

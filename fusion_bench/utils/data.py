@@ -1,6 +1,6 @@
 import pickle
 from pathlib import Path
-from typing import Literal, Optional, Union
+from typing import Literal, Optional, Union, Tuple, Any
 
 import numpy as np
 import torch
@@ -37,7 +37,7 @@ class InfiniteDataLoader:
         return data
 
 
-def load_tensor_from_file(file_path: Union[str, Path], device=None) -> torch.Tensor:
+def load_tensor_from_file(file_path: Union[str, Path], device: Optional[Union[str, torch.device]] = None) -> torch.Tensor:
     """
     Loads a tensor from a file, which can be either a .pt, .pth or .np file.
     If the file is not one of these formats, it will try to load it as a pickle file.
@@ -72,7 +72,7 @@ def train_validation_split(
     validation_size: Optional[int] = None,
     random_seed: Optional[int] = None,
     return_split: Literal["all", "train", "val"] = "both",
-):
+) -> Union[Tuple[Dataset, Dataset], Dataset]:
     """
     Split a dataset into a training and validation set.
 
@@ -134,7 +134,7 @@ def train_validation_test_split(
     test_fraction: float,
     random_seed: Optional[int] = None,
     return_spilt: Literal["all", "train", "val", "test"] = "all",
-):
+) -> Union[Tuple[Dataset, Dataset, Dataset], Dataset]:
     """
     Split a dataset into a training, validation and test set.
 

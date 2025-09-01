@@ -1,7 +1,7 @@
 import importlib.metadata
 import importlib.util
 from functools import lru_cache
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from packaging import version
 
@@ -69,7 +69,7 @@ def is_vllm_available():
     return _is_package_available("vllm")
 
 
-def import_object(abs_obj_name: str):
+def import_object(abs_obj_name: str) -> Any:
     """
     Imports a class from a module given the absolute class name.
 
@@ -84,7 +84,7 @@ def import_object(abs_obj_name: str):
     return getattr(module, obj_name)
 
 
-def compare_versions(v1, v2):
+def compare_versions(v1: str, v2: str) -> int:
     """Compare two version strings.
     Returns -1 if v1 < v2, 0 if v1 == v2, 1 if v1 > v2"""
 

@@ -57,5 +57,5 @@ CLIPTemplaetFactory.register_dataset(
 
 ## Reference
 
-::: fusion_bench.tasks.clip_classification.CLIPTemplateFactory
+For detailed API documentation, see [fusion_bench.tasks.clip_classification.CLIPTemplateFactory][fusion_bench.tasks.clip_classification.CLIPTemplateFactory] in the API reference.
 
