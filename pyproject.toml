@@ -24,6 +24,7 @@ dependencies = [
     "scipy",
     "h5py",
     "pytest",
+    "joblib",
     "transformers!=4.49", # Known issue with version 4.49 when running flan-t5 inference
     "pillow!=11.2.1",     # Known issue with version 11.2.1 when loading food101 dataset
 ]
