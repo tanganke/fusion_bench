@@ -7,53 +7,12 @@ import torch
 from torch import Tensor, nn
 from tqdm.autonotebook import tqdm
 
-from fusion_bench.method import BaseAlgorithm
+import fusion_bench.method.regmean.utils as regmean_utils
+from fusion_bench import BaseAlgorithm, auto_register_config
 from fusion_bench.mixins import SimpleProfilerMixin
 from fusion_bench.modelpool import BaseModelPool
 
 log = logging.getLogger(__name__)
-
-
-def get_param_names_to_merge(
-    input_param_names: List[str], exclude_param_names_regex: list
-):
-    """
-    get the names of parameters that need to be merged
-    :param input_param_names: list, names of input parameters
-    :param exclude_param_names_regex: list, regular expression of names of parameters that need to be excluded
-    :return:
-    """
-    param_names_to_merge = []
-    for param_name in input_param_names:
-        exclude = any(
-            [
-                re.match(exclude_pattern, param_name)
-                for exclude_pattern in exclude_param_names_regex
-            ]
-        )
-        if not exclude:
-            param_names_to_merge.append(param_name)
-    return param_names_to_merge
-
-
-def get_modules_to_merge(model: nn.Module, include_module_types: list):
-    """
-    get the model modules that need to be merged, whose type is in include_module_types
-    :param model: nn.Module, input model
-    :param include_module_types: list, module types that want to include
-    :return:
-    """
-    modules_to_merge: Dict[str, nn.Module] = {}
-    for module_name, module in model.named_modules():
-        is_valid_type = not include_module_types or any(
-            [
-                isinstance(module, include_module_type)
-                for include_module_type in include_module_types
-            ]
-        )
-        if is_valid_type:
-            modules_to_merge[module_name] = module
-    return modules_to_merge
 
 
 def reduce_non_diagonal_elements(
@@ -130,12 +89,16 @@ def merging_with_regmean_weights(
 ):
     """
     merge parameters of different models with computed regmean weights
-    :param models_to_merge_param_dict: dict, dictionary of list, where key is the parameter name,
-    value is a list of the corresponding parameters of all the models that need to be merged
-    :param models_to_merge_regmean_weights_list: list, list of dictionaries with length len(models_to_merge),
-    each dictionary records the regmean weights (matrix) of parameters for each model that needs to be merged, key is module name
-    :param reduce_non_diagonal_ratio: float, reduce non-diagonal elements in regmean weights by multiplying this scalar
-    :return:
+
+    Asrgs:
+        models_to_merge_param_dict: dict, dictionary of list, where key is the parameter name,
+            value is a list of the corresponding parameters of all the models that need to be merged
+        models_to_merge_regmean_weights_list: list, list of dictionaries with length len(models_to_merge),
+            each dictionary records the regmean weights (matrix) of parameters for each model that needs to be merged, key is module name
+        reduce_non_diagonal_ratio: float, reduce non-diagonal elements in regmean weights by multiplying this scalar
+
+    Returns:
+        dict: merged model parameters
     """
     # dict, dictionary of model parameters
     merged_params = {}
@@ -176,14 +139,12 @@ def merging_with_regmean_weights(
     return merged_params
 
 
-class RegMeanAlgorithmPlusPlus(BaseAlgorithm, SimpleProfilerMixin):
+@auto_register_config
+class RegMeanAlgorithmPlusPlus(
+    SimpleProfilerMixin,
+    BaseAlgorithm,
+):
     _include_module_type = [nn.Linear]
-    _config_mapping = {
-        "num_regmean_examples": "num_regmean_examples",
-        "exclude_param_names_regex": "exclude_param_names_regex",
-        "reduce_non_diagonal_ratio": "reduce_non_diagonal_ratio",
-        "weight_transpose": "weight_transpose",
-    }
 
     def __init__(
         self,
@@ -194,11 +155,11 @@ class RegMeanAlgorithmPlusPlus(BaseAlgorithm, SimpleProfilerMixin):
         weight_transpose: bool,
         **kwargs,
     ):
+        super().__init__(**kwargs)
         self.num_regmean_examples = num_regmean_examples
         self.exclude_param_names_regex = exclude_param_names_regex
         self.reduce_non_diagonal_ratio = reduce_non_diagonal_ratio
         self.weight_transpose = weight_transpose
-        super().__init__(**kwargs)
 
     def run(self, modelpool: BaseModelPool, **kwargs):
         if not isinstance(modelpool, BaseModelPool):
@@ -262,7 +223,7 @@ class RegMeanAlgorithmPlusPlus(BaseAlgorithm, SimpleProfilerMixin):
 
                     # exclude parameter whose name matches element in exclude_param_names_regex
                     if param_names_to_merge is None:
-                        param_names_to_merge = get_param_names_to_merge(
+                        param_names_to_merge = regmean_utils.get_param_names_to_merge(
                             input_param_names=list(param_dict.keys()),
                             exclude_param_names_regex=self.config.get(
                                 "exclude_param_names_regex", []
@@ -274,7 +235,7 @@ class RegMeanAlgorithmPlusPlus(BaseAlgorithm, SimpleProfilerMixin):
                             param_dict[param_name]
                         )
 
-                    linear_modules_to_merge = get_modules_to_merge(
+                    linear_modules_to_merge = regmean_utils.get_modules_to_merge(
                         model=layer_to_merge,
                         include_module_types=self._include_module_type,
                     )
@@ -294,7 +255,7 @@ class RegMeanAlgorithmPlusPlus(BaseAlgorithm, SimpleProfilerMixin):
                             linear_modules_to_merge=linear_modules_to_merge,
                         )
 
-                        module_subset = get_param_names_to_merge(
+                        module_subset = regmean_utils.get_param_names_to_merge(
                             input_param_names=list(param_dict.keys()),
                             exclude_param_names_regex=self.exclude_param_names_regex,
                         )

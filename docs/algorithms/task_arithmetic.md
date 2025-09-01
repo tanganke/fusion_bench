@@ -25,6 +25,8 @@ $$ \theta = \theta_0 + \lambda \sum_{i} \tau_i. $$
 
 The choice of the scaling coefficient $\lambda$ plays a crucial role in the final model performance. Typically, $\lambda$ is chosen based on validation set performance. 
 
+Recent work has also explored task arithmetic in the tangent space, which can provide improved editing of pre-trained models[^3]. 
+
 ## Examples
 
 ### CLI Usage

@@ -42,7 +42,7 @@ class ModelPool(ABC):
             ), "Duplicate model names found in model pool"
             self._model_names = model_names
 
-    def __len__(self):
+    def __len__(self) -> int:
         """
         Return the number of models in the model pool, exclude special models such as `_pretrained_`.
 
@@ -66,7 +66,7 @@ class ModelPool(ABC):
         return names
 
     @property
-    def has_pretrained(self):
+    def has_pretrained(self) -> bool:
         """
         Check if the pretrained model is available in the model pool.
 
@@ -78,7 +78,7 @@ class ModelPool(ABC):
                 return True
         return False
 
-    def get_model_config(self, model_name: str):
+    def get_model_config(self, model_name: str) -> Dict:
         """
         Retrieves the configuration for a specific model from the model pool.
 

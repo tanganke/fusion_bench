@@ -1,7 +1,7 @@
 import gc
 import logging
 import os
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Union
 
 import torch
 from transformers.utils import (
@@ -11,6 +11,8 @@ from transformers.utils import (
     is_torch_npu_available,
     is_torch_xpu_available,
 )
+
+from .type import T
 
 __all__ = [
     "clear_cuda_cache",
@@ -37,7 +39,7 @@ def clear_cuda_cache():
         log.warning("CUDA is not available. No cache to clear.")
 
 
-def to_device(obj, device: Optional[torch.device], **kwargs):
+def to_device(obj: T, device: Optional[torch.device], **kwargs: Any) -> T:
     """
     Move a given object to the specified device.
 
@@ -102,7 +104,7 @@ def num_devices(devices: Union[int, List[int], str]) -> int:
         )
 
 
-def get_device(obj) -> torch.device:
+def get_device(obj: Any) -> torch.device:
     """
     Get the device of a given object.
 
@@ -242,7 +244,7 @@ def cleanup_cuda():
     torch.cuda.reset_peak_memory_stats()
 
 
-def print_memory_usage(print_fn=print):
+def print_memory_usage(print_fn=print) -> str:
     """
     Print the current GPU memory usage.
 

@@ -121,7 +121,7 @@ class TokenizedGLUE:
 
     def load_dataset(
         self, name: Literal["mrpc", "mnli", "cola", "sst2", "qnli", "qqp", "rte"]
-    ):
+    ) -> Dataset:
         """
         Load and tokenize a GLUE dataset.
 

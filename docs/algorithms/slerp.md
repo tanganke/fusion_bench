@@ -3,7 +3,7 @@ title: SLERP
 ---
 # Spherical Linear Interpolation (SLERP)
 
-SLERP stands for Spherical LinEar inteRPolation.
+SLERP stands for Spherical LinEar inteRPolation[^1].
 
 ## Implementation Details
 

@@ -23,6 +23,7 @@ from transformers import MixtralForCausalLM
 from transformers.models.mixtral.modeling_mixtral import MixtralForCausalLM
 
 import fusion_bench as fb
+from fusion_bench import auto_register_config
 from fusion_bench.method.expert_sparsity.utils.calibration_data import (
     build_calib_loader,
 )
@@ -97,6 +98,7 @@ def dynamic_skipping(
     return model, (res_median, res_mean)
 
 
+@auto_register_config
 class DynamicSkippingPruningForMixtral(
     fb.BaseAlgorithm,
     fb.mixins.LightningFabricMixin,
