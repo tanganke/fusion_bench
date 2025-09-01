@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "fusion_bench"
 description = "A Comprehensive Benchmark of Deep Model Fusion"
 readme = "README.md"
-version = "0.2.22"
+version = "0.2.23"
 authors = [{ name = "Anke Tang", email = "tang.anke@foxmail.com" }]
 license-files = ["LICENSE"]
 requires-python = ">= 3.10"
