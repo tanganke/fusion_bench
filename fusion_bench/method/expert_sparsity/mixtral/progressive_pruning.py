@@ -20,6 +20,7 @@ from tqdm import tqdm
 from transformers import MixtralForCausalLM
 
 import fusion_bench as fb
+from fusion_bench import auto_register_config
 from fusion_bench.method.expert_sparsity.utils.calibration_data import (
     build_calib_loader,
 )
@@ -95,6 +96,7 @@ def progressive_pruning(
     return model, (global_loss_history,)
 
 
+@auto_register_config
 class ProgressivePruningForMixtral(
     fb.BaseAlgorithm,
     fb.mixins.LightningFabricMixin,
