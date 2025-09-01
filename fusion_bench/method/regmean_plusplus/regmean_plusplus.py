@@ -89,12 +89,16 @@ def merging_with_regmean_weights(
 ):
     """
     merge parameters of different models with computed regmean weights
-    :param models_to_merge_param_dict: dict, dictionary of list, where key is the parameter name,
-    value is a list of the corresponding parameters of all the models that need to be merged
-    :param models_to_merge_regmean_weights_list: list, list of dictionaries with length len(models_to_merge),
-    each dictionary records the regmean weights (matrix) of parameters for each model that needs to be merged, key is module name
-    :param reduce_non_diagonal_ratio: float, reduce non-diagonal elements in regmean weights by multiplying this scalar
-    :return:
+
+    Asrgs:
+        models_to_merge_param_dict: dict, dictionary of list, where key is the parameter name,
+            value is a list of the corresponding parameters of all the models that need to be merged
+        models_to_merge_regmean_weights_list: list, list of dictionaries with length len(models_to_merge),
+            each dictionary records the regmean weights (matrix) of parameters for each model that needs to be merged, key is module name
+        reduce_non_diagonal_ratio: float, reduce non-diagonal elements in regmean weights by multiplying this scalar
+
+    Returns:
+        dict: merged model parameters
     """
     # dict, dictionary of model parameters
     merged_params = {}

@@ -48,12 +48,16 @@ def merging_with_regmean_weights(
 ):
     """
     merge parameters of different models with computed regmean weights
-    :param models_to_merge_param_dict: dict, dictionary of list, where key is the parameter name,
-    value is a list of the corresponding parameters of all the models that need to be merged
-    :param models_to_merge_regmean_weights_list: list, list of dictionaries with length len(models_to_merge),
-    each dictionary records the regmean weights (matrix) of parameters for each model that needs to be merged, key is module name
-    :param reduce_non_diagonal_ratio: float, reduce non-diagonal elements in regmean weights by multiplying this scalar
-    :return:
+
+    Args:
+        models_to_merge_param_dict: dict, dictionary of list, where key is the parameter name,
+            value is a list of the corresponding parameters of all the models that need to be merged
+        models_to_merge_regmean_weights_list: list, list of dictionaries with length len(models_to_merge),
+            each dictionary records the regmean weights (matrix) of parameters for each model that needs to be merged, key is module name
+        reduce_non_diagonal_ratio: float, reduce non-diagonal elements in regmean weights by multiplying this scalar
+
+    Returns:
+        dict: merged model parameters
     """
     # dict, dictionary of model parameters
     merged_params = {}
@@ -124,13 +128,17 @@ def regmean_merging(
     reduce_non_diagonal_ratio: float = 1.0,
 ):
     """
-    regmean merging method
-    :param models_to_merge: list, individual models that need to be merged
-    :param trainers: list, trainers of individual models
-    :param exclude_param_names_regex: list, regular expression of names of parameters that need to be excluded
-    :param nums_regmean_examples: list, numbers of examples to compute regmean weights
-    :param reduce_non_diagonal_ratio: float, reduce non-diagonal elements in regmean weights by multiplying this scalar
-    :return:
+    regmean merging method.
+
+    Args:
+        models_to_merge: list, individual models that need to be merged
+        trainers: list, trainers of individual models
+        exclude_param_names_regex: list, regular expression of names of parameters that need to be excluded
+        nums_regmean_examples: list, numbers of examples to compute regmean weights
+        reduce_non_diagonal_ratio: float, reduce non-diagonal elements in regmean weights by multiplying this scalar
+
+    Returns:
+        dict: merged model parameters
     """
 
     def compute_regmean_weights(module_name: str):
