@@ -16,49 +16,9 @@ from fusion_bench.method import BaseAlgorithm
 from fusion_bench.mixins import SimpleProfilerMixin, auto_register_config
 from fusion_bench.modelpool import BaseModelPool
 
+from .utils import get_modules_to_merge, get_param_names_to_merge
+
 log = logging.getLogger(__name__)
-
-
-def get_param_names_to_merge(
-    input_param_names: List[str], exclude_param_names_regex: list
-):
-    """
-    get the names of parameters that need to be merged
-    :param input_param_names: list, names of input parameters
-    :param exclude_param_names_regex: list, regular expression of names of parameters that need to be excluded
-    :return:
-    """
-    param_names_to_merge = []
-    for param_name in input_param_names:
-        exclude = any(
-            [
-                re.match(exclude_pattern, param_name)
-                for exclude_pattern in exclude_param_names_regex
-            ]
-        )
-        if not exclude:
-            param_names_to_merge.append(param_name)
-    return param_names_to_merge
-
-
-def get_modules_to_merge(model: nn.Module, include_module_types: list):
-    """
-    get the model modules that need to be merged, whose type is in include_module_types
-    :param model: nn.Module, input model
-    :param include_module_types: list, module types that want to include
-    :return:
-    """
-    modules_to_merge: Dict[str, nn.Module] = {}
-    for module_name, module in model.named_modules():
-        is_valid_type = not include_module_types or any(
-            [
-                isinstance(module, include_module_type)
-                for include_module_type in include_module_types
-            ]
-        )
-        if is_valid_type:
-            modules_to_merge[module_name] = module
-    return modules_to_merge
 
 
 def reduce_non_diagonal_elements(
@@ -281,7 +241,10 @@ def regmean_merging(
 
 
 @auto_register_config
-class RegMeanAlgorithm(BaseAlgorithm, SimpleProfilerMixin):
+class RegMeanAlgorithm(
+    SimpleProfilerMixin,
+    BaseAlgorithm,
+):
     _include_module_type = [nn.Linear]
 
     def __init__(
