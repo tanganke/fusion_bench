@@ -76,6 +76,9 @@ class LazyStateDict(Mapping[str, torch.Tensor], Generic[TorchModelType]):
     _index: Optional[Dict[str, str]]
     """Mapping of parameter names to checkpoint files."""
 
+    meta_module: TorchModelType = None
+    meta_module_class: Optional[Type[TorchModelType]] = None
+
     def __init__(
         self,
         checkpoint: str,

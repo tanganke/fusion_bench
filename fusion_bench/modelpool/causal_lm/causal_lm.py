@@ -1,5 +1,5 @@
 """
-Online documentation for this module: https://tanganke.github.io/fusion_bench/modelpool/causal_lm
+Online documentation for this module: https://tanganke.github.io/fusion_bench/modelpool/llm
 """
 
 import logging
@@ -26,6 +26,7 @@ from fusion_bench import (
     instantiate,
     parse_dtype,
 )
+from fusion_bench.models.hf_utils import create_default_model_card
 from fusion_bench.utils.lazy_state_dict import LazyStateDict
 
 log = logging.getLogger(__name__)
@@ -271,13 +272,16 @@ class CausalLMPool(BaseModelPool):
         save_tokenizer: bool = False,
         tokenizer_kwargs=None,
         tokenizer: Optional[PreTrainedTokenizer] = None,
+        algorithm_config: Optional[DictConfig] = None,
+        description: Optional[str] = None,
+        base_model_in_modelcard: bool = True,
         **kwargs,
     ):
         """Save a model to the specified path with optional tokenizer and Hub upload.
 
         This method provides comprehensive model saving capabilities including
-        optional tokenizer saving, dtype conversion, and Hugging Face Hub upload.
-        The model is saved in the standard Hugging Face format.
+        optional tokenizer saving, dtype conversion, model card creation, and
+        Hugging Face Hub upload. The model is saved in the standard Hugging Face format.
 
         Args:
             model: The PreTrainedModel instance to be saved.
@@ -295,14 +299,12 @@ class CausalLMPool(BaseModelPool):
                 when save_tokenizer is True.
             tokenizer: Optional pre-loaded tokenizer instance. If provided, this
                 tokenizer will be saved regardless of the save_tokenizer flag.
+            algorithm_config: Optional DictConfig containing algorithm configuration.
+                If provided, a model card will be created with algorithm details.
+            description: Optional description for the model card. If not provided
+                and algorithm_config is given, a default description will be generated.
             **kwargs: Additional keyword arguments passed to the model's
                 save_pretrained method.
-
-        Side Effects:
-            - Creates model files in the specified directory
-            - Optionally creates tokenizer files in the same directory
-            - May convert the model to a different dtype
-            - May upload files to Hugging Face Hub
 
         Example:
             ```python
@@ -313,7 +315,9 @@ class CausalLMPool(BaseModelPool):
             ...     "/path/to/save",
             ...     save_tokenizer=True,
             ...     model_dtype="float16",
-            ...     push_to_hub=True
+            ...     push_to_hub=True,
+            ...     algorithm_config=algorithm_config,
+            ...     description="Custom merged model"
             ... )
             ```
         """
@@ -336,6 +340,24 @@ class CausalLMPool(BaseModelPool):
             push_to_hub=push_to_hub,
             **kwargs,
         )
+
+        # Create and save model card if algorithm_config is provided
+        if algorithm_config is not None:
+            if description is None:
+                description = "Model created using FusionBench."
+            model_card_str = create_default_model_card(
+                base_model=(
+                    self.get_model_path("_pretrained_")
+                    if base_model_in_modelcard and self.has_pretrained
+                    else None
+                ),
+                models=[self.get_model_path(m) for m in self.model_names],
+                description=description,
+                algorithm_config=algorithm_config,
+                modelpool_config=self.config,
+            )
+            with open(os.path.join(path, "README.md"), "w") as f:
+                f.write(model_card_str)
 
 
 class CausalLMBackbonePool(CausalLMPool):

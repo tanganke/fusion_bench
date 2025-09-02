@@ -6,11 +6,20 @@ http://arxiv.org/abs/2212.04089
 
 import logging
 from copy import deepcopy
-from typing import Dict, List, Mapping, Optional, TypeVar, Union  # noqa: F401
+from typing import (  # noqa: F401
+    TYPE_CHECKING,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    TypeVar,
+    Union,
+)
 
 import torch
 from torch import nn
 
+from fusion_bench import LazyStateDict
 from fusion_bench.method.base_algorithm import BaseAlgorithm
 from fusion_bench.mixins import SimpleProfilerMixin, auto_register_config
 from fusion_bench.modelpool import BaseModelPool
@@ -21,6 +30,8 @@ from fusion_bench.utils.state_dict_arithmetic import (
 )
 from fusion_bench.utils.type import StateDictType, TorchModelType
 
+if TYPE_CHECKING:
+    from transformers import PreTrainedModel
 log = logging.getLogger(__name__)
 
 
@@ -125,25 +136,39 @@ class TaskArithmeticAlgorithm(
             with self.profile("merge weights"):
                 if task_vector is None:
                     task_vector = state_dict_sub(
-                        model.state_dict(keep_vars=True),
-                        pretrained_model.state_dict(keep_vars=True),
+                        model.state_dict(),
+                        pretrained_model.state_dict(),
                     )
                 else:
                     task_vector = state_dict_add(
                         task_vector,
                         state_dict_sub(
-                            model.state_dict(keep_vars=True),
-                            pretrained_model.state_dict(keep_vars=True),
+                            model.state_dict(),
+                            pretrained_model.state_dict(),
                         ),
                     )
         with self.profile("merge weights"):
             # scale the task vector
             task_vector = state_dict_mul(task_vector, self.config.scaling_factor)
             # add the task vector to the pretrained model
-            state_dict = state_dict_add(
-                pretrained_model.state_dict(keep_vars=True), task_vector
-            )
+            state_dict = state_dict_add(pretrained_model.state_dict(), task_vector)
 
         self.print_profile_summary()
-        pretrained_model.load_state_dict(state_dict)
-        return pretrained_model
+
+        # apply state dict to model
+        if isinstance(pretrained_model, nn.Module):
+            model = pretrained_model
+            model.load_state_dict(state_dict)
+        elif isinstance(pretrained_model, LazyStateDict):
+            model = deepcopy(pretrained_model.meta_module)
+            model = model.to_empty(device=pretrained_model._device)
+            result = model.load_state_dict(state_dict, strict=False)
+            if result.unexpected_keys:
+                raise ValueError(
+                    f"Unexpected keys in state dict: {result.unexpected_keys}"
+                )
+            if result.missing_keys:
+                log.warning(f"Missing keys in state dict: {result.missing_keys}")
+        else:
+            raise TypeError(f"Unsupported model type: {type(pretrained_model)}")
+        return model

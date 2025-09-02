@@ -89,7 +89,7 @@ class SimpleAverageAlgorithm(
             modelpool = BaseModelPool(modelpool)
 
         log.info(
-            f"Fusing models using simple average on {len(modelpool.model_names)} models."
+            f"Fusing models using simple average on {len(modelpool.model_names)} models. "
             f"models: {modelpool.model_names}"
         )
         sd: Optional[StateDictType] = None
@@ -119,7 +119,7 @@ class SimpleAverageAlgorithm(
 
         if isinstance(forward_model, LazyStateDict):
             # if the model is a LazyStateDict, convert it to an empty module
-            forward_model = forward_model.meta_module.to_empty(
+            forward_model = deepcopy(forward_model.meta_module).to_empty(
                 device=forward_model._device
             )
         result = forward_model.load_state_dict(sd, strict=False)

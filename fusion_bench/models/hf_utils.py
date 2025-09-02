@@ -143,7 +143,7 @@ def save_pretrained_with_remote_code(
 
 def create_default_model_card(
     models: list[str],
-    *,
+    base_model: Optional[str] = None,
     title: str = "Deep Model Fusion",
     tags: list[str] = ["fusion-bench", "merge"],
     description=None,
@@ -154,6 +154,7 @@ def create_default_model_card(
 
     template: Template = Template(load_model_card_template("default.md"))
     card = template.render(
+        base_model=base_model,
         models=models,
         library_name="transformers",
         title=title,

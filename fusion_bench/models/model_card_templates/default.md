@@ -1,5 +1,8 @@
 ---
 base_model:
+{%- if base_model is not none %}
+- {{ base_model }}
+{%- endif %}
 {%- for model in models %}
 - {{ model }}
 {%- endfor %}
@@ -18,7 +21,11 @@ tags:
 This is a merged model created using [fusion-bench](https://github.com/tanganke/fusion_bench).
 
 The following models were included in the merge:
-{% for model in models %}
+
+{% if base_model is not none %}
+- base model: {{ base_model }}
+{%- endif %}
+{%- for model in models %}
 - {{ model }}
 {%- endfor %}
 

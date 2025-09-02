@@ -6,6 +6,7 @@ from inspect import Parameter, _ParameterKind
 from pathlib import Path
 from typing import Dict, Mapping, Optional, Union
 
+from bidict import MutableBidict, bidict
 from omegaconf import DictConfig, OmegaConf
 
 from fusion_bench.constants import FUSION_BENCH_VERSION
@@ -15,22 +16,29 @@ from fusion_bench.utils.instantiate_utils import set_print_function_call
 log = logging.getLogger(__name__)
 
 __all__ = [
-    "YAMLSerializationMixin",
     "auto_register_config",
+    "YAMLSerializationMixin",
     "BaseYAMLSerializable",
 ]
 
 
-def _get_attr_name(config_mapping: Mapping[str, str], param_name):
-    for attr_name, p in config_mapping.items():
-        if p == param_name:
-            return attr_name
-    else:
-        raise ValueError(f"Parameter {param_name} not found in config mapping.")
-
-
 def _set_attr(self, param_name: str, value):
-    attr_name = _get_attr_name(self._config_mapping, param_name)
+    """
+    Set an attribute on the object using the parameter name from config mapping.
+
+    This function looks up the corresponding attribute name for the given parameter
+    name using the object's _config_mapping, then sets that attribute to the
+    specified value. It also logs the operation for debugging purposes.
+
+    Args:
+        self: The object instance to set the attribute on.
+        param_name (str): The parameter name (config key) to map to an attribute.
+        value: The value to assign to the attribute.
+
+    Raises:
+        ValueError: If the parameter name is not found in the config mapping.
+    """
+    attr_name = self._config_mapping.inverse[param_name]
     log.debug(f"set {attr_name} to {value}. Parameter name: {param_name}")
     setattr(self, attr_name, value)
 
@@ -59,37 +67,16 @@ def auto_register_config(cls):
             functionality and modified __init__ behavior.
 
     Behavior:
-        - **Parameter Registration**: All non-variadic parameters (excluding *args, **kwargs)
+        - **Parameter Registration**: All non-variadic parameters (excluding ``*args``, ``**kwargs``)
           from the __init__ method are automatically added to _config_mapping
         - **Positional Arguments**: Handled in order and mapped to corresponding parameter names
         - **Keyword Arguments**: Processed after positional arguments, overriding any conflicts
         - **Default Values**: Applied when parameters are not provided via arguments
         - **Attribute Setting**: All parameters become instance attributes accessible via dot notation
 
-    Example:
-        ```python
-        @auto_register_config
-        class MyAlgorithm(BaseYAMLSerializable):
-            def __init__(self, learning_rate: float = 0.001, batch_size: int = 32, model_name: str = "default", **kwargs):
-                super().__init__(**kwargs)
-
-        # All instantiation methods work automatically:
-        algo1 = MyAlgorithm(0.01, 64)  # positional args
-        algo2 = MyAlgorithm(learning_rate=0.01, model_name="bert")  # keyword args
-        algo3 = MyAlgorithm(0.01, batch_size=128, model_name="gpt")  # mixed args
-
-        # Attributes are automatically set and can be serialized:
-        print(algo1.learning_rate)  # 0.01
-        print(algo1.batch_size)     # 64
-        print(algo1.model_name)     # "default" (from default value)
-
-        config = algo1.config
-        # DictConfig({'_target_': 'MyAlgorithm', 'learning_rate': 0.01, 'batch_size': 64, 'model_name': 'default'})
-        ```
-
     Note:
         - The decorator wraps the original __init__ method while preserving its signature for IDE support
-        - Parameters with *args or **kwargs signatures are ignored during registration
+        - Parameters with ``*args`` or ``**kwargs`` signatures are ignored during registration
         - The attributes are auto-registered, then the original __init__ method is called,
         - Type hints, method name, and other metadata are preserved using functools.wraps
         - This decorator is designed to work seamlessly with the YAML serialization system
@@ -103,7 +90,10 @@ def auto_register_config(cls):
 
     # Auto-register parameters in _config_mapping
     if not "_config_mapping" in cls.__dict__:
-        cls._config_mapping = deepcopy(getattr(cls, "_config_mapping", {}))
+        cls._config_mapping = deepcopy(getattr(cls, "_config_mapping", bidict()))
+    if not isinstance(cls._config_mapping, bidict):
+        cls._config_mapping = bidict(cls._config_mapping)
+
     registered_parameters = tuple(cls._config_mapping.values())
 
     for param_name in list(sig.parameters.keys())[1:]:  # Skip 'self'
@@ -116,6 +106,7 @@ def auto_register_config(cls):
         ) and (param_name not in registered_parameters):
             cls._config_mapping[param_name] = param_name
 
+    @wraps(original_init)
     def __init__(self, *args, **kwargs):
         log.debug(f"set attributes for {self.__class__.__name__} in {cls.__name__}")
         # auto-register the attributes based on the signature
@@ -162,32 +153,9 @@ def auto_register_config(cls):
 
 class YAMLSerializationMixin:
     _config_key: Optional[str] = None
-    _config_mapping: Dict[str, str] = {}
+    _config_mapping: MutableBidict[str, str] = bidict()
     R"""
     `_config_mapping` is a dictionary mapping the attribute names of the class to the config option names. This is used to convert the class to a DictConfig.
-
-    For example, if an algorithm class is defined as follows:
-    
-    ```python
-    class SomeModelFusionAlgorithm(BaseModelFusionAlgorithm):
-        hyper_parameter_1 = None
-        hyper_parameter_2 = None
-
-        _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
-            "hyper_parameter_1" : "hyper_param_1",
-            "hyper_parameter_2" : "hyper_param_2",
-        }
-        def __init__(self, hyper_param_1: int, hyper_param_2: int):
-            self.hyper_parameter_1 = hyper_param_1
-            self.hyper_parameter_2 = hyper_param_2
-            super().__init__()
-    ```
-
-    The model pool will be converted to a DictConfig as follows:
-        
-    ```python
-    algorithm = SomeModelFusionAlgorithm(hyper_param_1=1, hyper_param_2=2)
-    ```
 
     >>> algorithm.config
         DictCOnfig({'_target_': 'SomeModelFusionAlgorithm', 'hyper_param_1': 1, 'hyper_param_2': 2})
@@ -206,17 +174,6 @@ class YAMLSerializationMixin:
 
         This property converts the model pool instance into a dictionary
         configuration, which can be used for serialization or other purposes.
-
-        Example:
-
-        ```python
-        model = SomeModelFusionAlgorithm(hyper_param_1=1, hyper_param_2=2)
-        config = model.config
-        print(config)
-        # DictConfig({'_target_': 'SomeModelFusionAlgorithm', 'hyper_param_1': 1, 'hyper_param_2': 2})
-        ```
-
-        This is useful for serializing the object to a YAML file or for debugging.
 
         Returns:
             DictConfig: The configuration of the model pool.
@@ -282,16 +239,6 @@ class YAMLSerializationMixin:
                 serialization. This is how the attribute will appear in YAML output.
             value: The value to assign to the attribute.
 
-        Example:
-            ```python
-            model = BaseYAMLSerializable()
-            model.set_option("learning_rate", "lr", 0.001)
-
-            # This sets model.learning_rate = 0.001
-            # and maps it to "lr" in the config output
-            config = model.config
-            # config will contain: {"lr": 0.001, ...}
-            ```
         """
         setattr(self, attr_name, value)
         self._config_mapping[attr_name] = param_name

@@ -1,22 +1,27 @@
 import logging
+import os
 from typing import Dict, List, Mapping, Optional, TypeVar, Union  # noqa: F401
 
 from typing_extensions import override
 
-from fusion_bench import timeit_context
+from fusion_bench import auto_register_config, timeit_context
 from fusion_bench.method import TaskArithmeticAlgorithm
 from fusion_bench.mixins.simple_profiler import SimpleProfilerMixin
 from fusion_bench.modelpool import CausalLMBackbonePool, CausalLMPool
+from fusion_bench.models.hf_utils import create_default_model_card
 
 log = logging.getLogger(__name__)
 
 
-class TaskArithmeticForLlama(TaskArithmeticAlgorithm, SimpleProfilerMixin):
+@auto_register_config
+class TaskArithmeticForCausalLM(
+    TaskArithmeticAlgorithm,
+):
     R"""
     Examples:
 
     fusion_bench \
-        method=linear/task_arithmetic_for_llama \
+        method=linear/task_arithmetic_for_causallm \
             method.scaling_factor=0.3 \
         method.model_save_path=outputs/simle_mixtral_exp_v4/task_arithmetic_0.3 \
         modelpool=CausalLMPool/simle_mixtral_exp_v4.yaml
@@ -29,18 +34,14 @@ class TaskArithmeticForLlama(TaskArithmeticAlgorithm, SimpleProfilerMixin):
     def __init__(
         self,
         scaling_factor: float,
-        merge_backbone: bool,
+        merge_backbone: bool = False,
         model_save_path: Optional[str] = None,
+        **kwargs,
     ):
-        self.merge_backbone = merge_backbone
-        self.model_save_path = model_save_path
-        super().__init__(scaling_factor=scaling_factor)
+        super().__init__(scaling_factor=scaling_factor, **kwargs)
 
     @override
     def run(self, modelpool: CausalLMPool):
-        if self.model_save_path:
-            tokenizer = modelpool.load_tokenizer()
-
         if self.merge_backbone:
             assert modelpool.has_pretrained
             backbone_modelpool = CausalLMBackbonePool(**modelpool.config)
@@ -52,6 +53,15 @@ class TaskArithmeticForLlama(TaskArithmeticAlgorithm, SimpleProfilerMixin):
 
         if self.model_save_path is not None:
             with timeit_context(f"Saving the model to {self.model_save_path}"):
-                tokenizer.save_pretrained(self.model_save_path)
-                model.save_pretrained(self.model_save_path)
+                description = f"Merged model using task arithmetic with scaling factor {self.scaling_factor}."
+                modelpool.save_model(
+                    model=model,
+                    path=self.model_save_path,
+                    save_tokenizer=True,
+                    algorithm_config=self.config,
+                    description=description,
+                )
         return model
+
+
+TaskArithmeticForLlama = TaskArithmeticForCausalLM

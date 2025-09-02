@@ -118,7 +118,7 @@ This will install the latest version of fusion-bench and the dependencies requir
 Documentation for using LM-Eval Harness within FusionBench framework can be found at [this online documentation](https://tanganke.github.io/fusion_bench/taskpool/lm_eval_harness) or in the [`docs/taskpool/lm_eval_harness.md`](docs/taskpool/lm_eval_harness.md) markdown file.
 
 > [!TIP]
-> Documentation for merging large language models using FusionBench can be found at [this online documentation](https://tanganke.github.io/fusion_bench/modelpool/causal_lm) or in the [`docs/modelpool/causal_lm.md`](docs/modelpool/causal_lm.md) markdown file.
+> Documentation for merging large language models using FusionBench can be found at [this online documentation](https://tanganke.github.io/fusion_bench/modelpool/llm) or in the [`docs/modelpool/llm/index.md`](docs/modelpool/llm/index.md) markdown file.
 
 ## Introduction to Deep Model Fusion
 
@@ -146,7 +146,7 @@ The project is structured as follows:
   - `taskpool`: configuration files for the task pool.
   - `model`: configuration files for the models.
   - `dataset`: configuration files for the datasets.
-- `docs/`: documentation for the benchmark. We use [mkdocs](https://www.mkdocs.org/) to generate the documentation. Start the documentation server locally with `mkdocs serve`. The required packages can be installed with `pip install -r mkdocs-requirements.txt`.
+- `docs/`: documentation for the benchmark. We use [mkdocs](https://www.mkdocs.org/) to generate the documentation. Start the documentation server locally with `mkdocs serve`. The required packages can be installed with `pip install -e ".[docs]"`.
 - `examples/`: example scripts for running some of the experiments.
   > **naming convention**: `examples/{method_name}/` contains the files such as bash scripts and jupyter notebooks for the specific method.
 - `tests/`: unit tests for the benchmark.

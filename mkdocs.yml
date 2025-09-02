@@ -43,17 +43,22 @@ nav:
           # - Model Stitching: algorithms/model_stitching.md
           - Model Recombination: algorithms/model_recombination.md
       - Model Compression:
-        - Task Vector Compression:
-            - BitDelta: algorithms/bitdelta.md
-        - Parameter Pruning:
-            - Magnitude Pruning: algorithms/pruning/magnitude_pruning.md
+          - Task Vector Compression:
+              - BitDelta: algorithms/bitdelta.md
+          - Parameter Pruning:
+              - Magnitude Pruning: algorithms/pruning/magnitude_pruning.md
   - Model Pool (Benchmark Models):
       - modelpool/README.md
       - CLIP-ViT Models: modelpool/clip_vit.md
       - ResNet Models for Sence Understanding: modelpool/nyuv2.md
       - GPT-2 Models for Text Classification: modelpool/gpt2_classification.md
       - Flan-T5 Models for Text Generation: modelpool/flan-t5_generation.md
-      - Large Language Models: modelpool/causal_lm.md
+      - Large Language Models:
+          - modelpool/llm/index.md
+          - modelpool/llm/llama-2.md
+          - modelpool/llm/llama-3.md
+          - modelpool/llm/Qwen2.5.md
+          - modelpool/llm/gemma-2.md
   - Task Pool (Evaluation):
       - taskpool/README.md
       - taskpool/dummy.md

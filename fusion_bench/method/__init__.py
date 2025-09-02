@@ -26,9 +26,12 @@ _import_structure = {
     "linear": [
         "ExPOAlgorithm",
         "ExPOAlgorithmForLlama",
+        "SimpleAverageForCausalLM",
         "SimpleAverageForLlama",
+        "TaskArithmeticForCausalLM",
         "TaskArithmeticForLlama",
         "LinearInterpolationAlgorithm",
+        "TiesMergingForCausalLM",
     ],
     "slerp": ["SlerpMergeAlgorithm", "SlerpForCausalLM"],
     "simple_average": ["SimpleAverageAlgorithm"],
@@ -184,8 +187,11 @@ if TYPE_CHECKING:
         ExPOAlgorithm,
         ExPOAlgorithmForLlama,
         LinearInterpolationAlgorithm,
+        SimpleAverageForCausalLM,
         SimpleAverageForLlama,
+        TaskArithmeticForCausalLM,
         TaskArithmeticForLlama,
+        TiesMergingForCausalLM,
     )
     from .lm_finetune import *
     from .mixture_of_experts import (

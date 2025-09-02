@@ -20,8 +20,8 @@ log = logging.getLogger(__name__)
 
 
 def _get_default_config_path():
-    for config_dir in ["fusion_bench_config", "config"]:
-        for config_path_root in [os.getcwd(), PROJECT_ROOT_PATH]:
+    for config_path_root in [os.getcwd(), PROJECT_ROOT_PATH]:
+        for config_dir in ["config", "fusion_bench_config"]:
             config_path = os.path.join(config_path_root, config_dir)
             if os.path.exists(config_path) and os.path.isdir(config_path):
                 return os.path.abspath(config_path)
