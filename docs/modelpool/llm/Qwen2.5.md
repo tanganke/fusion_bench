@@ -57,7 +57,7 @@ Merge all three specialized models using task arithmetic:
 
 ```shell
 scaling_factor=0.8
-fusion_bench path.log_dir=outputs/Qwen2.5-1.5B/three_models/task_arithmetic/${scaling_factor}$ \
+fusion_bench path.log_dir=outputs/Qwen2.5-1.5B/three_models/task_arithmetic/${scaling_factor} \
     method=linear/task_arithmetic_for_causallm \
     method.scaling_factor=${scaling_factor} \
     modelpool=CausalLMPool/Qwen2.5-1.5B_three_models
