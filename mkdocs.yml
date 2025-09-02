@@ -56,7 +56,9 @@ nav:
       - Large Language Models:
           - modelpool/llm/index.md
           - modelpool/llm/llama-2.md
+          - modelpool/llm/llama-3.md
           - modelpool/llm/Qwen2.5.md
+          - modelpool/llm/gemma-2.md
   - Task Pool (Evaluation):
       - taskpool/README.md
       - taskpool/dummy.md
