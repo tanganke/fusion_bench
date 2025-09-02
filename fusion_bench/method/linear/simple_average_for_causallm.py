@@ -18,16 +18,16 @@ log = get_rankzero_logger(__name__)
 
 
 @auto_register_config
-class SimpleAverageForLlama(BaseAlgorithm):
+class SimpleAverageForCausalLM(BaseAlgorithm):
     R"""
     A simple averaging algorithm for LLama models. If `merge_backbone` is set to `True`, the backbone of the model will be averaged and the rest of the model will be loaded from the pre-trained model.
 
     Examples:
-        The following example demonstrates how to use the `SimpleAverageForLlama` algorithm to merge Mistral models.
+        The following example demonstrates how to use the `SimpleAverageForCausalLM` algorithm to merge Mistral models.
 
         ```bash
         fusion_bench \
-            method=linear/simple_average_for_llama \
+            method=linear/simple_average_for_causallm \
             method.model_save_path=outputs/simle_mixtral_exp_v4/simple_average \
             modelpool=CausalLMPool/simle_mixtral_exp_v4.yaml
         ```
@@ -81,3 +81,7 @@ class SimpleAverageForLlama(BaseAlgorithm):
                 with open(os.path.join(self.model_save_path, "README.md"), "w") as f:
                     f.write(model_card_str)
         return model
+
+
+SimpleAverageForLlama = SimpleAverageForCausalLM
+"""Alias for SimpleAverageForCausalLM"""

@@ -1,0 +1,3 @@
+- path.log_dir=outputs/Qwen2.5-1.5B_three_models/simple_average
+- method=linear/simple_average_for_causallm
+- modelpool=CausalLMPool/Qwen2.5-1.5B_three_models

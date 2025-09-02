@@ -26,6 +26,7 @@ _import_structure = {
     "linear": [
         "ExPOAlgorithm",
         "ExPOAlgorithmForLlama",
+        "SimpleAverageForCausalLM",
         "SimpleAverageForLlama",
         "TaskArithmeticForLlama",
         "LinearInterpolationAlgorithm",
@@ -184,6 +185,7 @@ if TYPE_CHECKING:
         ExPOAlgorithm,
         ExPOAlgorithmForLlama,
         LinearInterpolationAlgorithm,
+        SimpleAverageForCausalLM,
         SimpleAverageForLlama,
         TaskArithmeticForLlama,
     )

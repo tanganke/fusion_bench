@@ -1,0 +1,49 @@
+fabric:
+  loggers:
+    _target_: lightning.fabric.loggers.TensorBoardLogger
+    root_dir: ${path.log_dir}
+    name: ''
+    version: ''
+    sub_dir: null
+    default_hp_metric: false
+  _target_: lightning.Fabric
+  _recursive_: true
+  devices: 1
+  strategy: auto
+  accelerator: auto
+path:
+  root_dir: ${oc.env:FUSION_BENCH_PROJECT_ROOT,"."}
+  output_dir: ${.root_dir}/outputs
+  data_dir: ${oc.env:FUSION_BENCH_DATA_DIR,${.root_dir}/data}
+  cache_dir: ${oc.env:FUSION_BENCH_CACHE_DIR,${.output_dir}/cache}
+  log_dir: outputs/Qwen2.5-1.5B_three_models/simple_average
+  work_dir: ${hydra:runtime.cwd}
+modelpool:
+  _target_: fusion_bench.modelpool.CausalLMPool
+  _recursive_: false
+  enable_lazy_loading: true
+  models:
+    _pretrained_: Qwen/Qwen2.5-1.5B
+    math: Qwen/Qwen2.5-Math-1.5B
+    code: Qwen/Qwen2.5-Coder-1.5B
+    instruction: Qwen/Qwen2.5-1.5B-Instruct
+  model_kwargs:
+    torch_dtype: bfloat16
+  tokenizer: Qwen/Qwen2.5-1.5B
+method:
+  _target_: fusion_bench.method.SimpleAverageForCausalLM
+  merge_backbone: false
+  model_save_path: ${path.log_dir}/checkpoint
+  show_pbar: true
+taskpool:
+  _target_: fusion_bench.taskpool.DummyTaskPool
+  model_save_path: null
+_target_: fusion_bench.programs.FabricModelFusionProgram
+_recursive_: false
+fast_dev_run: false
+dry_run: false
+print_config: true
+print_function_call: true
+merged_model_save_path: null
+merged_model_save_kwargs: null
+report_save_path: '{log_dir}/program_report.json'
