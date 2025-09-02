@@ -31,11 +31,11 @@ In FusionBench, we provide several pre-configured model pools for Qwen2.5-1.5B m
 #### Simple Average
 
 ```shell
-fusion_bench path.log_dir=outputs/Qwen2.5-1.5B_three_models/simple_average \
+fusion_bench path.log_dir=outputs/Qwen2.5-1.5B/three_models/simple_average \
     method=linear/simple_average_for_causallm modelpool=CausalLMPool/Qwen2.5-1.5B_three_models
 ```
 
 ```shell
-fusion_bench path.log_dir=outputs/Qwen2.5-1.5B_math_and_code/simple_average \
+fusion_bench path.log_dir=outputs/Qwen2.5-1.5B/math_and_code/simple_average \
     method=linear/simple_average_for_causallm modelpool=CausalLMPool/Qwen2.5-1.5B_math_and_code
 ```
