@@ -149,7 +149,7 @@ else
 
     # Run the evaluation
     if [ -n "$MODEL_ARGS" ]; then
-        rich-run echo lm_eval \
+        rich-run lm_eval \
             --model "$MODEL_TYPE" \
             "$MODEL_ARGS_FLAG" "$MODEL_ARGS" \
             --tasks "$TASK" \
@@ -158,7 +158,7 @@ else
             --confirm_run_unsafe_code \
             "${ADDITIONAL_OPTIONS[@]}"
     else
-        rich-run echo lm_eval \
+        rich-run lm_eval \
             --model "$MODEL_TYPE" \
             --tasks "$TASK" \
             --output_path "$OUTPUT_DIR" \
