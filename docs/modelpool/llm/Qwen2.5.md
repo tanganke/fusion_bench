@@ -43,6 +43,14 @@ fusion_bench path.log_dir=outputs/Qwen2.5-1.5B/three_models/simple_average \
     modelpool=CausalLMPool/Qwen2.5-1.5B_three_models
 ```
 
+> Example for evaluating the merged model using lm-eval-harness on gsm8k and gsm8k_cot tasks:
+> 
+> ```shell
+> scripts/lm_eval/evaluate_task.sh \
+>     outputs/Qwen2.5-1.5B/three_models/simple_average/checkpoint \
+>     --tasks 'gsm8k,gsm8k_cot' --output_path outputs/lm_eval
+> ```
+
 Merge math and code models using simple parameter averaging:
 
 ```shell

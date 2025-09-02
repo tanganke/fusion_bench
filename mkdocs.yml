@@ -67,8 +67,9 @@ nav:
       - Classification Tasks for CLIP: taskpool/clip_vit_classification.md
       - GPT-2 Sequence Classification Tasks: taskpool/gpt2_classification.md
       - Flan-T5 Models for Text Generation: taskpool/flan-t5_generation.md
-      - Task Pool for Language Model Evaluation Harness: taskpool/lm_eval_harness.md
-        # - Command Line Interface:
+      - Large Language Model:
+        - Task Pool for Language Model Evaluation Harness: taskpool/lm_eval_harness.md
+        - taskpool/lm_eval_harness_cli.md
     # - fusion_bench: cli/fusion_bench.md
   - API Reference:
       - api/index.md

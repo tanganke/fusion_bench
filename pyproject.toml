@@ -54,5 +54,5 @@ fusion_bench = [
 profile = "black"
 
 [project.optional-dependencies]
-lm-eval-harness = ["lm-eval", "immutabledict", "langdetect"]
+lm-eval-harness = ["lm-eval", "immutabledict", "langdetect", 'rich-run']
 docs = ["mkdocs", "mkdocs-material", "mkdocstrings[python]"]
