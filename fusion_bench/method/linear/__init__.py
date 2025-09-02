@@ -7,3 +7,4 @@ from .task_arithmetic_for_causallm import (
     TaskArithmeticForCausalLM,
     TaskArithmeticForLlama,
 )
+from .ties_merging_for_causallm import TiesMergingForCausalLM

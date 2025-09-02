@@ -31,6 +31,7 @@ _import_structure = {
         "TaskArithmeticForCausalLM",
         "TaskArithmeticForLlama",
         "LinearInterpolationAlgorithm",
+        "TiesMergingForCausalLM",
     ],
     "slerp": ["SlerpMergeAlgorithm", "SlerpForCausalLM"],
     "simple_average": ["SimpleAverageAlgorithm"],
@@ -190,6 +191,7 @@ if TYPE_CHECKING:
         SimpleAverageForLlama,
         TaskArithmeticForCausalLM,
         TaskArithmeticForLlama,
+        TiesMergingForCausalLM,
     )
     from .lm_finetune import *
     from .mixture_of_experts import (

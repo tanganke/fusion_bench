@@ -9,11 +9,14 @@ Overview of Ties-Merging:
 """
 
 import logging
+from copy import deepcopy
 from typing import Any, Dict, List, Literal, Mapping, Union  # noqa: F401
 
 import torch
 from torch import Tensor, nn
+from transformers import PreTrainedModel
 
+from fusion_bench import LazyStateDict
 from fusion_bench.compat.modelpool import to_modelpool
 from fusion_bench.method import BaseAlgorithm
 from fusion_bench.mixins import SimpleProfilerMixin, auto_register_config
@@ -98,12 +101,25 @@ class TiesMergingAlgorithm(
                 merge_func=merge_func,
             )
             merged_check = flat_ptm + scaling_factor * merged_tv
-            merged_state_dict = vector_to_state_dict(
+            state_dict = vector_to_state_dict(
                 merged_check, ptm_check, remove_keys=remove_keys
             )
-
-            # Load the merged state dict into the pretrained model
-            pretrained_model.load_state_dict(merged_state_dict)
-
         self.print_profile_summary()
-        return pretrained_model
+
+        # apply state dict to model
+        if isinstance(pretrained_model, nn.Module):
+            model = pretrained_model
+            model.load_state_dict(state_dict)
+        elif isinstance(pretrained_model, LazyStateDict[PreTrainedModel]):
+            model = deepcopy(pretrained_model.meta_module)
+            model = model.to_empty(device=pretrained_model._device)
+            result = model.load_state_dict(state_dict, strict=False)
+            if result.unexpected_keys:
+                raise ValueError(
+                    f"Unexpected keys in state dict: {result.unexpected_keys}"
+                )
+            if result.missing_keys:
+                log.warning(f"Missing keys in state dict: {result.missing_keys}")
+        else:
+            raise TypeError(f"Unsupported model type: {type(pretrained_model)}")
+        return model
