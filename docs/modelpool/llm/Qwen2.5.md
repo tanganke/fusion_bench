@@ -16,11 +16,16 @@ The following table shows the architecture details and licensing information for
 
 ## Qwen2.5-1.5B Models
 
-In FusionBench, we provide several pre-configured model pools for Qwen2.5-1.5B models that are commonly used for model fusion experiments. These configurations include base models and their fine-tuned variants specialized for different domains.
+In FusionBench, we provide several pre-configured model pools for Qwen2.5-1.5B models that are commonly used for model fusion experiments. 
+These configurations include base models and their fine-tuned variants specialized for different domains.
+
+This configuration includes the base model along with instruction, math, and code variants:
 
 ```yaml title="config/modelpool/CausalLMPool/Qwen2.5-1.5B_three_models.yaml"
 --8<-- "config/modelpool/CausalLMPool/Qwen2.5-1.5B_three_models.yaml"
 ```
+
+This configuration focuses specifically on mathematical and coding capabilities:
 
 ```yaml title="config/modelpool/CausalLMPool/Qwen2.5-1.5B_math_and_code.yaml"
 --8<-- "config/modelpool/CausalLMPool/Qwen2.5-1.5B_math_and_code.yaml"
@@ -30,12 +35,32 @@ In FusionBench, we provide several pre-configured model pools for Qwen2.5-1.5B m
 
 #### Simple Average
 
+Merge all three specialized models using simple parameter averaging:
+
 ```shell
 fusion_bench path.log_dir=outputs/Qwen2.5-1.5B/three_models/simple_average \
-    method=linear/simple_average_for_causallm modelpool=CausalLMPool/Qwen2.5-1.5B_three_models
+    method=linear/simple_average_for_causallm \
+    modelpool=CausalLMPool/Qwen2.5-1.5B_three_models
 ```
 
 ```shell
 fusion_bench path.log_dir=outputs/Qwen2.5-1.5B/math_and_code/simple_average \
-    method=linear/simple_average_for_causallm modelpool=CausalLMPool/Qwen2.5-1.5B_math_and_code
+    method=linear/simple_average_for_causallm \
+    modelpool=CausalLMPool/Qwen2.5-1.5B_math_and_code
+```
+
+## Citation
+
+If you use Qwen2.5 models in your research, please cite:
+
+```bibtex
+@misc{qwen2025qwen25technicalreport,
+      title={Qwen2.5 Technical Report}, 
+      author={Qwen and : and An Yang and Baosong Yang and Beichen Zhang and Binyuan Hui and Bo Zheng and Bowen Yu and Chengyuan Li and Dayiheng Liu and Fei Huang and Haoran Wei and Huan Lin and Jian Yang and Jianhong Tu and Jianwei Zhang and Jianxin Yang and Jiaxi Yang and Jingren Zhou and Junyang Lin and Kai Dang and Keming Lu and Keqin Bao and Kexin Yang and Le Yu and Mei Li and Mingfeng Xue and Pei Zhang and Qin Zhu and Rui Men and Runji Lin and Tianhao Li and Tianyi Tang and Tingyu Xia and Xingzhang Ren and Xuancheng Ren and Yang Fan and Yang Su and Yichang Zhang and Yu Wan and Yuqiong Liu and Zeyu Cui and Zhenru Zhang and Zihan Qiu},
+      year={2025},
+      eprint={2412.15115},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2412.15115}, 
+}
 ```
