@@ -89,7 +89,7 @@ class SimpleAverageAlgorithm(
             modelpool = BaseModelPool(modelpool)
 
         log.info(
-            f"Fusing models using simple average on {len(modelpool.model_names)} models."
+            f"Fusing models using simple average on {len(modelpool.model_names)} models. "
             f"models: {modelpool.model_names}"
         )
         sd: Optional[StateDictType] = None
