@@ -55,7 +55,7 @@ nav:
       - Flan-T5 Models for Text Generation: modelpool/flan-t5_generation.md
       - Large Language Models:
           - modelpool/llm/index.md
-          - modelpool/llm/Qwen2.5-1.5B.md
+          - modelpool/llm/Qwen2.5.md
   - Task Pool (Evaluation):
       - taskpool/README.md
       - taskpool/dummy.md
