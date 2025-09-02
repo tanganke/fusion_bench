@@ -146,7 +146,7 @@ The project is structured as follows:
   - `taskpool`: configuration files for the task pool.
   - `model`: configuration files for the models.
   - `dataset`: configuration files for the datasets.
-- `docs/`: documentation for the benchmark. We use [mkdocs](https://www.mkdocs.org/) to generate the documentation. Start the documentation server locally with `mkdocs serve`. The required packages can be installed with `pip install -r mkdocs-requirements.txt`.
+- `docs/`: documentation for the benchmark. We use [mkdocs](https://www.mkdocs.org/) to generate the documentation. Start the documentation server locally with `mkdocs serve`. The required packages can be installed with `pip install -e ".[docs]"`.
 - `examples/`: example scripts for running some of the experiments.
   > **naming convention**: `examples/{method_name}/` contains the files such as bash scripts and jupyter notebooks for the specific method.
 - `tests/`: unit tests for the benchmark.
