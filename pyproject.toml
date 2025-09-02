@@ -54,3 +54,4 @@ profile = "black"
 
 [project.optional-dependencies]
 lm-eval-harness = ["lm-eval", "immutabledict", "langdetect"]
+docs = ["mkdocs", "mkdocs-material", "mkdocstrings[python]"]

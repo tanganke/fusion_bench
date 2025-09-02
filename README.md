@@ -118,7 +118,7 @@ This will install the latest version of fusion-bench and the dependencies requir
 Documentation for using LM-Eval Harness within FusionBench framework can be found at [this online documentation](https://tanganke.github.io/fusion_bench/taskpool/lm_eval_harness) or in the [`docs/taskpool/lm_eval_harness.md`](docs/taskpool/lm_eval_harness.md) markdown file.
 
 > [!TIP]
-> Documentation for merging large language models using FusionBench can be found at [this online documentation](https://tanganke.github.io/fusion_bench/modelpool/causal_lm) or in the [`docs/modelpool/causal_lm.md`](docs/modelpool/causal_lm.md) markdown file.
+> Documentation for merging large language models using FusionBench can be found at [this online documentation](https://tanganke.github.io/fusion_bench/modelpool/llm) or in the [`docs/modelpool/llm/index.md`](docs/modelpool/llm/index.md) markdown file.
 
 ## Introduction to Deep Model Fusion
 

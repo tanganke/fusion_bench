@@ -1,5 +1,5 @@
 """
-Online documentation for this module: https://tanganke.github.io/fusion_bench/modelpool/causal_lm
+Online documentation for this module: https://tanganke.github.io/fusion_bench/modelpool/llm
 """
 
 import logging

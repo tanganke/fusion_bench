@@ -25,13 +25,15 @@ We welcome contributions to the FusionBench documentation! This guide will help 
 2. Install documentation dependencies:
 
     ```bash
-    pip install -r mkdocs-requirements.txt
+    pip install -e ".[docs]"
     ```
 
 3. Serve the documentation locally:
 
     ```bash
     mkdocs serve
+    # or add `--dirty` to only rebuild changed files
+    mkdocs serve --dirty
     ```
 
     The documentation will be available at `http://localhost:8000` with live reload enabled.

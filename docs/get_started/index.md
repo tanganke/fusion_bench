@@ -45,7 +45,7 @@ To summarize the key features of FusionBench:
 
     ---
 
-    Manage the models, including [large language models](../modelpool/causal_lm.md). Responsible for loading, preprocessing, and saving the models.
+    Manage the models, including [large language models](../modelpool/llm/index.md). Responsible for loading, preprocessing, and saving the models.
 
     [:octicons-arrow-right-24: Read More](../modelpool/README.md)
 
