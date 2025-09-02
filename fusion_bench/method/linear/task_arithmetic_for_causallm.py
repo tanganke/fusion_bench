@@ -15,7 +15,6 @@ log = logging.getLogger(__name__)
 
 @auto_register_config
 class TaskArithmeticForCausalLM(
-    SimpleProfilerMixin,
     TaskArithmeticAlgorithm,
 ):
     R"""

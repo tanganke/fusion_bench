@@ -43,11 +43,24 @@ fusion_bench path.log_dir=outputs/Qwen2.5-1.5B/three_models/simple_average \
     modelpool=CausalLMPool/Qwen2.5-1.5B_three_models
 ```
 
+Merge math and code models using simple parameter averaging:
+
 ```shell
 fusion_bench path.log_dir=outputs/Qwen2.5-1.5B/math_and_code/simple_average \
     method=linear/simple_average_for_causallm \
     modelpool=CausalLMPool/Qwen2.5-1.5B_math_and_code
 ```
+
+#### Task Arithmetic
+
+Merge all three specialized models using task arithmetic:
+```shell
+fusion_bench path.log_dir=outputs/Qwen2.5-1.5B/three_models/task_arithmetic/0.8 \
+    method=linear/task_arithmetic_for_causallm \
+    method.scaling_factor=0.8 \
+    modelpool=CausalLMPool/Qwen2.5-1.5B_three_models
+```
+
 
 ## Citation
 

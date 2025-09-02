@@ -28,7 +28,7 @@ _import_structure = {
         "ExPOAlgorithmForLlama",
         "SimpleAverageForCausalLM",
         "SimpleAverageForLlama",
-        "TaskArithemticForCausalLM",
+        "TaskArithmeticForCausalLM",
         "TaskArithmeticForLlama",
         "LinearInterpolationAlgorithm",
     ],
