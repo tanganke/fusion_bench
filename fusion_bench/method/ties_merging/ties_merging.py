@@ -110,7 +110,7 @@ class TiesMergingAlgorithm(
         if isinstance(pretrained_model, nn.Module):
             model = pretrained_model
             model.load_state_dict(state_dict)
-        elif isinstance(pretrained_model, LazyStateDict[PreTrainedModel]):
+        elif isinstance(pretrained_model, LazyStateDict):
             model = deepcopy(pretrained_model.meta_module)
             model = model.to_empty(device=pretrained_model._device)
             result = model.load_state_dict(state_dict, strict=False)

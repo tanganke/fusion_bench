@@ -24,6 +24,10 @@ class TiesMergingForCausalLM(
     providing model saving capabilities and backbone merging support.
     """
 
+    _config_mapping = TiesMergingAlgorithm._config_mapping | {
+        "merge_backbone": "merge_backbone",
+    }
+
     def __init__(
         self,
         scaling_factor: float,
@@ -44,9 +48,6 @@ class TiesMergingForCausalLM(
 
     @override
     def run(self, modelpool: CausalLMPool):
-        if self.model_save_path:
-            tokenizer = modelpool.load_tokenizer()
-
         if self.merge_backbone:
             assert modelpool.has_pretrained
             backbone_modelpool = CausalLMBackbonePool(**modelpool.config)
@@ -58,14 +59,12 @@ class TiesMergingForCausalLM(
 
         if self.model_save_path is not None:
             with timeit_context(f"Saving the model to {self.model_save_path}"):
-                tokenizer.save_pretrained(self.model_save_path)
-                model.save_pretrained(self.model_save_path)
-                model_card_str = create_default_model_card(
-                    models=[modelpool.get_model_path(m) for m in modelpool.model_names],
-                    description=f"Merged model using TIES merging with scaling factor {self.scaling_factor} and threshold {self.threshold}.",
+                description = f"Merged model using TIES merging with scaling factor {self.scaling_factor} and threshold {self.threshold}."
+                modelpool.save_model(
+                    model=model,
+                    path=self.model_save_path,
+                    save_tokenizer=True,
                     algorithm_config=self.config,
-                    modelpool_config=modelpool.config,
+                    description=description,
                 )
-                with open(os.path.join(self.model_save_path, "README.md"), "w") as f:
-                    f.write(model_card_str)
         return model

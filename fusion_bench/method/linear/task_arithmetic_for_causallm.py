@@ -42,9 +42,6 @@ class TaskArithmeticForCausalLM(
 
     @override
     def run(self, modelpool: CausalLMPool):
-        if self.model_save_path:
-            tokenizer = modelpool.load_tokenizer()
-
         if self.merge_backbone:
             assert modelpool.has_pretrained
             backbone_modelpool = CausalLMBackbonePool(**modelpool.config)
@@ -56,16 +53,14 @@ class TaskArithmeticForCausalLM(
 
         if self.model_save_path is not None:
             with timeit_context(f"Saving the model to {self.model_save_path}"):
-                tokenizer.save_pretrained(self.model_save_path)
-                model.save_pretrained(self.model_save_path)
-                model_card_str = create_default_model_card(
-                    models=[modelpool.get_model_path(m) for m in modelpool.model_names],
-                    description=f"Merged model using task arithmetic with scaling factor {self.scaling_factor}.",
+                description = f"Merged model using task arithmetic with scaling factor {self.scaling_factor}."
+                modelpool.save_model(
+                    model=model,
+                    path=self.model_save_path,
+                    save_tokenizer=True,
                     algorithm_config=self.config,
-                    modelpool_config=modelpool.config,
+                    description=description,
                 )
-                with open(os.path.join(self.model_save_path, "README.md"), "w") as f:
-                    f.write(model_card_str)
         return model
 
 
