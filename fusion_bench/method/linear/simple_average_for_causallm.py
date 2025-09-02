@@ -35,7 +35,7 @@ class SimpleAverageForCausalLM(BaseAlgorithm):
 
     def __init__(
         self,
-        merge_backbone: bool,
+        merge_backbone: bool = False,
         model_save_path: Optional[str] = None,
         show_pbar: bool = False,
         **kwargs,

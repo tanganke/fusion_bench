@@ -1,0 +1,4 @@
+_target_: fusion_bench.method.TaskArithmeticForCausalLM
+scaling_factor: 0.3
+merge_backbone: false
+model_save_path: ${path.log_dir}/checkpoint

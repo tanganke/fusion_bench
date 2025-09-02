@@ -28,6 +28,7 @@ _import_structure = {
         "ExPOAlgorithmForLlama",
         "SimpleAverageForCausalLM",
         "SimpleAverageForLlama",
+        "TaskArithemticForCausalLM",
         "TaskArithmeticForLlama",
         "LinearInterpolationAlgorithm",
     ],
@@ -187,6 +188,7 @@ if TYPE_CHECKING:
         LinearInterpolationAlgorithm,
         SimpleAverageForCausalLM,
         SimpleAverageForLlama,
+        TaskArithmeticForCausalLM,
         TaskArithmeticForLlama,
     )
     from .lm_finetune import *
