@@ -26,7 +26,7 @@ In FusionBench, we provide several pre-configured model pools for Qwen2.5-1.5B m
 --8<-- "config/modelpool/CausalLMPool/Qwen2.5-1.5B_math_and_code.yaml"
 ```
 
-### Model Fusion Strategies
+### Model Fusion Experiments
 
 #### Simple Average
 
