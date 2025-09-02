@@ -274,6 +274,7 @@ class CausalLMPool(BaseModelPool):
         tokenizer: Optional[PreTrainedTokenizer] = None,
         algorithm_config: Optional[DictConfig] = None,
         description: Optional[str] = None,
+        base_model_in_modelcard: bool = True,
         **kwargs,
     ):
         """Save a model to the specified path with optional tokenizer and Hub upload.
@@ -345,6 +346,11 @@ class CausalLMPool(BaseModelPool):
             if description is None:
                 description = "Model created using FusionBench."
             model_card_str = create_default_model_card(
+                base_model=(
+                    self.get_model_path("_pretrained_")
+                    if base_model_in_modelcard and self.has_pretrained
+                    else None
+                ),
                 models=[self.get_model_path(m) for m in self.model_names],
                 description=description,
                 algorithm_config=algorithm_config,
