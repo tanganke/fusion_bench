@@ -213,7 +213,9 @@ class WeightedEnsembleModule(nn.Module, Generic[TorchModelType]):
         """Move models to their assigned devices according to device_map."""
         for model_idx, device_id in self.device_map.items():
             log.info(f"Moving model {model_idx} to device {device_id}")
-            self.model_list[model_idx].to(device_id)
+            self.model_list[model_idx] = self.model_list[model_idx].to(
+                device_id, non_blocking=True
+            )
 
     def _aggregate_tensors(self, outputs: List[Tensor]) -> Tensor:
         """
