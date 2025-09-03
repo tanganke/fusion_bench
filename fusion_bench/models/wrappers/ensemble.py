@@ -124,8 +124,12 @@ class EnsembleModule(nn.Module, Generic[TorchModelType]):
             device_id = self.device_map.get(i, "cpu")
 
             # Move inputs to the same device as the model
-            device_args = to_device(args, device_id, copy=True, non_blocking=True)
-            device_kwargs = to_device(kwargs, device_id, copy=True, non_blocking=True)
+            device_args = to_device(
+                args, device_id, copy_on_move=True, non_blocking=True
+            )
+            device_kwargs = to_device(
+                kwargs, device_id, copy_on_move=True, non_blocking=True
+            )
 
             # Create a future for asynchronous execution
             future = torch.jit.fork(model, *device_args, **device_kwargs)
@@ -241,8 +245,12 @@ class WeightedEnsembleModule(nn.Module, Generic[TorchModelType]):
             device_id = self.device_map.get(i, "cpu")
 
             # Move inputs to the same device as the model
-            device_args = to_device(args, device_id, copy=True, non_blocking=True)
-            device_kwargs = to_device(kwargs, device_id, copy=True, non_blocking=True)
+            device_args = to_device(
+                args, device_id, copy_on_move=True, non_blocking=True
+            )
+            device_kwargs = to_device(
+                kwargs, device_id, copy_on_move=True, non_blocking=True
+            )
 
             # Create a future for asynchronous execution
             future = torch.jit.fork(model, *device_args, **device_kwargs)

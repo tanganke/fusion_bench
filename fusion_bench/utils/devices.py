@@ -42,6 +42,7 @@ def clear_cuda_cache():
 def to_device(
     obj: T,
     device: Optional[torch.device],
+    copy_on_move: bool = False,
     **kwargs: Any,
 ) -> T:
     """
@@ -53,12 +54,20 @@ def to_device(
     Args:
         obj: The object to be moved to the device. This can be a torch.Tensor, torch.nn.Module, list, tuple, or dict.
         device (torch.device): The target device to move the object to. This can be `None`.
-        **kwargs: Additional keyword arguments to be passed to the `to` method of torch.Tensor or torch.nn.Module. For example, `non_blocking=True`, `dtype=torch.float16`.
+        copy_on_move (bool, optional): Whether to force a copy operation when moving tensors to a different device.
+            If True, tensors will be copied when moved to a different device (copy=True is passed to tensor.to()).
+            If False (default), tensors are moved without forcing a copy operation, allowing PyTorch to optimize
+            the operation. This parameter only affects torch.Tensor objects; modules and other types are unaffected.
+            Defaults to False.
+        **kwargs: Additional keyword arguments to be passed to the `to` method of torch.Tensor or torch.nn.Module.
+            For example, `non_blocking=True`, `dtype=torch.float16`. Note that if `copy_on_move=True`, the `copy`
+            keyword argument will be automatically set and should not be provided manually.
 
     Returns:
         The object moved to the specified device. The type of the returned object matches the type of the input object.
 
     Examples:
+        ```python
         >>> tensor = torch.tensor([1, 2, 3])
         >>> to_device(tensor, torch.device('cuda'))
         tensor([1, 2, 3], device='cuda:0')
@@ -70,8 +79,19 @@ def to_device(
         >>> data = [torch.tensor([1, 2]), torch.tensor([3, 4])]
         >>> to_device(data, torch.device('cuda'))
         [tensor([1, 2], device='cuda:0'), tensor([3, 4], device='cuda:0')]
+
+        >>> # Force copy when moving to different device
+        >>> tensor = torch.tensor([1, 2, 3], device='cpu')
+        >>> copied_tensor = to_device(tensor, torch.device('cuda'), copy_on_move=True)
+        >>> # tensor and copied_tensor will have different memory locations
+        ```
     """
-    if isinstance(obj, (torch.Tensor, torch.nn.Module)):
+    if isinstance(obj, torch.Tensor):
+        if copy_on_move:
+            if obj.device != torch.device(device):
+                kwargs["copy"] = True
+        return obj.to(device, **kwargs)
+    elif isinstance(obj, torch.nn.Module):
         return obj.to(device, **kwargs)
     elif isinstance(obj, list):
         return [to_device(o, device, **kwargs) for o in obj]
