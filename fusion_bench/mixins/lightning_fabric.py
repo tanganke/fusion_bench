@@ -100,6 +100,10 @@ class LightningFabricMixin:
             self.setup_lightning_fabric(getattr(self, "config", DictConfig({})))
         return self._fabric_instance
 
+    @fabric.setter
+    def fabric(self, instance: L.Fabric):
+        self._fabric_instance = instance
+
     @property
     def log_dir(self):
         """

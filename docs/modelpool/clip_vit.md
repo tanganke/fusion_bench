@@ -841,6 +841,8 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
     | Pre-trained                                    | 63.2   | 59.8 | 60.7     | 46.0    | 31.6 | 32.5  | 48.2  | 43.9 | 48.2    |
     | Fine-tuned (STL)                               | 75.0   | 78.3 | 95.2     | 99.0    | 97.3 | 98.9  | 99.6  | 79.7 | 90.3    |
     | Traditional MTL                                | 72.3   | 76.6 | 92.2     | 97.9    | 95.5 | 97.7  | 99.3  | 77.7 | 88.6    |
+    | Model Ensemble                                 |        |      |          |         |      |       |       |      |         |
+    | Simple Ensemble                                | 64.9   | 63.5 | 75.7     | 93.7    | 85.7 | 73.8  | 93.8  | 55.1 | 75.8    |
     | Model Merging                                  |        |      |          |         |      |       |       |      |         |
     | Simple Averaging                               | 65.4   | 62.6 | 70.8     | 76.9    | 64.5 | 54.9  | 86.3  | 50.9 | 66.5    |
     | Fisher Merging                                 | 66.7   | 64.0 | 72.2     | 91.6    | 69.0 | 64.3  | 83.5  | 53.7 | 70.6    |

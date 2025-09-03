@@ -17,7 +17,21 @@ from fusion_bench.models.wrappers.ensemble import (
 log = logging.getLogger(__name__)
 
 
+@auto_register_config
 class SimpleEnsembleAlgorithm(BaseAlgorithm):
+    def __init__(
+        self,
+        device_map: Optional[Mapping[int, Union[str, torch.device]]] = None,
+        **kwargs,
+    ):
+        """
+        Initializes the SimpleEnsembleAlgorithm with an optional device map.
+
+        Args:
+            device_map (Optional[Mapping[int, Union[str, torch.device]]], optional): A mapping from model index to device. Defaults to None.
+        """
+        super().__init__(**kwargs)
+
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool | List[nn.Module]) -> EnsembleModule:
         """
@@ -30,9 +44,10 @@ class SimpleEnsembleAlgorithm(BaseAlgorithm):
             EnsembleModule: The ensembled model.
         """
         log.info(f"Running ensemble algorithm with {len(modelpool)} models")
-
         models = [modelpool.load_model(m) for m in modelpool.model_names]
-        ensemble = EnsembleModule(models=models)
+
+        log.info("creating ensemble module")
+        ensemble = EnsembleModule(models=models, device_map=self.device_map)
         return ensemble
 
 

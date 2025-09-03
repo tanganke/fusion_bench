@@ -60,5 +60,12 @@
 
     [:octicons-arrow-right-24: Read More](import_and_use_merging_algorithms.md)
 
+- **Parallel Ensemble**
+
+    ---
+
+    Learn how to create an ensemble from multiple CLIP vision models and inference in parallel using FusionBench.
+
+    [:octicons-arrow-right-24: Read More](parallel_clip_ensemble.md)
 
 </div>

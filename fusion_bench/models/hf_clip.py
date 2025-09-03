@@ -195,5 +195,9 @@ class HFCLIPClassifier(nn.Module):
             pass
         elif isinstance(image_embeds, BaseModelOutputWithPooling):
             image_embeds = image_embeds[1]
+        elif isinstance(image_embeds, dict) and "pooler_output" in image_embeds:
+            image_embeds = image_embeds["pooler_output"]
+        else:
+            raise ValueError("Unsupported output type from vision model outputs")
         image_embeds = self.clip_model.visual_projection(image_embeds)
         return image_embeds
