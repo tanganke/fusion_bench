@@ -188,17 +188,21 @@ if __name__ == "__main__":
     display_available_styles()
 
 
-def setup_colorlogging(force=False, **config_kwargs):
+def setup_colorlogging(
+    force=False,
+    level=logging.INFO,
+    **kwargs,
+):
     """
     Sets up color logging for the application.
     """
     FORMAT = "%(message)s"
 
     logging.basicConfig(
-        level=logging.INFO,
+        level=level,
         format=FORMAT,
         datefmt="[%X]",
         handlers=[RichHandler()],
         force=force,
-        **config_kwargs,
+        **kwargs,
     )

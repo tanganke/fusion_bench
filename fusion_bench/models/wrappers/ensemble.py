@@ -1,9 +1,16 @@
-from typing import Any, Callable, Dict, List, Union, cast
+import logging
+from typing import Any, Callable, Dict, Generic, List, Union, cast
 
 import numpy as np
 import torch
+import torch.futures
 from omegaconf import ListConfig
 from torch import Tensor, nn
+
+from fusion_bench.utils.devices import to_device
+from fusion_bench.utils.type import TorchModelType
+
+log = logging.getLogger(__name__)
 
 
 def aggregate_tensors(
@@ -58,12 +65,16 @@ def aggregate_tensors(
         raise ValueError("Unsupported type for outputs")
 
 
-class EnsembleModule(nn.Module):
+class EnsembleModule(nn.Module, Generic[TorchModelType]):
     """
     Ensemble module that averages the outputs of multiple models.
     """
 
-    def __init__(self, models: List[nn.Module]):
+    def __init__(
+        self,
+        models: List[TorchModelType],
+        device_map: Dict[int, Union[int, str]] | None = None,
+    ):
         """
         Initializes the EnsembleModule with a list of models.
 
@@ -73,6 +84,16 @@ class EnsembleModule(nn.Module):
         super().__init__()
         # TODO: distribute models to devices
         self.model_list = nn.ModuleList(models)
+        self.device_map = device_map
+        if self.device_map is not None:
+            self._move_models_to_devices()
+
+    def _move_models_to_devices(self):
+        for model_idx, device_id in self.device_map.items():
+            log.info(f"Moving model {model_idx} to device {device_id}")
+            self.model_list[model_idx] = self.model_list[model_idx].to(
+                device_id, non_blocking=True
+            )
 
     def _aggregate_tensors(self, outputs: List[Tensor]) -> Tensor:
         """
@@ -86,6 +107,40 @@ class EnsembleModule(nn.Module):
         """
         return torch.stack(outputs).mean(dim=0)
 
+    def _parallel_forward_with_device_map(self, *args: Any, **kwargs: Any) -> List[Any]:
+        """
+        Performs parallel forward pass using device mapping with futures.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            List[Any]: List of outputs from all models, all moved to the same device.
+        """
+        futures = []
+
+        for i, model in enumerate(self.model_list):
+            device_id = self.device_map.get(i, "cpu")
+
+            # Move inputs to the same device as the model
+            device_args = to_device(args, device_id, copy=True, non_blocking=True)
+            device_kwargs = to_device(kwargs, device_id, copy=True, non_blocking=True)
+
+            # Create a future for asynchronous execution
+            future = torch.jit.fork(model, *device_args, **device_kwargs)
+            futures.append(future)
+
+        # Wait for all futures to complete and collect results
+        outputs = [torch.jit.wait(future) for future in futures]
+
+        # Move all outputs to the same device (use the device of the first model or cpu as fallback)
+        target_device = self.device_map.get(0, "cpu") if self.device_map else "cpu"
+        outputs = [
+            to_device(output, target_device, non_blocking=True) for output in outputs
+        ]
+        return outputs
+
     def forward(self, *args: Any, **kwargs: Any) -> Any:
         """
         Performs a forward pass by averaging the outputs of the models.
@@ -97,7 +152,11 @@ class EnsembleModule(nn.Module):
         Returns:
             Aggregated output from the ensemble of models.
         """
-        outputs = [model(*args, **kwargs) for model in self.model_list]
+        if self.device_map is None:
+            outputs = [model(*args, **kwargs) for model in self.model_list]
+        else:
+            # Parallel execution with device mapping
+            outputs = self._parallel_forward_with_device_map(*args, **kwargs)
         return aggregate_tensors(outputs, self._aggregate_tensors)
 
 

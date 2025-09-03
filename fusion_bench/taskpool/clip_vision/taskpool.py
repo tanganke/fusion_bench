@@ -27,7 +27,7 @@ from tqdm.autonotebook import tqdm
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
 from transformers.models.clip.modeling_clip import CLIPVisionTransformer
 
-from fusion_bench import RuntimeConstants
+from fusion_bench import RuntimeConstants, auto_register_config
 from fusion_bench.dataset import CLIPDataset
 from fusion_bench.mixins import HydraConfigMixin, LightningFabricMixin
 from fusion_bench.models.hf_clip import HFCLIPClassifier
@@ -86,6 +86,7 @@ class LayerWiseFeatureSaver:
             torch.save(features, self.save_path)
 
 
+@auto_register_config
 class CLIPVisionModelTaskPool(
     HydraConfigMixin,
     LightningFabricMixin,
@@ -134,11 +135,13 @@ class CLIPVisionModelTaskPool(
         layer_wise_feature_first_token_only: bool = True,
         layer_wise_feature_max_num: Optional[int] = None,
         fast_dev_run: Optional[bool] = None,
+        move_to_device: bool = True,
         **kwargs,
     ):
         """
         Initialize the CLIPVisionModelTaskPool.
         """
+        super().__init__(**kwargs)
         self._test_datasets = test_datasets
         self._processor = processor
         self._data_processor = data_processor
@@ -159,7 +162,6 @@ class CLIPVisionModelTaskPool(
             self.fast_dev_run = RuntimeConstants().debug
         else:
             self.fast_dev_run = fast_dev_run
-        super().__init__(**kwargs)
 
     def setup(self):
         """
@@ -220,7 +222,9 @@ class CLIPVisionModelTaskPool(
             for name, dataset in self.test_datasets.items()
         }
         self.test_dataloaders = {
-            name: self.fabric.setup_dataloaders(dataloader)
+            name: self.fabric.setup_dataloaders(
+                dataloader, move_to_device=self.move_to_device
+            )
             for name, dataloader in self.test_dataloaders.items()
         }
 
@@ -273,6 +277,8 @@ class CLIPVisionModelTaskPool(
                 task_name=task_name,
             )
             logits: Tensor = outputs["logits"]
+            if logits.device != targets.device:
+                targets = targets.to(logits.device)
 
             loss = F.cross_entropy(logits, targets)
             loss_metric.update(loss.detach().cpu())
@@ -321,7 +327,8 @@ class CLIPVisionModelTaskPool(
             self.clip_model,
             processor=self.processor,
         )
-        classifier = cast(HFCLIPClassifier, self.fabric.to_device(classifier))
+        if self.move_to_device:
+            classifier = cast(HFCLIPClassifier, self.fabric.to_device(classifier))
         # collect basic model information
         training_params, all_params = count_parameters(model)
         report["model_info"] = {

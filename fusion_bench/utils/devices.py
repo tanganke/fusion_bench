@@ -39,7 +39,11 @@ def clear_cuda_cache():
         log.warning("CUDA is not available. No cache to clear.")
 
 
-def to_device(obj: T, device: Optional[torch.device], **kwargs: Any) -> T:
+def to_device(
+    obj: T,
+    device: Optional[torch.device],
+    **kwargs: Any,
+) -> T:
     """
     Move a given object to the specified device.
 
@@ -70,13 +74,11 @@ def to_device(obj: T, device: Optional[torch.device], **kwargs: Any) -> T:
     if isinstance(obj, (torch.Tensor, torch.nn.Module)):
         return obj.to(device, **kwargs)
     elif isinstance(obj, list):
-        return [to_device(o, device) for o in obj]
+        return [to_device(o, device, **kwargs) for o in obj]
     elif isinstance(obj, tuple):
-        return tuple(to_device(o, device) for o in obj)
+        return tuple(to_device(o, device, **kwargs) for o in obj)
     elif isinstance(obj, dict):
-        for key in obj:
-            obj[key] = to_device(obj[key], device)
-        return obj
+        return {key: to_device(value, device, **kwargs) for key, value in obj.items()}
     else:
         # the default behavior is to return the object as is
         return obj
