@@ -30,7 +30,7 @@ with initialize(
     )
     modelpool: CLIPVisionModelPool = instantiate(cfg.modelpool)
     taskpool: CLIPVisionModelTaskPool = instantiate(cfg.taskpool, move_to_device=False)
-    taskpool._fabric_instance = fabric
+    taskpool.fabric = fabric
 
 # Hard-coded device map and algorithm instantiation for 8 models
 device_map = {
