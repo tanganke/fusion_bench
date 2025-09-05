@@ -120,16 +120,21 @@ class EnsembleModule(nn.Module, Generic[TorchModelType]):
         """
         futures = []
 
+        device_data_cache = {}
         for i, model in enumerate(self.model_list):
             device_id = self.device_map.get(i, "cpu")
 
-            # Move inputs to the same device as the model
-            device_args = to_device(
-                args, device_id, copy_on_move=True, non_blocking=True
-            )
-            device_kwargs = to_device(
-                kwargs, device_id, copy_on_move=True, non_blocking=True
-            )
+            if device_id not in device_data_cache:
+                # Move inputs to the same device as the model
+                device_args = to_device(
+                    args, device_id, copy_on_move=True, non_blocking=True
+                )
+                device_kwargs = to_device(
+                    kwargs, device_id, copy_on_move=True, non_blocking=True
+                )
+                device_data_cache[device_id] = (device_args, device_kwargs)
+            else:
+                device_args, device_kwargs = device_data_cache[device_id]
 
             # Create a future for asynchronous execution
             future = torch.jit.fork(model, *device_args, **device_kwargs)
@@ -243,16 +248,21 @@ class WeightedEnsembleModule(nn.Module, Generic[TorchModelType]):
         """
         futures = []
 
+        device_data_cache = {}
         for i, model in enumerate(self.model_list):
             device_id = self.device_map.get(i, "cpu")
 
-            # Move inputs to the same device as the model
-            device_args = to_device(
-                args, device_id, copy_on_move=True, non_blocking=True
-            )
-            device_kwargs = to_device(
-                kwargs, device_id, copy_on_move=True, non_blocking=True
-            )
+            if device_id not in device_data_cache:
+                # Move inputs to the same device as the model
+                device_args = to_device(
+                    args, device_id, copy_on_move=True, non_blocking=True
+                )
+                device_kwargs = to_device(
+                    kwargs, device_id, copy_on_move=True, non_blocking=True
+                )
+                device_data_cache[device_id] = (device_args, device_kwargs)
+            else:
+                device_args, device_kwargs = device_data_cache[device_id]
 
             # Create a future for asynchronous execution
             future = torch.jit.fork(model, *device_args, **device_kwargs)
