@@ -75,6 +75,8 @@ _import_structure = {
     "fw_merging": ["FrankWolfeHardAlgorithm", "FrankWolfeSoftAlgorithm"],
     "tall_mask": ["TallMaskTaskArithmeticAlgorithm"],
     "model_stock": ["ModelStock"],
+    "WUDI": ["WUDIMerging"],
+
     # plug-and-play model merging methods
     "concrete_subspace": [
         "ConcreteTaskArithmeticAlgorithmForCLIP",
