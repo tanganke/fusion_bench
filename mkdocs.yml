@@ -33,6 +33,7 @@ nav:
           - Concrete Subspace: algorithms/concrete_subspace.md
           - Task Singular Vector: algorithms/task_singular_vector.md
           - Isotropic Merging: algorithms/isotropic_merging.md
+          - WUDI-Merging: algorithms/wudi_merging.md
       - Model Mixing:
           - Depth Upscaling: algorithms/depth_upscaling.md
           - MoE-based Upscaling: algorithms/moe_based_upscaling.md

@@ -1,6 +1,3 @@
----
-status: new
----
 # RegMean++
 
 [![arxiv](https://img.shields.io/badge/arXiv-2508.03121-b31b1b.svg)](https://www.arxiv.org/abs/2508.03121)
