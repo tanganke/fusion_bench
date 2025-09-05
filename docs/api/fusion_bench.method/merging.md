@@ -142,6 +142,14 @@
         - FrankWolfeSoftAlgorithm
         - FrankWolfeHardAlgorithm
 
+### WUDI-Merging
+
+::: fusion_bench.method
+    options:
+        show_root_heading: false
+        heading_level: 4
+        members:
+        - WUDIMerging
 
 ## Subspace-based Methods
 

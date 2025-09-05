@@ -75,6 +75,7 @@ _import_structure = {
     "fw_merging": ["FrankWolfeHardAlgorithm", "FrankWolfeSoftAlgorithm"],
     "tall_mask": ["TallMaskTaskArithmeticAlgorithm"],
     "model_stock": ["ModelStock"],
+    "wudi": ["wudi_merging", "WUDIMerging"],
     # plug-and-play model merging methods
     "concrete_subspace": [
         "ConcreteTaskArithmeticAlgorithmForCLIP",
@@ -244,6 +245,7 @@ if TYPE_CHECKING:
         FlanT5WeightEnsemblingMoEAlgorithm,
     )
     from .weighted_average import WeightedAverageAlgorithm, WeightedAverageForLLama
+    from .wudi import WUDIMerging, wudi_merging
 
 else:
     sys.modules[__name__] = LazyImporter(
