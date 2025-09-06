@@ -1,4 +1,5 @@
 from collections import OrderedDict
+
 from numbers import Number
 from typing import Callable, Dict, List, Literal, Optional, Union, cast
 
@@ -6,8 +7,28 @@ import torch
 from torch import Tensor
 from tqdm.auto import tqdm
 
-from .parameters import check_parameters_all_equal
 from .type import BoolStateDictType, StateDictType
+
+__all__ = [
+    "ArithmeticStateDict",
+    "state_dicts_check_keys",
+    "state_dict_to_device",
+    "num_params_of_state_dict",
+    "state_dict_flatten",
+    "state_dict_avg",
+    "state_dict_sub",
+    "state_dict_add",
+    "state_dict_add_scalar",
+    "state_dict_mul",
+    "state_dict_div",
+    "state_dict_power",
+    "state_dict_interpolation",
+    "state_dict_sum",
+    "state_dict_weighted_sum",
+    "state_dict_diff_abs",
+    "state_dict_binary_mask",
+    "state_dict_hadamard_product",
+]
 
 
 class ArithmeticStateDict(OrderedDict):
@@ -626,7 +647,7 @@ def _validate_list_lengths_equal(
             pass
 
 
-def to_device(
+def state_dict_to_device(
     state_dict: StateDictType,
     device: Union[torch.device, str],
     copy: bool = False,
@@ -812,7 +833,7 @@ def state_dict_add(
             result[key] = a[key] + b[key]
 
     if device is not None:
-        result = to_device(result, device)
+        result = state_dict_to_device(result, device)
 
     return result
 

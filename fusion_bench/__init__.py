@@ -67,6 +67,7 @@ _import_structure = {
         "NYUv2TaskPool",
     ],
     "utils": [
+        "ArithmeticStateDict",
         "BoolStateDictType",
         "LazyStateDict",
         "StateDictType",
@@ -131,6 +132,7 @@ if TYPE_CHECKING:
         OpenCLIPVisionModelTaskPool,
     )
     from .utils import (
+        ArithmeticStateDict,
         BoolStateDictType,
         LazyStateDict,
         StateDictType,
