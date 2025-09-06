@@ -74,7 +74,7 @@ class LazyImporter(ModuleType):
         return (self.__class__, (self._name, self.__file__, self._import_structure))
 
 
-class LazyModule(ModuleType):
+class LazyPyModule(ModuleType):
     """Module wrapper for lazy import.
     Adapted from Optuna: https://github.com/optuna/optuna/blob/1f92d496b0c4656645384e31539e4ee74992ff55/optuna/__init__.py
 

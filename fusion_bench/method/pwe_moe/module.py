@@ -13,8 +13,6 @@ import torch.func
 from torch import Tensor, nn
 from torch.nn import functional as F
 
-from fusion_bench.utils import join_list
-
 log = logging.getLogger(__name__)
 
 

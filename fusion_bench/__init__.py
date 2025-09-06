@@ -5,46 +5,149 @@
 # ██║     ╚██████╔╝███████║██║╚██████╔╝██║ ╚████║      ██████╔╝███████╗██║ ╚████║╚██████╗██║  ██║
 # ╚═╝      ╚═════╝ ╚══════╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝      ╚═════╝ ╚══════╝╚═╝  ╚═══╝ ╚═════╝╚═╝  ╚═╝
 # flake8: noqa: F401
-from . import (
-    constants,
-    dataset,
-    method,
-    metrics,
-    mixins,
-    modelpool,
-    models,
-    optim,
-    programs,
-    taskpool,
-    tasks,
-    utils,
-)
+import sys
+from typing import TYPE_CHECKING
+
+from fusion_bench.utils.lazy_imports import LazyImporter
+
+from . import constants, metrics, optim, tasks
 from .constants import RuntimeConstants
-from .method import BaseAlgorithm, BaseModelFusionAlgorithm
-from .mixins import auto_register_config
-from .modelpool import BaseModelPool
-from .models import (
-    create_default_model_card,
-    load_model_card_template,
-    save_pretrained_with_remote_code,
-    separate_io,
-)
-from .programs import BaseHydraProgram
-from .taskpool import BaseTaskPool
-from .utils import (
-    BoolStateDictType,
-    LazyStateDict,
-    StateDictType,
-    TorchModelType,
-    cache_with_joblib,
-    get_rankzero_logger,
-    import_object,
-    instantiate,
-    parse_dtype,
-    print_parameters,
-    seed_everything_by_time,
-    set_default_cache_dir,
-    set_print_function_call,
-    set_print_function_call_permeanent,
-    timeit_context,
-)
+
+_extra_objects = {
+    "RuntimeConstants": RuntimeConstants,
+    "constants": constants,
+    "metrics": metrics,
+    "optim": optim,
+    "tasks": tasks,
+}
+_import_structure = {
+    "dataset": ["CLIPDataset"],
+    "method": ["BaseAlgorithm", "BaseModelFusionAlgorithm"],
+    "mixins": [
+        "CLIPClassificationMixin",
+        "FabricTrainingMixin",
+        "HydraConfigMixin",
+        "LightningFabricMixin",
+        "OpenCLIPClassificationMixin",
+        "SimpleProfilerMixin",
+        "YAMLSerializationMixin",
+        "auto_register_config",
+    ],
+    "modelpool": [
+        "AutoModelPool",
+        "BaseModelPool",
+        "CausalLMBackbonePool",
+        "CausalLMPool",
+        "CLIPVisionModelPool",
+        "GPT2ForSequenceClassificationPool",
+        "HuggingFaceGPT2ClassificationPool",
+        "NYUv2ModelPool",
+        "OpenCLIPVisionModelPool",
+        "PeftModelForSeq2SeqLMPool",
+        "Seq2SeqLMPool",
+        "SequenceClassificationModelPool",
+    ],
+    "models": [
+        "create_default_model_card",
+        "load_model_card_template",
+        "save_pretrained_with_remote_code",
+        "separate_load",
+        "separate_save",
+    ],
+    "programs": ["BaseHydraProgram", "FabricModelFusionProgram"],
+    "taskpool": [
+        "BaseTaskPool",
+        "CLIPVisionModelTaskPool",
+        "DummyTaskPool",
+        "GPT2TextClassificationTaskPool",
+        "LMEvalHarnessTaskPool",
+        "OpenCLIPVisionModelTaskPool",
+        "NYUv2TaskPool",
+    ],
+    "utils": [
+        "BoolStateDictType",
+        "LazyStateDict",
+        "StateDictType",
+        "TorchModelType",
+        "cache_with_joblib",
+        "get_rankzero_logger",
+        "import_object",
+        "instantiate",
+        "parse_dtype",
+        "print_parameters",
+        "seed_everything_by_time",
+        "set_default_cache_dir",
+        "set_print_function_call",
+        "set_print_function_call_permeanent",
+        "timeit_context",
+    ],
+}
+
+if TYPE_CHECKING:
+    from .dataset import CLIPDataset
+    from .method import BaseAlgorithm, BaseModelFusionAlgorithm
+    from .mixins import (
+        CLIPClassificationMixin,
+        FabricTrainingMixin,
+        HydraConfigMixin,
+        LightningFabricMixin,
+        OpenCLIPClassificationMixin,
+        SimpleProfilerMixin,
+        YAMLSerializationMixin,
+        auto_register_config,
+    )
+    from .modelpool import (
+        AutoModelPool,
+        BaseModelPool,
+        CausalLMBackbonePool,
+        CausalLMPool,
+        CLIPVisionModelPool,
+        GPT2ForSequenceClassificationPool,
+        HuggingFaceGPT2ClassificationPool,
+        NYUv2ModelPool,
+        OpenCLIPVisionModelPool,
+        PeftModelForSeq2SeqLMPool,
+        Seq2SeqLMPool,
+        SequenceClassificationModelPool,
+    )
+    from .models import (
+        create_default_model_card,
+        load_model_card_template,
+        save_pretrained_with_remote_code,
+        separate_load,
+        separate_save,
+    )
+    from .programs import BaseHydraProgram, FabricModelFusionProgram
+    from .taskpool import (
+        BaseTaskPool,
+        CLIPVisionModelTaskPool,
+        DummyTaskPool,
+        GPT2TextClassificationTaskPool,
+        LMEvalHarnessTaskPool,
+        NYUv2TaskPool,
+        OpenCLIPVisionModelTaskPool,
+    )
+    from .utils import (
+        BoolStateDictType,
+        LazyStateDict,
+        StateDictType,
+        TorchModelType,
+        cache_with_joblib,
+        get_rankzero_logger,
+        import_object,
+        instantiate,
+        parse_dtype,
+        print_parameters,
+        seed_everything_by_time,
+        set_default_cache_dir,
+        set_print_function_call,
+        set_print_function_call_permeanent,
+        timeit_context,
+    )
+else:
+    sys.modules[__name__] = LazyImporter(
+        __name__,
+        globals()["__file__"],
+        _import_structure,
+        extra_objects=_extra_objects,
+    )
