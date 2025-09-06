@@ -1,0 +1,42 @@
+defaults:
+  - Seq2SeqLMPool@: _template
+models:
+  _pretrained_:
+    _target_: transformers.AutoModelForSeq2SeqLM.from_pretrained
+    pretrained_model_name_or_path: ${...base_model}
+  glue-cola:
+    _target_: fusion_bench.modelpool.seq2seq_lm.modelpool.load_lora_model
+    base_model_path: ${...base_model}
+    peft_model_path: tanganke/flan-t5-large_glue-cola_lora-16
+  glue-mnli:
+    _target_: fusion_bench.modelpool.seq2seq_lm.modelpool.load_lora_model
+    base_model_path: ${...base_model}
+    peft_model_path: tanganke/flan-t5-large_glue-mnli_lora-16
+  glue-mrpc:
+    _target_: fusion_bench.modelpool.seq2seq_lm.modelpool.load_lora_model
+    base_model_path: ${...base_model}
+    peft_model_path: tanganke/flan-t5-large_glue-mrpc_lora-16
+  glue-qnli:
+    _target_: fusion_bench.modelpool.seq2seq_lm.modelpool.load_lora_model
+    base_model_path: ${...base_model}
+    peft_model_path: tanganke/flan-t5-large_glue-qnli_lora-16
+  glue-qqp:
+    _target_: fusion_bench.modelpool.seq2seq_lm.modelpool.load_lora_model
+    base_model_path: ${...base_model}
+    peft_model_path: tanganke/flan-t5-large_glue-qqp_lora-16
+  glue-rte:
+    _target_: fusion_bench.modelpool.seq2seq_lm.modelpool.load_lora_model
+    base_model_path: ${...base_model}
+    peft_model_path: tanganke/flan-t5-large_glue-rte_lora-16
+  glue-sst2:
+    _target_: fusion_bench.modelpool.seq2seq_lm.modelpool.load_lora_model
+    base_model_path: ${...base_model}
+    peft_model_path: tanganke/flan-t5-large_glue-sst2_lora-16
+  glue-stsb:
+    _target_: fusion_bench.modelpool.seq2seq_lm.modelpool.load_lora_model
+    base_model_path: ${...base_model}
+    peft_model_path: tanganke/flan-t5-large_glue-stsb_lora-16
+tokenizer:
+  _target_: transformers.AutoTokenizer.from_pretrained
+  pretrained_model_name_or_path: ${..base_model}
+base_model: google/flan-t5-large

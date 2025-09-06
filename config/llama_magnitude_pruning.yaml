@@ -1,0 +1,16 @@
+defaults:
+  - fabric_model_fusion
+  - override method: pruning/llama_magnitude_pruning
+  - override modelpool: CausalLMPool/single_llama_model
+  - override taskpool: dummy
+  - _self_
+merged_model_save_path: null # path to save the merged model, use "{log_dir}" to refer to the logger directory, for example `merged_model_save_path=\{log_dir\}/merged_model`
+merged_model_save_kwargs:
+  save_tokenizer: true
+  tokenizer_kwargs:
+    unk_token: "<s>" # https://github.com/huggingface/transformers/issues/24318#issuecomment-1596801322
+modelpool:
+  model_kwargs:
+    torch_dtype: float16
+    low_cpu_mem_usage: true
+    device_map: "auto"
