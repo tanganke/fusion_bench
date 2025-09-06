@@ -40,6 +40,10 @@ def is_matplotlib_available():
     return _is_package_available("matplotlib")
 
 
+def is_open_clip_available():
+    return _is_package_available("open_clip")
+
+
 def is_pillow_available():
     return _is_package_available("PIL")
 

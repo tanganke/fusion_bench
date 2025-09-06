@@ -4,7 +4,7 @@ from typing import Any, Iterable, List, Optional
 __all__ = [
     "first",
     "has_length",
-    "join_list",
+    "join_lists",
     "attr_equal",
     "validate_and_suggest_corrections",
 ]
@@ -25,7 +25,7 @@ def has_length(dataset):
         return False
 
 
-def join_list(list_of_list: List[List]):
+def join_lists(list_of_list: List[List]):
     ans = []
     for item in list_of_list:
         ans.extend(item)

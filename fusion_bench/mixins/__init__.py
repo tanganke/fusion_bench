@@ -11,6 +11,7 @@ _import_structure = {
     "hydra_config": ["HydraConfigMixin"],
     "lightning_fabric": ["LightningFabricMixin"],
     "openclip_classification": ["OpenCLIPClassificationMixin"],
+    "pyinstrument": ["PyinstrumentProfilerMixin"],
     "serialization": [
         "BaseYAMLSerializable",
         "YAMLSerializationMixin",
@@ -25,6 +26,7 @@ if TYPE_CHECKING:
     from .hydra_config import HydraConfigMixin
     from .lightning_fabric import LightningFabricMixin
     from .openclip_classification import OpenCLIPClassificationMixin
+    from .pyinstrument import PyinstrumentProfilerMixin
     from .serialization import (
         BaseYAMLSerializable,
         YAMLSerializationMixin,

@@ -40,6 +40,7 @@ class MyAlgorithm(
 
 ### Performance and Debugging
 - [fusion_bench.mixins.SimpleProfilerMixin][]: Provides simple profiling capabilities for measuring execution time.
+- [fusion_bench.mixins.PyinstrumentProfilerMixin][]: Offers advanced statistical profiling using the pyinstrument library.
 
 ### Computer Vision
 - [fusion_bench.mixins.CLIPClassificationMixin][]: Supports CLIP-based image classification tasks.
@@ -56,5 +57,6 @@ class MyAlgorithm(
 ::: fusion_bench.mixins.LightningFabricMixin
 ::: fusion_bench.mixins.FabricTrainingMixin
 ::: fusion_bench.mixins.SimpleProfilerMixin
+::: fusion_bench.mixins.PyinstrumentProfilerMixin
 ::: fusion_bench.mixins.CLIPClassificationMixin
 ::: fusion_bench.mixins.auto_register_config
