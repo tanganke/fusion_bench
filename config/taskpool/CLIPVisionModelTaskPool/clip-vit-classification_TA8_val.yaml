@@ -1,0 +1,12 @@
+defaults:
+  - CLIPVisionModelTaskPool@: _template
+  # use validation set as test set
+  - /dataset/image_classification/val@test_datasets:
+      - sun397
+      - stanford-cars
+      - resisc45
+      - eurosat
+      - svhn
+      - gtsrb
+      - mnist
+      - dtd

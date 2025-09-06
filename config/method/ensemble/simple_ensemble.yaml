@@ -1,0 +1,2 @@
+_target_: fusion_bench.method.SimpleEnsembleAlgorithm
+device_map: null  # Set to null for single device, or specify mapping

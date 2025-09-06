@@ -1,0 +1,12 @@
+_target_: fusion_bench.method.model_stock.ModelStock
+ignore_keys:
+  [
+    "model.positional_embedding",
+    "model.text_projection",
+    "model.logit_scale",
+    "model.token_embedding.weight",
+    "model.ln_final.weight",
+    "model.ln_final.bias",
+  ]
+model_save_path: ${path.log_dir}/checkpoint
+model_save_kwargs: null

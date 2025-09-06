@@ -1,0 +1,6 @@
+# or fusion_bench.method.MixtralUpscalingAlgorithm
+_target_: fusion_bench.method.MixtralForCausalLMUpscalingAlgorithm
+num_experts: 4
+experts_per_token: 2
+# path to save the upscaled model
+save_checkpoint: null

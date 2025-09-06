@@ -1,0 +1,6 @@
+_target_: fusion_bench.method.SimpleAverageForCausalLM
+# set `merge_backbone` to true if you has a base model and only want to merge the backbone of the experts
+# if `merge_backbone` is False, this is equivalent to `SimpleAverageAlgorithm`
+merge_backbone: false
+model_save_path: ${path.log_dir}/checkpoint
+show_pbar: true

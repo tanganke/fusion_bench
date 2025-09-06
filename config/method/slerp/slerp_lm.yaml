@@ -1,0 +1,4 @@
+_target_: fusion_bench.method.SlerpForCausalLM
+t: 0.5
+model_save_path: ${path.log_dir}/checkpoint
+show_pbar: True
