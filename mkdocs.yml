@@ -111,6 +111,7 @@ nav:
           - Mixins:
               - LightningFabricMixin: guides/fusion_bench/mixins/lightning_fabric.md
               - SimpleProfilerMixin: guides/fusion_bench/mixins/simple_profiler.md
+              - guides/fusion_bench/mixins/pyinstrument_profiling.md
       - CLIP-ViT Models For Image Classification:
           - guides/clip_vit/HFCLIPClassifier.md
           - Manage Labels and Templates: guides/clip_vit/classification_templates.md
