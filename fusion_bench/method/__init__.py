@@ -2,6 +2,7 @@
 import sys
 from typing import TYPE_CHECKING
 
+from fusion_bench.utils import join_lists
 from fusion_bench.utils.lazy_imports import LazyImporter
 
 _import_structure = {
@@ -131,7 +132,10 @@ _import_structure = {
         "ProgressivePruningForMixtral",
     ],
 }
-
+_available_algorithms = join_lists(list(_import_structure.values()))
+_extra_objects = {
+    "_available_algorithms": _available_algorithms,
+}
 
 if TYPE_CHECKING:
     from .ada_svd import AdaSVDMergingForCLIPVisionModel
@@ -252,4 +256,5 @@ else:
         __name__,
         globals()["__file__"],
         _import_structure,
+        extra_objects=_extra_objects,
     )

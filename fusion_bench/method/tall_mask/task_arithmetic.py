@@ -15,7 +15,7 @@ from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_add,
     state_dict_binary_mask,
     state_dict_diff_abs,
-    state_dict_hadmard_product,
+    state_dict_hadamard_product,
     state_dict_mul,
     state_dict_sub,
     state_dict_sum,
@@ -111,7 +111,7 @@ class TallMaskTaskArithmeticAlgorithm(
 
         with self.profile("compress and retrieve"):
             for model_name in modelpool.model_names:
-                retrieved_task_vector = state_dict_hadmard_product(
+                retrieved_task_vector = state_dict_hadamard_product(
                     tall_masks[model_name], multi_task_vector
                 )
                 retrieved_state_dict = state_dict_add(

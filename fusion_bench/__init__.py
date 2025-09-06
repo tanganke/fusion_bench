@@ -12,6 +12,7 @@ from fusion_bench.utils.lazy_imports import LazyImporter
 
 from . import constants, metrics, optim, tasks
 from .constants import RuntimeConstants
+from .method import _available_algorithms
 
 _extra_objects = {
     "RuntimeConstants": RuntimeConstants,
@@ -22,7 +23,7 @@ _extra_objects = {
 }
 _import_structure = {
     "dataset": ["CLIPDataset"],
-    "method": ["BaseAlgorithm", "BaseModelFusionAlgorithm"],
+    "method": _available_algorithms,
     "mixins": [
         "CLIPClassificationMixin",
         "FabricTrainingMixin",
@@ -66,6 +67,7 @@ _import_structure = {
         "NYUv2TaskPool",
     ],
     "utils": [
+        "ArithmeticStateDict",
         "BoolStateDictType",
         "LazyStateDict",
         "StateDictType",
@@ -130,6 +132,7 @@ if TYPE_CHECKING:
         OpenCLIPVisionModelTaskPool,
     )
     from .utils import (
+        ArithmeticStateDict,
         BoolStateDictType,
         LazyStateDict,
         StateDictType,

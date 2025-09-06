@@ -67,6 +67,26 @@ _import_structure = {
         "RankZeroLogger",
         "get_rankzero_logger",
     ],
+    "state_dict_arithmetic": [
+        "ArithmeticStateDict",
+        "state_dicts_check_keys",
+        "num_params_of_state_dict",
+        "state_dict_to_device",
+        "state_dict_flatten",
+        "state_dict_avg",
+        "state_dict_sub",
+        "state_dict_add",
+        "state_dict_add_scalar",
+        "state_dict_mul",
+        "state_dict_div",
+        "state_dict_power",
+        "state_dict_interpolation",
+        "state_dict_sum",
+        "state_dict_weighted_sum",
+        "state_dict_diff_abs",
+        "state_dict_binary_mask",
+        "state_dict_hadamard_product",
+    ],
     "timer": ["timeit_context"],
     "type": [
         "BoolStateDictType",
@@ -117,6 +137,26 @@ if TYPE_CHECKING:
     )
     from .path import create_symlink, listdir_fullpath, path_is_dir_and_not_empty
     from .pylogger import RankedLogger, RankZeroLogger, get_rankzero_logger
+    from .state_dict_arithmetic import (
+        ArithmeticStateDict,
+        num_params_of_state_dict,
+        state_dict_add,
+        state_dict_add_scalar,
+        state_dict_avg,
+        state_dict_binary_mask,
+        state_dict_diff_abs,
+        state_dict_div,
+        state_dict_flatten,
+        state_dict_hadamard_product,
+        state_dict_interpolation,
+        state_dict_mul,
+        state_dict_power,
+        state_dict_sub,
+        state_dict_sum,
+        state_dict_to_device,
+        state_dict_weighted_sum,
+        state_dicts_check_keys,
+    )
     from .timer import timeit_context
     from .type import BoolStateDictType, StateDictType, TorchModelType
 
