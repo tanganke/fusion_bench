@@ -10,6 +10,435 @@ from .parameters import check_parameters_all_equal
 from .type import BoolStateDictType, StateDictType
 
 
+class ArithmeticStateDict(OrderedDict):
+    """
+    An OrderedDict subclass that supports arithmetic operations on state dictionaries.
+
+    This class provides convenient operator overloading for common state dict operations
+    like addition, subtraction, multiplication, and division, while maintaining all
+    the functionality of OrderedDict.
+
+    Examples:
+        >>> sd1 = ArithmeticStateDict({'weight': torch.tensor([1.0, 2.0]), 'bias': torch.tensor([0.5])})
+        >>> sd2 = ArithmeticStateDict({'weight': torch.tensor([2.0, 3.0]), 'bias': torch.tensor([1.0])})
+        >>> result = sd1 + sd2  # Element-wise addition
+        >>> result = sd1 - sd2  # Element-wise subtraction
+        >>> result = sd1 * 2.0  # Scalar multiplication
+        >>> result = sd1 / 2.0  # Scalar division
+        >>> result = sd1 @ sd2  # Hadamard product
+    """
+
+    def __init__(self, *args, **kwargs):
+        """Initialize ArithmeticStateDict with the same interface as OrderedDict."""
+        super().__init__(*args, **kwargs)
+
+    def __add__(
+        self, other: Union["ArithmeticStateDict", StateDictType, Number]
+    ) -> "ArithmeticStateDict":
+        """
+        Element-wise addition with another state dict or scalar.
+
+        Args:
+            other: Another state dict to add or a scalar to add to all elements.
+
+        Returns:
+            A new ArithmeticStateDict with the element-wise sum.
+        """
+        if isinstance(other, (int, float, Number)):
+            # Scalar addition
+            result_dict = state_dict_add_scalar(self, other)
+            return ArithmeticStateDict(result_dict)
+        elif isinstance(other, (dict, OrderedDict)):
+            # State dict addition
+            result_dict = state_dict_add(self, other, strict=True)
+            return ArithmeticStateDict(result_dict)
+        else:
+            raise TypeError(
+                f"Cannot add ArithmeticStateDict with {type(other).__name__}"
+            )
+
+    def __radd__(
+        self, other: Union["ArithmeticStateDict", StateDictType, Number]
+    ) -> "ArithmeticStateDict":
+        """
+        Right addition (other + self).
+        Handles the case where sum() starts with 0 and scalar addition.
+        """
+        if other == 0:  # sum() starts with 0 by default
+            return self
+        elif isinstance(other, (int, float, Number)):
+            # Scalar addition is commutative
+            return self.__add__(other)
+        elif isinstance(other, (dict, OrderedDict)):
+            return self.__add__(other)
+        else:
+            raise TypeError(
+                f"Cannot add {type(other).__name__} with ArithmeticStateDict"
+            )
+
+    def __sub__(
+        self, other: Union["ArithmeticStateDict", StateDictType, Number]
+    ) -> "ArithmeticStateDict":
+        """
+        Element-wise subtraction with another state dict or scalar.
+
+        Args:
+            other: Another state dict to subtract or a scalar to subtract from all elements.
+
+        Returns:
+            A new ArithmeticStateDict with the element-wise difference.
+        """
+        if isinstance(other, (int, float, Number)):
+            # Scalar subtraction: subtract scalar from all elements
+            result_dict = state_dict_add_scalar(self, -other)
+            return ArithmeticStateDict(result_dict)
+        elif isinstance(other, (dict, OrderedDict)):
+            # State dict subtraction
+            result_dict = state_dict_sub(self, other, strict=True)
+            return ArithmeticStateDict(result_dict)
+        else:
+            raise TypeError(
+                f"Cannot subtract {type(other).__name__} from ArithmeticStateDict"
+            )
+
+    def __rsub__(
+        self, other: Union["ArithmeticStateDict", StateDictType, Number]
+    ) -> "ArithmeticStateDict":
+        """Right subtraction (other - self)."""
+        if isinstance(other, (int, float, Number)):
+            # Scalar - ArithmeticStateDict: subtract each element from scalar
+            result = ArithmeticStateDict()
+            for key, tensor in self.items():
+                result[key] = other - tensor
+            return result
+        elif isinstance(other, (dict, OrderedDict)):
+            result_dict = state_dict_sub(other, self, strict=True)
+            return ArithmeticStateDict(result_dict)
+        else:
+            raise TypeError(
+                f"Cannot subtract ArithmeticStateDict from {type(other).__name__}"
+            )
+
+    def __mul__(
+        self, scalar: Union[Number, "ArithmeticStateDict", StateDictType]
+    ) -> "ArithmeticStateDict":
+        """
+        Scalar multiplication or Hadamard product.
+
+        Args:
+            scalar: A scalar value for element-wise multiplication, or another state dict
+                   for Hadamard product.
+
+        Returns:
+            A new ArithmeticStateDict with the result.
+        """
+        if isinstance(scalar, (int, float, Number)):
+            result_dict = state_dict_mul(self, scalar)
+            return ArithmeticStateDict(result_dict)
+        elif isinstance(scalar, (dict, OrderedDict)):
+            # Hadamard product for dict-like objects
+            result_dict = state_dict_hadamard_product(self, scalar)
+            return ArithmeticStateDict(result_dict)
+        else:
+            raise TypeError(
+                f"Cannot multiply ArithmeticStateDict with {type(scalar).__name__}"
+            )
+
+    def __rmul__(
+        self, scalar: Union[Number, "ArithmeticStateDict", StateDictType]
+    ) -> "ArithmeticStateDict":
+        """Right multiplication (scalar * self)."""
+        return self.__mul__(scalar)
+
+    def __truediv__(self, scalar: Number) -> "ArithmeticStateDict":
+        """
+        Scalar division.
+
+        Args:
+            scalar: A scalar value to divide by.
+
+        Returns:
+            A new ArithmeticStateDict with each element divided by scalar.
+
+        Raises:
+            ZeroDivisionError: If scalar is zero.
+            TypeError: If scalar is not a number.
+        """
+        if not isinstance(scalar, (int, float, Number)):
+            raise TypeError(
+                f"Cannot divide ArithmeticStateDict by {type(scalar).__name__}"
+            )
+
+        result_dict = state_dict_div(self, scalar)
+        return ArithmeticStateDict(result_dict)
+
+    def __pow__(self, exponent: Number) -> "ArithmeticStateDict":
+        """
+        Element-wise power operation.
+
+        Args:
+            exponent: The exponent to raise each element to.
+
+        Returns:
+            A new ArithmeticStateDict with each element raised to the power.
+        """
+        if not isinstance(exponent, (int, float, Number)):
+            raise TypeError(
+                f"Cannot raise ArithmeticStateDict to power of {type(exponent).__name__}"
+            )
+
+        result_dict = state_dict_power(self, exponent)
+        return ArithmeticStateDict(result_dict)
+
+    def __matmul__(
+        self, other: Union["ArithmeticStateDict", StateDictType]
+    ) -> "ArithmeticStateDict":
+        """
+        Hadamard product (element-wise multiplication) using @ operator.
+
+        Args:
+            other: Another state dict for element-wise multiplication.
+
+        Returns:
+            A new ArithmeticStateDict with the Hadamard product.
+        """
+        if not isinstance(other, (dict, OrderedDict)):
+            raise TypeError(
+                f"Cannot compute Hadamard product with {type(other).__name__}"
+            )
+
+        result_dict = state_dict_hadamard_product(self, other)
+        return ArithmeticStateDict(result_dict)
+
+    def __rmatmul__(
+        self, other: Union["ArithmeticStateDict", StateDictType]
+    ) -> "ArithmeticStateDict":
+        """Right matrix multiplication (other @ self)."""
+        return self.__matmul__(other)
+
+    def __iadd__(
+        self, other: Union["ArithmeticStateDict", StateDictType, Number]
+    ) -> "ArithmeticStateDict":
+        """In-place addition."""
+        if isinstance(other, (int, float, Number)):
+            # Scalar addition
+            for key in self:
+                self[key] = self[key] + other
+        elif isinstance(other, (dict, OrderedDict)):
+            # State dict addition
+            for key in self:
+                if key in other:
+                    self[key] = self[key] + other[key]
+        else:
+            raise TypeError(f"Cannot add {type(other).__name__} to ArithmeticStateDict")
+        return self
+
+    def __isub__(
+        self, other: Union["ArithmeticStateDict", StateDictType, Number]
+    ) -> "ArithmeticStateDict":
+        """In-place subtraction."""
+        if isinstance(other, (int, float, Number)):
+            # Scalar subtraction
+            for key in self:
+                self[key] = self[key] - other
+        elif isinstance(other, (dict, OrderedDict)):
+            # State dict subtraction
+            for key in self:
+                if key in other:
+                    self[key] = self[key] - other[key]
+        else:
+            raise TypeError(
+                f"Cannot subtract {type(other).__name__} from ArithmeticStateDict"
+            )
+        return self
+
+    def __imul__(
+        self, scalar: Union[Number, "ArithmeticStateDict", StateDictType]
+    ) -> "ArithmeticStateDict":
+        """In-place multiplication."""
+        if isinstance(scalar, (int, float, Number)):
+            for key in self:
+                self[key] = self[key] * scalar
+        elif isinstance(scalar, (dict, OrderedDict)):
+            for key in self:
+                if key in scalar:
+                    self[key] = self[key] * scalar[key]
+        else:
+            raise TypeError(
+                f"Cannot multiply ArithmeticStateDict with {type(scalar).__name__}"
+            )
+        return self
+
+    def __itruediv__(self, scalar: Number) -> "ArithmeticStateDict":
+        """In-place division."""
+        if not isinstance(scalar, (int, float, Number)):
+            raise TypeError(
+                f"Cannot divide ArithmeticStateDict by {type(scalar).__name__}"
+            )
+        if scalar == 0:
+            raise ZeroDivisionError("Cannot divide by zero")
+
+        for key in self:
+            self[key] = self[key] / scalar
+        return self
+
+    def __ipow__(self, exponent: Number) -> "ArithmeticStateDict":
+        """In-place power operation."""
+        if not isinstance(exponent, (int, float, Number)):
+            raise TypeError(
+                f"Cannot raise ArithmeticStateDict to power of {type(exponent).__name__}"
+            )
+
+        for key in self:
+            self[key] = self[key] ** exponent
+        return self
+
+    def abs(self) -> "ArithmeticStateDict":
+        """
+        Element-wise absolute value.
+
+        Returns:
+            A new ArithmeticStateDict with absolute values.
+        """
+        result = ArithmeticStateDict()
+        for key, tensor in self.items():
+            result[key] = torch.abs(tensor)
+        return result
+
+    def sqrt(self) -> "ArithmeticStateDict":
+        """
+        Element-wise square root.
+
+        Returns:
+            A new ArithmeticStateDict with square roots.
+        """
+        result = ArithmeticStateDict()
+        for key, tensor in self.items():
+            result[key] = torch.sqrt(tensor)
+        return result
+
+    def sum(self) -> "ArithmeticStateDict":
+        """
+        Sum with other ArithmeticStateDicts using the + operator.
+
+        Args:
+            *others: Other ArithmeticStateDicts to sum with.
+
+        Returns:
+            A new ArithmeticStateDict with the sum.
+        """
+        # This is used for when sum() is called on a list of ArithmeticStateDicts
+        return self
+
+    def to_device(
+        self,
+        device: Union[torch.device, str],
+        copy: bool = False,
+        inplace: bool = False,
+    ) -> "ArithmeticStateDict":
+        """
+        Move all tensors to the specified device.
+
+        Args:
+            device: Target device.
+            copy: Whether to force a copy.
+            inplace: Whether to modify in place.
+
+        Returns:
+            ArithmeticStateDict with tensors on the target device.
+        """
+        if inplace:
+            for key, tensor in self.items():
+                self[key] = tensor.to(device, non_blocking=True, copy=copy)
+            return self
+        else:
+            result = ArithmeticStateDict()
+            for key, tensor in self.items():
+                result[key] = tensor.to(device, non_blocking=True, copy=copy)
+            return result
+
+    def clone(self) -> "ArithmeticStateDict":
+        """
+        Create a deep copy with cloned tensors.
+
+        Returns:
+            A new ArithmeticStateDict with cloned tensors.
+        """
+        result = ArithmeticStateDict()
+        for key, tensor in self.items():
+            result[key] = tensor.clone()
+        return result
+
+    def detach(self) -> "ArithmeticStateDict":
+        """
+        Detach all tensors from the computation graph.
+
+        Returns:
+            A new ArithmeticStateDict with detached tensors.
+        """
+        result = ArithmeticStateDict()
+        for key, tensor in self.items():
+            result[key] = tensor.detach()
+        return result
+
+    def num_params(self) -> int:
+        """
+        Calculate the total number of parameters.
+
+        Returns:
+            Total number of parameters in all tensors.
+        """
+        return sum(tensor.numel() for tensor in self.values())
+
+    @classmethod
+    def from_state_dict(cls, state_dict: StateDictType) -> "ArithmeticStateDict":
+        """
+        Create an ArithmeticStateDict from a regular state dict.
+
+        Args:
+            state_dict: A regular state dictionary.
+
+        Returns:
+            A new ArithmeticStateDict with the same data.
+        """
+        return cls(state_dict)
+
+    @classmethod
+    def weighted_sum(
+        cls,
+        state_dicts: List[Union["ArithmeticStateDict", StateDictType]],
+        weights: List[float],
+    ) -> "ArithmeticStateDict":
+        """
+        Compute a weighted sum of multiple state dicts.
+
+        Args:
+            state_dicts: List of state dicts to combine.
+            weights: List of weights for the combination.
+
+        Returns:
+            A new ArithmeticStateDict with the weighted sum.
+        """
+        result_dict = state_dict_weighted_sum(state_dicts, weights)
+        return cls(result_dict)
+
+    @classmethod
+    def average(
+        cls, state_dicts: List[Union["ArithmeticStateDict", StateDictType]]
+    ) -> "ArithmeticStateDict":
+        """
+        Compute the average of multiple state dicts.
+
+        Args:
+            state_dicts: List of state dicts to average.
+
+        Returns:
+            A new ArithmeticStateDict with the average.
+        """
+        result_dict = state_dict_avg(state_dicts)
+        return cls(result_dict)
+
+
 def _validate_state_dict_list_not_empty(state_dicts: List[StateDictType]) -> None:
     """
     Validate that the list of state dicts is not empty and contains valid state dicts.

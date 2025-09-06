@@ -206,7 +206,9 @@ class TestStateDictArithmetic(unittest.TestCase):
             state_dict_binary_mask(state_dict_a, state_dict_c, "greater", strict=True)
 
         # Test with strict=False (should work with common keys only)
-        result = state_dict_binary_mask(state_dict_a, state_dict_c, "greater", strict=False)
+        result = state_dict_binary_mask(
+            state_dict_a, state_dict_c, "greater", strict=False
+        )
         self.assertIn("weight", result)
         self.assertNotIn("bias", result)
         self.assertNotIn("different_key", result)
@@ -214,7 +216,9 @@ class TestStateDictArithmetic(unittest.TestCase):
         torch.testing.assert_close(result["weight"], expected_weight)
 
         # Test with show_pbar=True (should work without errors)
-        result = state_dict_binary_mask(state_dict_a, state_dict_b, "greater", show_pbar=True)
+        result = state_dict_binary_mask(
+            state_dict_a, state_dict_b, "greater", show_pbar=True
+        )
         expected_weight = torch.tensor([True, False, True])
         torch.testing.assert_close(result["weight"], expected_weight)
 
@@ -341,6 +345,468 @@ class TestStateDictArithmetic(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             state_dict_weighted_sum(state_dicts, [1.0])  # Wrong number of weights
+
+    def test_arithmetic_state_dict_creation(self):
+        """Test ArithmeticStateDict creation and basic properties."""
+        from fusion_bench.utils.state_dict_arithmetic import ArithmeticStateDict
+
+        # Test creation from dict
+        regular_dict = {"weight": torch.tensor([1.0, 2.0]), "bias": torch.tensor([0.5])}
+        asd = ArithmeticStateDict(regular_dict)
+
+        self.assertIsInstance(asd, ArithmeticStateDict)
+        self.assertEqual(len(asd), 2)
+        self.assertIn("weight", asd)
+        self.assertIn("bias", asd)
+        torch.testing.assert_close(asd["weight"], torch.tensor([1.0, 2.0]))
+
+        # Test from_state_dict class method
+        asd2 = ArithmeticStateDict.from_state_dict(regular_dict)
+        self.assertIsInstance(asd2, ArithmeticStateDict)
+        torch.testing.assert_close(asd2["weight"], asd["weight"])
+
+    def test_arithmetic_state_dict_addition(self):
+        """Test ArithmeticStateDict addition operations."""
+        from fusion_bench.utils.state_dict_arithmetic import ArithmeticStateDict
+
+        asd1 = ArithmeticStateDict(
+            {"weight": torch.tensor([1.0, 2.0, 3.0]), "bias": torch.tensor([0.5, 1.5])}
+        )
+        asd2 = ArithmeticStateDict(
+            {"weight": torch.tensor([2.0, 1.0, 1.0]), "bias": torch.tensor([0.3, 0.7])}
+        )
+
+        # Test addition
+        result = asd1 + asd2
+        self.assertIsInstance(result, ArithmeticStateDict)
+        expected_weight = torch.tensor([3.0, 3.0, 4.0])
+        expected_bias = torch.tensor([0.8, 2.2])
+        torch.testing.assert_close(result["weight"], expected_weight)
+        torch.testing.assert_close(result["bias"], expected_bias)
+
+        # Test right addition
+        result2 = asd2 + asd1
+        torch.testing.assert_close(result2["weight"], expected_weight)
+
+        # Test in-place addition
+        asd1_copy = asd1.clone()
+        asd1_copy += asd2
+        torch.testing.assert_close(asd1_copy["weight"], expected_weight)
+        torch.testing.assert_close(asd1_copy["bias"], expected_bias)
+
+        # Test type error
+        with self.assertRaises(TypeError):
+            asd1 + "invalid"
+
+    def test_arithmetic_state_dict_subtraction(self):
+        """Test ArithmeticStateDict subtraction operations."""
+        from fusion_bench.utils.state_dict_arithmetic import ArithmeticStateDict
+
+        asd1 = ArithmeticStateDict(
+            {"weight": torch.tensor([3.0, 4.0, 5.0]), "bias": torch.tensor([1.0, 2.0])}
+        )
+        asd2 = ArithmeticStateDict(
+            {"weight": torch.tensor([1.0, 2.0, 2.0]), "bias": torch.tensor([0.5, 0.5])}
+        )
+
+        # Test subtraction
+        result = asd1 - asd2
+        self.assertIsInstance(result, ArithmeticStateDict)
+        expected_weight = torch.tensor([2.0, 2.0, 3.0])
+        expected_bias = torch.tensor([0.5, 1.5])
+        torch.testing.assert_close(result["weight"], expected_weight)
+        torch.testing.assert_close(result["bias"], expected_bias)
+
+        # Test right subtraction
+        result2 = asd2 - asd1
+        expected_weight2 = torch.tensor([-2.0, -2.0, -3.0])
+        expected_bias2 = torch.tensor([-0.5, -1.5])
+        torch.testing.assert_close(result2["weight"], expected_weight2)
+        torch.testing.assert_close(result2["bias"], expected_bias2)
+
+        # Test in-place subtraction
+        asd1_copy = asd1.clone()
+        asd1_copy -= asd2
+        torch.testing.assert_close(asd1_copy["weight"], expected_weight)
+
+    def test_arithmetic_state_dict_multiplication(self):
+        """Test ArithmeticStateDict multiplication operations."""
+        from fusion_bench.utils.state_dict_arithmetic import ArithmeticStateDict
+
+        asd = ArithmeticStateDict(
+            {"weight": torch.tensor([1.0, 2.0, 3.0]), "bias": torch.tensor([0.5, 1.5])}
+        )
+        asd2 = ArithmeticStateDict(
+            {"weight": torch.tensor([2.0, 3.0, 2.0]), "bias": torch.tensor([4.0, 2.0])}
+        )
+
+        # Test scalar multiplication
+        result = asd * 2.0
+        self.assertIsInstance(result, ArithmeticStateDict)
+        expected_weight = torch.tensor([2.0, 4.0, 6.0])
+        expected_bias = torch.tensor([1.0, 3.0])
+        torch.testing.assert_close(result["weight"], expected_weight)
+        torch.testing.assert_close(result["bias"], expected_bias)
+
+        # Test right scalar multiplication
+        result2 = 3.0 * asd
+        expected_weight2 = torch.tensor([3.0, 6.0, 9.0])
+        torch.testing.assert_close(result2["weight"], expected_weight2)
+
+        # Test Hadamard product (element-wise multiplication)
+        result3 = asd * asd2
+        expected_weight3 = torch.tensor([2.0, 6.0, 6.0])
+        expected_bias3 = torch.tensor([2.0, 3.0])
+        torch.testing.assert_close(result3["weight"], expected_weight3)
+        torch.testing.assert_close(result3["bias"], expected_bias3)
+
+        # Test in-place scalar multiplication
+        asd_copy = asd.clone()
+        asd_copy *= 2.0
+        torch.testing.assert_close(asd_copy["weight"], expected_weight)
+
+        # Test in-place Hadamard product
+        asd_copy2 = asd.clone()
+        asd_copy2 *= asd2
+        torch.testing.assert_close(asd_copy2["weight"], expected_weight3)
+
+    def test_arithmetic_state_dict_division(self):
+        """Test ArithmeticStateDict division operations."""
+        from fusion_bench.utils.state_dict_arithmetic import ArithmeticStateDict
+
+        asd = ArithmeticStateDict(
+            {"weight": torch.tensor([4.0, 8.0, 12.0]), "bias": torch.tensor([2.0, 6.0])}
+        )
+
+        # Test scalar division
+        result = asd / 2.0
+        self.assertIsInstance(result, ArithmeticStateDict)
+        expected_weight = torch.tensor([2.0, 4.0, 6.0])
+        expected_bias = torch.tensor([1.0, 3.0])
+        torch.testing.assert_close(result["weight"], expected_weight)
+        torch.testing.assert_close(result["bias"], expected_bias)
+
+        # Test in-place division
+        asd_copy = asd.clone()
+        asd_copy /= 2.0
+        torch.testing.assert_close(asd_copy["weight"], expected_weight)
+
+        # Test division by zero
+        with self.assertRaises(ZeroDivisionError):
+            asd / 0.0
+
+        with self.assertRaises(ZeroDivisionError):
+            asd_copy = asd.clone()
+            asd_copy /= 0.0
+
+        # Test type error
+        with self.assertRaises(TypeError):
+            asd / "invalid"
+
+    def test_arithmetic_state_dict_power(self):
+        """Test ArithmeticStateDict power operations."""
+        from fusion_bench.utils.state_dict_arithmetic import ArithmeticStateDict
+
+        asd = ArithmeticStateDict(
+            {"weight": torch.tensor([1.0, 2.0, 3.0]), "bias": torch.tensor([2.0, 4.0])}
+        )
+
+        # Test power operation
+        result = asd**2
+        self.assertIsInstance(result, ArithmeticStateDict)
+        expected_weight = torch.tensor([1.0, 4.0, 9.0])
+        expected_bias = torch.tensor([4.0, 16.0])
+        torch.testing.assert_close(result["weight"], expected_weight)
+        torch.testing.assert_close(result["bias"], expected_bias)
+
+        # Test in-place power
+        asd_copy = asd.clone()
+        asd_copy **= 2
+        torch.testing.assert_close(asd_copy["weight"], expected_weight)
+
+        # Test type error
+        with self.assertRaises(TypeError):
+            asd ** "invalid"
+
+    def test_arithmetic_state_dict_matmul(self):
+        """Test ArithmeticStateDict matrix multiplication (Hadamard product)."""
+        from fusion_bench.utils.state_dict_arithmetic import ArithmeticStateDict
+
+        asd1 = ArithmeticStateDict(
+            {"weight": torch.tensor([1.0, 2.0, 3.0]), "bias": torch.tensor([0.5, 1.5])}
+        )
+        asd2 = ArithmeticStateDict(
+            {"weight": torch.tensor([2.0, 3.0, 2.0]), "bias": torch.tensor([4.0, 2.0])}
+        )
+
+        # Test matmul (Hadamard product)
+        result = asd1 @ asd2
+        self.assertIsInstance(result, ArithmeticStateDict)
+        expected_weight = torch.tensor([2.0, 6.0, 6.0])
+        expected_bias = torch.tensor([2.0, 3.0])
+        torch.testing.assert_close(result["weight"], expected_weight)
+        torch.testing.assert_close(result["bias"], expected_bias)
+
+        # Test right matmul
+        result2 = asd2 @ asd1
+        torch.testing.assert_close(result2["weight"], expected_weight)
+
+        # Test type error
+        with self.assertRaises(TypeError):
+            asd1 @ "invalid"
+
+    def test_arithmetic_state_dict_utility_methods(self):
+        """Test ArithmeticStateDict utility methods."""
+        from fusion_bench.utils.state_dict_arithmetic import ArithmeticStateDict
+
+        asd = ArithmeticStateDict(
+            {
+                "weight": torch.tensor([-1.0, 2.0, -3.0]),
+                "bias": torch.tensor([4.0, 9.0]),
+            }
+        )
+
+        # Test abs
+        result = asd.abs()
+        self.assertIsInstance(result, ArithmeticStateDict)
+        expected_weight = torch.tensor([1.0, 2.0, 3.0])
+        expected_bias = torch.tensor([4.0, 9.0])
+        torch.testing.assert_close(result["weight"], expected_weight)
+        torch.testing.assert_close(result["bias"], expected_bias)
+
+        # Test sqrt
+        asd_positive = ArithmeticStateDict(
+            {
+                "weight": torch.tensor([1.0, 4.0, 9.0]),
+                "bias": torch.tensor([16.0, 25.0]),
+            }
+        )
+        result = asd_positive.sqrt()
+        expected_weight = torch.tensor([1.0, 2.0, 3.0])
+        expected_bias = torch.tensor([4.0, 5.0])
+        torch.testing.assert_close(result["weight"], expected_weight)
+        torch.testing.assert_close(result["bias"], expected_bias)
+
+        # Test num_params
+        num_params = asd.num_params()
+        self.assertEqual(num_params, 5)  # 3 + 2 parameters
+
+        # Test clone
+        cloned = asd.clone()
+        self.assertIsInstance(cloned, ArithmeticStateDict)
+        self.assertIsNot(cloned, asd)
+        torch.testing.assert_close(cloned["weight"], asd["weight"])
+
+        # Modify original to ensure clone is independent
+        asd["weight"][0] = 999.0
+        self.assertNotEqual(cloned["weight"][0].item(), 999.0)
+
+        # Test detach
+        asd_with_grad = ArithmeticStateDict(
+            {"weight": torch.tensor([1.0, 2.0], requires_grad=True)}
+        )
+        detached = asd_with_grad.detach()
+        self.assertFalse(detached["weight"].requires_grad)
+        self.assertTrue(asd_with_grad["weight"].requires_grad)
+
+    def test_arithmetic_state_dict_device_operations(self):
+        """Test ArithmeticStateDict device operations."""
+        from fusion_bench.utils.state_dict_arithmetic import ArithmeticStateDict
+
+        asd = ArithmeticStateDict(
+            {"weight": torch.tensor([1.0, 2.0, 3.0]), "bias": torch.tensor([0.5, 1.5])}
+        )
+
+        # Test to_device (CPU to CPU)
+        result = asd.to_device("cpu")
+        self.assertIsInstance(result, ArithmeticStateDict)
+        self.assertEqual(result["weight"].device.type, "cpu")
+
+        # Test in-place device transfer
+        asd_copy = asd.clone()
+        result_inplace = asd_copy.to_device("cpu", inplace=True)
+        self.assertIs(result_inplace, asd_copy)
+
+        # Skip CUDA tests if not available
+        if torch.cuda.is_available():
+            # Test CPU to CUDA
+            cuda_result = asd.to_device("cuda")
+            self.assertEqual(cuda_result["weight"].device.type, "cuda")
+
+            # Test CUDA to CPU
+            cpu_result = cuda_result.to_device("cpu")
+            self.assertEqual(cpu_result["weight"].device.type, "cpu")
+
+    def test_arithmetic_state_dict_class_methods(self):
+        """Test ArithmeticStateDict class methods."""
+        from fusion_bench.utils.state_dict_arithmetic import ArithmeticStateDict
+
+        asd1 = ArithmeticStateDict(
+            {"weight": torch.tensor([1.0, 2.0, 3.0]), "bias": torch.tensor([0.5, 1.5])}
+        )
+        asd2 = ArithmeticStateDict(
+            {"weight": torch.tensor([3.0, 2.0, 1.0]), "bias": torch.tensor([1.5, 0.5])}
+        )
+
+        # Test weighted_sum
+        result = ArithmeticStateDict.weighted_sum([asd1, asd2], [0.3, 0.7])
+        self.assertIsInstance(result, ArithmeticStateDict)
+        expected_weight = torch.tensor([2.4, 2.0, 1.6])  # 0.3*[1,2,3] + 0.7*[3,2,1]
+        expected_bias = torch.tensor([1.2, 0.8])  # 0.3*[0.5,1.5] + 0.7*[1.5,0.5]
+        torch.testing.assert_close(result["weight"], expected_weight)
+        torch.testing.assert_close(result["bias"], expected_bias)
+
+        # Test average
+        result = ArithmeticStateDict.average([asd1, asd2])
+        self.assertIsInstance(result, ArithmeticStateDict)
+        expected_weight = torch.tensor([2.0, 2.0, 2.0])  # ([1,2,3] + [3,2,1]) / 2
+        expected_bias = torch.tensor([1.0, 1.0])  # ([0.5,1.5] + [1.5,0.5]) / 2
+        torch.testing.assert_close(result["weight"], expected_weight)
+        torch.testing.assert_close(result["bias"], expected_bias)
+
+    def test_arithmetic_state_dict_error_handling(self):
+        """Test ArithmeticStateDict error handling."""
+        from fusion_bench.utils.state_dict_arithmetic import ArithmeticStateDict
+
+        asd1 = ArithmeticStateDict(
+            {"weight": torch.tensor([1.0, 2.0]), "bias": torch.tensor([0.5])}
+        )
+
+        # Different keys should raise errors with strict operations
+        asd2 = ArithmeticStateDict(
+            {"weight": torch.tensor([3.0, 4.0]), "different_key": torch.tensor([1.0])}
+        )
+
+        # Test that operations with different keys raise ValueError
+        with self.assertRaises(ValueError):
+            asd1 + asd2
+
+        with self.assertRaises(ValueError):
+            asd1 - asd2
+
+        with self.assertRaises(ValueError):
+            asd1 @ asd2
+
+        # Test type errors for invalid operations
+        with self.assertRaises(TypeError):
+            asd1 + "string"  # Can't add string to ArithmeticStateDict
+
+        with self.assertRaises(TypeError):
+            asd1 - "string"  # Can't subtract string
+
+        with self.assertRaises(TypeError):
+            "string" - asd1  # Can't subtract from string
+
+        with self.assertRaises(TypeError):
+            asd1 + [1, 2, 3]  # Can't add list
+
+        with self.assertRaises(TypeError):
+            None + asd1  # Can't add None
+
+    def test_arithmetic_state_dict_sum_function(self):
+        """Test ArithmeticStateDict with Python's built-in sum function."""
+        from fusion_bench.utils.state_dict_arithmetic import ArithmeticStateDict
+
+        # Create test data
+        models = [
+            ArithmeticStateDict(
+                {"weight": torch.tensor([1.0, 2.0]), "bias": torch.tensor([0.5])}
+            ),
+            ArithmeticStateDict(
+                {"weight": torch.tensor([2.0, 3.0]), "bias": torch.tensor([1.0])}
+            ),
+            ArithmeticStateDict(
+                {"weight": torch.tensor([3.0, 1.0]), "bias": torch.tensor([1.5])}
+            ),
+        ]
+
+        # Test sum() function
+        total = sum(models)
+        self.assertIsInstance(total, ArithmeticStateDict)
+        expected_weight = torch.tensor([6.0, 6.0])  # 1+2+3, 2+3+1
+        expected_bias = torch.tensor([3.0])  # 0.5+1.0+1.5
+        torch.testing.assert_close(total["weight"], expected_weight)
+        torch.testing.assert_close(total["bias"], expected_bias)
+
+        # Test ensemble averaging using sum
+        ensemble = sum(models) / len(models)
+        expected_avg_weight = torch.tensor([2.0, 2.0])  # 6/3, 6/3
+        expected_avg_bias = torch.tensor([1.0])  # 3/3
+        torch.testing.assert_close(ensemble["weight"], expected_avg_weight)
+        torch.testing.assert_close(ensemble["bias"], expected_avg_bias)
+
+        # Test sum with empty list (should work with sum([], start))
+        empty_sum = sum(
+            [],
+            ArithmeticStateDict(
+                {"weight": torch.tensor([0.0]), "bias": torch.tensor([0.0])}
+            ),
+        )
+        self.assertIsInstance(empty_sum, ArithmeticStateDict)
+        torch.testing.assert_close(empty_sum["weight"], torch.tensor([0.0]))
+
+    def test_arithmetic_state_dict_scalar_operations(self):
+        """Test ArithmeticStateDict operations with scalars."""
+        from fusion_bench.utils.state_dict_arithmetic import ArithmeticStateDict
+
+        asd = ArithmeticStateDict(
+            {"weight": torch.tensor([1.0, 2.0, 3.0]), "bias": torch.tensor([0.5, 1.5])}
+        )
+
+        # Test scalar addition
+        result = asd + 2.0
+        self.assertIsInstance(result, ArithmeticStateDict)
+        expected_weight = torch.tensor([3.0, 4.0, 5.0])
+        expected_bias = torch.tensor([2.5, 3.5])
+        torch.testing.assert_close(result["weight"], expected_weight)
+        torch.testing.assert_close(result["bias"], expected_bias)
+
+        # Test right scalar addition
+        result = 3.0 + asd
+        expected_weight = torch.tensor([4.0, 5.0, 6.0])
+        expected_bias = torch.tensor([3.5, 4.5])
+        torch.testing.assert_close(result["weight"], expected_weight)
+        torch.testing.assert_close(result["bias"], expected_bias)
+
+        # Test scalar subtraction
+        result = asd - 1.0
+        expected_weight = torch.tensor([0.0, 1.0, 2.0])
+        expected_bias = torch.tensor([-0.5, 0.5])
+        torch.testing.assert_close(result["weight"], expected_weight)
+        torch.testing.assert_close(result["bias"], expected_bias)
+
+        # Test right scalar subtraction
+        result = 5.0 - asd
+        expected_weight = torch.tensor([4.0, 3.0, 2.0])
+        expected_bias = torch.tensor([4.5, 3.5])
+        torch.testing.assert_close(result["weight"], expected_weight)
+        torch.testing.assert_close(result["bias"], expected_bias)
+
+        # Test in-place scalar addition
+        asd_copy = asd.clone()
+        asd_copy += 2.5
+        expected_weight = torch.tensor([3.5, 4.5, 5.5])
+        expected_bias = torch.tensor([3.0, 4.0])
+        torch.testing.assert_close(asd_copy["weight"], expected_weight)
+        torch.testing.assert_close(asd_copy["bias"], expected_bias)
+
+        # Test in-place scalar subtraction
+        asd_copy = asd.clone()
+        asd_copy -= 0.5
+        expected_weight = torch.tensor([0.5, 1.5, 2.5])
+        expected_bias = torch.tensor([0.0, 1.0])
+        torch.testing.assert_close(asd_copy["weight"], expected_weight)
+        torch.testing.assert_close(asd_copy["bias"], expected_bias)
+
+        # Test with integers
+        result = asd + 2
+        expected_weight = torch.tensor([3.0, 4.0, 5.0])
+        torch.testing.assert_close(result["weight"], expected_weight)
+
+        # Test with negative scalars
+        result = asd + (-1.5)
+        expected_weight = torch.tensor([-0.5, 0.5, 1.5])
+        torch.testing.assert_close(result["weight"], expected_weight)
 
 
 if __name__ == "__main__":
