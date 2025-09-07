@@ -16,6 +16,7 @@ from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.syntax import Syntax
 from rich.text import Text
+from rich.traceback import install as install_rich_traceback
 
 from fusion_bench.utils import pylogger
 
