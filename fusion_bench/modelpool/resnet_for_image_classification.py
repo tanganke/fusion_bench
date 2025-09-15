@@ -57,9 +57,13 @@ def load_transformers_resnet(
     model.config.id2label = id2label
     model.config.label2id = label2id
 
-    model.classifier[1] = nn.Linear(
-        model.classifier[1].in_features,
-        len(classnames) if model.config.num_labels > 0 else nn.Identity(),
+    model.classifier[1] = (
+        nn.Linear(
+            model.classifier[1].in_features,
+            len(classnames),
+        )
+        if model.config.num_labels > 0
+        else nn.Identity()
     )
     return model
 
