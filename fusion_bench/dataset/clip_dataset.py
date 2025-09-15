@@ -6,7 +6,7 @@ from typing import Optional, Tuple
 
 import torch
 from torch.utils.data import Dataset
-from transformers import CLIPProcessor, ProcessorMixin
+from transformers import BaseImageProcessor, CLIPProcessor, ProcessorMixin
 
 __all__ = ["CLIPDataset"]
 
@@ -60,7 +60,7 @@ class CLIPDataset(torch.utils.data.Dataset):
             raise ValueError("Each item should be a dictionary or a tuple of length 2")
         image = item["image"]
         if self.processor is not None:
-            if isinstance(self.processor, ProcessorMixin):
+            if isinstance(self.processor, (ProcessorMixin, BaseImageProcessor)):
                 # Apply the processor to the image to get the input tensor
                 inputs = self.processor(images=[image], return_tensors="pt")[
                     "pixel_values"

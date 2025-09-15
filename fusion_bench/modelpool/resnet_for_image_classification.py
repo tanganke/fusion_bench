@@ -179,6 +179,13 @@ class ResNetForImageClassificationPool(BaseModelPool):
                     raise ValueError(
                         f"Invalid model_name_or_config type: {type(model_name_or_config)}"
                     )
+
+            # override forward to return logits only
+            original_forward = model.forward
+            model.forward = lambda pixel_values, **kwargs: original_forward(
+                pixel_values=pixel_values, **kwargs
+            ).logits
+            model.original_forward = original_forward
         else:
             raise ValueError(f"Unknown model type: {self.type}")
         return model
