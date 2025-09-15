@@ -183,3 +183,18 @@ class CLIPTemplateFactory:
 
 def get_classnames_and_templates(dataset_name: str) -> Tuple[List[str], List[Callable]]:
     return CLIPTemplateFactory.get_classnames_and_templates(dataset_name)
+
+
+def get_num_classes(dataset_name: str) -> int:
+    classnames, _ = get_classnames_and_templates(dataset_name)
+    return len(classnames)
+
+
+def get_classnames(dataset_name: str) -> List[str]:
+    classnames, _ = get_classnames_and_templates(dataset_name)
+    return classnames
+
+
+def get_templates(dataset_name: str) -> List[Callable]:
+    _, templates = get_classnames_and_templates(dataset_name)
+    return templates
