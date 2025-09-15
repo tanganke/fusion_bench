@@ -10,6 +10,7 @@ from typing import (
     override,
 )
 
+import torch
 from omegaconf import DictConfig
 from torch import nn
 
@@ -69,7 +70,9 @@ class ResNetForImageClassificationPool(BaseModelPool):
         super().__init__(**kwargs)
         assert type in ["torchvision", "transformers"]
 
-    def load_processor(self, stage: Literal["train", "val", "test"], *args, **kwargs):
+    def load_processor(
+        self, stage: Literal["train", "val", "test"] = "test", *args, **kwargs
+    ):
         if self.type == "torchvision":
             from torchvision import transforms
 
@@ -189,3 +192,13 @@ class ResNetForImageClassificationPool(BaseModelPool):
         else:
             raise ValueError(f"Unknown model type: {self.type}")
         return model
+
+    @override
+    def save_model(self, model, path, *args, **kwargs):
+        if self.type == "torchvision":
+            torch.save(model.state_dict(), path)
+        elif self.type == "transformers":
+            model.save_pretrained(path)
+            self.load_processor().save_pretrained(path)
+        else:
+            raise ValueError(f"Unknown model type: {self.type}")

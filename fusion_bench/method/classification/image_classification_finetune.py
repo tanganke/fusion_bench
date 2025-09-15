@@ -22,6 +22,7 @@ from fusion_bench import (
 from fusion_bench.dataset import CLIPDataset
 from fusion_bench.modelpool import ResNetForImageClassificationPool
 from fusion_bench.tasks.clip_classification import get_num_classes
+from lightning_utilities.core.rank_zero import rank_zero_only
 
 log = get_rankzero_logger(__name__)
 
@@ -82,7 +83,7 @@ class ImageClassificationFineTuning(BaseAlgorithm):
                     "frequency": 1,
                 },
             }
-        print(f"optimizer:\n{optimizer}")
+        log.info(f"optimizer:\n{optimizer}")
 
         lit_module = ERM_LitModule(
             model,
@@ -118,7 +119,14 @@ class ImageClassificationFineTuning(BaseAlgorithm):
         trainer.fit(
             lit_module, train_dataloaders=train_loader, val_dataloaders=val_loader
         )
-        return lit_module.model
+        model = lit_module.model
+        if rank_zero_only.rank == 0:
+            log.info(f"Saving the final model to {log_dir}/raw_checkpoints/final")
+            modelpool.save_model(
+                model,
+                path=os.path.join(log_dir, "raw_checkpoints", "final"),
+            )
+        return model
 
     def get_dataloader(self, dataset, stage: str):
         assert stage in ["train", "val", "test"], f"Invalid stage: {stage}"
