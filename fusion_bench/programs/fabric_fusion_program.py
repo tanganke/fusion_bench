@@ -236,7 +236,7 @@ class FabricModelFusionProgram(
 
         # create symbol link to hydra output directory
         if (
-            rank_zero_only.rank==0
+            rank_zero_only.rank == 0
             and self.log_dir is not None
             and os.path.abspath(self.log_dir) != os.path.abspath(get_hydra_output_dir())
         ):

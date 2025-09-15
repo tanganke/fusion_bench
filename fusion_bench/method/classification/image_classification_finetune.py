@@ -5,6 +5,7 @@ import lightning as L
 import lightning.pytorch.callbacks as pl_callbacks
 import torch
 from lightning.pytorch.loggers import TensorBoardLogger
+from lightning_utilities.core.rank_zero import rank_zero_only
 from lit_learn.lit_modules import ERM_LitModule
 from omegaconf import DictConfig
 from torch import nn
@@ -22,7 +23,6 @@ from fusion_bench import (
 from fusion_bench.dataset import CLIPDataset
 from fusion_bench.modelpool import ResNetForImageClassificationPool
 from fusion_bench.tasks.clip_classification import get_num_classes
-from lightning_utilities.core.rank_zero import rank_zero_only
 
 log = get_rankzero_logger(__name__)
 
