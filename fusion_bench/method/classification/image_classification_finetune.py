@@ -130,7 +130,7 @@ class ImageClassificationFineTuning(BaseAlgorithm):
 
 @auto_register_config
 class ImageClassificationFineTuning_Test(BaseAlgorithm):
-    def __init__(self, dataloader_kwargs: DictConfig, **kwargs):
+    def __init__(self, checkpoint_path: str, dataloader_kwargs: DictConfig, **kwargs):
         super().__init__(**kwargs)
 
     def run(self, modelpool: BaseModelPool):

@@ -171,9 +171,9 @@ class ResNetForImageClassificationPool(BaseModelPool):
                 case dict() | DictConfig() as model_config:
 
                     model = load_transformers_resnet(
-                        config_path=model_name_or_config["config_path"],
-                        pretrained=model_name_or_config.get("pretrained", False),
-                        dataset_name=model_name_or_config.get("dataset_name", None),
+                        config_path=model_config["config_path"],
+                        pretrained=model_config.get("pretrained", False),
+                        dataset_name=model_config.get("dataset_name", None),
                     )
                 case _:
                     raise ValueError(
