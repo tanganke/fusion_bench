@@ -124,7 +124,11 @@ class ImageClassificationFineTuning(BaseAlgorithm):
             log.info(f"Saving the final model to {log_dir}/raw_checkpoints/final")
             modelpool.save_model(
                 model,
-                path=os.path.join(log_dir, "raw_checkpoints", "final"),
+                path=os.path.join(
+                    trainer.log_dir if trainer.log_dir is not None else log_dir,
+                    "raw_checkpoints",
+                    "final",
+                ),
             )
         return model
 
