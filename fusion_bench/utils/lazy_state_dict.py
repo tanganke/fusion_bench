@@ -1,3 +1,11 @@
+"""
+Utilities for handling model checkpoints and state dictionaries.
+
+This module provides classes and functions for lazily loading state dictionaries
+from various checkpoint formats, including PyTorch .bin files, SafeTensors files,
+and sharded checkpoints.
+"""
+
 import json
 import logging
 import os
@@ -43,6 +51,21 @@ def resolve_checkpoint_path(
     hf_cache_dir: Optional[str] = None,
     hf_proxies: Optional[Dict] = None,
 ):
+    """
+    Resolve a checkpoint path, downloading from Hugging Face Hub if necessary.
+
+    Args:
+        checkpoint: Path to local checkpoint or Hugging Face model ID.
+        hf_revision: Specific revision to download from HF Hub.
+        hf_cache_dir: Local cache directory for HF downloads.
+        hf_proxies: Proxy settings for HF downloads.
+
+    Returns:
+        Local path to the checkpoint.
+
+    Raises:
+        FileNotFoundError: If the checkpoint cannot be resolved.
+    """
     # If it's a local file or directory, return as is
     if os.path.exists(checkpoint):
         return checkpoint
@@ -64,11 +87,11 @@ def resolve_checkpoint_path(
 
 class LazyStateDict(Mapping[str, torch.Tensor], Generic[TorchModelType]):
     """
-    Dictionary-like object that lazily loads a state dict from a checkpoint path.
+    A dictionary-like object that lazily loads tensors from model checkpoints.
     """
 
     _local_path: str
-    """local path to the checkpoint."""
+    """Local path to the checkpoint."""
     _state_dict_cache: Optional[Dict]
     """Cache for the state dict, if enabled."""
     _index_filename: Optional[str]
@@ -92,6 +115,8 @@ class LazyStateDict(Mapping[str, torch.Tensor], Generic[TorchModelType]):
         hf_proxies: Optional[Dict] = None,
     ):
         """
+        Initialize LazyStateDict with a checkpoint path.
+
         Args:
             checkpoint (str): Path to the checkpoint file or directory.
             meta_module_class (Type[nn.Module], optional): Class of the meta module to instantiate.
@@ -116,6 +141,7 @@ class LazyStateDict(Mapping[str, torch.Tensor], Generic[TorchModelType]):
             self.meta_module_class = import_object(self.meta_module_class)
         self.meta_module = meta_module
 
+        # Instantiate meta module if class provided
         if self.meta_module_class is not None:
             with init_empty_weights():
                 self.meta_module = self.meta_module_class.from_pretrained(
@@ -126,6 +152,7 @@ class LazyStateDict(Mapping[str, torch.Tensor], Generic[TorchModelType]):
                     proxies=hf_proxies,
                 )
 
+        # Store original checkpoint path and resolve to local path
         self._checkpoint = checkpoint
         self._local_path = resolve_checkpoint_path(
             checkpoint,
@@ -134,10 +161,12 @@ class LazyStateDict(Mapping[str, torch.Tensor], Generic[TorchModelType]):
             hf_proxies=hf_proxies,
         )
 
+        # Detect checkpoint file type and set up indexing
         self._index, self._index_filename, self._checkpoint_files = (
             self._resolve_checkpoint_files(self._local_path)
         )
 
+        # Set up based on checkpoint type
         if self._index is not None:
             # if meta_module is provided, remove the keys that are not in the meta_module
             if self.meta_module is not None:
@@ -152,7 +181,7 @@ class LazyStateDict(Mapping[str, torch.Tensor], Generic[TorchModelType]):
         elif len(self._checkpoint_files) == 1 and self._checkpoint_files[0].endswith(
             SAFE_WEIGHTS_NAME
         ):
-            # let the keys of self._index be the keys of the state dict, the values are the checkpoint file
+            # SafeTensors file: create index mapping all keys to this file
             with safe_open(
                 self._checkpoint_files[0], framework="pt", device=device
             ) as f:
@@ -164,6 +193,7 @@ class LazyStateDict(Mapping[str, torch.Tensor], Generic[TorchModelType]):
         elif len(self._checkpoint_files) == 1 and self._checkpoint_files[0].endswith(
             WEIGHTS_NAME
         ):
+            # PyTorch .bin file: load entire state dict immediately
             log.info(f"Loading full state dict from {WEIGHTS_NAME}")
             self._state_dict_cache = torch.load(self._checkpoint_files[0])
             # if meta_module is provided, remove the keys that are not in the meta_module
@@ -173,6 +203,7 @@ class LazyStateDict(Mapping[str, torch.Tensor], Generic[TorchModelType]):
                     if key not in meta_module_state_dict:
                         self._state_dict_cache.pop(key)
         else:
+            # Unsupported checkpoint format
             raise ValueError(
                 f"Cannot determine the type of checkpoint, please provide a checkpoint path to a file containing a whole state dict with file name {WEIGHTS_NAME} or {SAFE_WEIGHTS_NAME}, or the index of a sharded checkpoint ending with `.index.json`."
             )
@@ -209,10 +240,19 @@ class LazyStateDict(Mapping[str, torch.Tensor], Generic[TorchModelType]):
         return deepcopy(self)
 
     def _resolve_checkpoint_files(self, checkpoint: str):
-        # reference: https://huggingface.co/docs/accelerate/v0.17.1/en/usage_guides/big_modeling
+        """
+        Detect and resolve checkpoint files based on the checkpoint path.
+
+        Handles single files, directories with state dict files, and sharded checkpoints.
+
+        Returns:
+            Tuple of (index_dict, index_filename, checkpoint_files)
+        """
+        # Reference: https://huggingface.co/docs/accelerate/v0.17.1/en/usage_guides/big_modeling
         checkpoint_files = None
         index_filename = None
         if os.path.isfile(checkpoint):
+            # Single file: check if it's an index or a state dict
             if str(checkpoint).endswith(".json"):
                 index_filename = checkpoint
             else:
@@ -232,7 +272,7 @@ class LazyStateDict(Mapping[str, torch.Tensor], Generic[TorchModelType]):
                     os.path.join(checkpoint, potential_state_safetensor[0])
                 ]
             else:
-                # otherwise check for sharded checkpoints
+                # Check for sharded checkpoints
                 potential_index = [
                     f for f in os.listdir(checkpoint) if f.endswith(".index.json")
                 ]
@@ -247,18 +287,22 @@ class LazyStateDict(Mapping[str, torch.Tensor], Generic[TorchModelType]):
                         f"{checkpoint} containing more than one `.index.json` file, delete the irrelevant ones."
                     )
         else:
+            # Invalid checkpoint path
             raise ValueError(
                 "`checkpoint` should be the path to a file containing a whole state dict, or the index of a sharded "
                 f"checkpoint, or a folder containing a sharded checkpoint or the whole state dict, but got {checkpoint}."
             )
 
+        # Load index file if present
         if index_filename is not None:
             checkpoint_folder = os.path.split(index_filename)[0]
             with open(index_filename) as f:
                 index = json.loads(f.read())
 
+            # Extract weight_map if present (standard format)
             if "weight_map" in index:
                 index = index["weight_map"]
+            # Get list of unique checkpoint files
             checkpoint_files = sorted(list(set(index.values())))
             checkpoint_files = [
                 os.path.join(checkpoint_folder, f) for f in checkpoint_files
@@ -270,6 +314,11 @@ class LazyStateDict(Mapping[str, torch.Tensor], Generic[TorchModelType]):
     def _load_tensor_from_checkpoint_file(
         self, checkpoint_file: str, key: str, update_cache: bool = True
     ) -> torch.Tensor:
+        """
+        Load a tensor from the checkpoint file.
+        For safetensors, loads only the requested tensor.
+        For PyTorch files, loads the entire state dict on first access.
+        """
         if checkpoint_file.endswith(".safetensors"):
             with safe_open(checkpoint_file, framework="pt", device=self._device) as f:
                 tensor = f.get_tensor(key)
@@ -279,6 +328,7 @@ class LazyStateDict(Mapping[str, torch.Tensor], Generic[TorchModelType]):
                     self._state_dict_cache[key] = tensor
                 return tensor
         else:
+            # PyTorch .bin file: load entire state dict
             state_dict = torch.load(checkpoint_file, map_location=self._device)
             if update_cache:
                 if self._state_dict_cache is not None:

@@ -13,6 +13,8 @@ _import_structure = {
     "classification": [
         "ImageClassificationFineTuningForCLIP",
         "ContinualImageClassificationFineTuningForCLIP",
+        "ImageClassificationFineTuning",
+        "ImageClassificationFineTuning_Test",
     ],
     "lm_finetune": ["FullFinetuneSFT", "PeftFinetuneSFT", "BradleyTerryRewardModeling"],
     # analysis
@@ -145,6 +147,8 @@ if TYPE_CHECKING:
     from .bitdelta import BitDeltaAlgorithm
     from .classification import (
         ContinualImageClassificationFineTuningForCLIP,
+        ImageClassificationFineTuning,
+        ImageClassificationFineTuning_Test,
         ImageClassificationFineTuningForCLIP,
     )
     from .concrete_subspace import (

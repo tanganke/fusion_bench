@@ -1,8 +1,6 @@
 import json
-import logging
 import os
-from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Union  # noqa: F401
+from typing import Any, Dict, Iterable, List, Optional, Union
 
 import lightning as L
 from lightning_utilities.core.rank_zero import rank_zero_only
@@ -10,30 +8,26 @@ from omegaconf import DictConfig, OmegaConf
 from torch import nn
 from tqdm.auto import tqdm
 
-import fusion_bench
 from fusion_bench import (
     BaseAlgorithm,
     BaseHydraProgram,
     BaseModelPool,
     BaseTaskPool,
     RuntimeConstants,
+    auto_register_config,
+    get_rankzero_logger,
     import_object,
     instantiate,
     timeit_context,
 )
-from fusion_bench.mixins import LightningFabricMixin
-from fusion_bench.utils.hydra_utils import get_hydra_output_dir
 from fusion_bench.utils.json import print_json
-from fusion_bench.utils.path import create_symlink
 from fusion_bench.utils.rich_utils import print_bordered, print_config_tree
 
-log = fusion_bench.get_rankzero_logger(__name__)
+log = get_rankzero_logger(__name__)
 
 
-class FabricModelFusionProgram(
-    LightningFabricMixin,
-    BaseHydraProgram,
-):
+@auto_register_config
+class ModelFusionProgram(BaseHydraProgram):
     method: BaseAlgorithm
     modelpool: BaseModelPool
     taskpool: Optional[BaseTaskPool] = None
@@ -42,7 +36,6 @@ class FabricModelFusionProgram(
         "_method": "method",
         "_modelpool": "modelpool",
         "_taskpool": "taskpool",
-        "_fabric": "fabric",
         "fast_dev_run": "fast_dev_run",
         "seed": "seed",
         "path": "path",
@@ -54,7 +47,6 @@ class FabricModelFusionProgram(
         modelpool: DictConfig,
         taskpool: Optional[DictConfig] = None,
         *,
-        fabric: Optional[DictConfig] = None,
         print_config: bool = True,
         dry_run: bool = False,
         report_save_path: Optional[str] = None,
@@ -70,7 +62,6 @@ class FabricModelFusionProgram(
         self._method = method
         self._modelpool = modelpool
         self._taskpool = taskpool
-        self._fabric = fabric
         self.report_save_path = report_save_path
         self.merged_model_save_path = merged_model_save_path
         self.merged_model_save_kwargs = merged_model_save_kwargs
@@ -107,8 +98,7 @@ class FabricModelFusionProgram(
            - Ensures the target can be imported.
            - Uses the `instantiate` function with `_recursive_` set based on the configuration.
         4. Sets the `_program` attribute of the instantiated object to `self` if the object has this attribute.
-        5. Sets the `_fabric_instance` attribute of the instantiated object to `self.fabric` if the object has this attribute and `self.fabric` is not None.
-        6. Returns the instantiated and set up object.
+        5. Returns the instantiated and set up object.
         """
         if "_target_" not in config:
             log.warning(
@@ -138,11 +128,6 @@ class FabricModelFusionProgram(
             )
         if hasattr(obj, "_program"):
             obj._program = self
-        if hasattr(obj, "_fabric_instance") and self.fabric is not None:
-            obj._fabric_instance = self.fabric
-        if hasattr(obj, "_fabric") and self.fabric is not None:
-            # for v0.1.x compatibility
-            obj._fabric = self.fabric
         return obj
 
     def save_merged_model(self, merged_model):
@@ -230,19 +215,8 @@ class FabricModelFusionProgram(
         """
         Executes the model fusion program.
         """
-        fabric = self.fabric
         if self.seed is not None:
             L.seed_everything(self.seed)
-
-        # create symbol link to hydra output directory
-        if (
-            rank_zero_only.rank == 0
-            and self.log_dir is not None
-            and os.path.abspath(self.log_dir) != os.path.abspath(get_hydra_output_dir())
-        ):
-            create_symlink(
-                get_hydra_output_dir(), self.log_dir, link_name="hydra_output"
-            )
 
         log.info("Running the model fusion program.")
         # setup the modelpool, method, and taskpool
@@ -286,10 +260,10 @@ class FabricModelFusionProgram(
                     # if the directory of `save_report` does not exists, create it
                     if (
                         "{log_dir}" in self.report_save_path
-                        and self.log_dir is not None
+                        and self.path.log_dir is not None
                     ):
                         self.report_save_path = self.report_save_path.format(
-                            log_dir=self.log_dir
+                            log_dir=self.path.log_dir
                         )
                     os.makedirs(os.path.dirname(self.report_save_path), exist_ok=True)
                     json.dump(report, open(self.report_save_path, "w"))

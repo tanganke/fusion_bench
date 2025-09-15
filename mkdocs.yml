@@ -116,6 +116,8 @@ nav:
           - guides/clip_vit/HFCLIPClassifier.md
           - Manage Labels and Templates: guides/clip_vit/classification_templates.md
           - guides/clip_vit/finetune.md
+      - ResNet Models For Image Classification:
+          - guides/resnet/image_classification_finetune.md
       - Natural Language Processing:
           - Tasks:
               - guides/nlp/question_answering.md

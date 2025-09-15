@@ -1,0 +1,6 @@
+_target_: fusion_bench.method.classification.ImageClassificationFineTuning_Test
+checkpoint_path: null
+dataloader_kwargs:
+  batch_size: 256
+  num_workers: 4
+  pin_memory: true

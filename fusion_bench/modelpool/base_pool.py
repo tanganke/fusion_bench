@@ -229,6 +229,36 @@ class BaseModelPool(
         for model_name in self.model_names:
             yield model_name, self.load_model(model_name)
 
+    @property
+    def has_train_dataset(self) -> bool:
+        """
+        Check if the model pool contains training datasets.
+
+        Returns:
+            bool: True if training datasets are available, False otherwise.
+        """
+        return self._train_datasets is not None and len(self._train_datasets) > 0
+
+    @property
+    def has_val_dataset(self) -> bool:
+        """
+        Check if the model pool contains validation datasets.
+
+        Returns:
+            bool: True if validation datasets are available, False otherwise.
+        """
+        return self._val_datasets is not None and len(self._val_datasets) > 0
+
+    @property
+    def has_test_dataset(self) -> bool:
+        """
+        Check if the model pool contains testing datasets.
+
+        Returns:
+            bool: True if testing datasets are available, False otherwise.
+        """
+        return self._test_datasets is not None and len(self._test_datasets) > 0
+
     def load_train_dataset(self, dataset_name: str, *args, **kwargs) -> Dataset:
         """
         Load the training dataset for the specified model.

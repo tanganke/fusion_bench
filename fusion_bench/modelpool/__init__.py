@@ -18,6 +18,7 @@ _import_structure = {
         "GPT2ForSequenceClassificationPool",
     ],
     "seq_classification_lm": ["SequenceClassificationModelPool"],
+    "resnet_for_image_classification": ["ResNetForImageClassificationPool"],
 }
 
 
@@ -33,6 +34,7 @@ if TYPE_CHECKING:
     from .nyuv2_modelpool import NYUv2ModelPool
     from .openclip_vision import OpenCLIPVisionModelPool
     from .PeftModelForSeq2SeqLM import PeftModelForSeq2SeqLMPool
+    from .resnet_for_image_classification import ResNetForImageClassificationPool
     from .seq2seq_lm import Seq2SeqLMPool
     from .seq_classification_lm import SequenceClassificationModelPool
 
