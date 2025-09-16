@@ -5,8 +5,8 @@ function finetune() {
             for training_data_ratio in 0.5 0.8 1.0; do
                 local output_dir="outputs/${model}/${dataset}"
                 local version="batch_size_${batch_size}_lr_${lr}_training_data_ratio_${training_data_ratio}"
-                if [ -d "$output_dir" ]; then
-                    echo "$output_dir exists, skip finetuning."
+                if [ -d "$output_dir/$version" ]; then
+                    echo "$output_dir/$version exists, skip finetuning."
                     continue
                 fi
                 rich-run fusion_bench --config-name model_fusion \
