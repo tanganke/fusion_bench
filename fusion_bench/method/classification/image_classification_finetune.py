@@ -77,14 +77,19 @@ class ImageClassificationFineTuning(BaseAlgorithm):
         optimizer: DictConfig,
         lr_scheduler: DictConfig,
         dataloader_kwargs: DictConfig,
+        save_top_k: int,
+        save_interval: int,
+        save_on_train_epoch_end: bool,
         version: Optional[str] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
-        assert (max_epochs is None) or (
+        assert (max_epochs is None or max_epochs < 0) or (
             max_steps is None or max_steps < 0
         ), "Only one of max_epochs or max_steps should be set."
-        self.training_interval = "epoch" if max_epochs is not None else "step"
+        self.training_interval = (
+            "epoch" if max_epochs is not None or max_epochs < 0 else "step"
+        )
         if self.training_interval == "epoch":
             self.max_steps = -1
         log.info(f"Training interval: {self.training_interval}")
@@ -168,6 +173,19 @@ class ImageClassificationFineTuning(BaseAlgorithm):
             callbacks=[
                 pl_callbacks.LearningRateMonitor(logging_interval="step"),
                 pl_callbacks.DeviceStatsMonitor(),
+                pl_callbacks.ModelCheckpoint(
+                    save_top_k=self.save_top_k,
+                    every_n_train_steps=(
+                        self.save_interval if self.training_interval == "step" else None
+                    ),
+                    every_n_epochs=(
+                        self.save_interval
+                        if self.training_interval == "epoch"
+                        else None
+                    ),
+                    save_on_train_epoch_end=self.save_on_train_epoch_end,
+                    save_last=True,
+                ),
             ],
             logger=TensorBoardLogger(save_dir=log_dir, name="", version=self.version),
             fast_dev_run=RuntimeConstants.debug,
