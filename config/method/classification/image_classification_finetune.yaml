@@ -1,5 +1,4 @@
 _target_: fusion_bench.method.classification.ImageClassificationFineTuning
-version: null
 max_epochs: 10
 max_steps: null
 # if ``save_top_k == k``,

@@ -80,7 +80,6 @@ class ImageClassificationFineTuning(BaseAlgorithm):
         save_top_k: int,
         save_interval: int,
         save_on_train_epoch_end: bool,
-        version: Optional[str] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -88,7 +87,7 @@ class ImageClassificationFineTuning(BaseAlgorithm):
             max_steps is None or max_steps < 0
         ), "Only one of max_epochs or max_steps should be set."
         self.training_interval = (
-            "epoch" if max_epochs is not None or max_epochs < 0 else "step"
+            "epoch" if max_epochs is not None and max_epochs > 0 else "step"
         )
         if self.training_interval == "epoch":
             self.max_steps = -1
@@ -187,7 +186,7 @@ class ImageClassificationFineTuning(BaseAlgorithm):
                     save_last=True,
                 ),
             ],
-            logger=TensorBoardLogger(save_dir=log_dir, name="", version=self.version),
+            logger=TensorBoardLogger(save_dir=log_dir, name="", version=""),
             fast_dev_run=RuntimeConstants.debug,
         )
 

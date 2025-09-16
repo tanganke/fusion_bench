@@ -12,7 +12,6 @@ function finetune() {
                 rich-run fusion_bench --config-name model_fusion \
                     path.log_dir=${output_dir}/$version seed=0 \
                     method=classification/image_classification_finetune \
-                        method.version=${version} \
                         method.max_epochs=-1 \
                         method.max_steps=4000 \
                         method.save_top_k=-1 \
