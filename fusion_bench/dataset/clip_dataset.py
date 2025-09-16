@@ -62,6 +62,7 @@ class CLIPDataset(torch.utils.data.Dataset):
         if self.processor is not None:
             if isinstance(self.processor, (ProcessorMixin, BaseImageProcessor)):
                 # Apply the processor to the image to get the input tensor
+                image = image.convert("RGB")  # ensure image is in RGB format
                 inputs = self.processor(images=[image], return_tensors="pt")[
                     "pixel_values"
                 ][0]
