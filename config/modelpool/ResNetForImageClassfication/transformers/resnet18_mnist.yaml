@@ -1,8 +1,8 @@
 defaults:
   - /dataset/image_classification/train@train_datasets:
-      - cifar100
+      - mnist
   - /dataset/image_classification/test@val_datasets:
-      - cifar100
+      - mnist
   - _self_
 _target_: fusion_bench.modelpool.ResNetForImageClassificationPool
 _recursive_: False
@@ -11,4 +11,4 @@ models:
   _pretrained_:
     config_path: microsoft/resnet-18
     pretrained: true
-    dataset_name: cifar100
+    dataset_name: mnist
