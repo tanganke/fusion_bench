@@ -42,6 +42,7 @@ from typing import (
 )
 
 import torch
+from lightning_utilities.core.rank_zero import rank_zero_only
 from omegaconf import DictConfig
 from torch import nn
 
@@ -422,7 +423,15 @@ class ResNetForImageClassificationPool(BaseModelPool):
         return model
 
     @override
-    def save_model(self, model, path, *args, **kwargs):
+    def save_model(
+        self,
+        model,
+        path,
+        algorithm_config: Optional[DictConfig] = None,
+        description: Optional[str] = None,
+        *args,
+        **kwargs,
+    ):
         """Save a ResNet model to the specified path using the appropriate format.
 
         This method handles model saving based on the model pool type:
@@ -462,5 +471,16 @@ class ResNetForImageClassificationPool(BaseModelPool):
         elif self.type == "transformers":
             model.save_pretrained(path)
             self.load_processor().save_pretrained(path)
+
+            if algorithm_config is not None and rank_zero_only.rank == 0:
+                from fusion_bench.models.hf_utils import create_default_model_card
+
+                model_card_str = create_default_model_card(
+                    algorithm_config=algorithm_config,
+                    description=description,
+                    modelpool_config=self.config,
+                )
+                with open(os.path.join(path, "README.md"), "w") as f:
+                    f.write(model_card_str)
         else:
             raise ValueError(f"Unknown model type: {self.type}")

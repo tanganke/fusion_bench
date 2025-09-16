@@ -97,7 +97,10 @@ class _ResNetAdaMergingBase(
         merged_model = wrapped_model.merge_and_unload()
         if self.log_dir is not None:
             modelpool.save_model(
-                merged_model, os.path.join(self.log_dir, "checkpoints", "merged_model")
+                merged_model,
+                os.path.join(self.log_dir, "checkpoints", "merged_model"),
+                algorithm_config=self.config,
+                description="Merged ResNet model using AdaMerging (E Yang, 2023).",
             )
 
         return merged_model
