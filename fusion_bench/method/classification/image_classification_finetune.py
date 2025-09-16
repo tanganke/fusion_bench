@@ -177,6 +177,8 @@ class ImageClassificationFineTuning(BaseAlgorithm):
                     "raw_checkpoints",
                     "final",
                 ),
+                algorithm_config=self.config,
+                description=f"Fine-tuned ResNet model on dataset {dataset_name}.",
             )
         return model
 
