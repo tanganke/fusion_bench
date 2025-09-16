@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fusion_bench"
+name = "fusion-bench"
 description = "A Comprehensive Benchmark of Deep Model Fusion"
 readme = "README.md"
 version = "0.2.25dev"
