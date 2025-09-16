@@ -29,6 +29,7 @@ from fusion_bench import (
 from fusion_bench.dataset import CLIPDataset
 from fusion_bench.modelpool import ResNetForImageClassificationPool
 from fusion_bench.tasks.clip_classification import get_num_classes
+from torch.utils.data import random_split
 
 log = get_rankzero_logger(__name__)
 
@@ -71,10 +72,12 @@ class ImageClassificationFineTuning(BaseAlgorithm):
         self,
         max_epochs: Optional[int],
         max_steps: Optional[int],
+        training_data_ratio: Optional[float],
         label_smoothing: float,
         optimizer: DictConfig,
         lr_scheduler: DictConfig,
         dataloader_kwargs: DictConfig,
+        version: Optional[str] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -108,6 +111,15 @@ class ImageClassificationFineTuning(BaseAlgorithm):
         self.dataset_name = dataset_name = modelpool.train_dataset_names[0]
         num_classes = get_num_classes(dataset_name)
         train_dataset = modelpool.load_train_dataset(dataset_name)
+        log.info(f"Training dataset size: {len(train_dataset)}")
+        if self.training_data_ratio is not None and 0 < self.training_data_ratio < 1:
+            train_dataset, _ = random_split(
+                train_dataset,
+                lengths=[self.training_data_ratio, 1 - self.training_data_ratio],
+            )
+            log.info(
+                f"Using {len(train_dataset)} samples for training after applying training_data_ratio={self.training_data_ratio}."
+            )
         train_dataset = CLIPDataset(
             train_dataset, processor=modelpool.load_processor(stage="train")
         )
@@ -157,10 +169,7 @@ class ImageClassificationFineTuning(BaseAlgorithm):
                 pl_callbacks.LearningRateMonitor(logging_interval="step"),
                 pl_callbacks.DeviceStatsMonitor(),
             ],
-            logger=TensorBoardLogger(
-                save_dir=log_dir,
-                name="",
-            ),
+            logger=TensorBoardLogger(save_dir=log_dir, name="", version=self.version),
             fast_dev_run=RuntimeConstants.debug,
         )
 
