@@ -16,7 +16,7 @@ function finetune() {
                         method.max_steps=4000 \
                         method.save_top_k=-1 \
                         method.save_interval=1000 \
-                        method.save_on_train_epoch_end=true \
+                        method.save_on_train_epoch_end=false \
                         method.training_data_ratio=${training_data_ratio} \
                         method.optimizer.lr=${lr} \
                         method.lr_scheduler=null \

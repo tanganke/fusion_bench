@@ -114,6 +114,7 @@ class ImageClassificationFineTuning(BaseAlgorithm):
         ), "Exactly one training dataset is required."
         self.dataset_name = dataset_name = modelpool.train_dataset_names[0]
         num_classes = get_num_classes(dataset_name)
+        log.info(f"Number of classes for dataset {dataset_name}: {num_classes}")
         train_dataset = modelpool.load_train_dataset(dataset_name)
         log.info(f"Training dataset size: {len(train_dataset)}")
         if self.training_data_ratio is not None and 0 < self.training_data_ratio < 1:
@@ -155,7 +156,11 @@ class ImageClassificationFineTuning(BaseAlgorithm):
             objective=nn.CrossEntropyLoss(label_smoothing=self.label_smoothing),
             metrics={
                 "acc@1": Accuracy(task="multiclass", num_classes=num_classes),
-                "acc@5": Accuracy(task="multiclass", num_classes=num_classes, top_k=5),
+                f"acc@{min(5,num_classes)}": Accuracy(
+                    task="multiclass",
+                    num_classes=num_classes,
+                    top_k=min(5, num_classes),
+                ),
             },
         )
 
@@ -303,8 +308,10 @@ class ImageClassificationFineTuning_Test(BaseAlgorithm):
                 model,
                 metrics={
                     "acc@1": Accuracy(task="multiclass", num_classes=num_classes),
-                    "acc@5": Accuracy(
-                        task="multiclass", num_classes=num_classes, top_k=5
+                    f"acc@{min(5,num_classes)}": Accuracy(
+                        task="multiclass",
+                        num_classes=num_classes,
+                        top_k=min(5, num_classes),
                     ),
                 },
             )
@@ -314,8 +321,10 @@ class ImageClassificationFineTuning_Test(BaseAlgorithm):
                 model=model,
                 metrics={
                     "acc@1": Accuracy(task="multiclass", num_classes=num_classes),
-                    "acc@5": Accuracy(
-                        task="multiclass", num_classes=num_classes, top_k=5
+                    f"acc@{min(5,num_classes)}": Accuracy(
+                        task="multiclass",
+                        num_classes=num_classes,
+                        top_k=min(5, num_classes),
                     ),
                 },
             )
