@@ -218,7 +218,7 @@ class BaseModelPool(
                     # Unsupported model configuration type
                     raise ValueError(
                         f"Unsupported model configuration type for '{model_name}': {type(model_config)}. "
-                        f"Expected nn.Module, str, or DictConfig."
+                        f"Expected nn.Module, dict, or DictConfig."
                     )
 
         elif isinstance(model_name_or_config, (dict, DictConfig)):
