@@ -93,42 +93,79 @@ class CLIPVisionModelPool(BaseModelPool):
         self, model_name_or_config: Union[str, DictConfig], *args, **kwargs
     ) -> CLIPVisionModel:
         """
-        This method is used to load a CLIPVisionModel from the model pool.
+        Load a CLIPVisionModel from the model pool with support for various configuration formats.
 
-        Example configuration could be:
+        This method provides flexible model loading capabilities, handling different types of model
+        configurations including string paths, pre-instantiated models, and complex configurations.
 
+        Supported configuration formats:
+        1. String model paths (e.g., Hugging Face model IDs)
+        2. Pre-instantiated nn.Module objects
+        3. DictConfig objects for complex configurations
+
+        Example configuration:
         ```yaml
         models:
+            # Simple string paths to Hugging Face models
             cifar10: tanganke/clip-vit-base-patch32_cifar10
             sun397: tanganke/clip-vit-base-patch32_sun397
             stanford-cars: tanganke/clip-vit-base-patch32_stanford-cars
+
+            # Complex configuration with additional parameters
+            custom_model:
+                _target_: transformers.CLIPVisionModel.from_pretrained
+                pretrained_model_name_or_path: openai/clip-vit-base-patch32
+                torch_dtype: float16
         ```
 
         Args:
-            model_name_or_config (Union[str, DictConfig]): The name of the model or the model configuration.
+            model_name_or_config (Union[str, DictConfig]): Either a model name from the pool
+                or a configuration dictionary for instantiating the model.
+            *args: Additional positional arguments passed to model loading/instantiation.
+            **kwargs: Additional keyword arguments passed to model loading/instantiation.
 
         Returns:
-            CLIPVisionModel: The loaded CLIPVisionModel.
+            CLIPVisionModel: The loaded CLIPVisionModel instance.
         """
+        # Check if we have a string model name that exists in our model pool
         if (
             isinstance(model_name_or_config, str)
             and model_name_or_config in self._models
         ):
-            model = self._models[model_name_or_config]
-            if isinstance(model, str):
-                if rank_zero_only.rank == 0:
-                    log.info(f"Loading `transformers.CLIPVisionModel`: {model}")
-                repo_path = resolve_repo_path(
-                    model, repo_type="model", platform=self._platform
-                )
-                return CLIPVisionModel.from_pretrained(repo_path, *args, **kwargs)
-            if isinstance(model, nn.Module):
-                if rank_zero_only.rank == 0:
-                    log.info(f"Returning existing model: {model}")
-                return model
-        else:
-            # If the model is not a string, we use the default load_model method
-            return super().load_model(model_name_or_config, *args, **kwargs)
+            model_name = model_name_or_config
+
+            # handle different model configuration types
+            match self._models[model_name_or_config]:
+                case str() as model_path:
+                    # Handle string model paths (e.g., Hugging Face model IDs)
+                    if rank_zero_only.rank == 0:
+                        log.info(
+                            f"Loading model `{model_name}` of type `transformers.CLIPVisionModel` from {model_path}"
+                        )
+                    # Resolve the repository path (supports both HuggingFace and ModelScope)
+                    repo_path = resolve_repo_path(
+                        model_path, repo_type="model", platform=self._platform
+                    )
+                    # Load and return the CLIPVisionModel from the resolved path
+                    return CLIPVisionModel.from_pretrained(repo_path, *args, **kwargs)
+
+                case nn.Module() as model:
+                    # Handle pre-instantiated model objects
+                    if rank_zero_only.rank == 0:
+                        log.info(
+                            f"Returning existing model `{model_name}` of type {type(model)}"
+                        )
+                    return model
+
+                case _:
+                    # Handle other configuration types (e.g., DictConfig) via parent class
+                    # This fallback prevents returning None when the model config doesn't
+                    # match the expected string or nn.Module patterns
+                    return super().load_model(model_name_or_config, *args, **kwargs)
+
+        # If model_name_or_config is not a string in our pool, delegate to parent class
+        # This handles cases where model_name_or_config is a DictConfig directly
+        return super().load_model(model_name_or_config, *args, **kwargs)
 
     def load_train_dataset(self, dataset_name: str, *args, **kwargs):
         dataset_config = self._train_datasets[dataset_name]

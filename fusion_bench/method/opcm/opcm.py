@@ -87,6 +87,7 @@ class OPCMForCLIP(
         # get the average model
         with self.profile("loading model"):
             merged_model = modelpool.load_model(model_names[0])
+            assert merged_model is not None, "Failed to load the first model"
 
         if self.evaluate_on_every_step:
             with self.profile("evaluating model"):
