@@ -59,6 +59,10 @@ def create_symlink(src_dir: str, dst_dir: str, link_name: str = None):
         link_name = os.path.basename(src_dir)
 
     link_path = os.path.join(dst_dir, link_name)
+    # if the link already exists, skip
+    if os.path.exists(link_path):
+        log.warning(f"Symbolic link already exists, skipping: {link_path}")
+        return
 
     try:
         # if the system is windows, use the `mklink` command in "CMD" to create the symlink
