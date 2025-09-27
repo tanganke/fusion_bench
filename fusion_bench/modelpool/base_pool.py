@@ -180,26 +180,59 @@ class BaseModelPool(
 
         Args:
             model_name_or_config (Union[str, DictConfig]): The model name or configuration.
+                - If str: should be a key in self._models
+                - If DictConfig: should be a configuration dict for instantiation
+            *args: Additional positional arguments passed to model instantiation.
+            **kwargs: Additional keyword arguments passed to model instantiation.
 
         Returns:
-            nn.Module: The instantiated model.
+            nn.Module: The instantiated or retrieved model.
         """
         log.debug(f"Loading model: {model_name_or_config}", stacklevel=2)
-        if isinstance(self._models, DictConfig):
-            model_config = (
-                self._models[model_name_or_config]
-                if isinstance(model_name_or_config, str)
-                else model_name_or_config
-            )
-            model = instantiate(model_config, *args, **kwargs)
-        elif isinstance(self._models, Dict) and isinstance(model_name_or_config, str):
-            model = self._models[model_name_or_config]
+
+        if isinstance(model_name_or_config, str):
+            model_name = model_name_or_config
+            # Handle string model names - lookup in the model pool
+            if model_name not in self._models:
+                raise KeyError(
+                    f"Model '{model_name}' not found in model pool. "
+                    f"Available models: {list(self._models.keys())}"
+                )
+            model_config = self._models[model_name]
+
+            # Handle different types of model configurations
+            match model_config:
+                case dict() | DictConfig() as config:
+                    # Configuration that needs instantiation
+                    log.debug(f"Instantiating model '{model_name}' from configuration")
+                    return instantiate(config, *args, **kwargs)
+
+                case nn.Module() as model:
+                    # Pre-instantiated model - return directly
+                    log.debug(
+                        f"Returning pre-instantiated model '{model_name}' of type {type(model)}"
+                    )
+                    return model
+
+                case _:
+                    # Unsupported model configuration type
+                    raise ValueError(
+                        f"Unsupported model configuration type for '{model_name}': {type(model_config)}. "
+                        f"Expected nn.Module, dict, or DictConfig."
+                    )
+
+        elif isinstance(model_name_or_config, (dict, DictConfig)):
+            # Direct configuration - instantiate directly
+            log.debug("Instantiating model from direct DictConfig")
+            model_config = model_name_or_config
+            return instantiate(model_config, *args, **kwargs)
+
         else:
-            raise ValueError(
-                "The model pool configuration is not in the expected format."
-                f"We expected a DictConfig or Dict, but got {type(self._models)}."
+            # Unsupported input type
+            raise TypeError(
+                f"Unsupported input type: {type(model_name_or_config)}. "
+                f"Expected str or DictConfig."
             )
-        return model
 
     def load_pretrained_model(self, *args, **kwargs):
         assert (
