@@ -13,7 +13,7 @@ from fusion_bench.utils.type import StateDictType
 
 
 # Model conversion utils
-def state_dict_to_vector(state_dict, remove_keys=[]):
+def state_dict_to_vector(state_dict, remove_keys=None):
     """
     Convert a state dictionary to a vector, removing specified keys.
 
@@ -24,6 +24,8 @@ def state_dict_to_vector(state_dict, remove_keys=[]):
     Returns:
         Tensor: A vector representation of the state dictionary.
     """
+    if remove_keys is None:
+        remove_keys = []
     shared_state_dict = copy.deepcopy(state_dict)
     for key in remove_keys:
         if key in shared_state_dict:
@@ -34,7 +36,7 @@ def state_dict_to_vector(state_dict, remove_keys=[]):
     )
 
 
-def vector_to_state_dict(vector, state_dict, remove_keys=[]):
+def vector_to_state_dict(vector, state_dict, remove_keys=None):
     """
     Convert a vector back to a state dictionary, removing specified keys.
 
@@ -46,6 +48,8 @@ def vector_to_state_dict(vector, state_dict, remove_keys=[]):
     Returns:
         dict: A state dictionary representation of the vector.
     """
+    if remove_keys is None:
+        remove_keys = []
     # create a reference dict to define the order of the vector
     reference_dict = copy.deepcopy(state_dict)
     for key in remove_keys:

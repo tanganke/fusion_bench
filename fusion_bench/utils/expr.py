@@ -83,7 +83,7 @@ def is_expr_match(pattern, expr):
                 try:
                     if not is_expr_match(pattern[k], expr[k]):
                         return False
-                except:
+                except (KeyError, TypeError, AttributeError):
                     return False
         else:
             raise NotImplementedError("Unsupported type: {}".format(type(pattern)))

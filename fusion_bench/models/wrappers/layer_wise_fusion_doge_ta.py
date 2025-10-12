@@ -216,7 +216,7 @@ class LayerWiseMergedModel(nn.Module):
 
         return final_mask
 
-    def state_dict_to_vector(self, state_dict, remove_keys=[]):
+    def state_dict_to_vector(self, state_dict, remove_keys=None):
         """
         Convert a state dictionary to a vector, removing specified keys.
 
@@ -227,6 +227,8 @@ class LayerWiseMergedModel(nn.Module):
         Returns:
             Tensor: A vector representation of the state dictionary.
         """
+        if remove_keys is None:
+            remove_keys = []
         shared_state_dict = copy.deepcopy(state_dict)
         for key in remove_keys:
             if key in shared_state_dict:
@@ -236,7 +238,7 @@ class LayerWiseMergedModel(nn.Module):
             [value.reshape(-1) for key, value in sorted_shared_state_dict.items()]
         )
 
-    def vector_to_state_dict(self, vector, state_dict, remove_keys=[]):
+    def vector_to_state_dict(self, vector, state_dict, remove_keys=None):
         """
         Convert a vector back to a state dictionary, removing specified keys.
 
@@ -248,6 +250,8 @@ class LayerWiseMergedModel(nn.Module):
         Returns:
             dict: A state dictionary representation of the vector.
         """
+        if remove_keys is None:
+            remove_keys = []
         # create a reference dict to define the order of the vector
         reference_dict = copy.deepcopy(state_dict)
         for key in remove_keys:

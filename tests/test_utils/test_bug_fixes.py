@@ -128,5 +128,44 @@ def test_magnitude_pruning_rescale_boolean():
     assert rescale_factor == 1.5
 
 
+def test_mutable_default_argument_fix():
+    """
+    Test that mutable default arguments were fixed to use None.
+    
+    This tests the fix where default arguments like `remove_keys=[]` were
+    changed to `remove_keys=None` to avoid the mutable default argument bug.
+    """
+    from fusion_bench.method.ties_merging.ties_merging_utils import (
+        state_dict_to_vector,
+        vector_to_state_dict,
+    )
+    import torch
+    
+    # Create a simple state dict
+    state_dict = {
+        "layer1.weight": torch.randn(3, 3),
+        "layer1.bias": torch.randn(3),
+        "layer2.weight": torch.randn(2, 3),
+    }
+    
+    # Test state_dict_to_vector without remove_keys
+    vector1 = state_dict_to_vector(state_dict)
+    assert isinstance(vector1, torch.Tensor)
+    
+    # Test state_dict_to_vector with remove_keys
+    vector2 = state_dict_to_vector(state_dict, remove_keys=["layer1.bias"])
+    assert isinstance(vector2, torch.Tensor)
+    # Vector should be smaller when removing keys
+    assert vector2.numel() < vector1.numel()
+    
+    # Test that calling multiple times doesn't cause issues due to mutable defaults
+    vector3 = state_dict_to_vector(state_dict)
+    assert torch.allclose(vector1, vector3)
+    
+    # Test vector_to_state_dict
+    new_state_dict = vector_to_state_dict(vector1, state_dict)
+    assert set(new_state_dict.keys()) == set(state_dict.keys())
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

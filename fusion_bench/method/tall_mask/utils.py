@@ -183,8 +183,8 @@ def load_tall_mask(remove_keys, ptm_check, config):
                     mask_location, config.model, f"TALL_mask_{config.num_tasks}task.npy"
                 )
             )
-    except:
-        raise Exception("TALL Masks are not constructed yet.")
+    except (FileNotFoundError, RuntimeError, OSError) as e:
+        raise Exception("TALL Masks are not constructed yet.") from e
 
     # unpack masks and convert back to torch tensors
     tall_masks = {k: torch.from_numpy(np.unpackbits(v)) for k, v in tall_masks.items()}
@@ -198,7 +198,7 @@ def load_tall_mask(remove_keys, ptm_check, config):
     return tall_masks
 
 
-def construct_consensus_mask(ptm_check, prun_thre_k, config, remove_keys=[]):
+def construct_consensus_mask(ptm_check, prun_thre_k, config, remove_keys=None):
     """
     Generate consensus mask by filtering out least-used parameters
 
@@ -212,6 +212,8 @@ def construct_consensus_mask(ptm_check, prun_thre_k, config, remove_keys=[]):
     Returns:
         consensus_mask_vector: constructed consensus mask as vector (boolean in shape (n_parameter, ))
     """
+    if remove_keys is None:
+        remove_keys = []
 
     print("==== Generating Consensus Mask ====")
     # load TALL masks (in shape (n_task, n_parameter))

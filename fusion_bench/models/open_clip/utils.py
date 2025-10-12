@@ -193,7 +193,9 @@ def to_cuda(input_dict):
     return cuda_dict
 
 
-def state_dict_to_vector(state_dict, remove_keys=[]):
+def state_dict_to_vector(state_dict, remove_keys=None):
+    if remove_keys is None:
+        remove_keys = []
     shared_state_dict = copy.deepcopy(state_dict)
     for key in remove_keys:
         if key in shared_state_dict:
@@ -204,7 +206,9 @@ def state_dict_to_vector(state_dict, remove_keys=[]):
     )
 
 
-def vector_to_state_dict(vector, state_dict, remove_keys=[]):
+def vector_to_state_dict(vector, state_dict, remove_keys=None):
+    if remove_keys is None:
+        remove_keys = []
     # create a reference dict to define the order of the vector
     reference_dict = copy.deepcopy(state_dict)
     for key in remove_keys:
