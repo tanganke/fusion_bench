@@ -70,6 +70,7 @@ _import_structure = {
         "IsotropicMergingInCommonSubspace",
     ],
     "opcm": ["OPCMForCLIP"],
+    "dop": ["ContinualDOPForCLIP"],
     "gossip": [
         "CLIPLayerWiseGossipAlgorithm",
         "CLIPTaskWiseGossipAlgorithm",
@@ -212,6 +213,7 @@ if TYPE_CHECKING:
     from .model_recombination import ModelRecombinationAlgorithm
     from .model_stock import ModelStock
     from .opcm import OPCMForCLIP
+    from .dop import ContinualDOPForCLIP
     from .pruning import (
         MagnitudeDiffPruningAlgorithm,
         MagnitudePruningForLlama,

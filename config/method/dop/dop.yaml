@@ -1,0 +1,30 @@
+_target_: fusion_bench.method.dop.dop.ContinualDOPForCLIP
+
+# the random seed to use
+seed: null
+# shuffle the order of the models
+shuffle_order: true
+# save the merged model on every step
+save_on_every_step: false
+# evaluate the merged model on every step
+evaluate_on_every_step: true
+
+# optimizer (learning rate)
+lr: 1e-4
+# optimizer (num_steps)
+num_steps: 200
+
+# weighted loss
+# if mgda is true, use mgda to optimize the loss weights
+mgda: true
+# if mgda is false, this is the weight for the loss of the first task
+alpha: 0.8
+# if mgda is true and ema is ture, using exponential moving average (ema), alpha is the initial value
+ema: true
+# if mgda is true and ema is ture, using exponential moving average (ema), beta is the decay rate
+ema_beta: 0.999
+
+# epsilon for svd (the proportion of energy retained)
+svd_epsilon: 0.99999
+# the space to project the delta w (left singular vectors, right singular vectors, or both)
+svd_proj_space: uv # u or v or uv
