@@ -61,7 +61,9 @@ class ModelPool(ABC):
             list: A list of model names.
         """
         names = [
-            name for name in self._model_names if name[0] != "_" and name[-1] != "_"
+            name
+            for name in self._model_names
+            if len(name) > 0 and name[0] != "_" and name[-1] != "_"
         ]
         return names
 

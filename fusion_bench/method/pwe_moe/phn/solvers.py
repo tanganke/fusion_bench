@@ -176,7 +176,7 @@ class ExactParetoLP(object):
 
 
 def mu(rl, normed=False):
-    if len(np.where(rl < 0)[0]):
+    if len(np.where(rl < 0)[0]) > 0:
         raise ValueError(f"rl<0 \n rl={rl}")
         # return None
     m = len(rl)

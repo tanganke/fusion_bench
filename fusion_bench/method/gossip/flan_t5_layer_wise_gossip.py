@@ -171,7 +171,7 @@ class FlanT5LayerWiseGossipAlgorithm(
                     "local admerging",
                     dynamic_ncols=True,
                 ):
-                    if self.configs.gossip_skip_adamerging == True:
+                    if self.configs.gossip_skip_adamerging is True:
                         # skip adamerging, only merge
                         with self.profile("construct the local wrapped model"):
                             module = model_scheduler(model_id)
@@ -184,7 +184,7 @@ class FlanT5LayerWiseGossipAlgorithm(
                         with self.profile("construct the local wrapped model"):
                             module = model_scheduler(model_id)
 
-                        if self.configs.improve_dataset == True:
+                        if self.configs.improve_dataset is True:
                             log.info(
                                 f"improved datasets, the datasets used in this local merging is {datasets[model_id]}"
                             )

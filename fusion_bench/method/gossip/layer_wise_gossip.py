@@ -271,7 +271,7 @@ class LayerWiseGossipAlgorithm(
                     "local admerging",
                     dynamic_ncols=True,
                 ):
-                    if self.config.gossip_skip_adamerging == True:
+                    if self.config.gossip_skip_adamerging is True:
                         # skip adamerging, only merge
                         with self.profile("construct the local wrapped model"):
                             module = model_scheduler(model_id)
@@ -284,7 +284,7 @@ class LayerWiseGossipAlgorithm(
                         with self.profile("construct the local wrapped model"):
                             module = model_scheduler(model_id)
 
-                        if self.config.improve_dataset == True:
+                        if self.config.improve_dataset is True:
                             log.info(
                                 f"improved datasets, the datasets used in this local merging is {datasets[model_id]}"
                             )
@@ -399,7 +399,7 @@ class LayerWiseGossipAlgorithm(
         ):
             # default behavior for first-order optimizers
             for task in self.modelpool.model_names:
-                if self.config.improve_dataset == True and task not in datasets:
+                if self.config.improve_dataset is True and task not in datasets:
                     continue
                 with self.profile("data loading"):
                     batch = next(self.get_shuffled_test_loader_iter(task))

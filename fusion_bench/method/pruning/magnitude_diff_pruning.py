@@ -172,7 +172,7 @@ class MagnitudeDiffPruningAlgorithm(
                 )
                 if self.rescale is not None:
                     rescale = (
-                        1 / self.prune_ratio if self.rescale == True else self.rescale
+                        1 / self.prune_ratio if self.rescale is True else self.rescale
                     )
                     w_diff = w_diff * rescale
                 param.data = param + w_diff
