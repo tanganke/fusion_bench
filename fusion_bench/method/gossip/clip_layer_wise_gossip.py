@@ -30,7 +30,7 @@ class CLIPLayerWiseGossipAlgorithm(
         """
         Here we load the CLIP processor and construct the zero-shot classification head for each task.
         """
-        if self.whether_setup_zero_shot_classification_head == False:
+        if self.whether_setup_zero_shot_classification_head is False:
             self.setup_zero_shot_classification_head()
 
     @functools.cache
