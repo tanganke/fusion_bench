@@ -15,62 +15,32 @@ import os
 import random
 from copy import deepcopy
 from pathlib import Path
-from typing import List, Literal, Optional, Tuple, cast, Dict
+from typing import Dict, List, Literal, Optional, Tuple, cast
 
+import lightning as L
 import numpy as np
-from transformers import CLIPVisionModel
+import torch
 from omegaconf import DictConfig
+from torch import Tensor, nn
 from torch.autograd import Variable
-from fusion_bench import BaseAlgorithm, BaseModelPool
+from tqdm.auto import tqdm
+from transformers import CLIPVisionModel
+
+from fusion_bench import BaseAlgorithm, BaseModelPool, auto_register_config
 from fusion_bench.method.simple_average import simple_average
 from fusion_bench.mixins import LightningFabricMixin
-import lightning as L
-import torch
-from torch import Tensor, nn
-from tqdm.auto import tqdm
-
-from .utils import is_leaf_module
-from typing import Tuple
-from .min_norm_solvers import MinNormSolver, gradient_normalizers
+from fusion_bench.taskpool import CLIPVisionModelTaskPool
 from fusion_bench.utils import seed_everything_by_time
 from fusion_bench.utils.json import save_to_json
-from fusion_bench.taskpool import CLIPVisionModelTaskPool
+
+from .min_norm_solvers import MinNormSolver, gradient_normalizers
+from .utils import is_leaf_module, svd
 
 log = logging.getLogger(__name__)
 
-def _svd(w: Tensor, full_matrices=True) -> Tuple[Tensor, Tensor, Tensor]:
-    u, s, vh = torch.linalg.svd(
-        w, full_matrices=full_matrices, driver="gesvd" if w.is_cuda else None
-    )
-    v = vh.T
-    return u, s, v
 
-def svd(
-    w: Tensor, full_matrices=True, accelerator=None
-) -> Tuple[Tensor, Tensor, Tensor]:
-    if accelerator is None:
-        return _svd(w, full_matrices=full_matrices)
-    original_device = w.device
-    w = w.to(accelerator)
-    u, s, v = _svd(w)
-    return u.to(original_device), s.to(original_device), v.to(original_device)
-
+@auto_register_config
 class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
-
-    _config_mapping = BaseAlgorithm._config_mapping | {
-        "seed": "seed",
-        "shuffle_order": "shuffle_order",
-        "save_on_every_step": "save_on_every_step",
-        "evaluate_on_every_step": "evaluate_on_every_step",
-        "lr": "lr",
-        "num_steps": "num_steps",
-        "mgda": "mgda",
-        "ema": "ema",
-        "ema_beta": "ema_beta",
-        "alpha": "alpha",
-        "svd_epsilon": "svd_epsilon",
-        "svd_proj_space": "svd_proj_space",
-    }
 
     def __init__(
         self,
@@ -85,7 +55,7 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
         ema_beta: float = 0.99,
         alpha: float = None,
         svd_epsilon: float = 1.0,
-        svd_proj_space: str = 'uv',
+        svd_proj_space: str = "uv",
         **kwargs,
     ):
         self.lr = lr
@@ -101,8 +71,12 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
         self.save_on_every_step = save_on_every_step
         self.evaluate_on_every_step = evaluate_on_every_step
 
-        assert (self.svd_epsilon>=0 and self.svd_epsilon<=1), "The svd_epsilon should be in the range of [0, 1]"
-        assert (self.alpha>=0 and self.alpha<=1), "The alpha should be in the range of [0, 1]"
+        assert (
+            self.svd_epsilon >= 0 and self.svd_epsilon <= 1
+        ), "The svd_epsilon should be in the range of [0, 1]"
+        assert (
+            self.alpha >= 0 and self.alpha <= 1
+        ), "The alpha should be in the range of [0, 1]"
         super().__init__(**kwargs)
 
     def print_params(self, pretrained_model):
@@ -114,7 +88,9 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
                 continue
             if isinstance(module, nn.Linear):
                 linear_params += sum(p.numel() for n, p in module.named_parameters())
-                linear_weight_params += sum(p.numel() for n, p in module.named_parameters() if 'weight' in n)
+                linear_weight_params += sum(
+                    p.numel() for n, p in module.named_parameters() if "weight" in n
+                )
             total_params += sum(p.numel() for p in module.parameters())
 
         linear_ratio = linear_params / total_params * 100
@@ -124,6 +100,7 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
         print(f"Linear Weight Parameters: {linear_weight_params}")
         print(f"Linear Ratio: {linear_ratio:.2f}%")
         print(f"Linear Weight Ratio: {linear_weight_ratio:.2f}%")
+
     def run(self, modelpool: BaseModelPool):
         if self.seed is not None:
             L.seed_everything(self.seed)
@@ -147,7 +124,9 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
 
         merged_model = None
         for model_idx, model_name in enumerate(model_names):
-            print(f"--------- Optimizing {model_idx + 1}/{len(model_names)}-th with {model_name} ---------")
+            print(
+                f"--------- Optimizing {model_idx + 1}/{len(model_names)}-th with {model_name} ---------"
+            )
             if model_idx == 0:
                 merged_model = modelpool.load_model(model_names[0])
             else:
@@ -174,7 +153,8 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
 
         return merged_model
 
-    def _layer_wise_optimize(self,
+    def _layer_wise_optimize(
+        self,
         model_names: List[str],
         pretrained_model: nn.Module,
         finetuned_models: Dict[str, nn.Module],
@@ -188,11 +168,14 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
             if isinstance(module, nn.Linear):
                 if module.weight.requires_grad:
                     import time
+
                     start_time = time.time()
                     merged_weight = self._optimize_weight(
                         module.weight,
                         {
-                            model_name: finetuned_models[model_name].get_submodule(module_name).weight
+                            model_name: finetuned_models[model_name]
+                            .get_submodule(module_name)
+                            .weight
                             for model_name in model_names
                         },
                         module_name,
@@ -204,7 +187,9 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
                 else:
                     module.weight.data = simple_average(
                         [
-                            finetuned_models[model_name].get_submodule(module_name).weight
+                            finetuned_models[model_name]
+                            .get_submodule(module_name)
+                            .weight
                             for model_name in model_names
                         ]
                     )
@@ -233,7 +218,9 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
         module_name: str,
         model_idx: int,
     ):
-        assert (self.fabric.world_size == 1), "This algorithm is not currently supported in distributed training"
+        assert (
+            self.fabric.world_size == 1
+        ), "This algorithm is not currently supported in distributed training"
 
         pretrained_weight = self.fabric.to_device(pretrained_weight.detach())
         finetuned_weights = {
@@ -272,12 +259,14 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
 
         if self.mgda:
             if self.ema:
-                ema_sol = [self.alpha, 1-self.alpha]
+                ema_sol = [self.alpha, 1 - self.alpha]
             # This is multiple-gradient descent algorithm (MGDA) optimization
             optimizer = torch.optim.Adam([merged_weight], lr=self.lr)
             all_losses = [[], []]
             all_alphas = [[], []]
-            for step_idx in tqdm(range(self.num_steps), desc=f"Optimizing {module_name} weight"):
+            for step_idx in tqdm(
+                range(self.num_steps), desc=f"Optimizing {module_name} weight"
+            ):
                 # Scaling the loss functions based on the algorithm choice
                 loss_data = {}
                 grads = {}
@@ -293,20 +282,27 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
 
                     optimizer.zero_grad()
                     loss_i.backward()
-                    grads[i] = Variable(merged_weight.grad.data.clone(), requires_grad=False)
+                    grads[i] = Variable(
+                        merged_weight.grad.data.clone(), requires_grad=False
+                    )
 
                 # Normalize all gradients
-                gn = gradient_normalizers(grads=grads, losses=loss_data, normalization_type="loss")
+                gn = gradient_normalizers(
+                    grads=grads, losses=loss_data, normalization_type="loss"
+                )
                 for i, _ in enumerate(finetuned_weights.values()):
                     grads[i] = grads[i] / float(gn[i])
 
                 # Frank-Wolfe iteration to compute scales.
-                sol, min_norm = MinNormSolver.find_min_norm_element([
-                    [grads[i]] for i in range(len(finetuned_weights.values()))
-                ])
+                sol, min_norm = MinNormSolver.find_min_norm_element(
+                    [[grads[i]] for i in range(len(finetuned_weights.values()))]
+                )
 
                 if self.ema:
-                    ema_sol = [self.ema_beta * ema_sol[i] + (1-self.ema_beta) * float(sol[i]) for i in range(len(sol))]
+                    ema_sol = [
+                        self.ema_beta * ema_sol[i] + (1 - self.ema_beta) * float(sol[i])
+                        for i in range(len(sol))
+                    ]
                     sol = ema_sol
                     all_alphas[0].append(ema_sol[0])
                     all_alphas[1].append(ema_sol[1])
@@ -329,7 +325,9 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
         else:
             # This is a naive weighted optimization
             optimizer = torch.optim.Adam([merged_weight], lr=self.lr)
-            for step_idx in tqdm(range(self.num_steps), desc=f"Optimizing {module_name} weight"):
+            for step_idx in tqdm(
+                range(self.num_steps), desc=f"Optimizing {module_name} weight"
+            ):
                 loss = 0
                 for i, finetuned_weight in enumerate(finetuned_weights.values()):
                     proj_u = proj_u_dict[i]
@@ -348,13 +346,13 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
     def cal_loss_i(self, delta_tv, proj_s, proj_u, proj_v):
         proj_delta_1 = torch.diag(proj_s) @ proj_u.T @ delta_tv
         proj_delta_2 = delta_tv @ proj_v @ torch.diag(proj_s)
-        loss_i_u = torch.linalg.matrix_norm(proj_delta_1, ord='fro') ** 2
-        loss_i_v = torch.linalg.matrix_norm(proj_delta_2, ord='fro') ** 2
-        if self.svd_proj_space == 'uv':
+        loss_i_u = torch.linalg.matrix_norm(proj_delta_1, ord="fro") ** 2
+        loss_i_v = torch.linalg.matrix_norm(proj_delta_2, ord="fro") ** 2
+        if self.svd_proj_space == "uv":
             loss_i = loss_i_u + loss_i_v
-        elif self.svd_proj_space == 'u':
+        elif self.svd_proj_space == "u":
             loss_i = loss_i_u
-        elif self.svd_proj_space == 'v':
+        elif self.svd_proj_space == "v":
             loss_i = loss_i_v
         else:
             raise ValueError("Invalid svd_proj_space")
@@ -363,4 +361,6 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
 
     def save_merged_model(self, merged_model: CLIPVisionModel, step: int):
         os.makedirs(Path(self.log_dir) / "checkpoints", exist_ok=True)
-        merged_model.save_pretrained(Path(self.log_dir) / "checkpoints" / f"merged_model_{step}")
+        merged_model.save_pretrained(
+            Path(self.log_dir) / "checkpoints" / f"merged_model_{step}"
+        )
