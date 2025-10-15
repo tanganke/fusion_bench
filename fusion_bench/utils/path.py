@@ -2,6 +2,8 @@ import logging
 import os
 from typing import List
 
+from lightning_utilities.core.rank_zero import rank_zero_only
+
 log = logging.getLogger(__name__)
 
 
@@ -25,6 +27,7 @@ def listdir_fullpath(dir: str) -> List[str]:
     return [os.path.join(dir, name) for name in names]
 
 
+@rank_zero_only
 def create_symlink(src_dir: str, dst_dir: str, link_name: str = None):
     """
     Creates a symbolic link from src_dir to dst_dir.

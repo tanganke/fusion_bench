@@ -46,6 +46,7 @@ _import_structure = {
         "NYUv2ModelPool",
         "OpenCLIPVisionModelPool",
         "PeftModelForSeq2SeqLMPool",
+        "ResNetForImageClassificationPool",
         "Seq2SeqLMPool",
         "SequenceClassificationModelPool",
     ],
@@ -111,6 +112,7 @@ if TYPE_CHECKING:
         NYUv2ModelPool,
         OpenCLIPVisionModelPool,
         PeftModelForSeq2SeqLMPool,
+        ResNetForImageClassificationPool,
         Seq2SeqLMPool,
         SequenceClassificationModelPool,
     )

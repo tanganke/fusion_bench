@@ -13,6 +13,8 @@ _import_structure = {
     "classification": [
         "ImageClassificationFineTuningForCLIP",
         "ContinualImageClassificationFineTuningForCLIP",
+        "ImageClassificationFineTuning",
+        "ImageClassificationFineTuning_Test",
     ],
     "lm_finetune": ["FullFinetuneSFT", "PeftFinetuneSFT", "BradleyTerryRewardModeling"],
     # analysis
@@ -68,6 +70,7 @@ _import_structure = {
         "IsotropicMergingInCommonSubspace",
     ],
     "opcm": ["OPCMForCLIP"],
+    "dop": ["ContinualDOPForCLIP"],
     "gossip": [
         "CLIPLayerWiseGossipAlgorithm",
         "CLIPTaskWiseGossipAlgorithm",
@@ -145,6 +148,8 @@ if TYPE_CHECKING:
     from .bitdelta import BitDeltaAlgorithm
     from .classification import (
         ContinualImageClassificationFineTuningForCLIP,
+        ImageClassificationFineTuning,
+        ImageClassificationFineTuning_Test,
         ImageClassificationFineTuningForCLIP,
     )
     from .concrete_subspace import (
@@ -208,6 +213,7 @@ if TYPE_CHECKING:
     from .model_recombination import ModelRecombinationAlgorithm
     from .model_stock import ModelStock
     from .opcm import OPCMForCLIP
+    from .dop import ContinualDOPForCLIP
     from .pruning import (
         MagnitudeDiffPruningAlgorithm,
         MagnitudePruningForLlama,

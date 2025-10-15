@@ -1,4 +1,4 @@
-_target_: WeightedAverageForLLama
+_target_: fusion_bench.method.WeightedAverageForLLama
 normalize: true # if true, the weights will be normalized before merging
 weights: # List of weights for each model
   - 0.5

@@ -1,5 +1,4 @@
 from collections import OrderedDict
-
 from numbers import Number
 from typing import Callable, Dict, List, Literal, Optional, Union, cast
 
