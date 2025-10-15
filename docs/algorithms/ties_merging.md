@@ -76,6 +76,23 @@ fusion_bench method=ties_merging \
   taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
 ```
 
+#### Saving Merged Model
+
+If you want to persist the merged model, use the program-level save option `merged_model_save_path`. 
+The actual save behavior is delegated to the selected ModelPool via its `save_model` implementation.
+
+Example: save the merged model into a directory under the log folder
+
+```bash
+fusion_bench \
+  path.log_dir=outputs/clip-vit-base-patch32/ties_merging \
+  merged_model_save_path=$\{path.log_dir\}/merged_model \
+  method=ties_merging \
+    method.scaling_factor=0.3 \
+  modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8_model_only \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
+```
+
 ### API Usage
 
 To use the Ties-Merging algorithm programmatically, you can use the `TiesMergingAlgorithm` class from the `fusion_bench.method` module.

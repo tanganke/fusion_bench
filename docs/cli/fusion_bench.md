@@ -114,46 +114,58 @@ This is useful for tab completion in the shell. You can install shell completion
 ### Application Options
 
 - **report_save_path**: The path to save the report. If not specified or is `false`, the report will not be saved. The report will be saved as a JSON file. Default is `false`.
-  For example, to save the report to `outputs/report.json`:
+    For example, to save the report to `outputs/report.json`:
 
-  ```bash
-  fusion_bench report_save_path=outputs/report.json
-  ```
+    ```bash
+    fusion_bench report_save_path=outputs/report.json
+    ```
 
 - **print_config**: Whether to print the configuration to the console. If not specified or is `false`, the configuration will not be printed. Default is `true`.
-  For example, to print the configuration:
+    For example, to print the configuration:
 
-  ```bash
-  fusion_bench print_config=true
-  ```
+    ```bash
+    fusion_bench print_config=true
+    ```
 
 - **dry_run**: Perform a dry run.
-  This will only validate the configuration without running the actual code. Default is `false`.
-  For example, to perform a dry run and print the configuration:
+    This will only validate the configuration without running the actual code. Default is `false`.
+    For example, to perform a dry run and print the configuration:
 
-  ```bash
-  fusion_bench dry_run=true print_config=true
-  ```
+    ```bash
+    fusion_bench dry_run=true print_config=true
+    ```
 
 - **merged_model_save_path**: The path to save the merged model. If specified, the merged model will be saved to this path by calling `modelpool.save_model`.
-  For example, to save the merged model to `outputs/merged_model.pt`:
+    For example, to save the merged model to `outputs/merged_model.pt`:
 
-  ```bash
-  fusion_bench merged_model_save_path=outputs/merged_model.pt
-  ```
+    ```bash
+    fusion_bench merged_model_save_path=outputs/merged_model.pt
+    ```
 
-  Note that the behavior of `modelpool.save_model` depends on the implementation of the model pool. Take `AutoModelForCausalLMPool` as an example, it will save the model to the specified path as a dirctory containing the model configuration and safetensor files, i.e., calling `model.save_pretrained(merged_model_save_path)`.
+    Note that the behavior of `modelpool.save_model` depends on the implementation of the model pool. Take `AutoModelForCausalLMPool` as an example, it will save the model to the specified path as a dirctory containing the model configuration and safetensor files, i.e., calling `model.save_pretrained(merged_model_save_path)`.
 
     ??? example "Example of `modelpool.save_model`"
 
         `ModelPool` is the base class for model pools. The `save_model` method is defined in the `ModelPool` class and can be overridden in the derived classes. For example, `AutoModelForCausalLMPool` overrides the `save_model` method to save the model using the `save_pretrained` method of the model. The following is an example of the `save_model` method in the `ModelPool` class and the `AutoModelForCausalLMPool` class.
 
-        By passing `merged_model_save_path` to the `fusion_bench` command, only the model and the save path will be passed to the `modelpool.save_model` method. For example, although the `AutoModelForCausalLMPool` class has a `save_model` method that can take additional arguments, such as `push_to_hub` and `save_tokenizer`, these arguments will not be passed to the `save_model` method. If you want to pass additional arguments to the `save_model` method, you need to implement the logic in method class.
+        By default, FusionBench will call `modelpool.save_model(model, merged_model_save_path, **merged_model_save_kwargs)` if the options below are provided. That is, additional keyword arguments can be forwarded when supported by the ModelPool implementation.
 
-        ::: fusion_bench.modelpool.CausalLMPool.save_model
-            options:
-              show_root_full_path: true
-              show_root_toc_entry: false
+- **merged_model_save_kwargs**: Extra keyword arguments forwarded to `modelpool.save_model` when saving the merged model. Provide a dict-like value.
+
+    Example (CausalLMPool): save to a local directory and also save the tokenizer and avoid pushing to the hub.
+
+    ```bash
+    fusion_bench -c job \
+        merged_model_save_path=outputs/merged_model \
+        merged_model_save_kwargs='{push_to_hub: false, save_tokenizer: true}' \
+        method=linear/weighted_average_for_llama \
+        modelpool=CausalLMPool/simle_mixtral_exp_v4 \
+        taskpool=dummy
+    ```
+
+    !!! note
+
+        The exact set of supported kwargs is defined by the chosen ModelPool. For example, [`CausalLMPool.save_model`][fusion_bench.modelpool.CausalLMPool.save_model] accepts `push_to_hub`, `save_tokenizer`, etc.
 
 ### method, modelpool and taskpool options
 
