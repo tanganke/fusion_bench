@@ -142,7 +142,7 @@ This is useful for tab completion in the shell. You can install shell completion
     fusion_bench merged_model_save_path=outputs/merged_model.pt
     ```
 
-    Note that the behavior of `modelpool.save_model` depends on the implementation of the model pool. Take `AutoModelForCausalLMPool` as an example, it will save the model to the specified path as a dirctory containing the model configuration and safetensor files, i.e., calling `model.save_pretrained(merged_model_save_path)`.
+    Note that the behavior of `modelpool.save_model` depends on the implementation of the model pool. Take `AutoModelForCausalLMPool` as an example, it will save the model to the specified path as a directory containing the model configuration and safetensor files, i.e., calling `model.save_pretrained(merged_model_save_path)`.
 
     ??? example "Example of `modelpool.save_model`"
 
