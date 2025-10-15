@@ -208,3 +208,12 @@
         heading_level: 4
         members:
         - OPCMForCLIP
+
+### Dual Projections (DOP)
+
+::: fusion_bench.method
+    options:
+        show_root_heading: false
+        heading_level: 4
+        members:
+        - ContinualDOPForCLIP
