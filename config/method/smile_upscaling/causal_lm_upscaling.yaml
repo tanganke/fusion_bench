@@ -1,3 +1,9 @@
+# =============================================================================
+# FusionBench Method Configuration: SMILE Upscaling (Causal LM)
+# =============================================================================
+# Upscales causal language models (Qwen2/Llama/Mistral) with SMILE.
+# Supports auto-detection or explicit model_type override.
+# =============================================================================
 # Generic SMILE Upscaling Configuration for CausalLM models
 # Supports: Qwen2, Llama, Mistral models
 # The model type will be auto-detected from the base model

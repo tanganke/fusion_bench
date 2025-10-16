@@ -1,3 +1,8 @@
+# =============================================================================
+# FusionBench Method Configuration: ExPO
+# =============================================================================
+# Extrapolates from pretrained to finetuned direction by a factor.
+# =============================================================================
 # This algorithm merges a pretrained model with a finetuned model.
 #
 # $$\theta_{merged} = \theta_{ft} + \alpha (\theta_{ft} - \theta_{pre})$$

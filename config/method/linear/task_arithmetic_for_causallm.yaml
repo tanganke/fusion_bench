@@ -1,3 +1,6 @@
+# =============================================================================
+# FusionBench Method Configuration: Task Arithmetic (Causal LM)
+# =============================================================================
 _target_: fusion_bench.method.TaskArithmeticForCausalLM
 scaling_factor: 0.3
 merge_backbone: false

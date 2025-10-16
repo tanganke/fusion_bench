@@ -1,3 +1,6 @@
+# =============================================================================
+# FusionBench Method Configuration: RegMean++ (CLIP)
+# =============================================================================
 _target_: fusion_bench.method.RegMeanAlgorithmForCLIPPlusPlus
 # list, regular expression of names of parameters that need to be excluded
 exclude_param_names_regex: []

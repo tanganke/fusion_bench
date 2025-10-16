@@ -1,3 +1,8 @@
+# =============================================================================
+# FusionBench Method Configuration: SMILE Upscaling (Mistral)
+# =============================================================================
+# Specialized SMILE upscaling for Mistral models with rank settings.
+# =============================================================================
 _target_: fusion_bench.method.smile_upscaling.smile_mistral_upscaling.SmileMistralUpscalingAlgorithm
 # device to put the models on
 device: cpu

@@ -1,3 +1,6 @@
+# =============================================================================
+# FusionBench Method Configuration: RegMean (Base)
+# =============================================================================
 _target_: ???
 num_regmean_examples: 256
 reduce_non_diagonal_ratio: 0.1

@@ -1,3 +1,8 @@
+# =============================================================================
+# FusionBench Method Configuration: Weighted Average for LLaMA
+# =============================================================================
+# Like Weighted Average but supports merging only backbone and saving tokenizer.
+# =============================================================================
 _target_: fusion_bench.method.WeightedAverageForLLama
 normalize: true # if true, the weights will be normalized before merging
 weights: # List of weights for each model
