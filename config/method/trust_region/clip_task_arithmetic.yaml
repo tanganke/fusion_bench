@@ -1,0 +1,6 @@
+_target_: fusion_bench.method.trust_region.clip_task_arithmetic.TaskArithmeticWithTrustRegionForCLIP
+scaling_factor: 0.3
+threshold_quantile: 0.99
+max_samples: 128
+batch_size: 128
+zero_shot: false

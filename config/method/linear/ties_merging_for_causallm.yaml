@@ -1,0 +1,13 @@
+_target_: fusion_bench.method.TiesMergingForCausalLM
+# Scaling factor $\lambda$ 
+scaling_factor: 0.3
+# Threshold for resetting values in the task vector
+threshold: 20
+# List of keys to remove from the state dict, default is empty
+remove_keys: []
+# Function to merge the models, default is sum. Options are 'sum', 'mean', and 'max'
+merge_func: sum
+# Whether to merge only the backbone layers
+merge_backbone: false
+# Path to save the merged model
+model_save_path: ${path.log_dir}/checkpoint
