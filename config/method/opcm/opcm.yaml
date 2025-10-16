@@ -1,3 +1,8 @@
+# =============================================================================
+# FusionBench Method Configuration: OPCM
+# =============================================================================
+# Incrementally merges models via SVD projection and evaluation per step.
+# =============================================================================
 _target_: fusion_bench.method.opcm.opcm.OPCMForCLIP
 # shuffle the order of the models
 shuffle_order: true

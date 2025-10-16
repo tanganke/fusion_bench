@@ -1,3 +1,8 @@
+# =============================================================================
+# FusionBench Method Configuration: Continual Weighted Average
+# =============================================================================
+# Incrementally averages model weights as new models arrive.
+# =============================================================================
 _target_: fusion_bench.method.opcm.weight_average.ContinualWeightAverageForCLIP
 # shuffle the order of the models
 shuffle_order: true

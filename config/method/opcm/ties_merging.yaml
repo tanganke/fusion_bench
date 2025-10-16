@@ -1,3 +1,8 @@
+# =============================================================================
+# FusionBench Method Configuration: Continual TIES Merging
+# =============================================================================
+# Continual variant of TIES merging with per-step save/eval instrumentation.
+# =============================================================================
 _target_: fusion_bench.method.opcm.ties_merging.ContinualTiesMergingForCLIP
 # Scaling factor $\lambda$
 scaling_factor: 0.5

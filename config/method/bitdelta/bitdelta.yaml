@@ -1,3 +1,6 @@
+# =============================================================================
+# FusionBench Method Configuration: BitDelta
+# =============================================================================
 _target_: fusion_bench.method.bitdelta.BitDeltaAlgorithm
 save_dir: null
 save_full_model: false

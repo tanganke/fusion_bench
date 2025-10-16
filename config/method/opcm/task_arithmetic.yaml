@@ -1,3 +1,9 @@
+# =============================================================================
+# FusionBench Method Configuration: Continual Task Arithmetic
+# =============================================================================
+# Applies task arithmetic incrementally across a stream of models.
+# Maintains per-step save/eval similar to OPCM.
+# =============================================================================
 _target_: fusion_bench.method.opcm.task_arithmetic.ContinualTaskArithmeticForCLIP
 scaling_factor: 0.3
 # shuffle the order of the models
