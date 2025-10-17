@@ -264,7 +264,7 @@ class CLIPVisionModelTaskPool(
 
         pbar = tqdm(
             test_loader,
-            desc=f"Evaluating {task_name}",
+            desc=f"Evaluating {task_name}" if task_name is not None else "Evaluating",
             leave=False,
             dynamic_ncols=True,
         )

@@ -8,6 +8,7 @@ from copy import deepcopy
 from typing import Any, Dict, Optional, TypeAlias, Union, cast  # noqa: F401
 
 import peft
+from lightning_utilities.core.rank_zero import rank_zero_only
 from omegaconf import DictConfig, OmegaConf, flag_override
 from torch import nn
 from torch.nn.modules import Module
@@ -342,7 +343,7 @@ class CausalLMPool(BaseModelPool):
         )
 
         # Create and save model card if algorithm_config is provided
-        if algorithm_config is not None:
+        if algorithm_config is not None and rank_zero_only.rank == 0:
             if description is None:
                 description = "Model created using FusionBench."
             model_card_str = create_default_model_card(

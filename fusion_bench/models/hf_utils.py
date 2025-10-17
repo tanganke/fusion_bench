@@ -142,7 +142,7 @@ def save_pretrained_with_remote_code(
 
 
 def create_default_model_card(
-    models: list[str],
+    models: Optional[list[str]] = None,
     base_model: Optional[str] = None,
     title: str = "Deep Model Fusion",
     tags: list[str] = ["fusion-bench", "merge"],
@@ -151,6 +151,9 @@ def create_default_model_card(
     modelpool_config: DictConfig = None,
 ):
     from jinja2 import Template
+
+    if models is None:
+        models = []
 
     template: Template = Template(load_model_card_template("default.md"))
     card = template.render(

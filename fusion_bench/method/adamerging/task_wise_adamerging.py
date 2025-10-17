@@ -18,21 +18,9 @@ from fusion_bench.models.wrappers.task_wise_fusion import (
     get_task_wise_weights,
 )
 
+from .entropy_loss import entropy_loss
+
 log = logging.getLogger(__name__)
-
-
-def entropy_loss(logits: Tensor) -> Tensor:
-    """
-    Compute the entropy loss of a set of logits.
-
-    Args:
-        logits (Tensor): The logits to compute the entropy loss of.
-
-    Returns:
-        Tensor: The entropy loss of the logits.
-    """
-    probs = torch.softmax(logits, dim=-1)
-    return -torch.sum(probs * torch.log(probs + 1e-8), dim=-1).mean()
 
 
 class TaskWiseAdaMergingAlgorithm(ModelFusionAlgorithm):

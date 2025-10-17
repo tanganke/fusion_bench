@@ -13,6 +13,7 @@ profile_report.html
 # ignore all output files
 /temp/
 /outputs/
+/outputs*/
 /results/
 lightning_logs/
 
