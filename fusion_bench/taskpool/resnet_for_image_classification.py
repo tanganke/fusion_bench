@@ -88,7 +88,9 @@ class ResNetForImageClassificationTaskPool(
             for ds_name in self._test_datasets
         }
         self.test_dataloaders = {
-            ds_name: self.get_dataloader(ds, stage="test")
+            ds_name: self.fabric.setup_dataloaders(
+                self.get_dataloader(ds, stage="test")
+            )
             for ds_name, ds in test_datasets.items()
         }
 
