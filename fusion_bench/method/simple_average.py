@@ -64,10 +64,12 @@ class SimpleAverageAlgorithm(
     SimpleProfilerMixin,
     BaseAlgorithm,
 ):
-    def __init__(self, show_pbar: bool = False, **kwargs):
+    def __init__(self, show_pbar: bool = False, inplace: bool = True, **kwargs):
         """
         Args:
             show_pbar (bool): If True, shows a progress bar during model loading and merging. Default is False.
+            inplace (bool): If True, overwrites the weights of the first model in the model pool.
+                If False, creates a new model for the merged weights. Default is True.
         """
         super().__init__(**kwargs)
 
@@ -104,12 +106,12 @@ class SimpleAverageAlgorithm(
             with self.profile("merge weights"):
                 if sd is None:
                     # Initialize the state dictionary with the first model's state dictionary
-                    sd = model.state_dict(keep_vars=True)
-                    forward_model = model
+                    sd = model.state_dict()
+                    forward_model = model if self.inplace else deepcopy(model)
                 else:
                     # Add the current model's state dictionary to the accumulated state dictionary
                     sd = state_dict_add(
-                        sd, model.state_dict(keep_vars=True), show_pbar=self.show_pbar
+                        sd, model.state_dict(), show_pbar=self.show_pbar
                     )
         with self.profile("merge weights"):
             # Divide the accumulated state dictionary by the number of models to get the average

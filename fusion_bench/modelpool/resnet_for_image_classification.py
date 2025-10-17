@@ -208,9 +208,12 @@ class ResNetForImageClassificationPool(BaseModelPool):
         ```
     """
 
-    def __init__(self, type: str, **kwargs):
-        super().__init__(**kwargs)
-        assert type in ["torchvision", "transformers"]
+    def __init__(self, models, type: str, **kwargs):
+        super().__init__(models=models, **kwargs)
+        assert type in [
+            "torchvision",
+            "transformers",
+        ], "type must be either 'torchvision' or 'transformers'"
 
     def load_processor(
         self, stage: Literal["train", "val", "test"] = "test", *args, **kwargs
