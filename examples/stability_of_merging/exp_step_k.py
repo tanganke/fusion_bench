@@ -21,8 +21,7 @@ from fusion_bench.constants.clip_vision import TASK_NAMES_TALL20
 from fusion_bench.constants.paths import PROJECT_ROOT_PATH
 from fusion_bench.method import SimpleAverageAlgorithm
 from fusion_bench.taskpool import ResNetForImageClassificationTaskPool
-
-fabric = L.Fabric(accelerator="cpu", devices=1)
+from fusion_bench.utils.json import save_to_json
 
 STEPS = [1000, 2000, 3000, 4000]
 BACKS = ["resnet18", "resnet50", "resnet152"]
@@ -75,11 +74,14 @@ def eval_model_on_task(model, task: str):
     taskpool = ResNetForImageClassificationTaskPool(
         type="transformers",
         test_datasets={task: test_datasets_20[task]},
-        dataloader_kwargs={"batch_size": 128, "num_workers": 4},
+        dataloader_kwargs={"batch_size": 64, "num_workers": 4},
         processor_config_path=model.config._name_or_path,
     )
     taskpool._fabric_instance = fabric
     report = taskpool.evaluate(model)
+    print(
+        f"Evaluation results on task {task}: accuracy={report[task]['accuracy']}, loss={report[task]['loss']}"
+    )
     return report[task]["accuracy"], report[task]["loss"]
 
 
@@ -108,7 +110,9 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
+    fabric = L.Fabric(accelerator="cuda", devices=1)
 
+    run_idx = 0
     for step in STEPS:
         for seed in range(N_GROUP):
             random.seed(seed)
@@ -128,6 +132,8 @@ if __name__ == "__main__":
                 {n: model.resnet for n, model in models.items()}, algo=args.merge_algo
             )
 
+            # evaluate on chosen tasks
+            task_results = {}
             task_acc_list = []
             task_loss_list = []
             for task_name in chosen:
@@ -137,6 +143,27 @@ if __name__ == "__main__":
                 task_acc, task_loss = eval_model_on_task(model, task_name)
                 task_acc_list.append(task_acc)
                 task_loss_list.append(task_loss)
+                task_results[task_name] = {
+                    "accuracy": task_acc,
+                    "loss": task_loss,
+                }
 
             avg_acc = np.mean(task_acc_list)
             avg_loss = np.mean(task_loss_list)
+
+            run_results = {
+                "step": step,
+                "seed": seed,
+                "chosen_tasks": chosen,
+                "avg_acc": avg_acc,
+                "avg_loss": avg_loss,
+                "results": task_results,
+            }
+
+            os.makedirs(
+                result_dir := f"outputs/exp_step_k/{args.backbone}/{args.config_name}/{args.merge_algo}/step={step}",
+                exist_ok=True,
+            )
+            while os.path.exists(os.path.join(result_dir, f"run_{run_idx}.json")):
+                run_idx += 1
+            save_to_json(run_results, os.path.join(result_dir, f"run_{run_idx}.json"))
