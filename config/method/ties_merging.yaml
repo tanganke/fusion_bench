@@ -1,3 +1,6 @@
+# =============================================================================
+# FusionBench Method Configuration: Ties Merging
+# =============================================================================
 _target_: fusion_bench.method.TiesMergingAlgorithm
 # Scaling factor $\lambda$
 scaling_factor: 0.3

@@ -1,3 +1,6 @@
+# =============================================================================
+# FusionBench Method Configuration: SMILE Upscaling
+# =============================================================================
 _target_: fusion_bench.method.SmileUpscalingAlgorithm
 # merge device on cuda can accelerate the SVD computation
 device: cpu

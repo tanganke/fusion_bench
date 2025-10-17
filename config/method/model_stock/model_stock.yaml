@@ -1,3 +1,6 @@
+# =============================================================================
+# FusionBench Method Configuration: Model Stock
+# =============================================================================
 _target_: fusion_bench.method.model_stock.ModelStock
 ignore_keys:
   [
