@@ -3,7 +3,7 @@
 # =============================================================================
 # This configuration file defines the settings for running model fusion experiments
 # within FusionBench using standard PyTorch (without Lightning Fabric).
-# 
+#
 # The configuration includes:
 #
 # - Hydra framework settings and overrides
@@ -30,6 +30,7 @@ _recursive_: false # Disable recursive instantiation
 # =============================================================================
 # Experiment Execution Settings
 # =============================================================================
+seed: null # Random seed for reproducibility
 # Development and debugging options
 fast_dev_run: false # This option is for quick testing. For example, run single batch instead of full dataset
 dry_run: false # Show configuration without running experiment

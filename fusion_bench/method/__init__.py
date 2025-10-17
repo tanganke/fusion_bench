@@ -55,6 +55,8 @@ _import_structure = {
         "GPT2LayerWiseAdaMergingAlgorithm",
         "LayerWiseAdaMergingForLlamaSFT",
         "FlanT5LayerWiseAdaMergingAlgorithm",
+        "ResNetLayerWiseAdamerging",
+        "ResNetTaskWiseAdamerging",
     ],
     "pwe_moe": [
         "PWEMoELinearScalarizationForCLIP",
