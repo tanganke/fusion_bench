@@ -16,7 +16,7 @@ Fine-tune CLIP-ViT-B/32:
 
 ```bash
 fusion_bench \
-    method=clip_finetune \
+    method=classification/clip_finetune \
     modelpool=CLIPVisionModelPool/clip-vit-base-patch32_mtl \
     taskpool=dummy
 ```
@@ -26,7 +26,7 @@ Fine-tune CLIP-ViT-L/14 on eight GPUs with a per-device per-task batch size of 2
 ```bash
 fusion_bench \
     fabric.devices=8 \
-    method=clip_finetune \
+    method=classification/clip_finetune \
         method.batch_size=2 \
     modelpool=CLIPVisionModelPool/clip-vit-base-patch32_mtl \
         modelpool.models._pretrained_.pretrained_model_name_or_path=openai/clip-vit-large-patch14 \
