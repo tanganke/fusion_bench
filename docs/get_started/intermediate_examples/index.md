@@ -18,4 +18,12 @@
 
     [:octicons-arrow-right-24: Read More](assess_model_performance_within_algorithm.md)
 
+- **Select Logger for Experiment Tracking**
+
+    ---
+
+    Learn how to select and configure different loggers (TensorBoard, CSV, Wandb, etc.) for tracking your experiments.
+
+    [:octicons-arrow-right-24: Read More](select_logger.md)
+
 </div>
