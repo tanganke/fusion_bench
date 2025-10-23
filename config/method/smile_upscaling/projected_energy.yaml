@@ -1,0 +1,2 @@
+# Measure projected energy
+_target_: fusion_bench.method.smile_upscaling.projected_energy.ProjectedEnergyAnalysis

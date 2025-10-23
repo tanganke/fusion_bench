@@ -1,0 +1,18 @@
+defaults:
+  - hydra: default
+  - fabric: llama_fsdp
+  - path: default
+  # --- Model, Method, Task ---
+  - method: lm_finetune/fullfinetune_sft.yaml
+  - modelpool: CausalLMPool/llama_alpaca_cleaned.yaml
+  - taskpool: dummy
+  - _self_
+_target_: fusion_bench.programs.FabricModelFusionProgram
+_recursive_: false
+fast_dev_run: false # Run a single batch of data to test the model or method
+# Run the script without actually running the experiment, use with `print_config=true`.
+# You can also use `--cfg` or `-c` to show the configuration instead of running.
+dry_run: false
+print_config: true # Print the configuration to the console
+report_save_path: null # path to save the result report
+print_function_call: true # set to false if you don't want to print the details of instantiate calls
