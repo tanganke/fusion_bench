@@ -1,5 +1,5 @@
 defaults:
-  - loggers: tensorboard_logger
+  - loggers: tensorboard_logger # to choose the logger, e.g., tensorboard_logger, wandb_logger, swandb_logger
   - _self_
 _target_: lightning.Fabric
 _recursive_: true

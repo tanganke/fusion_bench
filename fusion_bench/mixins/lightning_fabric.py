@@ -111,6 +111,15 @@ class LightningFabricMixin:
         """
         if self.fabric is not None and len(self.fabric._loggers) > 0:
             log_dir = self.fabric.logger.log_dir
+
+            # Special handling for SwanLabLogger to get the correct log directory
+            if (
+                log_dir is None
+                and self.fabric.logger.__class__.__name__ == "SwanLabLogger"
+            ):
+                log_dir = self.fabric.logger.save_dir or self.fabric.logger._logdir
+
+            assert log_dir is not None, "log_dir should not be None"
             if self.fabric.is_global_zero and not os.path.exists(log_dir):
                 os.makedirs(log_dir, exist_ok=True)
             return log_dir
