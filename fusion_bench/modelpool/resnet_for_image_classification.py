@@ -191,7 +191,7 @@ class ResNetForImageClassificationPool(BaseModelPool):
         ```
         ```
 
-        Creaate a pool with a transformers ResNet model:
+        Create a pool with a transformers ResNet model:
 
         ```python
         >>> # Transformers-based pool
