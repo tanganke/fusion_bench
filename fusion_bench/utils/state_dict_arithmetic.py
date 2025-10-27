@@ -6,10 +6,13 @@ import torch
 from torch import Tensor
 from tqdm.auto import tqdm
 
+from fusion_bench.utils.type import TorchModelType
+
 from .type import BoolStateDictType, StateDictType
 
 __all__ = [
     "ArithmeticStateDict",
+    "load_state_dict_with_prefix",
     "state_dicts_check_keys",
     "state_dict_to_device",
     "num_params_of_state_dict",
@@ -644,6 +647,48 @@ def _validate_list_lengths_equal(
         except (TypeError, AttributeError):
             # If we can't check numeric values, skip this validation
             pass
+
+
+def load_state_dict_with_prefix(
+    model: TorchModelType,
+    state_dict: StateDictType,
+    strict: bool = True,
+    assign: bool = False,
+    key_prefix: str = "model.",
+    operation: Literal["add", "remove"] = "remove",
+) -> TorchModelType:
+    """
+    Load a state dict into a model, adding or removing a prefix from the keys.
+
+    This is useful when loading state dicts saved with DataParallel, pytorch lightning or similar wrappers.
+
+    Args:
+        model: The model to load the state dict into.
+        state_dict: The state dictionary to load.
+        key_prefix: The prefix to add or remove from the keys.
+        operation: 'add' to add the prefix, 'remove' to remove it.
+
+    Returns:
+        The model with the loaded state dict.
+    """
+    if operation not in ("add", "remove"):
+        raise ValueError("operation must be either 'add' or 'remove'")
+
+    modified_state_dict = OrderedDict()
+    for key, value in state_dict.items():
+        if operation == "add":
+            new_key = f"{key_prefix}{key}"
+        else:  # operation == "remove"
+            if key.startswith(key_prefix):
+                new_key = key[len(key_prefix) :]
+            else:
+                raise ValueError(
+                    f"Key '{key}' does not start with prefix '{key_prefix}'"
+                )
+        modified_state_dict[new_key] = value
+
+    model.load_state_dict(modified_state_dict, strict=strict, assign=assign)
+    return model
 
 
 def state_dict_to_device(
