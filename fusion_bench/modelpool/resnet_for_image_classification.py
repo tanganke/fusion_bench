@@ -5,7 +5,7 @@ classification tasks. It supports both torchvision and transformers implementati
 architectures with configurable preprocessing, loading, and saving capabilities.
 
 Example Usage:
-    Create  a pool with a torchvision ResNet model:
+    Create a pool with a torchvision ResNet model:
 
     ```python
     >>> # Torchvision ResNet pool
