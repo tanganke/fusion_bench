@@ -149,7 +149,10 @@ class TaskArithmeticAlgorithm(
                     )
         with self.profile("merge weights"):
             # scale the task vector
-            task_vector = state_dict_mul(task_vector, self.config.scaling_factor)
+            # here we keep the dtype when the elements of value are all zeros to avoid dtype mismatch
+            task_vector = state_dict_mul(
+                task_vector, self.config.scaling_factor, keep_dtype_when_zero=True
+            )
             # add the task vector to the pretrained model
             state_dict = state_dict_add(pretrained_model.state_dict(), task_vector)
 
