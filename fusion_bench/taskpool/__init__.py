@@ -18,6 +18,7 @@ _import_structure = {
     "lm_eval_harness": ["LMEvalHarnessTaskPool"],
     "nyuv2_taskpool": ["NYUv2TaskPool"],
     "openclip_vision": ["OpenCLIPVisionModelTaskPool"],
+    "resnet_for_image_classification": ["ResNetForImageClassificationTaskPool"],
 }
 
 
@@ -34,6 +35,7 @@ if TYPE_CHECKING:
     from .lm_eval_harness import LMEvalHarnessTaskPool
     from .nyuv2_taskpool import NYUv2TaskPool
     from .openclip_vision import OpenCLIPVisionModelTaskPool
+    from .resnet_for_image_classification import ResNetForImageClassificationTaskPool
 
 else:
     sys.modules[__name__] = LazyImporter(

@@ -1,3 +1,8 @@
+# =============================================================================
+# FusionBench Method Configuration: CLIP Finetune
+# =============================================================================
+# Finetunes CLIP models with optional LoRA adapters.
+# =============================================================================
 name: clip_finetune
 seed: 42
 learning_rate: 1e-5

@@ -1,7 +1,7 @@
 import torch
 from torch import Tensor, nn
 
-from fusion_bench import BaseAlgorithm, BaseModelPool
+from fusion_bench import BaseAlgorithm, BaseModelPool, auto_register_config
 from fusion_bench.utils.state_dict_arithmetic import state_dict_sum
 
 from .utils import (
@@ -12,6 +12,7 @@ from .utils import (
 )
 
 
+@auto_register_config
 class DareTaskArithmetic(BaseAlgorithm):
     """
     Implementation of Task Arithmetic w/ DARE.
@@ -27,11 +28,11 @@ class DareTaskArithmetic(BaseAlgorithm):
         rescale: bool = True,
         **kwargs,
     ):
+        super().__init__(**kwargs)
         self.scaling_factor = scaling_factor
         self.sparsity_ratio = sparsity_ratio
         self.only_on_linear_weights = only_on_linear_weights
         self.rescale = rescale
-        super().__init__(**kwargs)
 
     def _load_task_vector(
         self,

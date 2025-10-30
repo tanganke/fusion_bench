@@ -1,3 +1,8 @@
+# =============================================================================
+# FusionBench Method Configuration: TIES Merging (Causal LM)
+# =============================================================================
+# TIES merging adapted for causal language models with optional backbone-only.
+# =============================================================================
 _target_: fusion_bench.method.TiesMergingForCausalLM
 # Scaling factor $\lambda$ 
 scaling_factor: 0.3

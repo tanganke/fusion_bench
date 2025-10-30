@@ -10,15 +10,20 @@ function finetune() {
                     continue
                 fi
                 rich-run fusion_bench --config-name model_fusion \
-                    path.log_dir=${output_dir} seed=0 \
+                    path.log_dir=${output_dir}/$version seed=0 \
                     method=classification/image_classification_finetune \
-                    method.version=${version} \
-                    method.training_data_ratio=${training_data_ratio} \
-                    method.optimizer.lr=${lr} \
-                    method.lr_scheduler=null \
-                    method.dataloader_kwargs.batch_size=${batch_size} \
+                        method.max_epochs=-1 \
+                        method.max_steps=4000 \
+                        method.save_top_k=-1 \
+                        method.save_interval=1000 \
+                        method.save_on_train_epoch_end=false \
+                        method.training_data_ratio=${training_data_ratio} \
+                        method.optimizer.lr=${lr} \
+                        method.lr_scheduler=null \
+                        method.dataloader_kwargs.batch_size=${batch_size} \
                     modelpool=ResNetForImageClassfication/transformers/${model}_${dataset}
             done
+        done
     done
 }
 

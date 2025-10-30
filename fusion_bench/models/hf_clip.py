@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING, Callable, Iterable, List  # noqa: F401
+from typing import TYPE_CHECKING, Callable, Iterable, List, Optional  # noqa: F401
 
 import torch
 from torch import Tensor, nn
@@ -39,7 +39,6 @@ class HFCLIPClassifier(nn.Module):
         self,
         clip_model: CLIPModel,
         processor: CLIPProcessor,
-        extra_module=None,
     ):
         """
         Initialize the HFCLIPClassifier.
@@ -62,8 +61,6 @@ class HFCLIPClassifier(nn.Module):
             None,
             persistent=False,
         )
-
-        self.extra_module = extra_module
 
     @property
     def text_model(self):
@@ -123,9 +120,9 @@ class HFCLIPClassifier(nn.Module):
     def forward(
         self,
         images: Tensor,
-        return_image_embeds=False,
-        return_dict=False,
-        task_name=None,
+        return_image_embeds: bool = False,
+        return_dict: bool = False,
+        task_name: Optional[str] = None,
     ):
         """
         Perform forward pass for zero-shot image classification.

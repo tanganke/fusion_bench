@@ -77,14 +77,18 @@ class ImageClassificationFineTuning(BaseAlgorithm):
         optimizer: DictConfig,
         lr_scheduler: DictConfig,
         dataloader_kwargs: DictConfig,
-        version: Optional[str] = None,
+        save_top_k: int,
+        save_interval: int,
+        save_on_train_epoch_end: bool,
         **kwargs,
     ):
         super().__init__(**kwargs)
-        assert (max_epochs is None) or (
+        assert (max_epochs is None or max_epochs < 0) or (
             max_steps is None or max_steps < 0
         ), "Only one of max_epochs or max_steps should be set."
-        self.training_interval = "epoch" if max_epochs is not None else "step"
+        self.training_interval = (
+            "epoch" if max_epochs is not None and max_epochs > 0 else "step"
+        )
         if self.training_interval == "epoch":
             self.max_steps = -1
         log.info(f"Training interval: {self.training_interval}")
@@ -110,6 +114,7 @@ class ImageClassificationFineTuning(BaseAlgorithm):
         ), "Exactly one training dataset is required."
         self.dataset_name = dataset_name = modelpool.train_dataset_names[0]
         num_classes = get_num_classes(dataset_name)
+        log.info(f"Number of classes for dataset {dataset_name}: {num_classes}")
         train_dataset = modelpool.load_train_dataset(dataset_name)
         log.info(f"Training dataset size: {len(train_dataset)}")
         if self.training_data_ratio is not None and 0 < self.training_data_ratio < 1:
@@ -151,7 +156,11 @@ class ImageClassificationFineTuning(BaseAlgorithm):
             objective=nn.CrossEntropyLoss(label_smoothing=self.label_smoothing),
             metrics={
                 "acc@1": Accuracy(task="multiclass", num_classes=num_classes),
-                "acc@5": Accuracy(task="multiclass", num_classes=num_classes, top_k=5),
+                f"acc@{min(5,num_classes)}": Accuracy(
+                    task="multiclass",
+                    num_classes=num_classes,
+                    top_k=min(5, num_classes),
+                ),
             },
         )
 
@@ -168,8 +177,21 @@ class ImageClassificationFineTuning(BaseAlgorithm):
             callbacks=[
                 pl_callbacks.LearningRateMonitor(logging_interval="step"),
                 pl_callbacks.DeviceStatsMonitor(),
+                pl_callbacks.ModelCheckpoint(
+                    save_top_k=self.save_top_k,
+                    every_n_train_steps=(
+                        self.save_interval if self.training_interval == "step" else None
+                    ),
+                    every_n_epochs=(
+                        self.save_interval
+                        if self.training_interval == "epoch"
+                        else None
+                    ),
+                    save_on_train_epoch_end=self.save_on_train_epoch_end,
+                    save_last=True,
+                ),
             ],
-            logger=TensorBoardLogger(save_dir=log_dir, name="", version=self.version),
+            logger=TensorBoardLogger(save_dir=log_dir, name="", version=""),
             fast_dev_run=RuntimeConstants.debug,
         )
 
@@ -286,8 +308,10 @@ class ImageClassificationFineTuning_Test(BaseAlgorithm):
                 model,
                 metrics={
                     "acc@1": Accuracy(task="multiclass", num_classes=num_classes),
-                    "acc@5": Accuracy(
-                        task="multiclass", num_classes=num_classes, top_k=5
+                    f"acc@{min(5,num_classes)}": Accuracy(
+                        task="multiclass",
+                        num_classes=num_classes,
+                        top_k=min(5, num_classes),
                     ),
                 },
             )
@@ -297,8 +321,10 @@ class ImageClassificationFineTuning_Test(BaseAlgorithm):
                 model=model,
                 metrics={
                     "acc@1": Accuracy(task="multiclass", num_classes=num_classes),
-                    "acc@5": Accuracy(
-                        task="multiclass", num_classes=num_classes, top_k=5
+                    f"acc@{min(5,num_classes)}": Accuracy(
+                        task="multiclass",
+                        num_classes=num_classes,
+                        top_k=min(5, num_classes),
                     ),
                 },
             )

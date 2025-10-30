@@ -1,3 +1,6 @@
+# =============================================================================
+# FusionBench Method Configuration: ExPO with DARE (LLaMA)
+# =============================================================================
 _target_: fusion_bench.method.linear.llama_expo.ExPOWithDareForLLama
 extrapolation_factor: 0.1
 attention_scaling_factor: 1.0

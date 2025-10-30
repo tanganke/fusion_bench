@@ -3,10 +3,10 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fusion_bench"
+name = "fusion-bench"
 description = "A Comprehensive Benchmark of Deep Model Fusion"
 readme = "README.md"
-version = "0.2.26"
+version = "0.2.27"
 authors = [{ name = "Anke Tang", email = "tang.anke@foxmail.com" }]
 license-files = ["LICENSE"]
 requires-python = ">= 3.10" # Python 3.10+ for pattern matching support

@@ -14,7 +14,7 @@ A clear and concise description of what the bug is.
 Steps to reproduce the behavior:
 1. script execution
 2. Where the error occurred
-3. Error report or log
+3. Error report or log: Include the full stack trace where possible, especially the location of the error. If launched from fusion_bench, set the environment variable `HYDRA_FULL_ERROR=1` to obtain the full stack trace.
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.

@@ -1,3 +1,6 @@
+# =============================================================================
+# FusionBench Method Configuration: SMILE Singular Projection Merging
+# =============================================================================
 name: singular_projection_merging
 # merge device on cuda can accelerate the SVD computation
 device: cuda

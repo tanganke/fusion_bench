@@ -1,3 +1,8 @@
+# =============================================================================
+# FusionBench Method Configuration: SMILE Upscaling (Qwen2)
+# =============================================================================
+# Specialized SMILE upscaling for Qwen2 models with rank settings.
+# =============================================================================
 _target_: fusion_bench.method.smile_upscaling.smile_qwen2_upscaling.SmileQwen2UpscalingAlgorithm
 # device to put the models on
 device: cpu

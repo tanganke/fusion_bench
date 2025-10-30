@@ -140,6 +140,99 @@ fusion_bench \
 
 ## Advanced Features
 
+### Selecting Multiple Configs from a Config Group
+
+In some scenarios, you may need to select multiple configuration files from the same config group. This is particularly useful when you want to load multiple datasets, models, or evaluation tasks in a single run.
+
+#### The Problem
+
+Sometimes you need to compose configurations where a single component requires multiple sub-configurations. For example:
+
+- Loading multiple training datasets at once
+- Evaluating on multiple test datasets simultaneously
+- Combining multiple model architectures in an ensemble
+
+#### The Solution
+
+Use a **list of config names** as the value of the config group in the Defaults List or via command line.
+
+#### Basic Example
+
+Let's understand this with a simplified example. Suppose we want to configure training datasets for a model:
+
+**Config structure:**
+```
+config/
+├── datasets_config.yaml
+└── dataset/
+    ├── sun397.yaml
+    ├── stanford-cars.yaml
+    └── resisc45.yaml
+```
+
+**Using defaults list** (`datasets_config.yaml`):
+```yaml
+defaults:
+  - dataset:
+      - sun397
+      - stanford-cars
+      - resisc45
+```
+
+**Output:** All three dataset configs will be loaded and merged into your configuration.
+
+#### FusionBench Example
+
+Here's a practical example from FusionBench where we load multiple training datasets:
+
+```yaml
+defaults:
+  - /dataset/image_classification/train@train_datasets:
+      - sun397
+      - stanford-cars
+      - resisc45
+
+# The @train_datasets syntax specifies the package path where 
+# these configs will be placed in the final configuration
+```
+
+**Result:** The configuration will include all three datasets under `train_datasets`:
+```yaml
+train_datasets:
+  sun397:
+    _target_: datasets.load_dataset
+    path: tanganke/sun397
+    split: train
+  stanford-cars:
+    _target_: datasets.load_dataset
+    path: tanganke/stanford_cars
+    split: train
+  resisc45:
+    _target_: datasets.load_dataset
+    path: tanganke/resisc45
+    split: train
+```
+
+#### Package Relocation
+
+You can relocate where the configs are placed in the final configuration using the `@` syntax:
+
+```yaml
+defaults:
+  - dataset@training.data:
+      - sun397
+      - stanford-cars
+```
+
+This places the datasets under `training.data` instead of the default `dataset`:
+
+```yaml
+training:
+  data:
+    sun397: ...
+    stanford-cars: ...
+```
+
 ### Recursive Configuration
 
 Control recursive instantiation with `_recursive_`:
@@ -148,17 +241,3 @@ Control recursive instantiation with `_recursive_`:
 _target_: fusion_bench.modelpool.CLIPVisionModelPool
 _recursive_: False  # Prevent recursive instantiation
 ```
-
-### Conditional Configurations
-
-Leverage Hydra's conditional configuration syntax to handle advanced scenarios, such as dynamically selecting configurations based on specific conditions:
-
-```yaml
-defaults:
-  - /dataset/image_classification/train@train_datasets:
-      - sun397
-      - stanford-cars
-      - resisc45
-```
-
-This structured approach makes FusionBench configurations highly flexible, maintainable, and easy to experiment with different combinations of methods, models, and tasks.

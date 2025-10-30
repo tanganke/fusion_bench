@@ -1,6 +1,6 @@
 import logging
 
-from fusion_bench import BaseAlgorithm, BaseModelPool
+from fusion_bench import BaseAlgorithm, BaseModelPool, auto_register_config
 from fusion_bench.utils.state_dict_arithmetic import state_dict_add, state_dict_mul
 
 from .task_arithmetic import DareTaskArithmetic
@@ -8,6 +8,7 @@ from .task_arithmetic import DareTaskArithmetic
 log = logging.getLogger(__name__)
 
 
+@auto_register_config
 class DareSimpleAverage(BaseAlgorithm):
 
     def __init__(
@@ -17,10 +18,10 @@ class DareSimpleAverage(BaseAlgorithm):
         rescale: bool = True,
         **kwargs,
     ):
+        super().__init__(**kwargs)
         self.sparsity_ratio = sparsity_ratio
         self.only_on_linear_weight = only_on_linear_weights
         self.rescale = rescale
-        super().__init__(**kwargs)
 
     def run(self, modelpool: BaseModelPool):
         return DareTaskArithmetic(
