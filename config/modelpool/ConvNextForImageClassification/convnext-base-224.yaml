@@ -1,0 +1,7 @@
+_target_: fusion_bench.modelpool.ConvNextForImageClassificationPool
+_recursive_: False
+models:
+  _pretrained_:
+    config_path: facebook/convnext-base-224
+    pretrained: true
+    dataset_name: null

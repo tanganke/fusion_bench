@@ -24,6 +24,27 @@
     options:
         heading_level: 4
 
+### ResNet for Image Classification
+
+::: fusion_bench.modelpool.resnet_for_image_classification
+    options:
+        show_root_heading: false
+        heading_level: 4
+        members:
+        - load_torchvision_resnet
+        - load_transformers_resnet
+        - ResNetForImageClassificationPool
+
+### ConvNeXt for Image Classification
+
+::: fusion_bench.modelpool.convnext_for_image_classification
+    options:
+        show_root_heading: false
+        heading_level: 4
+        members:
+        - load_transformers_convnext
+        - ConvNextForImageClassificationPool
+
 ## NLP Model Pool
 
 ### GPT-2
@@ -35,7 +56,7 @@
         members:
         - HuggingFaceGPT2ClassificationPool
         - GPT2ForSequenceClassificationPool
-  
+
 ## Seq2Seq Language Models (Flan-T5)
 
 ::: fusion_bench.modelpool

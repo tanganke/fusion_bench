@@ -49,10 +49,10 @@ def load_transformers_convnext(
             are updated and the classifier head is resized accordingly.
 
     Returns:
-        A `transformers.ConvNextForImageClassification` instance. If
-        `dataset_name` is set, the classifier head is adapted to the number of
-        classes. The model's `config.id2label` and `config.label2id` are also
-        populated.
+        ConvNextForImageClassification: A `transformers.ConvNextForImageClassification` instance. If
+            `dataset_name` is set, the classifier head is adapted to the number of
+            classes. The model's `config.id2label` and `config.label2id` are also
+            populated.
 
     Notes:
         The overall structure mirrors the ResNet implementation in
