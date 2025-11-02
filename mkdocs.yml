@@ -52,7 +52,7 @@ nav:
       - modelpool/README.md
       - Computer Vision Tasks:
         - CLIP-ViT Models: modelpool/clip_vit.md
-        - ResNet Models for Sence Understanding: modelpool/nyuv2.md
+        - ResNet Models for Scene Understanding: modelpool/nyuv2.md
         - modelpool/resnet_for_image_classification.md
         - modelpool/convnext_for_image_classification.md
       - Natural Language Processing Tasks:
