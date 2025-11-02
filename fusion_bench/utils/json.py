@@ -18,19 +18,18 @@ def save_to_json(obj, path: Union[str, Path], filesystem: "FileSystem" = None):
             Can also be an s3fs.S3FileSystem or fsspec filesystem.
     """
     if filesystem is not None:
+        json_str = json.dumps(obj)
         # Check if it's an fsspec-based filesystem (like s3fs)
         if hasattr(filesystem, "open"):
             # Direct fsspec/s3fs usage - more reliable for some endpoints
             path_str = str(path)
-            json_str = json.dumps(obj)
             with filesystem.open(path_str, "w") as f:
                 f.write(json_str)
         else:
             # Use PyArrow filesystem
             path_str = str(path)
-            json_data = json.dumps(obj)
             with filesystem.open_output_stream(path_str) as f:
-                f.write(json_data.encode("utf-8"))
+                f.write(json_str.encode("utf-8"))
     else:
         # Use standard Python file operations
         with open(path, "w") as f:
