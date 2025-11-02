@@ -138,6 +138,7 @@ def load_transformers_resnet(
     label2id = {c: i for i, c in enumerate(classnames)}
     model.config.id2label = id2label
     model.config.label2id = label2id
+    model.num_labels = model.config.num_labels
 
     model.classifier[1] = (
         nn.Linear(
