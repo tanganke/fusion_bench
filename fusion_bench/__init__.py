@@ -41,6 +41,7 @@ _import_structure = {
         "CausalLMBackbonePool",
         "CausalLMPool",
         "CLIPVisionModelPool",
+        "ConvNextForImageClassificationPool",
         "GPT2ForSequenceClassificationPool",
         "HuggingFaceGPT2ClassificationPool",
         "NYUv2ModelPool",
