@@ -23,6 +23,15 @@
         - SparseWEMoECLIPVisionModelTaskPool
         - RankoneMoECLIPVisionModelTaskPool
 
+### ResNet for Image Classification
+
+::: fusion_bench.taskpool
+    options:
+        heading_level: 4
+        show_root_heading: false
+        members:
+        - ResNetForImageClassificationTaskPool
+
 ## Natural Language Processing (NLP) Tasks
 
 ### GPT-2

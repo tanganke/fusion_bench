@@ -8,6 +8,10 @@ _import_structure = {
     "base_pool": ["BaseModelPool"],
     "causal_lm": ["CausalLMPool", "CausalLMBackbonePool"],
     "clip_vision": ["CLIPVisionModelPool"],
+    "convnext_for_image_classification": [
+        "ConvNextForImageClassificationPool",
+        "load_transformers_convnext",
+    ],
     "nyuv2_modelpool": ["NYUv2ModelPool"],
     "huggingface_automodel": ["AutoModelPool"],
     "seq2seq_lm": ["Seq2SeqLMPool"],
@@ -18,7 +22,10 @@ _import_structure = {
         "GPT2ForSequenceClassificationPool",
     ],
     "seq_classification_lm": ["SequenceClassificationModelPool"],
-    "resnet_for_image_classification": ["ResNetForImageClassificationPool"],
+    "resnet_for_image_classification": [
+        "ResNetForImageClassificationPool",
+        "load_transformers_resnet",
+    ],
 }
 
 
@@ -26,6 +33,10 @@ if TYPE_CHECKING:
     from .base_pool import BaseModelPool
     from .causal_lm import CausalLMBackbonePool, CausalLMPool
     from .clip_vision import CLIPVisionModelPool
+    from .convnext_for_image_classification import (
+        ConvNextForImageClassificationPool,
+        load_transformers_convnext,
+    )
     from .huggingface_automodel import AutoModelPool
     from .huggingface_gpt2_classification import (
         GPT2ForSequenceClassificationPool,
@@ -34,7 +45,10 @@ if TYPE_CHECKING:
     from .nyuv2_modelpool import NYUv2ModelPool
     from .openclip_vision import OpenCLIPVisionModelPool
     from .PeftModelForSeq2SeqLM import PeftModelForSeq2SeqLMPool
-    from .resnet_for_image_classification import ResNetForImageClassificationPool
+    from .resnet_for_image_classification import (
+        ResNetForImageClassificationPool,
+        load_transformers_resnet,
+    )
     from .seq2seq_lm import Seq2SeqLMPool
     from .seq_classification_lm import SequenceClassificationModelPool
 

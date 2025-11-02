@@ -21,7 +21,7 @@ function finetune() {
                         method.optimizer.lr=${lr} \
                         method.lr_scheduler=null \
                         method.dataloader_kwargs.batch_size=${batch_size} \
-                    modelpool=ResNetForImageClassfication/transformers/${model}_${dataset}
+                    modelpool=ResNetForImageClassification/transformers/${model}_${dataset}
             done
         done
     done

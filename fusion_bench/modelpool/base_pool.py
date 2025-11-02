@@ -3,7 +3,7 @@ from copy import deepcopy
 from typing import Dict, Generator, List, Optional, Tuple, Union
 
 import torch
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf, UnsupportedValueType
 from torch import nn
 from torch.utils.data import Dataset
 
@@ -52,6 +52,13 @@ class BaseModelPool(
     ):
         if isinstance(models, List):
             models = {str(model_idx): model for model_idx, model in enumerate(models)}
+
+        if isinstance(models, dict):
+            try:  # try to convert to DictConfig
+                models = OmegaConf.create(models)
+            except UnsupportedValueType:
+                pass
+
         self._models = models
         self._train_datasets = train_datasets
         self._val_datasets = val_datasets
