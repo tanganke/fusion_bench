@@ -1,31 +1,73 @@
 import json
 from pathlib import Path
-from typing import Any, Union
+from typing import TYPE_CHECKING, Any, Union
+
+if TYPE_CHECKING:
+    from pyarrow.fs import FileSystem
 
 
-def save_to_json(obj, path: Union[str, Path]):
+def save_to_json(obj, path: Union[str, Path], filesystem: "FileSystem" = None):
     """
     save an object to a json file
 
     Args:
         obj (Any): the object to save
         path (Union[str, Path]): the path to save the object
+        filesystem (FileSystem, optional): PyArrow FileSystem to use for writing.
+            If None, uses local filesystem via standard Python open().
+            Can also be an s3fs.S3FileSystem or fsspec filesystem.
     """
-    with open(path, "w") as f:
-        json.dump(obj, f)
+    if filesystem is not None:
+        # Check if it's an fsspec-based filesystem (like s3fs)
+        if hasattr(filesystem, "open"):
+            # Direct fsspec/s3fs usage - more reliable for some endpoints
+            path_str = str(path)
+            json_str = json.dumps(obj)
+            with filesystem.open(path_str, "w") as f:
+                f.write(json_str)
+        else:
+            # Use PyArrow filesystem
+            path_str = str(path)
+            json_data = json.dumps(obj)
+            with filesystem.open_output_stream(path_str) as f:
+                f.write(json_data.encode("utf-8"))
+    else:
+        # Use standard Python file operations
+        with open(path, "w") as f:
+            json.dump(obj, f)
 
 
-def load_from_json(path: Union[str, Path]) -> Union[dict, list]:
+def load_from_json(
+    path: Union[str, Path], filesystem: "FileSystem" = None
+) -> Union[dict, list]:
     """load an object from a json file
 
     Args:
         path (Union[str, Path]): the path to load the object
+        filesystem (FileSystem, optional): PyArrow FileSystem to use for reading.
+            If None, uses local filesystem via standard Python open().
+            Can also be an s3fs.S3FileSystem or fsspec filesystem.
 
     Returns:
-        dict: the loaded object
+        Union[dict, list]: the loaded object
     """
-    with open(path, "r") as f:
-        return json.load(f)
+    if filesystem is not None:
+        # Check if it's an fsspec-based filesystem (like s3fs)
+        if hasattr(filesystem, "open"):
+            # Direct fsspec/s3fs usage
+            path_str = str(path)
+            with filesystem.open(path_str, "r") as f:
+                return json.load(f)
+        else:
+            # Use PyArrow filesystem
+            path_str = str(path)
+            with filesystem.open_input_stream(path_str) as f:
+                json_data = f.read().decode("utf-8")
+                return json.loads(json_data)
+    else:
+        # Use standard Python file operations
+        with open(path, "r") as f:
+            return json.load(f)
 
 
 def _is_list_of_dict(obj) -> bool:
