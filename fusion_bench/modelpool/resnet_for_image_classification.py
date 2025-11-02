@@ -408,7 +408,7 @@ class ResNetForImageClassificationPool(BaseModelPool):
 
                     model = load_transformers_resnet(
                         config_path=model_config["config_path"],
-                        pretrained=model_config.get("pretrained", False),
+                        pretrained=model_config.get("pretrained", True),
                         dataset_name=model_config.get("dataset_name", None),
                     )
                 case _:
