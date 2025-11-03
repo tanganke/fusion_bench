@@ -45,6 +45,16 @@
         - load_transformers_convnext
         - ConvNextForImageClassificationPool
 
+### DINOv2 for Image Classification
+
+::: fusion_bench.modelpool.dinov2_for_image_classification
+    options:
+        show_root_heading: false
+        heading_level: 4
+        members:
+        - load_transformers_dinov2
+        - Dinov2ForImageClassificationPool
+
 ## NLP Model Pool
 
 ### GPT-2
