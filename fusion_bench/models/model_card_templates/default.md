@@ -1,6 +1,6 @@
 ---
-base_model:
 {%- if base_model is not none %}
+base_model:
 - {{ base_model }}
 {%- endif %}
 {%- for model in models %}
