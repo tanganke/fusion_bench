@@ -12,6 +12,10 @@ _import_structure = {
         "ConvNextForImageClassificationPool",
         "load_transformers_convnext",
     ],
+    "dinov2_for_image_classification": [
+        "Dinov2ForImageClassificationPool",
+        "load_transformers_dinov2",
+    ],
     "nyuv2_modelpool": ["NYUv2ModelPool"],
     "huggingface_automodel": ["AutoModelPool"],
     "seq2seq_lm": ["Seq2SeqLMPool"],
@@ -36,6 +40,10 @@ if TYPE_CHECKING:
     from .convnext_for_image_classification import (
         ConvNextForImageClassificationPool,
         load_transformers_convnext,
+    )
+    from .dinov2_for_image_classification import (
+        Dinov2ForImageClassificationPool,
+        load_transformers_dinov2,
     )
     from .huggingface_automodel import AutoModelPool
     from .huggingface_gpt2_classification import (

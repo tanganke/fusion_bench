@@ -1,13 +1,13 @@
 """
-Hugging Face ConvNeXt image classification model pool.
+Hugging Face DINOv2 image classification model pool.
 
 This module provides a `BaseModelPool` implementation that loads and saves
-ConvNeXt models for image classification via `transformers`. It optionally
+DINOv2 models for image classification via `transformers`. It optionally
 reconfigures the classification head to match a dataset's class names and
 overrides `forward` to return logits only for simpler downstream usage.
 
-See also: `fusion_bench.modelpool.resnet_for_image_classification` for a
-parallel implementation for ResNet-based classifiers.
+See also: `fusion_bench.modelpool.convnext_for_image_classification` for a
+parallel implementation for ConvNeXt-based classifiers.
 """
 
 import os
@@ -34,14 +34,14 @@ from fusion_bench.tasks.clip_classification import get_classnames, get_num_class
 log = get_rankzero_logger(__name__)
 
 
-def load_transformers_convnext(
+def load_transformers_dinov2(
     config_path: str, pretrained: bool, dataset_name: Optional[str]
 ):
-    """Create a ConvNeXt image classification model from a config or checkpoint.
+    """Create a DINOv2 image classification model from a config or checkpoint.
 
     Args:
         config_path: A model identifier or local path understood by
-            `transformers.AutoConfig/AutoModel` (e.g., "facebook/convnext-base-224").
+            `transformers.AutoConfig/AutoModel` (e.g., "facebook/dinov2-base").
         pretrained: If True, load weights via `from_pretrained`; otherwise, build
             the model from config only.
         dataset_name: Optional dataset key used by FusionBench to derive class
@@ -49,22 +49,22 @@ def load_transformers_convnext(
             are updated and the classifier head is resized accordingly.
 
     Returns:
-        ConvNextForImageClassification: A `transformers.ConvNextForImageClassification` instance. If
+        Dinov2ForImageClassification: A `transformers.Dinov2ForImageClassification` instance. If
             `dataset_name` is set, the classifier head is adapted to the number of
             classes. The model's `config.id2label` and `config.label2id` are also
             populated.
 
     Notes:
-        The overall structure mirrors the ResNet implementation in
-        `fusion_bench.modelpool.resnet_for_image_classification`.
+        The overall structure mirrors the ConvNeXt implementation in
+        `fusion_bench.modelpool.convnext_for_image_classification`.
     """
-    from transformers import AutoConfig, ConvNextForImageClassification
+    from transformers import AutoConfig, Dinov2ForImageClassification
 
     if pretrained:
-        model = ConvNextForImageClassification.from_pretrained(config_path)
+        model = Dinov2ForImageClassification.from_pretrained(config_path)
     else:
         config = AutoConfig.from_pretrained(config_path)
-        model = ConvNextForImageClassification(config)
+        model = Dinov2ForImageClassification(config)
 
     if dataset_name is None:
         return model
@@ -76,6 +76,8 @@ def load_transformers_convnext(
     model.config.label2id = label2id
     model.num_labels = model.config.num_labels
 
+    # If the model is configured with a positive number of labels, resize the
+    # classifier to match the dataset classes; otherwise leave it as identity.
     model.classifier = (
         nn.Linear(
             model.classifier.in_features,
@@ -90,21 +92,17 @@ def load_transformers_convnext(
 
 
 @auto_register_config
-class ConvNextForImageClassificationPool(BaseModelPool):
-    """Model pool for ConvNeXt image classification models (HF Transformers).
-
-    Responsibilities:
-    - Load an `AutoImageProcessor` compatible with the configured ConvNeXt model.
-    - Load ConvNeXt models either from a pretrained checkpoint or from config.
-    - Optionally adapt the classifier head to match dataset classnames.
-    - Override `forward` to return logits for consistent interfaces within
-      FusionBench.
-
-    See `fusion_bench.modelpool.resnet_for_image_classification` for a closely
-    related ResNet-based pool with analogous behavior.
-    """
+class Dinov2ForImageClassificationPool(BaseModelPool):
+    """Model pool for DINOv2 image classification models (HF Transformers)."""
 
     def load_processor(self, *args, **kwargs):
+        """Load the paired image processor for this model pool.
+
+        Uses the configured model's identifier or config path to retrieve the
+        appropriate `transformers.AutoImageProcessor` instance. If a pretrained
+        model entry exists in the pool configuration, it is preferred to derive
+        the processor to ensure tokenization/normalization parity.
+        """
         from transformers import AutoImageProcessor
 
         if self.has_pretrained:
@@ -121,7 +119,7 @@ class ConvNextForImageClassificationPool(BaseModelPool):
 
     @override
     def load_model(self, model_name_or_config: Union[str, DictConfig], *args, **kwargs):
-        """Load a ConvNeXt model described by a name, path, or DictConfig.
+        """Load a DINOv2 model described by a name, path, or DictConfig.
 
         Accepts either a string (pretrained identifier or local path) or a
         config mapping with keys: `config_path`, optional `pretrained` (bool),
@@ -144,7 +142,7 @@ class ConvNextForImageClassificationPool(BaseModelPool):
 
                 model = AutoModelForImageClassification.from_pretrained(model_path)
             case dict() | DictConfig() as model_config:
-                model = load_transformers_convnext(
+                model = load_transformers_dinov2(
                     model_config["config_path"],
                     pretrained=model_config.get("pretrained", True),
                     dataset_name=model_config.get("dataset_name", None),
@@ -154,7 +152,8 @@ class ConvNextForImageClassificationPool(BaseModelPool):
                     f"Unsupported model_name_or_config type: {type(model_name_or_config)}"
                 )
 
-        # override forward to return logits only
+        # Override forward to return logits only, to unify the interface across
+        # FusionBench model pools and simplify downstream usage.
         original_forward = model.forward
         model.forward = lambda pixel_values, **kwargs: original_forward(
             pixel_values=pixel_values, **kwargs
@@ -177,7 +176,7 @@ class ConvNextForImageClassificationPool(BaseModelPool):
         """Save the model, processor, and an optional model card to disk.
 
         Artifacts written to `path`:
-        - The ConvNeXt model via `model.save_pretrained`.
+        - The DINOv2 model via `model.save_pretrained`.
         - The paired image processor via `AutoImageProcessor.save_pretrained`.
         - If `algorithm_config` is provided and on rank-zero, a README model card
           documenting the FusionBench configuration.
