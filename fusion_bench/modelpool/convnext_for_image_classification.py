@@ -104,7 +104,7 @@ class ConvNextForImageClassificationPool(BaseModelPool):
     related ResNet-based pool with analogous behavior.
     """
 
-    def load_processor(self):
+    def load_processor(self, *args, **kwargs):
         from transformers import AutoImageProcessor
 
         if self.has_pretrained:

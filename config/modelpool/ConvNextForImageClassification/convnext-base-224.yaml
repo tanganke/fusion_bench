@@ -5,3 +5,6 @@ models:
     config_path: facebook/convnext-base-224
     pretrained: true
     dataset_name: null
+train_datasets: null
+val_datasets: null
+test_datasets: null

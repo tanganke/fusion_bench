@@ -34,6 +34,13 @@ from torch.utils.data import random_split
 log = get_rankzero_logger(__name__)
 
 
+def _get_base_model_name(model) -> Optional[str]:
+    if hasattr(model, "config") and hasattr(model.config, "_name_or_path"):
+        return model.config._name_or_path
+    else:
+        return None
+
+
 @auto_register_config
 class ImageClassificationFineTuning(BaseAlgorithm):
     """Fine-tuning algorithm for image classification models.
@@ -107,6 +114,8 @@ class ImageClassificationFineTuning(BaseAlgorithm):
         """
         # load model and dataset
         model = modelpool.load_pretrained_or_first_model()
+        base_model_name = _get_base_model_name(model)
+
         assert isinstance(model, nn.Module), "Loaded model is not a nn.Module."
 
         assert (
@@ -135,6 +144,8 @@ class ImageClassificationFineTuning(BaseAlgorithm):
                 val_dataset, processor=modelpool.load_processor(stage="val")
             )
             val_loader = self.get_dataloader(val_dataset, stage="val")
+        else:
+            val_loader = None
 
         # configure optimizer
         optimizer = instantiate(self.optimizer, params=model.parameters())
@@ -210,6 +221,7 @@ class ImageClassificationFineTuning(BaseAlgorithm):
                 ),
                 algorithm_config=self.config,
                 description=f"Fine-tuned ResNet model on dataset {dataset_name}.",
+                base_model=base_model_name,
             )
         return model
 

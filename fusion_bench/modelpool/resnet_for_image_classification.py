@@ -433,6 +433,7 @@ class ResNetForImageClassificationPool(BaseModelPool):
         path,
         algorithm_config: Optional[DictConfig] = None,
         description: Optional[str] = None,
+        base_model: Optional[str] = None,
         *args,
         **kwargs,
     ):
@@ -480,6 +481,7 @@ class ResNetForImageClassificationPool(BaseModelPool):
                 from fusion_bench.models.hf_utils import create_default_model_card
 
                 model_card_str = create_default_model_card(
+                    base_model=base_model,
                     algorithm_config=algorithm_config,
                     description=description,
                     modelpool_config=self.config,
