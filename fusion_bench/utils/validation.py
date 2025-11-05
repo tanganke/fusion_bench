@@ -26,7 +26,7 @@ class ValidationError(ValueError):
 
     def __init__(self, message: str, field: Optional[str] = None, value: Any = None):
         """
-        Initializes the ValidationError with an informative message and optional field/value context.
+        Initialize the ValidationError with an informative message and optional field/value context.
         
         Constructs an error message by prepending the field name (if provided) and appending the actual value (if provided), stores `field` and `value` on the instance, and passes the composed message to the base ValueError initializer.
         
