@@ -184,7 +184,9 @@ class TestInfiniteDataLoader(unittest.TestCase):
 
         with self.assertRaises(RuntimeError) as cm:
             next(infinite_loader)
-        self.assertIn("Failed to reset data loader", str(cm.exception))
+        error_msg = str(cm.exception)
+        self.assertIn("Failed to retrieve data from data loader", error_msg)
+        self.assertIn("may be empty", error_msg)
 
     def test_max_retries_parameter(self):
         """Test that max_retries parameter is respected"""
