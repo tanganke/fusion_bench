@@ -256,3 +256,5 @@ If you find this benchmark useful, please consider citing our work:
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=tanganke/fusion_bench&type=Date)](https://www.star-history.com/#tanganke/fusion_bench&Date)
+
+![Alt](https://repobeats.axiom.co/api/embed/83f1f046562e4a4787bdd6ed1190856f9f30bd9f.svg "Repobeats analytics image")
