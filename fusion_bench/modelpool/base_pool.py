@@ -434,6 +434,7 @@ class BaseModelPool(
         Returns:
             bool: True if the model exists, False otherwise.
         """
-        assert self._models is not None, "Model pool is not initialized"
+        if self._models is None:
+            raise RuntimeError("Model pool is not initialized")
         validate_model_name(model_name, allow_special=True)
         return model_name in self._models
