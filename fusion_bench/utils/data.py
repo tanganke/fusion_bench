@@ -38,6 +38,7 @@ class InfiniteDataLoader:
 
         Args:
             data_loader: The DataLoader to wrap.
+            max_retries: Maximum number of retry attempts when resetting the data loader (default: 1).
 
         Raises:
             ValidationError: If data_loader is None or not a DataLoader instance.
