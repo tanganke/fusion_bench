@@ -15,7 +15,7 @@ from lightning_utilities.core.rank_zero import rank_zero_only
 from lit_learn.lit_modules import ERM_LitModule
 from omegaconf import DictConfig
 from torch import nn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 from torchmetrics.classification import Accuracy
 
 from fusion_bench import (
@@ -29,7 +29,6 @@ from fusion_bench import (
 from fusion_bench.dataset import CLIPDataset
 from fusion_bench.modelpool import ResNetForImageClassificationPool
 from fusion_bench.tasks.clip_classification import get_num_classes
-from torch.utils.data import random_split
 
 log = get_rankzero_logger(__name__)
 

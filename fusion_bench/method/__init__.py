@@ -167,6 +167,7 @@ if TYPE_CHECKING:
     from .dawe import DataAdaptiveWeightEnsemblingForCLIP
     from .depth_upscaling import DepthUpscalingAlgorithm, DepthUpscalingForLlama
     from .doge_ta import DOGE_TA_Algorithm
+    from .dop import ContinualDOPForCLIP
     from .dummy import DummyAlgorithm
     from .ensemble import (
         MaxModelPredictorAlgorithm,
@@ -215,7 +216,6 @@ if TYPE_CHECKING:
     from .model_recombination import ModelRecombinationAlgorithm
     from .model_stock import ModelStock
     from .opcm import OPCMForCLIP
-    from .dop import ContinualDOPForCLIP
     from .pruning import (
         MagnitudeDiffPruningAlgorithm,
         MagnitudePruningForLlama,
