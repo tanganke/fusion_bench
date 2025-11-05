@@ -1,5 +1,4 @@
 import unittest
-from unittest.mock import Mock, patch
 
 import torch
 from torch.utils.data import DataLoader, Dataset
