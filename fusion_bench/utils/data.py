@@ -7,6 +7,8 @@ import torch
 import torch.utils.data
 from torch.utils.data import DataLoader, Dataset
 
+from fusion_bench.utils.validation import validate_file_exists
+
 
 class InfiniteDataLoader:
     """
@@ -50,7 +52,14 @@ def load_tensor_from_file(
 
     Returns:
         torch.Tensor: The tensor loaded from the file.
+
+    Raises:
+        ValidationError: If the file doesn't exist
+        ValueError: If the file format is unsupported
     """
+    # Validate file exists
+    validate_file_exists(file_path)
+
     if file_path.endswith(".np"):
         tensor = torch.from_numpy(np.load(file_path)).detach_()
     if file_path.endswith((".pt", ".pth")):

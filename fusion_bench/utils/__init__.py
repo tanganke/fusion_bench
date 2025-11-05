@@ -93,6 +93,13 @@ _import_structure = {
         "StateDictType",
         "TorchModelType",
     ],
+    "validation": [
+        "validate_path_exists",
+        "validate_file_exists",
+        "validate_directory_exists",
+        "validate_model_name",
+        "ValidationError",
+    ],
 }
 
 if TYPE_CHECKING:
@@ -159,6 +166,13 @@ if TYPE_CHECKING:
     )
     from .timer import timeit_context
     from .type import BoolStateDictType, StateDictType, TorchModelType
+    from .validation import (
+        ValidationError,
+        validate_directory_exists,
+        validate_file_exists,
+        validate_model_name,
+        validate_path_exists,
+    )
 
 else:
     sys.modules[__name__] = LazyImporter(

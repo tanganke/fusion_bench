@@ -2,6 +2,8 @@ import json
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Union
 
+from fusion_bench.utils.validation import validate_file_exists
+
 if TYPE_CHECKING:
     from pyarrow.fs import FileSystem
 
@@ -49,6 +51,9 @@ def load_from_json(
 
     Returns:
         Union[dict, list]: the loaded object
+
+    Raises:
+        ValidationError: If the file doesn't exist (when using local filesystem)
     """
     if filesystem is not None:
         # Check if it's an fsspec-based filesystem (like s3fs)
@@ -65,6 +70,7 @@ def load_from_json(
                 return json.loads(json_data)
     else:
         # Use standard Python file operations
+        validate_file_exists(path)
         with open(path, "r") as f:
             return json.load(f)
 

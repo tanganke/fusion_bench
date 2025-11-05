@@ -1,6 +1,6 @@
 import logging
 from copy import deepcopy
-from typing import Dict, Generator, List, Optional, Tuple, Union
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
 import torch
 from omegaconf import DictConfig, OmegaConf, UnsupportedValueType
@@ -8,7 +8,12 @@ from torch import nn
 from torch.utils.data import Dataset
 
 from fusion_bench.mixins import BaseYAMLSerializable, HydraConfigMixin
-from fusion_bench.utils import instantiate, timeit_context
+from fusion_bench.utils import (
+    ValidationError,
+    instantiate,
+    timeit_context,
+    validate_model_name,
+)
 
 __all__ = ["BaseModelPool"]
 
@@ -58,6 +63,16 @@ class BaseModelPool(
                 models = OmegaConf.create(models)
             except UnsupportedValueType:
                 pass
+
+        if not models:
+            log.warning("Initialized BaseModelPool with empty models dictionary.")
+        else:
+            # Validate model names
+            for model_name in models.keys():
+                try:
+                    validate_model_name(model_name, allow_special=True)
+                except ValidationError as e:
+                    log.warning(f"Invalid model name '{model_name}': {e}")
 
         self._models = models
         self._train_datasets = train_datasets
@@ -147,7 +162,9 @@ class BaseModelPool(
         """
         return model_name.startswith("_") and model_name.endswith("_")
 
-    def get_model_config(self, model_name: str, return_copy: bool = True) -> DictConfig:
+    def get_model_config(
+        self, model_name: str, return_copy: bool = True
+    ) -> Union[DictConfig, str, Any]:
         """
         Get the configuration for the specified model.
 
@@ -155,10 +172,36 @@ class BaseModelPool(
             model_name (str): The name of the model.
 
         Returns:
-            DictConfig: The configuration for the specified model.
+            Union[DictConfig, str, Any]: The configuration for the specified model, which may be a DictConfig, string path, or other type.
+
+        Raises:
+            ValidationError: If model_name is invalid.
+            KeyError: If model_name is not found in the pool.
         """
+        # Validate model name
+        validate_model_name(model_name, allow_special=True)
+
+        # raise friendly error if model not found in the pool
+        if model_name not in self._models:
+            available_models = list(self._models.keys())
+            raise KeyError(
+                f"Model '{model_name}' not found in model pool. "
+                f"Available models: {available_models}"
+            )
+
         model_config = self._models[model_name]
+        if isinstance(model_config, nn.Module):
+            log.warning(
+                f"Model configuration for '{model_name}' is a pre-instantiated model. "
+                "Returning the model instance instead of configuration."
+            )
+
         if return_copy:
+            if isinstance(model_config, nn.Module):
+                # raise performance warning
+                log.warning(
+                    f"Furthermore, returning a copy of the pre-instantiated model '{model_name}' may be inefficient."
+                )
             model_config = deepcopy(model_config)
         return model_config
 
@@ -171,12 +214,28 @@ class BaseModelPool(
 
         Returns:
             str: The path for the specified model.
+
+        Raises:
+            ValidationError: If model_name is invalid.
+            KeyError: If model_name is not found in the pool.
+            ValueError: If model configuration is not a string path.
         """
+        # Validate model name
+        validate_model_name(model_name, allow_special=True)
+
+        if model_name not in self._models:
+            available_models = list(self._models.keys())
+            raise KeyError(
+                f"Model '{model_name}' not found in model pool. "
+                f"Available models: {available_models}"
+            )
+
         if isinstance(self._models[model_name], str):
             return self._models[model_name]
         else:
             raise ValueError(
-                "Model path is not a string. Try to override this method in derived modelpool class."
+                f"Model configuration for '{model_name}' is not a string path. "
+                "Try to override this method in derived modelpool class."
             )
 
     def load_model(
@@ -357,3 +416,25 @@ class BaseModelPool(
         """
         with timeit_context(f"Saving the state dict of model to {path}"):
             torch.save(model.state_dict(), path)
+
+    def __contains__(self, model_name: str) -> bool:
+        """
+        Check if a model with the given name exists in the model pool.
+
+        Examples:
+            >>> modelpool = BaseModelPool(models={"modelA": ..., "modelB": ...})
+            >>> "modelA" in modelpool
+            True
+            >>> "modelC" in modelpool
+            False
+
+        Args:
+            model_name (str): The name of the model to check.
+
+        Returns:
+            bool: True if the model exists, False otherwise.
+        """
+        if self._models is None:
+            raise RuntimeError("Model pool is not initialized")
+        validate_model_name(model_name, allow_special=True)
+        return model_name in self._models
