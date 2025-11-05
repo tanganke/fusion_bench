@@ -59,6 +59,15 @@ class CLIPClassificationMixin(LightningFabricMixin):
 
     @property
     def clip_processor(self):
+        """
+        Get the CLIP processor, loading it from the model pool if necessary.
+
+        Returns:
+            CLIPProcessor: The CLIP processor for image and text preprocessing.
+
+        Raises:
+            AssertionError: If the model pool is not set.
+        """
         if self._clip_processor is None:
             assert self.modelpool is not None, "Model pool is not set"
             self._clip_processor = self.modelpool.load_processor()
