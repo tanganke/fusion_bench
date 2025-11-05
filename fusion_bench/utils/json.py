@@ -41,19 +41,20 @@ def save_to_json(obj, path: Union[str, Path], filesystem: "FileSystem" = None):
 def load_from_json(
     path: Union[str, Path], filesystem: "FileSystem" = None
 ) -> Union[dict, list]:
-    """load an object from a json file
-
-    Args:
-        path (Union[str, Path]): the path to load the object
-        filesystem (FileSystem, optional): PyArrow FileSystem to use for reading.
-            If None, uses local filesystem via standard Python open().
-            Can also be an s3fs.S3FileSystem or fsspec filesystem.
-
+    """
+    Load and return a JSON object from the given path.
+    
+    Supports reading from the local filesystem, fsspec-like filesystems (have an `open` method), and PyArrow-like filesystems (provide `open_input_stream`).
+    
+    Parameters:
+        path (Union[str, Path]): Path to the JSON file.
+        filesystem (FileSystem, optional): Filesystem to use for reading. If provided and it has an `open` method, that method is used; otherwise `open_input_stream` is used. If omitted, the local filesystem is used.
+    
     Returns:
-        Union[dict, list]: the loaded object
-
+        Union[dict, list]: The parsed JSON object (a dictionary or a list).
+    
     Raises:
-        ValidationError: If the file doesn't exist (when using local filesystem)
+        ValidationError: If `filesystem` is None and the local file at `path` does not exist.
     """
     if filesystem is not None:
         # Check if it's an fsspec-based filesystem (like s3fs)

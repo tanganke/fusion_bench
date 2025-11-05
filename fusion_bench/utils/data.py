@@ -43,19 +43,20 @@ def load_tensor_from_file(
     file_path: Union[str, Path], device: Optional[Union[str, torch.device]] = None
 ) -> torch.Tensor:
     """
-    Loads a tensor from a file, which can be either a .pt, .pth or .np file.
-    If the file is not one of these formats, it will try to load it as a pickle file.
-
-    Args:
-        file_path (str): The path to the file to load.
-        device: The device to move the tensor to. By default the tensor is loaded on the CPU.
-
+    Load a torch.Tensor from disk supporting .np, .pt, .pth, or pickle-serialized files.
+    
+    Supports NumPy .np files (converted to a torch.Tensor), PyTorch .pt/.pth files, and other pickle-backed tensor files. If `device` is provided, the loaded tensor is moved to that device.
+    
+    Parameters:
+        file_path (str | Path): Path to the file to load.
+        device (str | torch.device, optional): Device to move the tensor to.
+    
     Returns:
-        torch.Tensor: The tensor loaded from the file.
-
+        torch.Tensor: The loaded tensor.
+    
     Raises:
-        ValidationError: If the file doesn't exist
-        ValueError: If the file format is unsupported
+        ValidationError: If the file does not exist.
+        ValueError: If the file format is unsupported or loading fails.
     """
     # Validate file exists
     validate_file_exists(file_path)

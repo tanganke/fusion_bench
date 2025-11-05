@@ -25,6 +25,16 @@ class ValidationError(ValueError):
     """Custom exception for validation errors with detailed context."""
 
     def __init__(self, message: str, field: Optional[str] = None, value: Any = None):
+        """
+        Initializes the ValidationError with an informative message and optional field/value context.
+        
+        Constructs an error message by prepending the field name (if provided) and appending the actual value (if provided), stores `field` and `value` on the instance, and passes the composed message to the base ValueError initializer.
+        
+        Parameters:
+            message (str): The primary error message describing the validation failure.
+            field (Optional[str]): The name of the field related to the validation error; included in the composed message when provided.
+            value (Any): The actual value that failed validation; appended to the composed message when provided.
+        """
         self.field = field
         self.value = value
         detailed_message = message
@@ -43,24 +53,25 @@ def validate_path_exists(
     must_be_dir: bool = False,
 ) -> Path:
     """
-    Validate that a path exists and optionally check its type.
-
-    Args:
-        path: Path to validate.
-        name: Name of the path for error messages.
-        create_if_missing: If True and path doesn't exist, create it as a directory.
-        must_be_file: If True, ensure path points to a file.
-        must_be_dir: If True, ensure path points to a directory.
-
+    Validate that a filesystem path exists and optionally enforce or create its type.
+    
+    The input is expanded and resolved to an absolute pathlib.Path. If the path is missing and
+    create_if_missing is True, a directory will be created. The function can require the path
+    to be a file or a directory and will raise a ValidationError on violations.
+    
+    Parameters:
+        path (str | Path): Path to validate.
+        name (str): Human-readable name used in error messages.
+        create_if_missing (bool): Create the path as a directory when it does not exist.
+        must_be_file (bool): Require that the resolved path is a file.
+        must_be_dir (bool): Require that the resolved path is a directory.
+    
     Returns:
-        Path object of the validated path.
-
+        pathlib.Path: The resolved Path object for the validated path.
+    
     Raises:
-        ValidationError: If path validation fails.
-
-    Examples:
-        >>> validate_path_exists("./config", name="config_dir", must_be_dir=True)
-        PosixPath('config')
+        ValidationError: If `path` is None, does not exist (and creation is not requested),
+                         or does not match the required file/directory type.
     """
     if path is None:
         raise ValidationError(f"{name} cannot be None", field=name, value=path)
@@ -118,18 +129,18 @@ def validate_directory_exists(
     path: Union[str, Path], name: str = "directory", create_if_missing: bool = False
 ) -> Path:
     """
-    Validate that a directory exists.
-
-    Args:
-        path: Directory path to validate.
-        name: Name of the directory for error messages.
-        create_if_missing: If True, create directory if it doesn't exist.
-
+    Ensure the given path exists and is a directory.
+    
+    Parameters:
+        path (Union[str, Path]): Path to validate.
+        name (str): Label used in error messages.
+        create_if_missing (bool): If True, create the directory (including parents) when it is missing.
+    
     Returns:
-        Path object of the validated directory.
-
+        Path: The resolved Path object for the validated directory.
+    
     Raises:
-        ValidationError: If directory doesn't exist (and not creating) or is not a directory.
+        ValidationError: If `path` is None, the path does not exist (and `create_if_missing` is False), or the path exists but is not a directory.
     """
     return validate_path_exists(
         path, name=name, must_be_dir=True, create_if_missing=create_if_missing

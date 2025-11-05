@@ -55,6 +55,18 @@ class BaseModelPool(
         test_datasets: Optional[DictConfig] = None,
         **kwargs,
     ):
+        """
+        Initialize the model pool with model entries and optional dataset configurations.
+        
+        Accepts `models` as a DictConfig, a dict mapping names to model configs/instances, or a list of nn.Modules (list entries are converted to a dict with string indices). If a plain dict is provided, an attempt is made to convert it to a DictConfig; conversion failures are ignored. Model names are validated (special names that start and end with '_' are allowed); invalid names emit warnings. Stores the provided train/val/test dataset configurations on the instance and delegates remaining keyword arguments to the superclass initializer.
+        
+        Parameters:
+            models: Mapping, DictConfig, or list of models to populate the pool. List inputs are converted to a dict keyed by string indices; dict inputs may be converted to a DictConfig.
+            train_datasets: Optional DictConfig of training dataset specifications; stored on the instance as _train_datasets.
+            val_datasets: Optional DictConfig of validation dataset specifications; stored on the instance as _val_datasets.
+            test_datasets: Optional DictConfig of testing dataset specifications; stored on the instance as _test_datasets.
+            **kwargs: Additional keyword arguments forwarded to the superclass initializer.
+        """
         if isinstance(models, List):
             models = {str(model_idx): model for model_idx, model in enumerate(models)}
 
@@ -152,13 +164,13 @@ class BaseModelPool(
     @staticmethod
     def is_special_model(model_name: str) -> bool:
         """
-        Determine if a model is special based on its name.
-
-        Args:
-            model_name (str): The name of the model.
-
+        Check whether a model name denotes a special model (enclosed in leading and trailing underscores).
+        
+        Parameters:
+            model_name (str): Name to evaluate; considered special if it begins and ends with an underscore.
+        
         Returns:
-            bool: True if the model name indicates a special model, False otherwise.
+            `True` if `model_name` starts and ends with `_`, `False` otherwise.
         """
         return model_name.startswith("_") and model_name.endswith("_")
 
@@ -166,17 +178,20 @@ class BaseModelPool(
         self, model_name: str, return_copy: bool = True
     ) -> Union[DictConfig, str, Any]:
         """
-        Get the configuration for the specified model.
-
-        Args:
-            model_name (str): The name of the model.
-
+        Retrieve the stored configuration or instance associated with the given model name.
+        
+        If `return_copy` is True, a deep copy of the stored value is returned. If the stored value is a pre-instantiated model instance, that instance (or its copy when requested) is returned rather than a configuration object.
+        
+        Parameters:
+            model_name (str): Name of the model in the pool. Special model names (wrapped with leading and trailing underscores) are allowed.
+            return_copy (bool): If True, return a deep copy of the stored configuration or instance.
+        
         Returns:
-            Union[DictConfig, str, Any]: The configuration for the specified model, which may be a DictConfig, string path, or other type.
-
+            Union[DictConfig, str, Any]: The stored model configuration, a string path, a pre-instantiated model instance, or any other value previously stored for that model name.
+        
         Raises:
-            ValidationError: If model_name is invalid.
-            KeyError: If model_name is not found in the pool.
+            ValidationError: If `model_name` is invalid.
+            KeyError: If `model_name` is not present in the model pool.
         """
         # Validate model name
         validate_model_name(model_name, allow_special=True)
@@ -207,18 +222,14 @@ class BaseModelPool(
 
     def get_model_path(self, model_name: str) -> str:
         """
-        Get the path for the specified model.
-
-        Args:
-            model_name (str): The name of the model.
-
+        Return the configured filesystem or resource path for the specified model name.
+        
         Returns:
-            str: The path for the specified model.
-
+            str: The model path.
+        
         Raises:
-            ValidationError: If model_name is invalid.
-            KeyError: If model_name is not found in the pool.
-            ValueError: If model configuration is not a string path.
+            KeyError: If `model_name` is not present in the pool.
+            ValueError: If the stored model configuration for `model_name` is not a string path.
         """
         # Validate model name
         validate_model_name(model_name, allow_special=True)
@@ -242,17 +253,13 @@ class BaseModelPool(
         self, model_name_or_config: Union[str, DictConfig], *args, **kwargs
     ) -> nn.Module:
         """
-        Load a model from the pool based on the provided configuration.
-
-        Args:
-            model_name_or_config (Union[str, DictConfig]): The model name or configuration.
-                - If str: should be a key in self._models
-                - If DictConfig: should be a configuration dict for instantiation
-            *args: Additional positional arguments passed to model instantiation.
-            **kwargs: Additional keyword arguments passed to model instantiation.
-
+        Load and return a model by name from the pool or instantiate one from a configuration.
+        
+        Parameters:
+            model_name_or_config (Union[str, DictConfig]): If a string, it must be a key in the pool and the corresponding entry will be loaded; if a dict or `DictConfig`, it will be instantiated as a model. Additional `*args` and `**kwargs` are forwarded to the instantiation routine.
+        
         Returns:
-            nn.Module: The instantiated or retrieved model.
+            nn.Module: The loaded or newly instantiated model.
         """
         log.debug(f"Loading model: {model_name_or_config}", stacklevel=2)
 
@@ -408,11 +415,11 @@ class BaseModelPool(
 
     def save_model(self, model: nn.Module, path: str, *args, **kwargs):
         """
-        Save the state dictionary of the model to the specified path.
-
-        Args:
-            model (nn.Module): The model whose state dictionary is to be saved.
-            path (str): The path where the state dictionary will be saved.
+        Save a model's state dictionary to a file.
+        
+        Parameters:
+            model (nn.Module): Model whose state dictionary will be written.
+            path (str): File path where the state dictionary will be saved; any existing file at this path will be overwritten.
         """
         with timeit_context(f"Saving the state dict of model to {path}"):
             torch.save(model.state_dict(), path)
