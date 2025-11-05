@@ -58,7 +58,7 @@ class BaseModelPool(
         """
         Initialize the model pool with model entries and optional dataset configurations.
         
-        Accepts `models` as a DictConfig, a dict mapping names to model configs/instances, or a list of nn.Modules (list entries are converted to a dict with string indices). If a plain dict is provided, an attempt is made to convert it to a DictConfig; conversion failures are ignored. Model names are validated (special names that start and end with '_' are allowed); invalid names emit warnings. Stores the provided train/val/test dataset configurations on the instance and delegates remaining keyword arguments to the superclass initializer.
+        Accepts `models` as a DictConfig, a dict mapping names to model configs or instances, or a list of nn.Modules. If a list is provided, its entries are converted to a dict with string indices as keys. If a plain dict is provided, an attempt is made to convert it to a DictConfig; conversion failures are ignored. Model names are validated (special names that start and end with '_' are allowed); invalid names emit warnings. The provided train, validation, and test dataset configurations are stored on the instance. Any remaining keyword arguments are delegated to the superclass initializer.
         
         Parameters:
             models: Mapping, DictConfig, or list of models to populate the pool. List inputs are converted to a dict keyed by string indices; dict inputs may be converted to a DictConfig.
