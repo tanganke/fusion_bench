@@ -1,7 +1,7 @@
 import functools
 import logging
 import os
-from typing import TYPE_CHECKING, Any, List, Optional, TypeVar
+from typing import TYPE_CHECKING, Any, List, Mapping, Optional, TypeVar
 
 import lightning as L
 import torch
@@ -96,12 +96,24 @@ class LightningFabricMixin:
 
     @property
     def fabric(self):
+        """
+        Get the Lightning Fabric instance, initializing it if necessary.
+
+        Returns:
+            L.Fabric: The Lightning Fabric instance for distributed computing.
+        """
         if self._fabric_instance is None:
             self.setup_lightning_fabric(getattr(self, "config", DictConfig({})))
         return self._fabric_instance
 
     @fabric.setter
     def fabric(self, instance: L.Fabric):
+        """
+        Set the Lightning Fabric instance.
+
+        Args:
+            instance: The Lightning Fabric instance to use.
+        """
         self._fabric_instance = instance
 
     @property
@@ -172,6 +184,15 @@ class LightningFabricMixin:
     def tensorboard_summarywriter(
         self,
     ) -> "lightning.fabric.loggers.tensorboard.SummaryWriter":
+        """
+        Get the TensorBoard SummaryWriter for detailed logging.
+
+        Returns:
+            SummaryWriter: The TensorBoard SummaryWriter instance.
+
+        Raises:
+            AttributeError: If the logger is not a TensorBoardLogger.
+        """
         if isinstance(self.fabric.logger, TensorBoardLogger):
             return self.fabric.logger.experiment
         else:
@@ -179,6 +200,12 @@ class LightningFabricMixin:
 
     @property
     def is_debug_mode(self):
+        """
+        Check if the program is running in debug mode (fast_dev_run).
+
+        Returns:
+            bool: True if fast_dev_run is enabled, False otherwise.
+        """
         if hasattr(self, "config") and self.config.get("fast_dev_run", False):
             return True
         elif hasattr(self, "_program") and self._program.config.get(
@@ -190,13 +217,22 @@ class LightningFabricMixin:
 
     def log(self, name: str, value: Any, step: Optional[int] = None):
         """
-        Logs the metric to the fabric's logger.
+        Logs a single metric to the fabric's logger.
+
+        Args:
+            name: The name of the metric to log.
+            value: The value of the metric.
+            step: Optional step number for the metric.
         """
         self.fabric.log(name, value, step=step)
 
-    def log_dict(self, metrics: dict, step: Optional[int] = None):
+    def log_dict(self, metrics: Mapping[str, Any], step: Optional[int] = None):
         """
-        Logs the metrics to the fabric's logger.
+        Logs multiple metrics to the fabric's logger.
+
+        Args:
+            metrics: Dictionary of metric names and values.
+            step: Optional step number for the metrics.
         """
         self.fabric.log_dict(metrics, step=step)
 
@@ -207,7 +243,12 @@ class LightningFabricMixin:
         name_template: str = "train/lr_group_{0}",
     ):
         """
-        Logs the learning rate of the optimizer to the fabric's logger.
+        Logs the learning rate of each parameter group in the optimizer.
+
+        Args:
+            optimizer: The optimizer whose learning rates should be logged.
+            step: Optional step number for the log entry.
+            name_template: Template string for the log name. Use {0} as placeholder for group index.
         """
         for i, param_group in enumerate(optimizer.param_groups):
             self.fabric.log(name_template.format(i), param_group["lr"], step=step)
