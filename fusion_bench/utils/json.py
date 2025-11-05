@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Union
 
-from fusion_bench.utils.validation import validate_file_exists, validate_path_exists
+from fusion_bench.utils.validation import validate_file_exists
 
 if TYPE_CHECKING:
     from pyarrow.fs import FileSystem
