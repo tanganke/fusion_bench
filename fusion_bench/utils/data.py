@@ -75,32 +75,31 @@ class InfiniteDataLoader:
         Raises:
             RuntimeError: If the data loader consistently fails to produce data.
         """
+        last_exception = None
         for attempt in range(self.max_retries):
             try:
                 data = next(self._data_iter)
                 return data
             except StopIteration:
-                # Dataset exhausted, reset to beginning
+                # Dataset exhausted or dataloader is empty, reset to beginning
                 self._iteration_count += 1
                 try:
                     self._data_iter = iter(self.data_loader)
                     data = next(self._data_iter)
                     return data
                 except Exception as e:
-                    if attempt == self.max_retries - 1:
-                        raise RuntimeError(
-                            f"Failed to reset data loader after {self.max_retries} attempts. "
-                            f"Last error: {e}"
-                        ) from e
+                    last_exception = e
+                    continue
             except Exception as e:
                 # Handle other potential errors from the data loader
                 raise RuntimeError(
                     f"Error retrieving data from data loader: {e}"
                 ) from e
-
-        # Should never reach here, but just in case
-        raise RuntimeError("Unexpected error in InfiniteDataLoader.__next__")
-
+        # If we get here, all attempts failed
+        raise RuntimeError(
+            f"Failed to retrieve data from data loader after {self.max_retries} attempts. "
+            f"Last error: {last_exception}"
+        ) from last_exception
     def reset(self):
         """Manually reset the iterator to the beginning of the dataset."""
         self._data_iter = iter(self.data_loader)
