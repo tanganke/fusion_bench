@@ -1,6 +1,5 @@
 import unittest
 
-import torch
 from torch.utils.data import DataLoader, Dataset
 
 from fusion_bench.utils.data import InfiniteDataLoader
