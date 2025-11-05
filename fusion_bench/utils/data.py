@@ -102,7 +102,7 @@ class InfiniteDataLoader:
             f"Failed to retrieve data from data loader after {self.max_retries} attempts. "
             f"Last error: [{type(last_exception).__name__}]{last_exception}. "
             + (
-                f"The data loader may be empty."
+                f"The data loader appears to be empty."
                 if isinstance(last_exception, StopIteration)
                 else ""
             )
