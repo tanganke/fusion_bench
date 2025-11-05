@@ -94,13 +94,20 @@ class InfiniteDataLoader:
             except Exception as e:
                 # Handle other potential errors from the data loader
                 raise RuntimeError(
-                    f"Error retrieving data from data loader: {e}"
+                    f"Error retrieving data from data loader: [{type(e).__name__}]{e}"
                 ) from e
+
         # If we get here, all attempts failed
         raise RuntimeError(
             f"Failed to retrieve data from data loader after {self.max_retries} attempts. "
-            f"Last error: {last_exception}"
+            f"Last error: [{type(last_exception).__name__}]{last_exception}. "
+            + (
+                f"The data loader may be empty."
+                if isinstance(last_exception, StopIteration)
+                else ""
+            )
         ) from last_exception
+
     def reset(self):
         """Manually reset the iterator to the beginning of the dataset."""
         self._data_iter = iter(self.data_loader)
