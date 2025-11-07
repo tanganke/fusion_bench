@@ -48,13 +48,6 @@ class InfiniteDataLoader:
                 "data_loader cannot be None", field="data_loader", value=data_loader
             )
 
-        if not isinstance(data_loader, DataLoader):
-            raise ValidationError(
-                f"data_loader must be a DataLoader instance, got {type(data_loader).__name__}",
-                field="data_loader",
-                value=type(data_loader).__name__,
-            )
-
         self.data_loader = data_loader
         self.max_retries = max_retries
         self._data_iter = iter(data_loader)
