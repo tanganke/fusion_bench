@@ -156,7 +156,8 @@ class CLIPClassificationMixin(LightningFabricMixin):
         self.logit_scale_exp = self.fabric.to_device(self.logit_scale_exp)
 
         @cache_with_joblib()
-        def construct_classification_head(task: str):
+        def construct_classification_head(task: str, model_name: str):
+            log.info(f"Constructing zero-shot classification head for task: {task} using model: {model_name}")
             nonlocal clip_classifier
 
             classnames, templates = get_classnames_and_templates(task)
@@ -172,7 +173,18 @@ class CLIPClassificationMixin(LightningFabricMixin):
         ):
             zeroshot_weights = None
             if self.fabric.is_global_zero:
-                zeroshot_weights = construct_classification_head(task)
+                if hasattr(clip_model, "config") and hasattr(
+                    clip_model.config, "_name_or_path"
+                ):
+                    model_name = clip_model.config._name_or_path
+                else:
+                    model_name = "unknown_model"
+                    log.warning(
+                        "CLIP model config does not have `_name_or_path` attribute. Using 'unknown_model' as model name."
+                    )
+                zeroshot_weights = construct_classification_head(
+                    task, model_name=model_name
+                )
 
             self.fabric.barrier()
             self.zeroshot_weights[task] = self.fabric.broadcast(zeroshot_weights, src=0)
