@@ -136,7 +136,7 @@ class CLIPClassificationMixin(LightningFabricMixin):
         """
         # make sure the task names are equal across all processes
         _task_names = self.fabric.broadcast(task_names, src=0)
-        if task_names != _task_names:
+        if not self.fabric.is_global_zero and task_names != _task_names:
             raise ValueError("The `task_names` must be the same across all processes.")
 
         self.whether_setup_zero_shot_classification_head = True
