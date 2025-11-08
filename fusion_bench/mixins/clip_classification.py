@@ -134,6 +134,11 @@ class CLIPClassificationMixin(LightningFabricMixin):
             clip_model (Optional[CLIPModel]): The CLIP model to use. If not provided, a pretrained model is loaded from the model pool.
             task_names (Optional[List[str]]): A list of task names to set up the classification head for. If not provided, all models in the model pool will be used.
         """
+        # make sure the task names are equal across all processes
+        _task_names = self.fabric.broadcast(task_names, src=0)
+        if task_names != _task_names:
+            raise ValueError("The `task_names` must be the same across all processes.")
+
         self.whether_setup_zero_shot_classification_head = True
         # load clip model if not provided
         if clip_model is None:
@@ -157,7 +162,9 @@ class CLIPClassificationMixin(LightningFabricMixin):
 
         @cache_with_joblib()
         def construct_classification_head(task: str, model_name: str):
-            log.info(f"Constructing zero-shot classification head for task: {task} using model: {model_name}")
+            log.info(
+                f"Constructing zero-shot classification head for task: {task} using model: {model_name}"
+            )
             nonlocal clip_classifier
 
             classnames, templates = get_classnames_and_templates(task)
