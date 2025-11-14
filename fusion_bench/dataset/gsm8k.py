@@ -13,8 +13,12 @@ def load_gsm8k_question_label_data(
 
     An example in the dataset:
 
-    {'question': 'Natalia sold clips to 48 of her friends in April, and then she sold half as many clips in May. How many clips did Natalia sell altogether in April and May?',
-     'answer': 'Natalia sold 48/2 = <<48/2=24>>24 clips in May.\nNatalia sold 48+24 = <<48+24=72>>72 clips altogether in April and May.\n#### 72'}
+    ```python
+    {
+        'question': 'Natalia sold clips to 48 of her friends in April, and then she sold half as many clips in May. How many clips did Natalia sell altogether in April and May?',
+        'answer': 'Natalia sold 48/2 = <<48/2=24>>24 clips in May.\nNatalia sold 48+24 = <<48+24=72>>72 clips altogether in April and May.\n#### 72'
+    }
+    ```
 
     Args:
         dataset_name (Literal["train", "test", "train_socratic", "test_socratic"]): The name of the dataset to load.
