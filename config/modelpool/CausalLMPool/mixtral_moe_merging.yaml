@@ -1,0 +1,10 @@
+_target_: fusion_bench.modelpool.CausalLMPool
+models:
+  _pretrained_: path_to_your_pretrained_model
+  expert_1: path_to_your_expert_model_1
+  expert_2: path_to_your_expert_model_2
+  expert_3: path_to_your_expert_model_3
+  expert_4: path_to_your_expert_model_4
+tokenizer: ${.models._pretrained_}
+model_kwargs:
+  torch_dtype: bfloat16

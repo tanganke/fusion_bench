@@ -1,0 +1,69 @@
+defaults:
+  - Seq2SeqLMPool@: _template
+  - /model/roberta@models:
+      - roberta_base
+      - roberta_glue-cola
+      - roberta_glue-mnli
+      - roberta_glue-mrpc
+      - roberta_glue-qnli
+      - roberta_glue-qqp
+      - roberta_glue-rte
+      - roberta_glue-sst2
+      - roberta_glue-stsb
+# _target_: fusion_bench.modelpool.SequenceClassificationModelPool
+# _recursive_: false
+
+_dataset_loader: fusion_bench.tasks.flan_t5_text_generation.glue_load_dataset.load_glue_dataset
+test_datasets:
+  glue-cola:
+    _target_: ${..._dataset_loader}
+    _recursive_: false
+    name: cola
+    tokenizer: ${...tokenizer}
+    split: validation
+  glue-mnli:
+    _target_: ${..._dataset_loader}
+    _recursive_: false
+    name: mnli
+    tokenizer: ${...tokenizer}
+    split: validation_matched
+  glue-mrpc:
+    _target_: ${..._dataset_loader}
+    _recursive_: false
+    name: mrpc
+    tokenizer: ${...tokenizer}
+    split: validation
+  glue-qnli:
+    _target_: ${..._dataset_loader}
+    _recursive_: false
+    name: qnli
+    tokenizer: ${...tokenizer}
+    split: validation
+  glue-qqp:
+    _target_: ${..._dataset_loader}
+    _recursive_: false
+    name: qqp
+    tokenizer: ${...tokenizer}
+    split: validation
+  glue-rte:
+    _target_: ${..._dataset_loader}
+    _recursive_: false
+    name: rte
+    tokenizer: ${...tokenizer}
+    split: validation
+  glue-sst2:
+    _target_: ${..._dataset_loader}
+    _recursive_: false
+    name: sst2
+    tokenizer: ${...tokenizer}
+    split: validation
+  glue-stsb:
+    _target_: ${..._dataset_loader}
+    _recursive_: false
+    name: stsb
+    tokenizer: ${...tokenizer}
+    split: validation
+
+tokenizer:
+  _target_: transformers.AutoTokenizer.from_pretrained
+  pretrained_model_name_or_path: roberta-base

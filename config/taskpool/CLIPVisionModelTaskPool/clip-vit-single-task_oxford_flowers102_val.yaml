@@ -1,0 +1,3 @@
+defaults:
+  - CLIPVisionModelTaskPool@: _template
+  - /dataset/image_classification/val@test_datasets: oxford_flowers102

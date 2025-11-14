@@ -1,0 +1,7 @@
+search_qa:
+  _target_: datasets.load_dataset
+  _args_:
+    - search_qa
+    - train_test_val
+  trust_remote_code: true
+  split: test
