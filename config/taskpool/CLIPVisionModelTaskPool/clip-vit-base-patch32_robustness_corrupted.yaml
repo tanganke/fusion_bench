@@ -1,6 +1,6 @@
 type: clip_vit_classification
 name: clip-vit-robustness_clean
-# corrption can be one of:
+# corruption can be one of:
 # contrast, gaussian_noise, impulse_noise, jpeg_compression, motion_blur, pixelate, spatter
 corruption: ${corruption}
 dataset_type: huggingface_image_classification

@@ -20,6 +20,18 @@ from fusion_bench.scripts.cli import _get_default_config_path
 
 
 def escape_overrides(value: str) -> str:
+    """
+    Escapes special characters in Hydra command-line override values.
+
+    Adds quotes around values containing spaces and escapes equals signs
+    to prevent them from being interpreted as key-value separators.
+
+    Args:
+        value (str): The override value to escape.
+
+    Returns:
+        str: The escaped value ready for use in command-line overrides.
+    """
     if " " in value and not (value.startswith('"') or value.startswith("'")):
         return f"'{value}'"
     if "=" in value:
