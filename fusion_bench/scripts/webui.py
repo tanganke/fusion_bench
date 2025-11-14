@@ -1,5 +1,5 @@
 """
-TODO: Per-session state management (use AppState)
+Web UI for FusionBench Command Generator with per-session state management.
 """
 
 import argparse
@@ -13,28 +13,37 @@ import hydra
 import yaml
 from colorama import Fore, Style  # For cross-platform color support
 from hydra import compose, initialize_config_dir
+from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
 from fusion_bench.scripts.cli import _get_default_config_path
 
 
+def escape_overrides(value: str) -> str:
+    if " " in value and not (value.startswith('"') or value.startswith("'")):
+        return f"'{value}'"
+    if "=" in value:
+        return value.replace("=", "\\=")
+    return value
+
+
 class ConfigGroupNode:
     name: str
     path: Path
-    parent: Optional["ConfigGroupNode"] = None
+    parent: Optional["ConfigGroupNode"]
     children: List["ConfigGroupNode"]
     configs: List[str]
 
-    def __init__(self, path: str | Path):
+    def __init__(self, path: str | Path, parent: Optional["ConfigGroupNode"] = None):
         self.path = Path(path)
         assert self.path.is_dir()
         self.name = self.path.stem
+        self.parent = parent
         self.children = []
         self.configs = []
         for child in self.path.iterdir():
             if child.is_dir():
-                child_node = ConfigGroupNode(child)
-                child_node.parent = self
+                child_node = ConfigGroupNode(child, parent=self)
                 self.children.append(child_node)
             elif child.is_file() and child.suffix == ".yaml":
                 self.configs.append(child.stem)
@@ -133,8 +142,12 @@ class AppState:
             self.config = ""
         else:
             self.config = compose(
-                config_name=self.config_name, overrides=self.overrides
+                config_name=self.config_name,
+                overrides=self.overrides,
+                return_hydra_config=True,
             )
+            HydraConfig().set_config(self.config)
+            del self.config.hydra
         return self
 
     def generate_command(self):
@@ -163,7 +176,7 @@ class AppState:
     def update_override(self, key: str, value):
         self.overrides = [ov for ov in self.overrides if not ov.startswith(f"{key}=")]
         if value:
-            self.overrides.append(f"{key}={value}")
+            self.overrides.append(f"{key}={escape_overrides(value)}")
         return self.update_config()
 
 
@@ -177,8 +190,8 @@ class App:
 
         self.group_tree = group_tree
 
-        if "example_config" in group_tree.configs:
-            self.init_config_name = "example_config"
+        if "fabric_model_fusion" in group_tree.configs:
+            self.init_config_name = "fabric_model_fusion"
         else:
             self.init_config_name = group_tree.configs[0]
 
@@ -212,16 +225,22 @@ class App:
             gr.Markdown("# FusionBench Command Generator")
 
             # 1. Choose a root config file
-            root_configs = gr.Dropdown(
-                choices=self.group_tree.configs,
-                value=self.config_name,
-                label="Root Config",
-            )
+            with gr.Row(equal_height=True):
+                root_configs = gr.Dropdown(
+                    choices=self.group_tree.configs,
+                    value=self.config_name,
+                    label="Root Config",
+                    scale=4,
+                )
+                reset_button = gr.Button("Reset", scale=1)
 
             with gr.Row():
                 with gr.Column(scale=2):
                     command_output = gr.Code(
-                        language="shell", label="Generated Command"
+                        value=self.app_state.generate_command(),
+                        language="shell",
+                        label="Generated Command",
+                        interactive=False,
                     )
 
                     @gr.render(inputs=[root_configs, command_output])
@@ -352,6 +371,16 @@ class App:
                 outputs=[config_output, command_output],
             )
 
+            def reset_app(config_name):
+                # Reset overrides and update config
+                self.app_state.overrides = []
+                return self.app_state.update_config(config_name).config_str_and_command
+
+            reset_button.click(
+                reset_app,
+                inputs=[root_configs],
+                outputs=[config_output, command_output],
+            )
         return app
 
 
