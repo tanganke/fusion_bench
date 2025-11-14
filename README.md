@@ -276,11 +276,24 @@ Click on [<kbd>Use this template</kbd>](https://github.com/fusion-bench/fusion-b
 
 </div>
 
-### FusionBench Command Generator WebUI (for v0.1.x)
+### FusionBench Command Generator WebUI
 
-FusionBench Command Generator is a user-friendly web interface for generating FusionBench commands based on configuration files.
-It provides an interactive way to select and customize FusionBench configurations, making it easier to run experiments with different settings.
-[Read more here](https://tanganke.github.io/fusion_bench/cli/fusion_bench_webui/).
+> [!NOTE]
+> Requires `gradio` package. Install with `pip install gradio`.
+
+For users who prefer a graphical interface, FusionBench provides an interactive web UI for generating commands:
+
+```bash
+fusion_bench_webui
+```
+
+This launches a browser-based interface where you can:
+
+- Select root configurations and components through dropdowns
+- Adjust hyperparameters interactively
+- View real-time YAML configuration updates
+
+The WebUI is particularly useful for exploring available configurations, experimenting with different parameter combinations, and learning the FusionBench configuration structure. [Learn more about the WebUI](https://tanganke.github.io/fusion_bench/cli/fusion_bench_webui/).
 
 ![FusionBench Command Generator Web Interface](docs/cli/images/fusion_bench_webui.png)
 
