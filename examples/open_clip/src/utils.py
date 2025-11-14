@@ -67,7 +67,9 @@ def num_devices(devices: Union[int, List[int], str]) -> int:
     elif isinstance(devices, list):
         return len(devices)
     else:
-        raise TypeError(f"devices must be a single int or a list of ints, but got {type(devices)}")
+        raise TypeError(
+            f"devices must be a single int or a list of ints, but got {type(devices)}"
+        )
 
 
 def num_parameters(model: nn.Module) -> int:
@@ -112,7 +114,10 @@ def cosine_lr(optimizer, base_lrs, warmup_length, steps):
 def accuracy(output, target, topk=(1,)):
     pred = output.topk(max(topk), 1, True, True)[1].t()
     correct = pred.eq(target.view(1, -1).expand_as(pred))
-    return [float(correct[:k].reshape(-1).float().sum(0, keepdim=True).cpu().numpy()) for k in topk]
+    return [
+        float(correct[:k].reshape(-1).float().sum(0, keepdim=True).cpu().numpy())
+        for k in topk
+    ]
 
 
 def torch_load_old(save_path, device=None):

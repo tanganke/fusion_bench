@@ -40,6 +40,21 @@ def escape_overrides(value: str) -> str:
 
 
 class ConfigGroupNode:
+    """
+    Represents a node in the configuration directory tree.
+
+    This class recursively builds a tree structure representing the Hydra
+    configuration directory hierarchy, including subdirectories (child groups)
+    and YAML configuration files.
+
+    Attributes:
+        name (str): Name of the configuration group (directory name).
+        path (Path): Full path to the directory.
+        parent (Optional[ConfigGroupNode]): Parent node in the tree.
+        children (List[ConfigGroupNode]): Child directory nodes.
+        configs (List[str]): List of YAML config file names (without extension).
+    """
+
     name: str
     path: Path
     parent: Optional["ConfigGroupNode"]
@@ -47,6 +62,13 @@ class ConfigGroupNode:
     configs: List[str]
 
     def __init__(self, path: str | Path, parent: Optional["ConfigGroupNode"] = None):
+        """
+        Initialize a ConfigGroupNode.
+
+        Args:
+            path: Path to the configuration directory.
+            parent: Parent node in the tree (None for root).
+        """
         self.path = Path(path)
         assert self.path.is_dir()
         self.name = self.path.stem
@@ -62,11 +84,23 @@ class ConfigGroupNode:
 
     def __repr__(self):
         """
-        Return string of the tree structure
+        Return a colored string representation of the tree structure.
+
+        Returns:
+            str: Tree structure with colored group names.
         """
         return f"{Fore.BLUE}{self.name}{Style.RESET_ALL}\n" + self._repr_indented()
 
     def _repr_indented(self, prefix=""):
+        """
+        Generate indented tree representation recursively.
+
+        Args:
+            prefix: String prefix for indentation.
+
+        Returns:
+            str: Indented tree structure.
+        """
         result = ""
 
         items = self.configs + self.children
@@ -84,9 +118,30 @@ class ConfigGroupNode:
         return result
 
     def has_child_group(self, name: str) -> bool:
+        """
+        Check if this node has a child group with the given name.
+
+        Args:
+            name: Name of the child group to check.
+
+        Returns:
+            bool: True if child group exists, False otherwise.
+        """
         return any(child.name == name for child in self.children)
 
     def __getitem__(self, key: str) -> Union["ConfigGroupNode", str]:
+        """
+        Get a child group or config by name.
+
+        Args:
+            key: Name of the child group or config file.
+
+        Returns:
+            Union[ConfigGroupNode, str]: Child node or config file name.
+
+        Raises:
+            KeyError: If no child group or config with that name exists.
+        """
         for child in self.children:
             if child.name == key:
                 return child
@@ -97,12 +152,28 @@ class ConfigGroupNode:
 
     @functools.cached_property
     def prefix(self) -> str:
+        """
+        Get the dot-separated prefix path from root to this node.
+
+        Returns:
+            str: Prefix path (e.g., "method.modelpool.").
+        """
         if self.parent is None:
             return ""
         return self.parent.prefix + self.name + "."
 
 
 def priority_iterable(iter, priority_keys):
+    """
+    Iterate over items with priority keys first, then remaining items.
+
+    Args:
+        iter: Iterable to process.
+        priority_keys: Keys to yield first.
+
+    Yields:
+        Items from iter, with priority_keys first.
+    """
     items = list(iter)
     for key in priority_keys:
         if key in items:
@@ -114,7 +185,16 @@ def priority_iterable(iter, priority_keys):
 
 class AppState:
     """
-    Pre-session state of the app
+    Per-session state of the app.
+
+    Manages the current configuration state including the selected config name,
+    overrides, and the composed Hydra configuration.
+
+    Attributes:
+        config_name (str): Name of the root configuration file.
+        hydra_options (List[str]): Hydra-specific command line options.
+        overrides (List[str]): List of configuration overrides.
+        config (DictConfig): The composed OmegaConf configuration.
     """
 
     config_name: str
@@ -129,6 +209,15 @@ class AppState:
         hydra_options: List[str] = [],
         overrides: List[str] = [],
     ) -> None:
+        """
+        Initialize the application state.
+
+        Args:
+            config_path: Path to the config directory.
+            config_name: Name of the root config file.
+            hydra_options: Hydra command line options.
+            overrides: Initial configuration overrides.
+        """
         super().__init__()
         self.config_path = config_path
         self.config_name = config_name
@@ -138,6 +227,12 @@ class AppState:
 
     @property
     def config_str(self):
+        """
+        Get the YAML string representation of the current configuration.
+
+        Returns:
+            str: YAML formatted configuration.
+        """
         return OmegaConf.to_yaml(self.config)
 
     def update_config(
@@ -145,6 +240,16 @@ class AppState:
         config_name: str = None,
         overrides: List[str] = None,
     ) -> "AppState":
+        """
+        Update the configuration with new name and/or overrides.
+
+        Args:
+            config_name: New root config name (optional).
+            overrides: New list of overrides (optional).
+
+        Returns:
+            AppState: Self for method chaining.
+        """
         if config_name is not None:
             self.config_name = config_name
         if overrides is not None:
@@ -163,6 +268,12 @@ class AppState:
         return self
 
     def generate_command(self):
+        """
+        Generate the fusion_bench CLI command from current state.
+
+        Returns:
+            str: Complete command ready to execute in shell.
+        """
         # Generate the command according to `config_name` and `overrides` (a list of strings)
         command = "fusion_bench \\\n"
         if self.config_path is not None:
@@ -177,15 +288,40 @@ class AppState:
 
     @property
     def config_str_and_command(self):
+        """
+        Get both config string and command as a tuple.
+
+        Returns:
+            Tuple[str, str]: (YAML config, shell command).
+        """
         return self.config_str, self.generate_command()
 
     def get_override(self, key: str):
+        """
+        Get the override value for a specific key.
+
+        Args:
+            key: Configuration key to look up.
+
+        Returns:
+            Optional[str]: Override value or None if not found.
+        """
         for ov in self.overrides:
             if ov.startswith(f"{key}="):
                 return "".join(ov.split("=")[1:])
         return None
 
     def update_override(self, key: str, value):
+        """
+        Update or add an override for a specific key.
+
+        Args:
+            key: Configuration key to override.
+            value: New value for the key.
+
+        Returns:
+            AppState: Updated state after recomposing config.
+        """
         self.overrides = [ov for ov in self.overrides if not ov.startswith(f"{key}=")]
         if value:
             self.overrides.append(f"{key}={escape_overrides(value)}")
@@ -193,7 +329,25 @@ class AppState:
 
 
 class App:
+    """
+    Main application class for the FusionBench WebUI.
+
+    Manages the Gradio interface, configuration tree, and application state.
+
+    Attributes:
+        args: Command line arguments.
+        group_tree (ConfigGroupNode): Root of the config directory tree.
+        init_config_name (str): Initial configuration name.
+        app_state (AppState): Current application state.
+    """
+
     def __init__(self, args):
+        """
+        Initialize the application.
+
+        Args:
+            args: Parsed command line arguments.
+        """
         super().__init__()
         self.args = args
         group_tree = ConfigGroupNode(self.config_path)
@@ -222,17 +376,44 @@ class App:
 
     @functools.cached_property
     def config_path(self):
+        """
+        Get the configuration directory path.
+
+        Returns:
+            Path: Path to the config directory.
+        """
         if self.args.config_path:
             return Path(self.args.config_path)
         else:
             return _get_default_config_path()
 
     def __getattr__(self, name):
+        """
+        Delegate attribute access to app_state if not found in App.
+
+        Args:
+            name: Attribute name.
+
+        Returns:
+            Attribute value from app_state.
+
+        Raises:
+            AttributeError: If attribute not found in app_state either.
+        """
         if hasattr(self.app_state, name):
             return getattr(self.app_state, name)
         raise AttributeError(f"App object has no attribute {name}")
 
     def generate_ui(self):
+        """
+        Generate the Gradio user interface.
+
+        Creates interactive UI components for configuration selection,
+        parameter editing, and command generation.
+
+        Returns:
+            gr.Blocks: Gradio application instance.
+        """
         with gr.Blocks() as app:
             gr.Markdown("# FusionBench Command Generator")
 
@@ -397,6 +578,12 @@ class App:
 
 
 def parse_args():
+    """
+    Parse command line arguments for the WebUI.
+
+    Returns:
+        argparse.Namespace: Parsed arguments.
+    """
     parser = argparse.ArgumentParser(description="FusionBench Command Generator")
     parser.add_argument(
         "--config-path",
@@ -431,6 +618,11 @@ def parse_args():
 
 
 def main() -> None:
+    """
+    Main entry point for the FusionBench WebUI application.
+
+    Parses arguments, initializes the app, and launches the Gradio interface.
+    """
     args = parse_args()
 
     app = App(args).generate_ui()

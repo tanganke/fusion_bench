@@ -4,6 +4,7 @@ This script is used to count the number of parameters in a model.
 Usage:
     python count_parameters.py <model_path>
 """
+
 import argparse
 
 import torch

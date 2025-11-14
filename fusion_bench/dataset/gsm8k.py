@@ -12,7 +12,7 @@ def load_gsm8k_question_label_data(
     Load the GSM8K dataset and extract questions and labels.
 
     An example in the dataset:
-    
+
     ```python
     {
         'question': 'Natalia sold clips to 48 of her friends in April, and then she sold half as many clips in May. How many clips did Natalia sell altogether in April and May?',
