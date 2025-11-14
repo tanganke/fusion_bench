@@ -167,6 +167,48 @@ The CLI's design allows for easy extension to new fusion methods, model types, a
 
 Read the [CLI documentation](https://tanganke.github.io/fusion_bench/cli/fusion_bench/) for more information.
 
+## The FusionBench Workflow
+
+FusionBench follows a three-component architecture to perform model fusion experiments:
+
+```mermaid
+graph LR
+    CLI[fusion_bench CLI] --> Hydra[Hydra Config]
+    Hydra --> Program[Program]
+    
+    Program --> MP[ModelPool<br/>Manages Models<br/>& Datasets]
+    Program --> Method[Method<br/>Fusion Algorithm]
+    Program --> TP[TaskPool<br/>Evaluation Tasks]
+    
+    MP --> Method
+    Method --> Merged[Merged Model]
+    Merged --> TP
+    TP --> Report[Evaluation Report]
+    
+    style CLI fill:#e1f5e1
+    style Hydra fill:#f0e1ff
+    style Method fill:#ffe1f0
+    style Merged fill:#fff4e1
+    style Report fill:#e1f0ff
+```
+
+**Key Components:**
+
+1. **CLI**: Entry point using Hydra for configuration management
+2. **Program**: Orchestrates the fusion workflow (e.g., `FabricModelFusionProgram`)
+3. **ModelPool**: Manages task-specific models and their datasets
+4. **Method**: Implements the fusion algorithm (e.g., Simple Average, Task Arithmetic, AdaMerging)
+5. **TaskPool**: Evaluates the merged model on benchmark tasks
+
+**Workflow Steps:**
+
+1. User runs `fusion_bench` with config overrides
+2. Hydra loads YAML configs for method, modelpool, and taskpool
+3. Program instantiates all three components
+4. Method executes fusion algorithm on ModelPool
+5. TaskPool evaluates the merged model
+6. Results are saved and reported
+
 ## Implement your own model fusion algorithm
 
 First, create a new Python file for the algorithm in the `fusion_bench/method` directory.
