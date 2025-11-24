@@ -304,9 +304,9 @@ If you find this benchmark useful, please consider citing our work:
 ```bibtex
 @article{tang2024fusionbench,
   title={Fusionbench: A comprehensive benchmark of deep model fusion},
-  author={Tang, Anke and Shen, Li and Luo, Yong and Hu, Han and Du, Bo and Tao, Dacheng},
-  journal={arXiv preprint arXiv:2406.03280},
-  year={2024}
+  author={Tang, Anke and Shen, Li and Luo, Yong and Yang, Enneng and Hu, Han and Zhang, Lefei and Du, Bo and Tao, Dacheng},
+  journal={Journal of Machine Learning Research},
+  year={2025}
 }
 ```
 
