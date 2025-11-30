@@ -6,8 +6,6 @@ import torch
 
 from .utility import Metric
 
-logging.basicConfig(level=logging.INFO, force=True)
-
 
 def cosine_similarity(a, b):
     similarity = numpy.sqrt(numpy.dot(a, b) ** 2 / (numpy.dot(a, a) * numpy.dot(b, b)))
