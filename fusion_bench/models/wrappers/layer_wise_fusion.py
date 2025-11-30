@@ -173,6 +173,24 @@ class LayerWiseMergedModel(nn.Module, Generic[TorchModelType]):
 
     @property
     def forward_model(self):
+        """
+        Get a functional model with merged parameters.
+
+        Returns a partial function that applies the pretrained model with the current
+        merged state dictionary. This allows for efficient forward passes without
+        modifying the original model's parameters.
+
+        Returns:
+            Callable: A partial function that can be called with (args, kwargs) to
+                perform forward pass with merged parameters.
+
+        Example:
+            ```python
+            # Internal usage during forward pass
+            forward_fn = merged_model.forward_model
+            output = forward_fn(args=(x,), kwargs={})
+            ```
+        """
         return functools.partial(
             functional_call,
             self.pretrained_model,
@@ -181,10 +199,30 @@ class LayerWiseMergedModel(nn.Module, Generic[TorchModelType]):
             strict=self.strict,
         )
 
-    def merge_and_unload(self, task_vector_mask: Optional[Dict[str, Tensor]] = None):
+    def merge_and_unload(
+        self,
+        task_vector_mask: Optional[Dict[str, Tensor]] = None,
+        copy: bool = False,
+    ) -> TorchModelType:
+        """
+        Merge models and return the final merged model.
+
+        Args:
+            task_vector_mask (Optional[Dict[str, Tensor]], optional): Optional masks
+                for selective parameter merging. Defaults to None.
+            copy (bool, optional): Whether to return a deep copy of the pretrained model.
+                Defaults to False. If True, the original pretrained model remains unchanged.
+
+        Returns:
+            TorchModelType: The pretrained model with merged parameters loaded.
+        """
         self.merge_weights(task_vector_mask=task_vector_mask)
-        self.pretrained_model.load_state_dict(self._merged_state_dict)
-        return self.pretrained_model
+        if copy:
+            model = deepcopy(self.pretrained_model)
+        else:
+            model = self.pretrained_model
+        model.load_state_dict(self._merged_state_dict)
+        return model
 
     def merge_weights(self, task_vector_mask: Optional[Dict[str, Tensor]] = None):
         """
