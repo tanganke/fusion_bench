@@ -69,6 +69,20 @@ def main(cfg: DictConfig) -> None:
     """
     OmegaConf.resolve(cfg)
     program: BaseHydraProgram = instantiate(cfg)
+
+    # Validate that instantiation succeeded and returned an object with 'run' method
+    if not hasattr(program, "run") or not callable(getattr(program, "run")):
+        err_msg = (
+            f"Expected an object with a callable 'run' method, but got {type(program).__name__}. "
+            "Ensure that the configuration specifies a concrete program class with '_target_'."
+        )
+        if "_target_" not in cfg:
+            err_msg += "\nThe '_target_' field is missing from the root configuration."
+        else:
+            err_msg += f"\nFound '_target_': {cfg._target_}"
+        err_msg += f"\n\nConfiguration content:\n{cfg}"
+        raise TypeError(err_msg)
+
     program.run()
 
 
