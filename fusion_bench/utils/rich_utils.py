@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Sequence
+from typing import Optional, Sequence
 
 import rich
 import rich.syntax
@@ -19,6 +19,9 @@ from rich.text import Text
 from rich.traceback import install as install_rich_traceback
 
 from fusion_bench.utils import pylogger
+from fusion_bench.utils.packages import _is_package_available
+
+install_rich_traceback()
 
 log = pylogger.RankedLogger(__name__, rank_zero_only=True)
 
@@ -61,7 +64,31 @@ def display_available_styles():
     console.print(Columns(style_samples, equal=True, expand=False))
 
 
-def print_bordered(message, title=None, style="blue", code_style=None):
+def format_code_str(message: str, code_style="python"):
+    if code_style.lower() == "python" and _is_package_available("black"):
+        # Use black formatting for python code if black is available
+        import black
+
+        try:
+            message = black.format_str(message, mode=black.Mode())
+        except black.InvalidInput:
+            pass  # If black fails, use the original message
+
+    return message.strip()
+
+
+def print_bordered(
+    message,
+    title=None,
+    style="blue",
+    code_style=None,
+    *,
+    expand: bool = True,
+    theme: str = "monokai",
+    background_color: Optional[str] = "default",
+    print_fn=print,
+    format_code: bool = True,
+):
     """
     Print a message with a colored border.
 
@@ -73,12 +100,54 @@ def print_bordered(message, title=None, style="blue", code_style=None):
                                 Set to None for plain text. Defaults to "python".
     """
     if code_style:
-        content = Syntax(message, code_style, theme="monokai", word_wrap=True)
+        if format_code:
+            message = format_code_str(message, code_style)
+        content = Syntax(
+            message,
+            code_style,
+            word_wrap=True,
+            theme=theme,
+            background_color=background_color,
+        )
     else:
         content = Text(message)
 
-    panel = Panel(content, title=title, border_style=style)
-    print(panel)
+    panel = Panel(content, title=title, border_style=style, expand=expand)
+    print_fn(panel)
+
+
+def print_code(
+    message,
+    title=None,
+    code_style=None,
+    *,
+    expand: bool = True,
+    theme: str = "monokai",
+    background_color: Optional[str] = "default",
+    print_fn=print,
+):
+    """
+    Print a message with a colored border.
+
+    Args:
+    message (str): The message to print.
+    title (str, optional): The title of the panel. Defaults to None.
+    style (str, optional): The color style for the border. Defaults to "cyan".
+    code_style (str, optional): The syntax highlighting style if the message is code.
+                                Set to None for plain text. Defaults to "python".
+    """
+    if code_style:
+        content = Syntax(
+            message,
+            code_style,
+            word_wrap=True,
+            theme=theme,
+            background_color=background_color,
+        )
+    else:
+        content = Text(message)
+
+    print_fn(content)
 
 
 @rank_zero_only
@@ -95,6 +164,9 @@ def print_config_tree(
     ),
     resolve: bool = False,
     save_to_file: bool = False,
+    *,
+    theme: str = "monokai",
+    background_color: Optional[str] = "default",
 ) -> None:
     """Prints the contents of a DictConfig as a tree structure using the Rich library.
 
@@ -134,7 +206,14 @@ def print_config_tree(
         else:
             branch_content = str(config_group)
 
-        branch.add(rich.syntax.Syntax(branch_content, "yaml"))
+        branch.add(
+            rich.syntax.Syntax(
+                branch_content,
+                "yaml",
+                theme=theme,
+                background_color=background_color,
+            )
+        )
 
     # print config tree
     rich.print(tree)
@@ -143,6 +222,35 @@ def print_config_tree(
     if save_to_file:
         with open(Path(cfg.paths.output_dir, "config_tree.log"), "w") as file:
             rich.print(tree, file=file)
+
+
+@rank_zero_only
+def print_config_yaml(
+    cfg: DictConfig,
+    resolve: bool = False,
+    output_path: Optional[str] = False,
+    *,
+    theme: str = "monokai",
+    background_color: Optional[str] = "default",
+) -> None:
+    """
+    Prints the contents of a DictConfig as a YAML string using the Rich library.
+
+    Args:
+        cfg: A DictConfig composed by Hydra.
+        resolve: Whether to resolve reference fields of DictConfig. Default is ``False``.
+        save_to_file: Whether to export config to the hydra output folder. Default is ``False``.
+    """
+    config_yaml = OmegaConf.to_yaml(cfg, resolve=resolve)
+    syntax = rich.syntax.Syntax(
+        config_yaml, "yaml", theme=theme, background_color=background_color
+    )
+    rich.print(syntax)
+
+    if output_path:
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        with open(Path(output_path), "w") as file:
+            rich.print(syntax, file=file)
 
 
 @rank_zero_only

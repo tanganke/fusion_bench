@@ -113,21 +113,27 @@ class MaskModel(ParameterDictModel):
     def get_distribution(
         self,
         mask_type: Literal["discrete", "continuous"],
+        temperature: float = 0.5,
         **kwargs,
     ):
         return {
-            name: self._param_to_distribution(param, mask_type=mask_type, **kwargs)
+            name: self._param_to_distribution(
+                param, mask_type=mask_type, temperature=temperature, **kwargs
+            )
             for name, param in self.named_parameters()
         }
 
     def sample_mask(
         self,
         mask_type: Literal["discrete", "continuous"] = "discrete",
+        temperature: float = 0.5,
         **kwargs,
     ):
         mask = {}
         for name, param in self.named_parameters():
-            dist = self._param_to_distribution(param, mask_type, **kwargs)
+            dist = self._param_to_distribution(
+                param, mask_type, temperature=temperature, **kwargs
+            )
             if mask_type == "discrete":
                 mask[name] = dist.sample()
             elif mask_type == "continuous":

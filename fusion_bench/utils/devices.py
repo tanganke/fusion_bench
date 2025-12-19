@@ -32,11 +32,13 @@ def clear_cuda_cache():
     Clears the CUDA memory cache to free up GPU memory.
     Works only if CUDA is available.
     """
+
     gc.collect()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
+        gc.collect()
     else:
-        log.warning("CUDA is not available. No cache to clear.")
+        log.debug("CUDA is not available. No cache to clear.")
 
 
 def to_device(

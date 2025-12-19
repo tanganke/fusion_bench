@@ -14,8 +14,8 @@ from lightning_utilities.core.rank_zero import rank_zero_only
 from omegaconf import DictConfig, OmegaConf, SCMode
 from omegaconf._utils import is_structured_config
 from rich import print
-from rich.panel import Panel
-from rich.syntax import Syntax
+
+from fusion_bench.utils.rich_utils import print_bordered
 
 PRINT_FUNCTION_CALL = True
 """
@@ -67,12 +67,22 @@ def _resolve_callable_name(f: Callable[..., Any]) -> str:
     return full_name
 
 
-def _format_args_kwargs(args, kwargs):
+def _get_obj_str(obj: Any) -> str:
+    if isinstance(obj, (str, int, float, bool, type(None))):
+        return repr(obj)
+    else:
+        return f"'<{type(obj).__name__} object>'"
+
+
+def _format_args_kwargs(args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> str:
     result_strings = []
     if len(args) > 0:
-        result_strings.append(", ".join(repr(arg) for arg in args))
+        result_strings.append(", ".join(_get_obj_str(arg) for arg in args))
+
     if len(kwargs) > 0:
-        result_strings.append(", ".join(f"{k}={repr(v)}" for k, v in kwargs.items()))
+        result_strings.append(
+            ", ".join(f"{k}={_get_obj_str(v)}" for k, v in kwargs.items())
+        )
 
     if len(result_strings) == 0:
         return ""
@@ -145,14 +155,14 @@ def _call_target(
     if _partial_:
         if PRINT_FUNCTION_CALL and getattr(rank_zero_only, "rank", 0) == 0:
             call_str = f"functools.partial({_resolve_callable_name(_target_)}, {_format_args_kwargs(args, kwargs)})"
-            PRINT_FUNCTION_CALL_FUNC(
-                Panel(
-                    Syntax(call_str, "python", theme="monokai", word_wrap=True),
-                    title="Instantiate by calling partial",
-                    border_style="cyan",
-                )
+            print_bordered(
+                call_str,
+                code_style="python",
+                title=f"Instantiate by calling {'function' if not isinstance(_target_, type) else 'class'}",
+                style="cyan",
+                expand=False,
+                print_fn=PRINT_FUNCTION_CALL_FUNC,
             )
-
         if CATCH_EXCEPTION:
             try:
                 return functools.partial(_target_, *args, **kwargs)
@@ -169,12 +179,13 @@ def _call_target(
     else:
         if PRINT_FUNCTION_CALL and getattr(rank_zero_only, "rank", 0) == 0:
             call_str = f"{_resolve_callable_name(_target_)}({_format_args_kwargs(args, kwargs)})"
-            PRINT_FUNCTION_CALL_FUNC(
-                Panel(
-                    Syntax(call_str, "python", theme="monokai", word_wrap=True),
-                    title="Instantiate by calling function",
-                    border_style="green",
-                )
+            print_bordered(
+                call_str,
+                code_style="python",
+                title=f"Instantiate by calling {'function' if not isinstance(_target_, type) else 'class'}",
+                style="green",
+                expand=False,
+                print_fn=PRINT_FUNCTION_CALL_FUNC,
             )
         if CATCH_EXCEPTION:
             try:
