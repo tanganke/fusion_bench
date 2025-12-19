@@ -249,12 +249,13 @@ class TaskSingularVectorMerging(BaseAlgorithm, LightningFabricMixin):
         # - SVD finds the principal components (most important directions)
         # - Task vectors are reconstructed using only the most significant components
         # - The reconstructed vectors are merged (summed) to create a unified task vector
-        new_merged_tv = TSVM_utils.compute_and_sum_svd_mem_reduction(
-            task_vectors,
-            exclude_keys=self.exclude_keys,  # Skip certain parameters from SVD
-            accelerator=accelerator,  # Use GPU if available
-            return_single_task_models=self.return_single_task_models,
-        )
+        with torch.no_grad():
+            new_merged_tv = TSVM_utils.compute_and_sum_svd_mem_reduction(
+                task_vectors,
+                exclude_keys=self.exclude_keys,  # Skip certain parameters from SVD
+                accelerator=accelerator,  # Use GPU if available
+                return_single_task_models=self.return_single_task_models,
+            )
 
         # Handle the case where individual transformed task vectors are also returned
         if self.return_single_task_models:
