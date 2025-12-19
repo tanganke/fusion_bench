@@ -127,14 +127,23 @@ def print_code(
     print_fn=print,
 ):
     """
-    Print a message with a colored border.
+    Print code or plain text with optional syntax highlighting.
 
     Args:
-    message (str): The message to print.
-    title (str, optional): The title of the panel. Defaults to None.
-    style (str, optional): The color style for the border. Defaults to "cyan".
-    code_style (str, optional): The syntax highlighting style if the message is code.
-                                Set to None for plain text. Defaults to "python".
+        message (str): The message or code to print.
+        title (str, optional): Optional title associated with this output. Currently
+            not used by this function, but kept for API compatibility. Defaults to None.
+        code_style (str, optional): The language/lexer name for syntax highlighting
+            (for example, ``"python"``). If ``None``, the message is rendered as plain
+            text without syntax highlighting. Defaults to ``None``.
+        expand (bool, optional): Placeholder flag for API symmetry with other printing
+            helpers. It is not used in the current implementation. Defaults to True.
+        theme (str, optional): Name of the Rich syntax highlighting theme to use when
+            ``code_style`` is provided. Defaults to ``"monokai"``.
+        background_color (str, optional): Background color style to apply to the code
+            block when using syntax highlighting. Defaults to ``"default"``.
+        print_fn (Callable, optional): Function used to render the resulting Rich
+            object. Defaults to :func:`rich.print`.
     """
     if code_style:
         content = Syntax(
