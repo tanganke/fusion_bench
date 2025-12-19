@@ -1,3 +1,10 @@
+from fusion_bench.utils.packages import is_open_clip_available
+
+if not is_open_clip_available():
+    raise ImportError(
+        "open_clip is not installed. Please install it with `pip install open_clip_torch`."
+    )
+
 from typing import Callable, List
 
 import open_clip
