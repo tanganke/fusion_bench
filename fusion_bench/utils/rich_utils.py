@@ -239,7 +239,7 @@ def print_config_yaml(
     Args:
         cfg: A DictConfig composed by Hydra.
         resolve: Whether to resolve reference fields of DictConfig. Default is ``False``.
-        save_to_file: Whether to export config to the hydra output folder. Default is ``False``.
+        output_path: Optional path to export the config YAML to. If provided, the file is written to this path.
     """
     config_yaml = OmegaConf.to_yaml(cfg, resolve=resolve)
     syntax = rich.syntax.Syntax(
