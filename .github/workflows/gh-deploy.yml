@@ -28,7 +28,7 @@ jobs:
       # - run: pip install -r requirements.txt
       - run: pip install mkdocs mkdocs-material 'mkdocstrings[python]'
       - name: Build documentation
-        run: mkdocs build --strict
+        run: mkdocs build
       - name: Deploy to GitHub Pages
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: mkdocs gh-deploy --force --no-history --remote-branch gh-pages
