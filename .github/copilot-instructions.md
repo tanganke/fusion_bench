@@ -11,7 +11,7 @@ FusionBench is a comprehensive benchmark and toolkit for deep model fusion—mer
 FusionBench follows a strict three-component architecture that you MUST understand:
 
 ### 1. **Method** (`fusion_bench/method/`)
-The fusion algorithm implementation. Each algorithm inherits from `BaseAlgorithm` (or `BaseModelFusionAlgorithm`).
+The fusion algorithm implementation. Each algorithm inherits from `BaseAlgorithm`.
 
 ```python
 # Example: fusion_bench/method/simple_average/simple_average.py
@@ -24,9 +24,9 @@ class SimpleAverageAlgorithm(BaseAlgorithm):
 **Key Conventions**:
 - File path: `fusion_bench/method/{method_name}/{variant}.py`
 - Must implement `run(self, modelpool)` abstract method
-- Use `_config_mapping` dict to map attributes to YAML config keys
+- Use `_config_mapping` dict to map attributes to YAML config keys (or use `@auto_register_config` decorator)
 - Lifecycle hooks: `on_run_start()` and `on_run_end()`
-- Algorithm examples: `simple_average`, `task_arithmetic`, `adamerging`, `regmean`
+- Algorithm examples: `simple_average`, `task_arithmetic`, `adamerging`, `regmean`, `dare`, `ties_merging`, `model_stock`, `slerp`
 
 ### 2. **ModelPool** (`fusion_bench/modelpool/`)
 Manages models and their datasets. Responsible for lazy-loading models from HuggingFace, local paths, or model definitions.
@@ -96,8 +96,9 @@ models:
 ```
 
 ### `_config_mapping` Pattern
-To serialize class attributes to YAML config, define `_config_mapping`:
+To serialize class attributes to YAML config, you have two options:
 
+**Option 1: Manual mapping with `_config_mapping`**:
 ```python
 class MyAlgorithm(BaseAlgorithm):
     _config_mapping = BaseAlgorithm._config_mapping | {
@@ -105,6 +106,22 @@ class MyAlgorithm(BaseAlgorithm):
         "num_epochs": "epochs",     # self.num_epochs -> config.epochs
     }
 ```
+
+**Option 2: Automatic registration with `@auto_register_config` decorator**:
+```python
+from fusion_bench.mixins import auto_register_config
+
+@auto_register_config
+class MyAlgorithm(BaseAlgorithm):
+    def __init__(self, learning_rate: float, num_epochs: int):
+        # Parameters are automatically registered and set as attributes
+        super().__init__()
+```
+
+The `@auto_register_config` decorator automatically:
+- Maps all `__init__` parameters to `_config_mapping`
+- Sets instance attributes from constructor arguments
+- Applies default values when parameters are not provided
 
 ## Running FusionBench
 
@@ -119,6 +136,10 @@ fusion_bench \
 
 # The CLI entry point is fusion_bench/scripts/cli.py
 # It uses @hydra.main decorator with config_path pointing to config/
+# The default config name is "fabric_model_fusion.yaml"
+
+# There's also a web UI available:
+fusion_bench_webui
 ```
 
 ### Programmatic Usage
@@ -187,17 +208,22 @@ Configuration in YAML:
 
 FusionBench uses mixins for cross-cutting concerns. Common mixins in `fusion_bench/mixins/`:
 
-- `BaseYAMLSerializable`: YAML serialization support
+- `BaseYAMLSerializable` / `YAMLSerializationMixin`: YAML serialization support
 - `HydraConfigMixin`: Hydra integration
 - `LightningFabricMixin`: Fabric device management
 - `SimpleProfilerMixin`: Performance profiling
+- `PyinstrumentProfilerMixin`: Pyinstrument profiling support
 - `CLIPClassificationMixin`: CLIP-specific evaluation helpers
+- `OpenCLIPClassificationMixin`: OpenCLIP-specific evaluation helpers
+- `FabricTrainingMixin`: Training utilities with Fabric
 
 **Mixin Order Matters**: Put functionality mixins before base class:
 ```python
 class MyClass(MixinA, MixinB, BaseClass):
     pass
 ```
+
+**Using `@auto_register_config`**: This decorator from `fusion_bench.mixins` automatically registers all `__init__` parameters in `_config_mapping` and sets them as instance attributes, reducing boilerplate code.
 
 ## Testing
 
@@ -226,16 +252,28 @@ Tests should:
 1. **Don't bypass the three-component system**: Always use ModelPool, not direct model loading in methods
 2. **Don't forget `_target_` in configs**: Every instantiated config needs this
 3. **Don't use absolute imports in examples**: Examples should be self-contained
-4. **Don't ignore `_config_mapping`**: Required for proper YAML serialization
-5. **Don't import PyTorch/Transformers at module level**: Use lazy imports
+4. **Don't ignore `_config_mapping`**: Required for proper YAML serialization (or use `@auto_register_config` decorator)
+5. **Don't import PyTorch/Transformers at module level**: Use lazy imports via `LazyImporter`
 6. **Don't hardcode paths**: Use Hydra's path configuration system (`config/path/default.yaml`)
+7. **Don't mix positional and keyword arguments carelessly**: When using `@auto_register_config`, be aware of how arguments are processed
 
 ## Key Files to Reference
 
-- **Base classes**: `fusion_bench/method/base_algorithm.py`, `fusion_bench/modelpool/base_pool.py`, `fusion_bench/taskpool/base_pool.py`
+- **Base classes**: 
+  - `fusion_bench/method/base_algorithm.py` - BaseAlgorithm
+  - `fusion_bench/modelpool/base_pool.py` - BaseModelPool
+  - `fusion_bench/taskpool/base_pool.py` - BaseTaskPool
+  - `fusion_bench/programs/base_program.py` - BaseHydraProgram
 - **CLI entry**: `fusion_bench/scripts/cli.py`
-- **Main program**: `fusion_bench/programs/fabric_fusion_program.py`
-- **Utils**: `fusion_bench/utils/instantiate_utils.py` (custom instantiation logic)
+- **Main programs**: 
+  - `fusion_bench/programs/fabric_fusion_program.py` - FabricModelFusionProgram (recommended)
+  - `fusion_bench/programs/fusion_program.py` - ModelFusionProgram (non-fabric version)
+- **Utils**: 
+  - `fusion_bench/utils/instantiate_utils.py` - Custom instantiation logic
+  - `fusion_bench/utils/lazy_imports.py` - LazyImporter for deferred imports
+- **Mixins**: 
+  - `fusion_bench/mixins/serialization.py` - YAML serialization, auto_register_config
+  - `fusion_bench/mixins/lightning_fabric.py` - Lightning Fabric integration
 - **Example config**: `config/fabric_model_fusion.yaml` (main entry point with defaults)
 
 ## Quick Start for New Features
@@ -259,6 +297,8 @@ Tests should:
 ## Code Style
 
 - **Black** for formatting: `black .`
-- **isort** for imports: `isort .`
+- **isort** for imports: `isort .` (profile: black)
+- **yamlfmt** for YAML formatting
 - Python 3.10+ required (uses pattern matching in some places)
 - Comprehensive docstrings (Google style) for all public APIs
+- Type hints are encouraged for better IDE support and code clarity

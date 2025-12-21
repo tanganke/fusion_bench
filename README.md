@@ -215,9 +215,9 @@ First, create a new Python file for the algorithm in the `fusion_bench/method` d
 Following the naming convention, the file should be named `{method_name_or_class}/{variant}.py`.
 
 ```python
-from fusion_bench import BaseModelFusionAlgorithm, BaseModelPool
+from fusion_bench import BaseAlgorithm, BaseModelPool
 
-class DerivedModelFusionAlgorithm(BaseModelFusionAlgorithm):
+class DerivedModelFusionAlgorithm(BaseAlgorithm):
     """
     An example of a derived model fusion algorithm.
     """
@@ -225,7 +225,7 @@ class DerivedModelFusionAlgorithm(BaseModelFusionAlgorithm):
     # _config_mapping maps the attribution to the corresponding key in the configuration file.
     # this is optional and can be used to serialize the object to a configuration file.
     # `self.config.hyperparam_1` will be mapped to the attribute `hyperparam_attr_1`.
-    _config_mapping = BaseModelFusionAlgorithm._config_mapping | {
+    _config_mapping = BaseAlgorithm._config_mapping | {
         "hyperparam_attr_1": "hyperparam_1",
         "hyperparam_attr_2": "hyperparam_2",
     }
