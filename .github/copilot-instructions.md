@@ -75,7 +75,8 @@ config/
 │   └── CLIPVisionModelPool/
 │       └── clip-vit-base-patch32_TA8.yaml
 └── taskpool/                    # Task definitions
-    └── clip_vision.yaml
+    └── CLIPVisionModelTaskPool/
+        └── clip-vit-classification_TA8.yaml
 ```
 
 ### YAML Configuration Pattern
@@ -235,7 +236,7 @@ Tests should:
 - **CLI entry**: `fusion_bench/scripts/cli.py`
 - **Main program**: `fusion_bench/programs/fabric_fusion_program.py`
 - **Utils**: `fusion_bench/utils/instantiate_utils.py` (custom instantiation logic)
-- **Example config**: `config/_get_started/clip_simple_average.yaml`
+- **Example config**: `config/fabric_model_fusion.yaml` (main entry point with defaults)
 
 ## Quick Start for New Features
 
