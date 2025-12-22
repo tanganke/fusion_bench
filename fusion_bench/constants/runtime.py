@@ -89,7 +89,10 @@ class RuntimeConstants:
             self._initialized = True
 
     debug = False
-    """Global debug flag for enabling verbose logging and debugging features."""
+    """
+    Global debug flag for enabling verbose logging and debugging features.
+    Use `RuntimeConstants().debug` instead of `RuntimeConstants.debug`
+    """
 
     @property
     def cache_dir(self) -> Path:

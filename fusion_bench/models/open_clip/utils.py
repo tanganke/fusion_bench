@@ -77,7 +77,16 @@ def torch_load_old(save_path: str, device=None):
     return classifier
 
 
-def torch_save(model, save_path, save_state_dict=True):
+def torch_save(model: torch.nn.Module, save_path: str, save_state_dict: bool = True):
+    """
+    Save a model to disk.
+
+    Args:
+        model: The model to save.
+        save_path (str): The path to save the model to.
+        save_state_dict (bool): Whether to save the state dict of the model (weights only).
+            If False, the entire model object is saved. Default is True.
+    """
     # TODO: hacky way to save state dict
     if save_state_dict and isinstance(model, torch.nn.Module):
         model = model.state_dict()
@@ -86,7 +95,9 @@ def torch_save(model, save_path, save_state_dict=True):
     torch.save(model, save_path)
 
 
-def torch_load(save_path, device=None):
+def torch_load(
+    save_path: str, device: Optional[torch.device] = None
+) -> torch.nn.Module:
     model = torch.load(save_path, map_location="cpu")
     if device is not None:
         model = model.to(device)
