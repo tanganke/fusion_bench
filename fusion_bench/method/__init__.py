@@ -144,7 +144,15 @@ _extra_objects = {
 
 if TYPE_CHECKING:
     from .ada_svd import AdaSVDMergingForCLIPVisionModel
-    from .adamerging import *
+    from .adamerging import (
+        CLIPLayerWiseAdaMergingAlgorithm,
+        CLIPTaskWiseAdaMergingAlgorithm,
+        FlanT5LayerWiseAdaMergingAlgorithm,
+        GPT2LayerWiseAdaMergingAlgorithm,
+        LayerWiseAdaMergingForLlamaSFT,
+        ResNetLayerWiseAdamerging,
+        ResNetTaskWiseAdamerging,
+    )
     from .analysis import TaskVectorCosSimilarity, TaskVectorViolinPlot
     from .base_algorithm import BaseAlgorithm, BaseModelFusionAlgorithm
     from .bitdelta import BitDeltaAlgorithm
