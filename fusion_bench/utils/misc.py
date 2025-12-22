@@ -182,7 +182,7 @@ def validate_and_suggest_corrections(
 
 class DeprecationWarningMeta(type):
     """
-    Metaclass that issues a deprecation warning when BaseModelFusionAlgorithm is used.
+    Metaclass that issues a deprecation warning whenever a class using it is instantiated.
     """
 
     def __call__(cls, *args, **kwargs):
