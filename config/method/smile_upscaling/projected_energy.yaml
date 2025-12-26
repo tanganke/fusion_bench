@@ -1,0 +1,7 @@
+# =============================================================================
+# FusionBench Analysis Configuration: SMILE Projected Energy
+# =============================================================================
+# Measures projected energy retained by singular vectors during SMILE upscaling.
+# =============================================================================
+# Measure projected energy
+_target_: fusion_bench.method.smile_upscaling.projected_energy.ProjectedEnergyAnalysis

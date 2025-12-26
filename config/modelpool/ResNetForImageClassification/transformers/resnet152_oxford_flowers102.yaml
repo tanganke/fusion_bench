@@ -1,0 +1,14 @@
+defaults:
+  - /dataset/image_classification/train@train_datasets:
+      - oxford_flowers102
+  - /dataset/image_classification/test@val_datasets:
+      - oxford_flowers102
+  - _self_
+_target_: fusion_bench.modelpool.ResNetForImageClassificationPool
+_recursive_: False
+type: transformers
+models:
+  _pretrained_:
+    config_path: microsoft/resnet-152
+    pretrained: true
+    dataset_name: oxford_flowers102

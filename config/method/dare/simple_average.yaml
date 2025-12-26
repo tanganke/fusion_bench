@@ -1,0 +1,4 @@
+_target_: fusion_bench.method.DareSimpleAverage
+sparsity_ratio: 0.5
+only_on_linear_weights: false
+rescale: true

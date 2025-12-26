@@ -1,0 +1,12 @@
+defaults:
+  - override help: fusion_bench_help
+  - override job_logging: rich_logging
+run:
+  dir: ${path.log_dir}
+sweep:
+  dir: ${path.log_dir}
+  subdir: ${hydra.job.num}
+job:
+  env_set:
+    HYDRA_FULL_ERROR: ${oc.env:HYDRA_FULL_ERROR,1}
+output_subdir: ""
