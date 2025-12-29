@@ -178,3 +178,19 @@ def validate_and_suggest_corrections(
     if matches:
         msg += f". Did you mean {', '.join(repr(m) for m in matches)}?"
     raise ValueError(msg)
+
+
+class DeprecationWarningMeta(type):
+    """
+    Metaclass that issues a deprecation warning whenever a class using it is instantiated.
+    """
+
+    def __call__(cls, *args, **kwargs):
+        import warnings
+
+        warnings.warn(
+            f"{cls.__name__} is deprecated and will be removed in a future version. ",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return super(DeprecationWarningMeta, cls).__call__(*args, **kwargs)

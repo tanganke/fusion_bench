@@ -40,6 +40,7 @@ from typing import Optional  # noqa: F401
 
 from fusion_bench.mixins import BaseYAMLSerializable
 from fusion_bench.modelpool import BaseModelPool
+from fusion_bench.utils.misc import DeprecationWarningMeta
 
 __all__ = ["BaseAlgorithm", "BaseModelFusionAlgorithm"]
 
@@ -202,27 +203,36 @@ class BaseAlgorithm(BaseYAMLSerializable):
         pass
 
 
-BaseModelFusionAlgorithm = BaseAlgorithm
-"""
-Alias for BaseAlgorithm class.
+# Create a deprecated wrapper class that inherits from BaseAlgorithm
+class BaseModelFusionAlgorithm(BaseAlgorithm, metaclass=DeprecationWarningMeta):
+    """
+    Alias for BaseAlgorithm class.
 
-This alias is provided for backward compatibility and semantic clarity.
-Some users may prefer the more explicit name 'BaseModelFusionAlgorithm'
-to emphasize that this class is specifically designed for model fusion
-tasks, while others may prefer the shorter 'BaseAlgorithm' name.
+    .. deprecated::
+        BaseModelFusionAlgorithm is deprecated and will be removed in a future version.
+        Use :class:`BaseAlgorithm` instead.
 
-Both names refer to the exact same class and can be used interchangeably.
+    This alias was provided for backward compatibility and semantic clarity.
+    Both names refer to the same base class and can be used interchangeably,
+    but BaseAlgorithm is now the preferred name for all implementations.
 
-Examples:
-    Using the original name:
-    >>> class MyAlgorithm(BaseAlgorithm):
-    ...     def run(self, modelpool): pass
+    Examples:
+        Preferred (using BaseAlgorithm):
 
-    Using the alias:
-    >>> class MyAlgorithm(BaseModelFusionAlgorithm):
-    ...     def run(self, modelpool): pass
+        >>> class MyAlgorithm(BaseAlgorithm):
+        ...     def run(self, modelpool): pass
 
-Note:
-    The alias is maintained for compatibility but BaseAlgorithm is the
-    preferred name for new implementations.
-"""
+        Deprecated (using BaseModelFusionAlgorithm):
+
+        >>> class MyAlgorithm(BaseModelFusionAlgorithm):  # Will trigger deprecation warning
+        ...     def run(self, modelpool): pass
+
+    Note:
+        New implementations should use :class:`BaseAlgorithm` exclusively.
+        The BaseModelFusionAlgorithm alias will be removed in a future release.
+
+    Warning:
+        Using BaseModelFusionAlgorithm will trigger a DeprecationWarning.
+    """
+
+    pass
