@@ -7,6 +7,7 @@ from omegaconf import DictConfig, OmegaConf, UnsupportedValueType
 from torch import nn
 from torch.utils.data import Dataset
 
+from fusion_bench import TorchModelType
 from fusion_bench.mixins import BaseYAMLSerializable, HydraConfigMixin
 from fusion_bench.utils import (
     ValidationError,

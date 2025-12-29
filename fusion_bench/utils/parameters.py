@@ -10,6 +10,7 @@ from .type import StateDictType
 __all__ = [
     "count_parameters",
     "print_parameters",
+    "print_trainable_parameters",
     "check_parameters_all_equal",
     "get_parameter_statistics",
     "state_dict_to_vector",
@@ -280,6 +281,38 @@ def print_parameters(
     print_fn(
         f"trainable params: {trainable_params} || all params: {all_param} || trainable%: {trainable_ratio:.4f}"
     )
+
+
+def print_trainable_parameters(
+    module: nn.Module,
+    is_human_readable: bool = True,
+    print_fn=print,
+    non_zero_only: bool = False,
+):
+    """
+    Print the names and number of trainable parameters in a PyTorch model.
+
+    Args:
+        module (nn.Module): The PyTorch model.
+        is_human_readable (bool, optional): Whether to print the number of parameters in a human-readable format. Defaults to True.
+        print_fn (callable, optional): The function to use for printing. Defaults to print.
+        non_zero_only (bool, optional): Whether to count only non-zero parameters. Defaults to False.
+
+    Prints:
+        The names and number of trainable parameters in the model.
+
+        ```python
+        print_trainable_parameters(model)
+        # weight: 1.50M parameters
+        # bias: 500.00K parameters
+        ```
+    """
+    for name, param in module.named_parameters():
+        if param.requires_grad:
+            num_params = _numel(param, non_zero_only=non_zero_only)
+            if is_human_readable:
+                num_params = human_readable(num_params)
+            print_fn(f"{name}: {num_params} parameters")
 
 
 def check_parameters_all_equal(

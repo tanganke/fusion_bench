@@ -38,7 +38,7 @@ from fusion_bench.models.wrappers.task_wise_fusion import (
 )
 from fusion_bench.utils.devices import clear_cuda_cache
 from fusion_bench.utils.dtype import parse_dtype
-from fusion_bench.utils.parameters import print_parameters
+from fusion_bench.utils.parameters import print_parameters, print_trainable_parameters
 from fusion_bench.utils.rich_utils import print_config_yaml
 from fusion_bench.utils.state_dict_arithmetic import (
     _validate_state_dict_same_keys,
@@ -94,6 +94,7 @@ class ConcreteTSVMForOpenCLIP(
 
         # load the pre-trained model
         pretrained_model = modelpool.load_pretrained_model()
+        self.set_clip_processor(stage="test", processor=pretrained_model.val_preprocess)
 
         # constrcute mask model
         mask_model = MaskModel(
@@ -132,6 +133,9 @@ class ConcreteTSVMForOpenCLIP(
             strict=self.strict,
             task_vector_dtype=self.merge_dtype,
         )
+
+        print("summary of merged model (TaskWiseMergedModel):")
+        print_trainable_parameters(module)
 
         return module, mask_model
 
@@ -246,6 +250,7 @@ class ConcreteTSVMForOpenCLIP(
 
         with self.profile("setup models"):
             module, mask_model = self.setup_models()
+            self.setup_zero_shot_classification_head()
 
         if self.mask_checkpoint is None:
             if not self.skip_training:

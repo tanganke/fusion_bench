@@ -1,7 +1,7 @@
 import logging
 import pickle
 import sys
-from typing import Callable, Optional, Union, cast
+from typing import Callable, Optional, Union, cast, override
 
 import torch
 from datasets import load_dataset
@@ -41,8 +41,8 @@ def _check_and_redirect_open_clip_modeling():
             )
 
     try:
-        import src
-        import src.modeling
+        import src  # type: ignore
+        import src.modeling  # type: ignore
     except ImportError:
         if "src" not in sys.modules:
             # redirect the import of `src` to `fusion_bench.models.open_clip`
@@ -114,6 +114,7 @@ class OpenCLIPVisionModelPool(BaseModelPool):
             self._test_processor = encoder.val_preprocess
         return self._test_processor
 
+    @override
     def load_model(
         self, model_name_or_config: Union[str, DictConfig], *args, **kwargs
     ) -> ImageEncoder:
@@ -210,6 +211,8 @@ class OpenCLIPVisionModelPool(BaseModelPool):
         - A string, which is the path to the model checkpoint in pickle format. Load directly using `torch.load`.
         - Default, load the model using `instantiate` from hydra.
         """
+        if self._classification_heads is None:
+            raise ValueError("No classification heads are defined in the model pool.")
         if (
             isinstance(model_name_or_config, str)
             and model_name_or_config in self._classification_heads
@@ -222,6 +225,8 @@ class OpenCLIPVisionModelPool(BaseModelPool):
         return head
 
     def load_train_dataset(self, dataset_name: str, *args, **kwargs):
+        if self._train_datasets is None:
+            raise ValueError("No train datasets are defined in the model pool.")
         dataset_config = self._train_datasets[dataset_name]
         if isinstance(dataset_config, str):
             log.info(
@@ -233,6 +238,8 @@ class OpenCLIPVisionModelPool(BaseModelPool):
         return dataset
 
     def load_val_dataset(self, dataset_name: str, *args, **kwargs):
+        if self._val_datasets is None:
+            raise ValueError("No val datasets are defined in the model pool.")
         dataset_config = self._val_datasets[dataset_name]
         if isinstance(dataset_config, str):
             log.info(
@@ -244,6 +251,8 @@ class OpenCLIPVisionModelPool(BaseModelPool):
         return dataset
 
     def load_test_dataset(self, dataset_name: str, *args, **kwargs):
+        if self._test_datasets is None:
+            raise ValueError("No test datasets are defined in the model pool.")
         dataset_config = self._test_datasets[dataset_name]
         if isinstance(dataset_config, str):
             log.info(
