@@ -108,34 +108,41 @@ class ConcreteTSVMForOpenCLIP(
             print("summary of mask model:")
             print_parameters(mask_model)
 
-        tsvm_algo = TaskSingularVectorMerging(
-            alpha=self.alpha,
-            exclude_keys=self.exclude_keys,
-            return_single_task_models=self.return_single_task_models,
-        )
-        tsvm_algo._fabric_instance = self.fabric
-        models = tsvm_algo.run(modelpool)
+        if self.fabric.is_global_zero:
+            tsvm_algo = TaskSingularVectorMerging(
+                alpha=self.alpha,
+                exclude_keys=self.exclude_keys,
+                return_single_task_models=self.return_single_task_models,
+            )
+            tsvm_algo._fabric_instance = self.fabric
+            models = tsvm_algo.run(modelpool)
 
-        finetuned_models = [models[name] for name in modelpool.model_names]
+            finetuned_models = [models[name] for name in modelpool.model_names]
 
-        task_wise_weight = get_task_wise_weights(
-            num_models=len(modelpool.model_names),
-            init_values=self.alpha,
-        )
+            task_wise_weight = get_task_wise_weights(
+                num_models=len(modelpool.model_names),
+                init_values=self.alpha,
+            )
 
-        # create a warpped model
-        module = TaskWiseMergedModel(
-            task_wise_weight=task_wise_weight,
-            pretrained_model=pretrained_model,
-            finetuned_models=finetuned_models,
-            clamp_weights=self.clamp_weights,
-            tie_weights=self.tie_weights,
-            strict=self.strict,
-            task_vector_dtype=self.merge_dtype,
-        )
+            # create a warpped model
+            module = TaskWiseMergedModel(
+                task_wise_weight=task_wise_weight,
+                pretrained_model=pretrained_model,
+                finetuned_models=finetuned_models,
+                clamp_weights=self.clamp_weights,
+                tie_weights=self.tie_weights,
+                strict=self.strict,
+                task_vector_dtype=self.merge_dtype,
+            )
 
-        print("summary of merged model (TaskWiseMergedModel):")
-        print_trainable_parameters(module)
+            print("trainable parameter summary of merged model (TaskWiseMergedModel):")
+            print_trainable_parameters(module)
+        else:
+            module = None
+
+        with torch.no_grad():
+            self.fabric.barrier()
+            module = self.fabric.broadcast(module, src=0)
 
         return module, mask_model
 
@@ -166,8 +173,12 @@ class ConcreteTSVMForOpenCLIP(
         else:
             lr_scheduler = None
 
-        mask_model, optimizer = self.fabric.setup(mask_model, optimizer)
+        log.info("Setup models and optimizer with Fabric.")
+        mask_model, optimizer = self.fabric.setup(
+            mask_model, optimizer, _reapply_compile=False
+        )
 
+        log.info("Move the merged module to the correct device and disable gradients.")
         module.requires_grad_(False)
         module.to(mask_model.device)
 
