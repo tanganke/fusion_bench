@@ -132,8 +132,9 @@ class ConcreteTSVMForOpenCLIP(
                 clamp_weights=self.clamp_weights,
                 tie_weights=self.tie_weights,
                 strict=self.strict,
-                task_vector_dtype=self.merge_dtype,
+                task_vector_dtype=merge_dtype,
             )
+            module = module.to(dtype=merge_dtype)
 
             print("trainable parameter summary of merged model (TaskWiseMergedModel):")
             print_trainable_parameters(module)
@@ -157,7 +158,8 @@ class ConcreteTSVMForOpenCLIP(
             mask_model (MaskModel): The mask model to be trained.
         """
         config = self.config
-        # mask_model: MaskModel = self.fabric.to_device(mask_model)
+        merge_dtype = parse_dtype(self.merge_dtype)
+        log.info(f"Using merge dtype: {merge_dtype}")
 
         optimizer: "torch.optim.Optimizer" = instantiate(
             self.optimizer,
@@ -174,9 +176,7 @@ class ConcreteTSVMForOpenCLIP(
             lr_scheduler = None
 
         log.info("Setup models and optimizer with Fabric.")
-        mask_model, optimizer = self.fabric.setup(
-            mask_model, optimizer, _reapply_compile=False
-        )
+        mask_model, optimizer = self.fabric.setup(mask_model, optimizer)
 
         log.info("Move the merged module to the correct device and disable gradients.")
         module.requires_grad_(False)
@@ -217,7 +217,7 @@ class ConcreteTSVMForOpenCLIP(
                 with self.profile("data loading"):
                     batch = next(self.get_shuffled_test_loader_iter(task))
                     # NOTE: The labels are not allowed to be used during test-time adaptation
-                    images = batch[0].to(dtype=self.merge_dtype)
+                    images = batch[0].to(dtype=merge_dtype)
                 with self.profile("forward pass"):
                     logits = self.compute_logits(module, images, task)
                     loss = entropy_loss(logits)
@@ -258,10 +258,11 @@ class ConcreteTSVMForOpenCLIP(
 
     def run(self, modelpool: OpenCLIPVisionModelPool):
         self.modelpool = modelpool
+        merge_dtype = parse_dtype(self.merge_dtype)
 
         with self.profile("setup models"):
             module, mask_model = self.setup_models()
-            self.setup_zero_shot_classification_head()
+            self.setup_zero_shot_classification_head(freeze=True, dtype=merge_dtype)
 
         if self.mask_checkpoint is None:
             if not self.skip_training:

@@ -1,9 +1,11 @@
 import functools
 import logging
-from typing import TYPE_CHECKING, Callable, Dict, Iterator, Literal, Optional, List
+from typing import TYPE_CHECKING, Callable, Dict, Iterator, List, Literal, Optional
 
+import torch
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from fusion_bench.dataset.clip_dataset import CLIPDataset
 from fusion_bench.mixins import LightningFabricMixin
@@ -14,7 +16,6 @@ from fusion_bench.models.open_clip import (
     ImageEncoder,
 )
 from fusion_bench.utils.data import InfiniteDataLoader
-from tqdm import tqdm
 
 log = logging.getLogger(__name__)
 
@@ -62,6 +63,7 @@ class OpenCLIPClassificationMixin(LightningFabricMixin):
         self,
         task_names: Optional[List[str]] = None,
         freeze: bool = True,
+        dtype: Optional[torch.dtype] = None,
     ):
         # check task names consistency across processes
         _task_names = self.fabric.broadcast(task_names, src=0)
@@ -76,6 +78,8 @@ class OpenCLIPClassificationMixin(LightningFabricMixin):
             head = self.modelpool.load_classification_head(task)
             if freeze:
                 head.requires_grad_(False)
+            if dtype is not None:
+                head = head.to(dtype=dtype)
             self.zero_shot_heads[task] = self.to_device(head)
 
     def set_clip_processor(self, stage: Literal["train", "test"], processor: Callable):
