@@ -10,6 +10,7 @@ from lightning.fabric.loggers import TensorBoardLogger
 from lightning.fabric.utilities.rank_zero import rank_zero_only
 from omegaconf import DictConfig, OmegaConf
 
+from fusion_bench.constants import RuntimeConstants
 from fusion_bench.utils import import_object
 from fusion_bench.utils.instantiate_utils import instantiate
 
@@ -206,14 +207,7 @@ class LightningFabricMixin:
         Returns:
             bool: True if fast_dev_run is enabled, False otherwise.
         """
-        if hasattr(self, "config") and self.config.get("fast_dev_run", False):
-            return True
-        elif hasattr(self, "_program") and self._program.config.get(
-            "fast_dev_run", False
-        ):
-            return True
-        else:
-            return False
+        return RuntimeConstants().debug
 
     def log(self, name: str, value: Any, step: Optional[int] = None):
         """

@@ -311,7 +311,6 @@ def compute_and_sum_svd_mem_reduction_lossless_eigen(
 
 ###############
 #### TSV Merge Orthogonalization
-@torch.no_grad()
 def compute_and_sum_svd_mem_reduction(
     task_vectors: List[StateDictType],
     exclude_keys: Optional[List[str]] = None,

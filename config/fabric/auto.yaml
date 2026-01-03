@@ -13,3 +13,4 @@ strategy: auto
 # ``"cpu"``, ``"cuda"``, ``"mps"``, ``"gpu"``, ``"tpu"``, ``"auto"``.
 # for example: fabric.accelerator=cpu
 accelerator: auto
+precision: null
