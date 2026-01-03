@@ -17,6 +17,14 @@ fusion_bench \
     method.scaling_factor=1.5 \
     modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
     taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
+
+# merge OpenCLIP models
+fusion_bench \
+    path.log_dir=outputs/ViT-B-32/openclip_iso_c \
+    method=isotropic_merging/iso_c \
+    method.scaling_factor=1.5 \
+    modelpool=OpenCLIPVisionModelPool/ViT-B-32_TA8 \
+    taskpool=OpenCLIPVisionModelTaskPool/ViT-B-32_TA8
 ```
 
 Merge CLIP-ViT-B/32 models on eight image classification tasks using ISO-CTS, with a scaling factor of 1.5:

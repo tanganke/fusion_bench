@@ -13,11 +13,14 @@ description: A Comprehensive Benchmark/Toolkit of Deep Model Fusion
 [![Static Badge](https://img.shields.io/badge/code%20style-black-black)](https://github.com/psf/black)
 [![Static Badge](https://img.shields.io/badge/code%20style-yamlfmt-black)](https://github.com/google/yamlfmt)
 
+## Prerequisites
+
+Before getting started with FusionBench:
+
+- **Python 3.10 or later** (some features may not work as expected for earlier versions)
+- **Understanding of Hydra** (recommended): FusionBench uses [Hydra](https://hydra.cc/) for configuration management. Familiarity with Hydra's [basic concepts](https://hydra.cc/docs/intro/) will help you work more effectively with FusionBench configurations.
+
 ## Install FusionBench
-
-Prerequisites:
-
-- Python 3.10 or later (some features may not work as expected for earlier versions)
 
 === "Install from GitHub repository"
 

@@ -63,6 +63,15 @@ To summarize the key features of FusionBench:
 
 Hydra is a powerful framework for managing complex configurations in Python applications. It allows you to compose and override configurations easily, making it an ideal choice for projects like FusionBench that has a modular design and require flexible and dynamic configuration management.
 
+!!! tip "New to Hydra?"
+    If you're unfamiliar with Hydra, start with these resources:
+    
+    - [Hydra Introduction](https://hydra.cc/docs/intro/) - Learn the basic concepts
+    - [Basic Override Syntax](https://hydra.cc/docs/advanced/override_grammar/basic/) - Understand how to modify configurations from the command line
+    - [Configuration Groups](https://hydra.cc/docs/tutorials/basic/your_first_app/config_groups/) - Learn about organizing configurations into groups
+    
+    These concepts are essential for working effectively with FusionBench!
+
 ## The FusionBench Command Line Interface
 
 The `fusion_bench` CLI is your primary tool for executing model fusion experiments and benchmarks. This powerful command-line interface serves as the entry point for all FusionBench operations, orchestrating the entire fusion pipeline from model loading to evaluation.

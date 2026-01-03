@@ -27,8 +27,11 @@ jobs:
           python-version: "3.10"
       # - run: pip install -r requirements.txt
       - run: pip install mkdocs mkdocs-material 'mkdocstrings[python]'
+      # Always build documentation to verify it builds correctly
       - name: Build documentation
         run: mkdocs build
+      # Only deploy to GitHub Pages when main branch is actually updated (merged or direct push)
+      # Pull requests will only build but not deploy
       - name: Deploy to GitHub Pages
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: mkdocs gh-deploy --force --no-history --remote-branch gh-pages
