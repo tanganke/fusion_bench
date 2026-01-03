@@ -124,7 +124,7 @@ class ConcreteTSVMForOpenCLIP(
                 init_values=self.alpha,
             )
 
-            # create a warpped model
+            # create a wrapped model
             module = TaskWiseMergedModel(
                 task_wise_weight=task_wise_weight,
                 pretrained_model=pretrained_model,
