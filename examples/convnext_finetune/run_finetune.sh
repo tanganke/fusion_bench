@@ -35,7 +35,7 @@ for model in convnext-base-224; do
     for dataset in sun397 stanford-cars resisc45 eurosat svhn gtsrb mnist dtd oxford_flowers102 pcam fer2013 oxford-iiit-pet stl10 cifar100 cifar10 food101 fashion_mnist emnist_letters kmnist rendered-sst2; do
         # global batch size
         for batch_size in 64 128 256; do
-            for lr in 0.005 0.001; do
+            for lr in 0.001 0.005 0.01; do
                 finetune
             done
         done
