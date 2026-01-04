@@ -23,6 +23,7 @@ function finetune() {
                 method.save_interval=1000 \
                 method.save_on_train_epoch_end=false \
                 method.optimizer.lr=${lr} \
+                method.lr_scheduler.T_max=4000 \
                 method.dataloader_kwargs.batch_size=$((${batch_size} / ${NUM_GPUS})) \
             modelpool=ConvNextForImageClassification/${model} \
             modelpool.models._pretrained_.dataset_name=${dataset} \
