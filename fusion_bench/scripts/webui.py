@@ -16,7 +16,7 @@ from hydra import compose, initialize_config_dir
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
-from fusion_bench.scripts.cli import _get_default_config_path
+from fusion_bench.scripts.cli import get_default_config_path
 
 
 def escape_overrides(value: str) -> str:
@@ -385,7 +385,7 @@ class App:
         if self.args.config_path:
             return Path(self.args.config_path)
         else:
-            return _get_default_config_path()
+            return get_default_config_path()
 
     def __getattr__(self, name):
         """

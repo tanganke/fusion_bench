@@ -9,7 +9,7 @@ import hydra
 from hydra import compose, initialize_config_dir
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
-from fusion_bench.scripts.cli import _get_default_config_path
+from fusion_bench.scripts.cli import get_default_config_path
 
 # Keeping the ConfigGroupNode and AppState classes as they are
 from fusion_bench.scripts.webui import AppState, ConfigGroupNode, priority_iterable
@@ -40,7 +40,7 @@ class App:
         if self.args.config_path:
             return Path(self.args.config_path)
         else:
-            return _get_default_config_path()
+            return get_default_config_path()
 
     def generate_ui(self):
         dpg.create_context()
