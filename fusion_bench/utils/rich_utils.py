@@ -93,11 +93,11 @@ def print_bordered(
     Print a message with a colored border.
 
     Args:
-    message (str): The message to print.
-    title (str, optional): The title of the panel. Defaults to None.
-    style (str, optional): The color style for the border. Defaults to "cyan".
-    code_style (str, optional): The syntax highlighting style if the message is code.
-                                Set to None for plain text. Defaults to "python".
+        message (str): The message to print.
+        title (str, optional): The title of the panel. Defaults to None.
+        style (str, optional): The color style for the border. Defaults to "cyan".
+        code_style (str, optional): The syntax highlighting style if the message is code.
+                                    Set to None for plain text. Defaults to "python".
     """
     if code_style:
         if format_code:
