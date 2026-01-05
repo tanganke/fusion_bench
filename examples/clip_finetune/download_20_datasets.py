@@ -8,14 +8,14 @@ from hydra import compose, initialize
 from tqdm import tqdm
 
 from fusion_bench.modelpool import CLIPVisionModelPool
-from fusion_bench.scripts.cli import _get_default_config_path
+from fusion_bench.scripts.cli import get_default_config_path
 from fusion_bench.utils import instantiate
 
 # Load configuration using Hydra
 with initialize(
     version_base=None,
     config_path=os.path.relpath(
-        _get_default_config_path(), start=os.path.dirname(__file__)
+        get_default_config_path(), start=os.path.dirname(__file__)
     ),
 ):
     cfg = compose(
