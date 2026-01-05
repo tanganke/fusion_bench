@@ -168,7 +168,7 @@ def print_config_tree(
         "callbacks",
         "logger",
         "trainer",
-        "paths",
+        "path",
         "extras",
     ),
     resolve: bool = False,
@@ -179,11 +179,20 @@ def print_config_tree(
 ) -> None:
     """Prints the contents of a DictConfig as a tree structure using the Rich library.
 
-    :param cfg: A DictConfig composed by Hydra.
-    :param print_order: Determines in what order config components are printed. Default is ``("data", "model",
-    "callbacks", "logger", "trainer", "paths", "extras")``.
-    :param resolve: Whether to resolve reference fields of DictConfig. Default is ``False``.
-    :param save_to_file: Whether to export config to the hydra output folder. Default is ``False``.
+    Args:
+        cfg (DictConfig): A DictConfig composed by Hydra.
+        print_order (Sequence[str], optional): Determines in what order config components are printed.
+            Defaults to ``("data", "model", "callbacks", "logger", "trainer", "paths", "extras")``.
+        resolve (bool, optional): Whether to resolve reference fields of DictConfig.
+            Defaults to ``False``.
+        save_to_file (bool, optional): Whether to export config to the hydra output folder.
+            Defaults to ``False``.
+        theme (str, optional): The theme to use for syntax highlighting. Defaults to "monokai".
+        background_color (str, optional): The background color to use for syntax highlighting.
+            Defaults to "default".
+
+    Returns:
+        None
     """
     style = "tree"
     tree = rich.tree.Tree("CONFIG", style=style, guide_style=style)
@@ -200,18 +209,13 @@ def print_config_tree(
             )
         )
 
-    # add all the other fields to queue (not specified in `print_order`)
-    for field in cfg:
-        if field not in queue:
-            queue.append(field)
-
     # generate config tree from queue
     for field in queue:
         branch = tree.add(field, style=style, guide_style=style)
 
         config_group = cfg[field]
         if isinstance(config_group, DictConfig):
-            branch_content = OmegaConf.to_yaml(config_group, resolve=resolve)
+            branch_content = OmegaConf.to_yaml(config_group, resolve=resolve).strip()
         else:
             branch_content = str(config_group)
 
@@ -224,13 +228,32 @@ def print_config_tree(
             )
         )
 
+    # add all the other fields to queue (not specified in `print_order`)
+    other_fields = [field for field in cfg if field not in queue]
+    if other_fields:
+        others_branch = tree.add(Text("[others]"), style=style, guide_style=style)
+
+        other_cfg = OmegaConf.create({field: cfg[field] for field in other_fields})
+        branch_content = OmegaConf.to_yaml(other_cfg, resolve=resolve).strip()
+
+        others_branch.add(
+            rich.syntax.Syntax(
+                branch_content, "yaml", theme=theme, background_color=background_color
+            )
+        )
+
     # print config tree
     rich.print(tree)
 
     # save config tree to file
     if save_to_file:
-        with open(Path(cfg.paths.output_dir, "config_tree.log"), "w") as file:
-            rich.print(tree, file=file)
+        if not cfg.get("paths") or not cfg.paths.get("output_dir"):
+            log.error(
+                "Cannot save config tree to file. 'paths.output_dir' is not specified in the config."
+            )
+        else:
+            with open(Path(cfg.path.output_dir, "config_tree.log"), "w") as file:
+                rich.print(tree, file=file)
 
 
 @rank_zero_only
