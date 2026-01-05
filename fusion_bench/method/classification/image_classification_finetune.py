@@ -173,6 +173,7 @@ class ImageClassificationFineTuning(BaseAlgorithm):
                 ),
             },
         )
+        lit_module.train()
 
         log_dir = (
             self._program.path.log_dir
