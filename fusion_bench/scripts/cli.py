@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING
 import hydra
 from omegaconf import DictConfig, OmegaConf
 
-from fusion_bench.constants import PROJECT_ROOT_PATH
 from fusion_bench.utils import instantiate
 from fusion_bench.utils.hydra_utils import get_default_config_path
 
@@ -70,7 +69,8 @@ def main(cfg: DictConfig) -> None:
         raise TypeError(err_msg)
 
     try:
-        program.run()
+        program_result = program.run()
+        return program_result
     except Exception as e:
         # Log the exception before exiting
         log.error(e, exc_info=True)
@@ -83,7 +83,7 @@ def main(cfg: DictConfig) -> None:
     version_base=None,
 )
 def _hydra_main(cfg: DictConfig) -> None:
-    return main(cfg)
+    main(cfg)
 
 
 if __name__ == "__main__":
