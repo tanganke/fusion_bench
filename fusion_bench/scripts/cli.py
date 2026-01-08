@@ -78,7 +78,7 @@ def main(cfg: DictConfig) -> None:
         program.run()
     except Exception as e:
         # Log the exception before exiting
-        log.error(e)
+        log.error(e, exc_info=True)
         raise e
 
 
