@@ -74,7 +74,12 @@ def main(cfg: DictConfig) -> None:
         err_msg += f"\n\nConfiguration content:\n{cfg}"
         raise TypeError(err_msg)
 
-    program.run()
+    try:
+        program.run()
+    except Exception as e:
+        # Log the exception before exiting
+        log.error(e)
+        raise e
 
 
 if __name__ == "__main__":
