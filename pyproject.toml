@@ -37,7 +37,7 @@ Homepage = "https://github.com/tanganke/fusion_bench"
 Issues = "https://github.com/tanganke/fusion_bench/issues"
 
 [project.scripts]
-fusion_bench = "fusion_bench.scripts.cli:main"
+fusion_bench = "fusion_bench.scripts.cli:_hydra_main"
 fusion_bench_webui = "fusion_bench.scripts.webui:main"
 
 [tool.setuptools]

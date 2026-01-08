@@ -19,11 +19,6 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-@hydra.main(
-    config_path=get_default_config_path(),
-    config_name="fabric_model_fusion",
-    version_base=None,
-)
 def main(cfg: DictConfig) -> None:
     """
     Main entry point for the FusionBench command-line interface.
@@ -82,5 +77,14 @@ def main(cfg: DictConfig) -> None:
         raise e
 
 
+@hydra.main(
+    config_path=get_default_config_path(),
+    config_name="fabric_model_fusion",
+    version_base=None,
+)
+def _hydra_main(cfg: DictConfig) -> None:
+    return main(cfg)
+
+
 if __name__ == "__main__":
-    main()
+    _hydra_main()
