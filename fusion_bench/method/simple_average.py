@@ -33,6 +33,8 @@ def simple_average(
 
     This function takes a list of PyTorch modules or state dictionaries and returns a new module with the averaged parameters, or a new state dictionary with the averaged parameters.
 
+    If `_fusion_bench_target_modules` attribute is set on the modules, only the parameters of the specified target submodules will be averaged.
+
     Args:
         modules (List[Union[nn.Module, StateDictType]]): A list of PyTorch modules or state dictionaries.
         base_module (Optional[nn.Module]): A base module to use for the new module. If provided, the averaged parameters will be loaded into this module. If not provided, a new module will be created by copying the first module in the list.
@@ -56,8 +58,10 @@ def simple_average(
             new_module = deepcopy(modules[0])
         else:
             new_module = base_module
-        state_dict = state_dict_avg([module.state_dict() for module in modules])
-        new_module.load_state_dict(state_dict)
+        state_dict = state_dict_avg(
+            [get_target_state_dict(module) for module in modules]
+        )
+        load_state_dict_into_target_modules(new_module, state_dict)
         return new_module
     elif isinstance(modules[0], Mapping):
         return state_dict_avg(modules)
