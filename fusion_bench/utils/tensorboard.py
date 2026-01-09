@@ -2,14 +2,18 @@
 functions deal with tensorboard logs.
 """
 
-from typing import Dict, Iterable, List
+from pathlib import Path
+from typing import Dict, Iterable, List, Union
 
 import numpy as np
 import pandas as pd
 from tensorboard.backend.event_processing import event_accumulator
 
 
-def parse_tensorboard_as_dict(path: str, scalars: Iterable[str]):
+def parse_tensorboard_as_dict(
+    path: Union[str, Path],
+    scalars: Iterable[str],
+) -> Dict[str, pd.DataFrame]:
     """
     returns a dictionary of pandas dataframes for each requested scalar.
 
@@ -20,7 +24,19 @@ def parse_tensorboard_as_dict(path: str, scalars: Iterable[str]):
 
     Returns:
         Dict[str, pandas.DataFrame]: a dictionary of pandas dataframes for each requested scalar
+
+    Example:
+
+        >>> from fusion_bench.utils.tensorboard import parse_tensorboard_as_dict
+        >>> path = "path/to/tensorboard/logs"
+        >>> scalars = ["train/loss", "val/accuracy"]
+        >>> data = parse_tensorboard_as_dict(path, scalars)
+        >>> train_loss_df = data["train/loss"]
+        >>> val_accuracy_df = data["val/accuracy"]
     """
+    if isinstance(path, Path):
+        path = str(path)
+    assert isinstance(path, str), "path must be a string"
     ea = event_accumulator.EventAccumulator(
         path,
         size_guidance={event_accumulator.SCALARS: 0},
@@ -33,7 +49,9 @@ def parse_tensorboard_as_dict(path: str, scalars: Iterable[str]):
     return {k: pd.DataFrame(ea.Scalars(k)) for k in scalars}
 
 
-def parse_tensorboard_as_list(path: str, scalars: Iterable[str]):
+def parse_tensorboard_as_list(
+    path: Union[str, Path], scalars: Iterable[str]
+) -> List[pd.DataFrame]:
     """
     returns a list of pandas dataframes for each requested scalar.
 
