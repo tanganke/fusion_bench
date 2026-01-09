@@ -1,4 +1,79 @@
+import logging
+import os
+
 import hydra.core.hydra_config
+from hydra import compose, initialize
+from omegaconf import DictConfig
+
+from fusion_bench.constants import PROJECT_ROOT_PATH
+
+log = logging.getLogger(__name__)
+
+
+def get_default_config_path():
+    """
+    Get the default configuration path by searching in common locations.
+    """
+    for config_path_root in [os.getcwd(), PROJECT_ROOT_PATH]:
+        for config_dir in ["config", "fusion_bench_config"]:
+            config_path = os.path.join(config_path_root, config_dir)
+            if os.path.exists(config_path) and os.path.isdir(config_path):
+                return os.path.abspath(config_path)
+    return None
+
+
+def initialize_hydra_config(
+    config_name: str,
+    overrides: list[str] = None,
+    config_path: str = None,
+    return_hydra_config: bool = False,
+) -> DictConfig:
+    """
+    Load the Hydra configuration.
+
+    Args:
+        config_name (str): The name of the configuration file (without .yaml extension).
+        overrides (list[str]): A list of configuration overrides.
+        config_path (str): The path to the configuration directory. If None, it will be automatically detected.
+        return_hydra_config (bool): If True, return the Hydra configuration object.
+
+    Returns:
+        DictConfig: The loaded configuration.
+
+    Example:
+        >>> cfg = initialize_hydra_config(
+        ...     config_name="fabric_model_fusion",
+        ...     overrides=["method=dummy", "modelpool=dummy"],
+        ... )
+        >>> print(cfg.method)
+    """
+    if config_path is None:
+        config_path = get_default_config_path()
+
+    # check config_path validity
+    if config_path is None:
+        raise FileNotFoundError("Could not find configuration directory.")
+    if not os.path.isdir(config_path):
+        raise NotADirectoryError(
+            f"Configuration path {config_path} do not exists or is not a directory."
+        )
+
+    if overrides is None:
+        overrides = []
+
+    with initialize(
+        version_base=None,
+        config_path=os.path.relpath(
+            config_path,
+            start=os.path.dirname(__file__),
+        ),
+    ):
+        cfg = compose(
+            config_name=config_name,
+            overrides=overrides,
+            return_hydra_config=return_hydra_config,
+        )
+        return cfg
 
 
 def get_hydra_output_dir():

@@ -267,6 +267,7 @@ class FabricModelFusionProgram(
         merged_model = self.method.run(self.modelpool)
         self.method.on_run_end()
 
+        report = None
         if merged_model is None:
             log.info(
                 "No merged model returned by the method. Skipping saving and evaluation."
@@ -295,3 +296,5 @@ class FabricModelFusionProgram(
                     json.dump(report, open(self.report_save_path, "w"))
             else:
                 log.info("No task pool specified. Skipping evaluation.")
+
+        return {"merged_model": merged_model, "report": report}

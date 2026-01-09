@@ -1,4 +1,4 @@
-from fusion_bench.scripts.cli import main
+from fusion_bench.scripts.cli import _hydra_main
 
 if __name__ == "__main__":
-    main()
+    _hydra_main()

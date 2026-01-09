@@ -6,7 +6,7 @@ from hydra import compose, initialize
 from fusion_bench import instantiate
 from fusion_bench.method import SimpleEnsembleAlgorithm
 from fusion_bench.modelpool import CLIPVisionModelPool
-from fusion_bench.scripts.cli import _get_default_config_path
+from fusion_bench.scripts.cli import get_default_config_path
 from fusion_bench.taskpool import CLIPVisionModelTaskPool
 from fusion_bench.utils.rich_utils import setup_colorlogging
 
@@ -18,7 +18,7 @@ fabric = L.Fabric(accelerator="auto", devices=1)
 with initialize(
     version_base=None,
     config_path=os.path.relpath(
-        _get_default_config_path(), start=os.path.dirname(__file__)
+        get_default_config_path(), start=os.path.dirname(__file__)
     ),
 ):
     cfg = compose(

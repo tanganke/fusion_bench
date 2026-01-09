@@ -3,36 +3,21 @@
 This is the CLI script that is executed when the user runs the `fusion_bench` command.
 The script is responsible for parsing the command-line arguments, loading the configuration file, and running the fusion algorithm.
 """
-
-import importlib
-import importlib.resources
 import logging
-import os
+from typing import TYPE_CHECKING
 
 import hydra
 from omegaconf import DictConfig, OmegaConf
 
-from fusion_bench.constants import PROJECT_ROOT_PATH
-from fusion_bench.programs import BaseHydraProgram
 from fusion_bench.utils import instantiate
+from fusion_bench.utils.hydra_utils import get_default_config_path
+
+if TYPE_CHECKING:
+    from fusion_bench.programs import BaseHydraProgram
 
 log = logging.getLogger(__name__)
 
 
-def _get_default_config_path():
-    for config_path_root in [os.getcwd(), PROJECT_ROOT_PATH]:
-        for config_dir in ["config", "fusion_bench_config"]:
-            config_path = os.path.join(config_path_root, config_dir)
-            if os.path.exists(config_path) and os.path.isdir(config_path):
-                return os.path.abspath(config_path)
-    return None
-
-
-@hydra.main(
-    config_path=_get_default_config_path(),
-    config_name="fabric_model_fusion",
-    version_base=None,
-)
 def main(cfg: DictConfig) -> None:
     """
     Main entry point for the FusionBench command-line interface.
@@ -68,7 +53,7 @@ def main(cfg: DictConfig) -> None:
         loading the corresponding configuration files to populate the cfg parameter.
     """
     OmegaConf.resolve(cfg)
-    program: BaseHydraProgram = instantiate(cfg)
+    program: "BaseHydraProgram" = instantiate(cfg)
 
     # Validate that instantiation succeeded and returned an object with 'run' method
     if not hasattr(program, "run") or not callable(getattr(program, "run")):
@@ -83,8 +68,23 @@ def main(cfg: DictConfig) -> None:
         err_msg += f"\n\nConfiguration content:\n{cfg}"
         raise TypeError(err_msg)
 
-    program.run()
+    try:
+        program_result = program.run()
+        return program_result
+    except Exception as e:
+        # Log the exception before exiting
+        log.error(e, exc_info=True)
+        raise e
+
+
+@hydra.main(
+    config_path=get_default_config_path(),
+    config_name="fabric_model_fusion",
+    version_base=None,
+)
+def _hydra_main(cfg: DictConfig) -> None:
+    main(cfg)
 
 
 if __name__ == "__main__":
-    main()
+    _hydra_main()
