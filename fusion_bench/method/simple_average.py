@@ -11,6 +11,7 @@ from fusion_bench.modelpool import BaseModelPool
 from fusion_bench.models.utils import (
     get_target_state_dict,
     load_state_dict_into_target_modules,
+    validate_target_modules_equal,
 )
 from fusion_bench.utils import LazyStateDict
 from fusion_bench.utils.state_dict_arithmetic import (
@@ -53,6 +54,8 @@ def simple_average(
         >>> averaged_state_dict = simple_average([state_dict1, state_dict2])
     """
     assert len(modules) > 0, "modules must be a non-empty list"
+    validate_target_modules_equal(modules)
+
     if isinstance(modules[0], nn.Module):
         if base_module is None:
             new_module = deepcopy(modules[0])

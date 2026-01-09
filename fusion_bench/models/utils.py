@@ -161,6 +161,44 @@ def get_target_state_dict(
     return merged_state_dict
 
 
+def validate_target_modules_equal(modules: Iterable[nn.Module]) -> None:
+    """
+    Validates that the `_fusion_bench_target_modules` attribute is the same across all provided modules.
+
+    Args:
+        modules (Iterable[nn.Module]): An iterable of PyTorch modules to validate.
+
+    Raises:
+        ValueError: If the `_fusion_bench_target_modules` attribute differs among the modules.
+    """
+    model_iter = iter(modules)
+    first_module = next(model_iter)
+
+    if hasattr(first_module, "_fusion_bench_target_modules"):
+        target_modules = first_module._fusion_bench_target_modules
+    else:
+        # if the module does not have the attribute, set to None
+        target_modules = None
+
+    for module in model_iter:
+        if target_modules is None:
+            if (
+                hasattr(module, "_fusion_bench_target_modules")
+                and module._fusion_bench_target_modules != target_modules
+            ):
+                raise ValueError(
+                    "_fusion_bench_target_modules attribute differs among the provided modules."
+                )
+        else:
+            if (
+                not hasattr(module, "_fusion_bench_target_modules")
+                or module._fusion_bench_target_modules != target_modules
+            ):
+                raise ValueError(
+                    "_fusion_bench_target_modules attribute differs among the provided modules."
+                )
+
+
 def load_state_dict_into_target_modules(
     module: TorchModelType,
     state_dict: StateDictType,
