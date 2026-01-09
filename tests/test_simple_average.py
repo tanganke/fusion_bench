@@ -8,7 +8,8 @@ from fusion_bench.method.simple_average import SimpleAverageAlgorithm
 
 class TestSimpleAverageAlgorithm(unittest.TestCase):
     def setUp(self):
-        self.algorithm = SimpleAverageAlgorithm()
+        # here we set inplace to False to avoid modifying the input models
+        self.algorithm = SimpleAverageAlgorithm(inplace=False)
         self.models = [nn.Linear(10, 1) for _ in range(5)]
 
     def test_run(self):

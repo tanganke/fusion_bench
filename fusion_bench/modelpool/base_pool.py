@@ -57,6 +57,10 @@ class BaseModelPool(
         **kwargs,
     ):
         if isinstance(models, List):
+            log.debug(
+                "Initializing BaseModelPool with a list of models. "
+                "Converting to a dictionary with integer string keys."
+            )
             models = {str(model_idx): model for model_idx, model in enumerate(models)}
 
         if isinstance(models, dict):
@@ -80,6 +84,22 @@ class BaseModelPool(
         self._val_datasets = val_datasets
         self._test_datasets = test_datasets
         super().__init__(**kwargs)
+
+    @property
+    def has_instance_models(self) -> bool:
+        """
+        Check if the model pool contains any pre-instantiated models.
+
+        Attention:
+            Some algorithms may modify the models in-place if they are pre-instantiated.
+
+        Returns:
+            bool: True if there are pre-instantiated models, False otherwise.
+        """
+        for model_cfg in self._models.values():
+            if isinstance(model_cfg, nn.Module):
+                return True
+        return False
 
     @property
     def has_pretrained(self) -> bool:
