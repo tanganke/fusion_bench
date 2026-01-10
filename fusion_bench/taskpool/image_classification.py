@@ -20,6 +20,7 @@ from fusion_bench import (
     instantiate,
 )
 from fusion_bench.dataset import ImageClassificationDataset
+from fusion_bench.models.wrappers.switch import set_active_option
 from fusion_bench.tasks.clip_classification import get_classnames, get_num_classes
 from fusion_bench.utils import count_parameters
 
@@ -229,6 +230,7 @@ class ImageClassificationTaskPool(LightningFabricMixin, BaseTaskPool):
             total=len(self.test_dataloaders),
         )
         for task_name, test_dataloader in pbar:
+            set_active_option(classifier, task_name)
             num_classes = get_num_classes(task_name)
             result = self._evaluate(
                 classifier,

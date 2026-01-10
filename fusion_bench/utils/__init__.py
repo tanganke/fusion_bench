@@ -31,6 +31,11 @@ _import_structure = {
     ],
     "dtype": ["get_dtype", "parse_dtype"],
     "fabric": ["seed_everything_by_time"],
+    "hydra_utils": [
+        "initialize_hydra_config",
+        "get_default_config_path",
+        "get_hydra_output_dir",
+    ],
     "instantiate_utils": [
         "instantiate",
         "is_instantiable",
@@ -123,6 +128,11 @@ if TYPE_CHECKING:
     )
     from .dtype import get_dtype, parse_dtype
     from .fabric import seed_everything_by_time
+    from .hydra_utils import (
+        get_default_config_path,
+        get_hydra_output_dir,
+        initialize_hydra_config,
+    )
     from .instantiate_utils import (
         instantiate,
         is_instantiable,

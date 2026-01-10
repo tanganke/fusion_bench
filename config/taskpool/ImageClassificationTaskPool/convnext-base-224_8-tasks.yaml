@@ -14,4 +14,4 @@ _recursive_: False
 processor: facebook/convnext-base-224
 dataloader_kwargs:
   batch_size: 32
-  num_workers: 4
+  num_workers: 0
