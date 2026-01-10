@@ -13,15 +13,6 @@ class ImageClassificationDataset(Dataset):
     This class wraps an existing dataset and applies preprocessing to the images.
     It expects each item in the dataset to be either a dictionary with 'image' and 'label' keys,
     or a tuple/list of (image, label).
-
-    Args:
-        dataset (Dataset): The original dataset to wrap.
-        processor (Optional[Union[ProcessorMixin, BaseImageProcessor]]): The processor for preparing inputs.
-            If None, no preprocessing is applied and raw images are returned.
-
-    Attributes:
-        dataset (Dataset): The wrapped dataset.
-        processor (Optional[Union[ProcessorMixin, BaseImageProcessor]]): The processor used for image preprocessing.
     """
 
     def __init__(
@@ -29,6 +20,12 @@ class ImageClassificationDataset(Dataset):
         dataset: Dataset,
         processor: Optional[Union["ProcessorMixin", "BaseImageProcessor"]] = None,
     ):
+        """
+        Args:
+            dataset (Dataset): The original dataset to wrap.
+            processor (Optional[Union[ProcessorMixin, BaseImageProcessor]]): The processor for preparing inputs.
+                If None, no preprocessing is applied and raw images are returned.
+        """
         self.dataset = dataset
         self.processor = processor
 
