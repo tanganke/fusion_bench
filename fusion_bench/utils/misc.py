@@ -9,6 +9,7 @@ __all__ = [
     "join_lists",
     "attr_equal",
     "validate_and_suggest_corrections",
+    "DeprecationWarningMeta",
 ]
 
 

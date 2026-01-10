@@ -59,6 +59,10 @@ class BaseAlgorithm(BaseYAMLSerializable):
     core fusion logic in the `run` method, while optional lifecycle hooks allow for
     setup and cleanup operations.
 
+    If model has `_fusion_bench_target_modules` attribute, the algorithm will only fuse
+    the specified target modules. This is useful for models where only certain layers
+    should be fused (e.g., classification heads on top of a shared backbone are not merged).
+
     Attributes:
         _program: Optional program reference for algorithm execution context.
         _config_key (str): Configuration key used for YAML serialization, defaults to "method".

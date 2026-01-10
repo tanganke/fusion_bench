@@ -38,10 +38,12 @@ _extra_objects = {
 }
 _import_structure = {
     "clip_dataset": ["CLIPDataset"],
+    "image_dataset": ["ImageClassificationDataset"],
 }
 
 if TYPE_CHECKING:
     from .clip_dataset import CLIPDataset
+    from .image_dataset import ImageClassificationDataset
 
 else:
     sys.modules[__name__] = LazyImporter(

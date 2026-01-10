@@ -41,3 +41,22 @@ def dict_map(f, d: dict, *, max_level: int = -1, skip_levels=0, inplace=False):
 
     dict_map_impl(d, ans, 0)
     return ans
+
+
+def dict_merge(dicts: Iterable[dict], disjoint: bool = True) -> dict:
+    """Merge multiple dictionaries into one.
+
+    Args:
+        dicts (Iterable[dict]): iterable of dictionaries to merge
+        disjoint (bool, optional): if True, raises an error on key conflicts. Defaults to True.
+
+    Returns:
+        dict: merged dictionary
+    """
+    merged_dict = type(dicts[0])()
+    for d in dicts:
+        for k, v in d.items():
+            if disjoint and k in merged_dict:
+                raise ValueError(f"Key conflict when merging dictionaries: {k}")
+            merged_dict[k] = v
+    return merged_dict

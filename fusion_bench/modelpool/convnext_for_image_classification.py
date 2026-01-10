@@ -98,7 +98,7 @@ class ConvNextForImageClassificationPool(BaseModelPool):
     - Load ConvNeXt models either from a pretrained checkpoint or from config.
     - Optionally adapt the classifier head to match dataset classnames.
     - Override `forward` to return logits for consistent interfaces within
-      FusionBench.
+        FusionBench.
 
     See `fusion_bench.modelpool.resnet_for_image_classification` for a closely
     related ResNet-based pool with analogous behavior.
@@ -161,6 +161,9 @@ class ConvNextForImageClassificationPool(BaseModelPool):
         ).logits
         model.original_forward = original_forward
 
+        # Mark ConvNeXt layers for FusionBench fusion
+        model._fusion_bench_target_modules = ["convnext"]
+
         return model
 
     @override
@@ -180,7 +183,7 @@ class ConvNextForImageClassificationPool(BaseModelPool):
         - The ConvNeXt model via `model.save_pretrained`.
         - The paired image processor via `AutoImageProcessor.save_pretrained`.
         - If `algorithm_config` is provided and on rank-zero, a README model card
-          documenting the FusionBench configuration.
+            documenting the FusionBench configuration.
         """
         model.save_pretrained(path)
         self.load_processor().save_pretrained(path)

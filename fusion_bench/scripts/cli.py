@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING
 import hydra
 from omegaconf import DictConfig, OmegaConf
 
-from fusion_bench.constants import PROJECT_ROOT_PATH
 from fusion_bench.utils import instantiate
 from fusion_bench.utils.hydra_utils import get_default_config_path
 
@@ -19,11 +18,6 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-@hydra.main(
-    config_path=get_default_config_path(),
-    config_name="fabric_model_fusion",
-    version_base=None,
-)
 def main(cfg: DictConfig) -> None:
     """
     Main entry point for the FusionBench command-line interface.
@@ -75,12 +69,22 @@ def main(cfg: DictConfig) -> None:
         raise TypeError(err_msg)
 
     try:
-        program.run()
+        program_result = program.run()
+        return program_result
     except Exception as e:
         # Log the exception before exiting
         log.error(e, exc_info=True)
         raise e
 
 
+@hydra.main(
+    config_path=get_default_config_path(),
+    config_name="fabric_model_fusion",
+    version_base=None,
+)
+def _hydra_main(cfg: DictConfig) -> None:
+    main(cfg)
+
+
 if __name__ == "__main__":
-    main()
+    _hydra_main()

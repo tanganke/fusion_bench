@@ -86,6 +86,9 @@ _import_structure = {
         "set_print_function_call",
         "set_print_function_call_permeanent",
         "timeit_context",
+        "initialize_hydra_config",
+        "get_default_config_path",
+        "get_hydra_output_dir",
     ],
 }
 
@@ -144,8 +147,11 @@ if TYPE_CHECKING:
         StateDictType,
         TorchModelType,
         cache_with_joblib,
+        get_default_config_path,
+        get_hydra_output_dir,
         get_rankzero_logger,
         import_object,
+        initialize_hydra_config,
         instantiate,
         parse_dtype,
         print_parameters,

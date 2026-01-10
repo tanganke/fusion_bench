@@ -186,7 +186,7 @@ class TestInfiniteDataLoader(unittest.TestCase):
             next(infinite_loader)
         error_msg = str(cm.exception)
         self.assertIn("Failed to retrieve data from data loader", error_msg)
-        self.assertIn("appears to be empty", error_msg)
+        self.assertIn("may be empty", error_msg)
 
     def test_max_retries_parameter(self):
         """Test that max_retries parameter is respected"""

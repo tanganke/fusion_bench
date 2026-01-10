@@ -97,7 +97,7 @@ dataset = SimpleDataset(image_paths, labels)  # Replace with your data
 dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
 ```
 
-You can also use `fusion_bench.dataset.clip_dataset.CLIPDataset` or `fusion_bench.dataset.image_dataset.TransformedImageDataset` to prepare your dataset. Here is examples of using `fusion_bench.dataset.clip_dataset.CLIPDataset` and `fusion_bench.dataset.image_dataset.TransformedImageDataset` to prepare your dataset:
+You can also use `fusion_bench.dataset.clip_dataset.CLIPDataset` or `fusion_bench.dataset.image_dataset.ImageClassificationDataset` to prepare your dataset. Here is examples of using `fusion_bench.dataset.clip_dataset.CLIPDataset` and `fusion_bench.dataset.image_dataset.ImageClassificationDataset` to prepare your dataset:
 
 ```python
 from fusion_bench.dataset.clip_dataset import CLIPDataset
@@ -106,16 +106,13 @@ dataset = CLIPDataset(dataset, processor)
 ```
 
 ```python
-from fusion_bench.dataset.image_dataset import TransformedImageDataset
+from fusion_bench.dataset.image_dataset import ImageClassificationDataset
 
-dataset = TransformedImageDataset(dataset, transform)
+dataset = ImageClassificationDataset(dataset, transform)
 ```
 
 Where `dataset` is your original dataset and `transform` is the transform you want to apply to the images.
 Below is the reference code for these two classes:
-
-::: fusion_bench.dataset.clip_dataset.CLIPDataset
-::: fusion_bench.dataset.image_dataset.TransformedImageDataset
 
 ## Inference
 
