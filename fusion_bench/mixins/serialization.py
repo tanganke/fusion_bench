@@ -68,7 +68,7 @@ def auto_register_config(cls):
 
     Behavior:
         - **Parameter Registration**: All non-variadic parameters (excluding ``*args``, ``**kwargs``)
-          from the __init__ method are automatically added to _config_mapping
+            from the __init__ method are automatically added to _config_mapping
         - **Positional Arguments**: Handled in order and mapped to corresponding parameter names
         - **Keyword Arguments**: Processed after positional arguments, overriding any conflicts
         - **Default Values**: Applied when parameters are not provided via arguments

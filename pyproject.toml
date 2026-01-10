@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "fusion-bench"
 description = "A Comprehensive Benchmark of Deep Model Fusion"
 readme = "README.md"
-version = "0.2.31"
+version = "0.2.32dev"
 authors = [{ name = "Anke Tang", email = "tang.anke@foxmail.com" }]
 license-files = ["LICENSE"]
 requires-python = ">= 3.10" # Python 3.10+ for pattern matching support
@@ -37,7 +37,7 @@ Homepage = "https://github.com/tanganke/fusion_bench"
 Issues = "https://github.com/tanganke/fusion_bench/issues"
 
 [project.scripts]
-fusion_bench = "fusion_bench.scripts.cli:main"
+fusion_bench = "fusion_bench.scripts.cli:_hydra_main"
 fusion_bench_webui = "fusion_bench.scripts.webui:main"
 
 [tool.setuptools]
