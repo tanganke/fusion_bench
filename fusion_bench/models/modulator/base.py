@@ -37,6 +37,15 @@ class ModulatedModel(nn.Module, Generic[TorchModelType]):
             raise ValueError(
                 f"Task '{task_name}' not found in modulators. Available tasks: {list(self.modulators.keys())}"
             )
+        if self._current_task == task_name:
+            return
+
+        # unset previous task
+        if self._current_task is not None:
+            self.modulators[self._current_task].remove(self)
+
+        # set new task
+        self.modulators[task_name].apply(self)
         self._current_task = task_name
 
     @property
@@ -50,16 +59,17 @@ class ModulatedModel(nn.Module, Generic[TorchModelType]):
 
         Args:
             *args: Positional arguments for the backbone model
-            task: Task name to use (overrides current_task if provided)
             **kwargs: Keyword arguments for the backbone model
 
         Returns:
             Model output after applying task-specific modulation
         """
-        if self._current_task is None and "task" not in kwargs:
+        if self._current_task is None:
             raise ValueError(
                 "No task specified. Set current_task or provide 'task' argument."
             )
+
+        return self.backbone(*args, **kwargs)
 
 
 class TaskModulator(nn.Module, Generic[TorchModelType], ABC):
@@ -78,9 +88,16 @@ class TaskModulator(nn.Module, Generic[TorchModelType], ABC):
         Apply task-specific modulation to the backbone model.
 
         Args:
-            backbone: The shared backbone model
-
-        Returns:
-            Model output after applying task-specific modulation
+            modulated_model: The modulated model
         """
         raise NotImplementedError("Subclasses must implement the apply method.")
+
+    def remove(self, modulated_model: "ModulatedModel[TorchModelType]"):
+        """
+        Remove task-specific modulation from the backbone model.
+        This is called when switching tasks.
+
+        Args:
+            modulated_model: The modulated model
+        """
+        pass
