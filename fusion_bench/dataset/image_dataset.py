@@ -1,35 +1,42 @@
-from typing import Any, Callable, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple, Union
 
+import torch
 from torch.utils.data import Dataset
+from transformers import BaseImageProcessor, ProcessorMixin
 
 
-class TransformedImageDataset(Dataset):
+class ImageClassificationDataset(Dataset):
     """
-    A dataset class for image classification tasks that applies a transform to images.
+    A dataset class for image classification models that converts a dataset of dictionaries or tuples
+    into a format suitable for model processing.
 
-    This class wraps an existing dataset and applies a specified transform to the images.
+    This class wraps an existing dataset and applies preprocessing to the images.
     It expects each item in the dataset to be either a dictionary with 'image' and 'label' keys,
     or a tuple/list of (image, label).
 
     Args:
-        dataset: The original dataset to wrap.
-        transform (Callable): A function/transform to apply on the image.
+        dataset (Dataset): The original dataset to wrap.
+        processor (Optional[Union[ProcessorMixin, BaseImageProcessor]]): The processor for preparing inputs.
+            If None, no preprocessing is applied and raw images are returned.
 
     Attributes:
-        dataset: The wrapped dataset.
-        transform (Callable): The transform to be applied to the images.
+        dataset (Dataset): The wrapped dataset.
+        processor (Optional[Union[ProcessorMixin, BaseImageProcessor]]): The processor used for image preprocessing.
     """
 
-    def __init__(self, dataset: Dataset, transform: Callable):
-        super().__init__()
+    def __init__(
+        self,
+        dataset: Dataset,
+        processor: Optional[Union["ProcessorMixin", "BaseImageProcessor"]] = None,
+    ):
         self.dataset = dataset
-        self.transform = transform
+        self.processor = processor
 
     def __len__(self):
         """Returns the number of items in the dataset."""
         return len(self.dataset)
 
-    def __getitem__(self, idx: int) -> Tuple[Any, Any]:
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, int]:
         """
         Retrieves and processes an item from the dataset.
 
@@ -37,11 +44,13 @@ class TransformedImageDataset(Dataset):
             idx (int): The index of the item to retrieve.
 
         Returns:
-            tuple: A tuple containing the processed image and the label.
+            tuple: A tuple containing the processed image tensor and the label.
 
         Raises:
             ValueError: If the item is neither a dictionary nor a tuple/list of length 2.
         """
+        # Standardize the item to a dictionary format
+        # {"image": ..., "label": ...}
         item = self.dataset[idx]
         if isinstance(item, dict):
             item = item
@@ -50,6 +59,26 @@ class TransformedImageDataset(Dataset):
             item = {"image": item[0], "label": item[1]}
         else:
             raise ValueError("Each item should be a dictionary or a tuple of length 2")
+
+        # Process the image using the provided processor, if any
         image = item["image"]
-        inputs = self.transform(image)
+        if self.processor is not None:
+            if isinstance(self.processor, (ProcessorMixin, BaseImageProcessor)):
+                # Apply the processor to the image to get the input tensor
+                image = image.convert("RGB")  # ensure image is in RGB format
+                inputs = self.processor(images=[image], return_tensors="pt")[
+                    "pixel_values"
+                ][0]
+            elif callable(self.processor):
+                inputs = self.processor(image)
+            else:
+                raise ValueError(
+                    "The processor should be a transformers Processor or a callable function"
+                )
+        else:
+            # if processor is None, return the raw image directly
+            inputs = image
+        # convert boolean label to int, this is for the case when the label is a binary classification task
+        if isinstance(item["label"], bool):
+            item["label"] = 1 if item["label"] else 0
         return inputs, item["label"]
