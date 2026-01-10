@@ -40,6 +40,7 @@ _import_structure = {
     "json": ["load_from_json", "save_to_json", "print_json"],
     "lazy_state_dict": ["LazyStateDict"],
     "misc": [
+        "DeprecationWarningMeta",
         "first",
         "has_length",
         "join_lists",
@@ -130,7 +131,13 @@ if TYPE_CHECKING:
     )
     from .json import load_from_json, print_json, save_to_json
     from .lazy_state_dict import LazyStateDict
-    from .misc import first, has_length, join_lists, validate_and_suggest_corrections
+    from .misc import (
+        DeprecationWarningMeta,
+        first,
+        has_length,
+        join_lists,
+        validate_and_suggest_corrections,
+    )
     from .packages import compare_versions, import_object
     from .parameters import (
         check_parameters_all_equal,
