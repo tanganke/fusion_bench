@@ -3,6 +3,7 @@ import json
 import os
 from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
+import torch
 from omegaconf import DictConfig, OmegaConf
 from torch import Tensor, nn
 from torch.nn import functional as F
@@ -12,6 +13,7 @@ from tqdm.auto import tqdm
 
 from fusion_bench import (
     BaseTaskPool,
+    LightningFabricMixin,
     RuntimeConstants,
     auto_register_config,
     get_rankzero_logger,
@@ -27,8 +29,31 @@ if TYPE_CHECKING:
 log = get_rankzero_logger(__name__)
 
 
+def _get_logits_from_model_output(outputs) -> Tensor:
+    """Extract logits from model outputs."""
+    match outputs:
+        case Tensor():
+            logits = outputs
+        case dict() | DictConfig() if "logits" in outputs:
+            logits = outputs["logits"]
+            assert isinstance(
+                logits, Tensor
+            ), "The 'logits' in the model output dictionary is not a Tensor."
+        case _:
+            if hasattr(outputs, "logits"):
+                logits = outputs.logits
+                assert isinstance(
+                    logits, Tensor
+                ), "The 'logits' attribute of the model output is not a Tensor."
+            else:
+                raise ValueError(
+                    "Model output is not a Tensor and does not have 'logits' attribute."
+                )
+    return logits
+
+
 @auto_register_config
-class ImageClassificationTaskPool(BaseTaskPool):
+class ImageClassificationTaskPool(LightningFabricMixin, BaseTaskPool):
     _config_mapping = BaseTaskPool._config_mapping | {
         "_test_datasets": "test_datasets",
         "_processor": "processor",
@@ -126,6 +151,7 @@ class ImageClassificationTaskPool(BaseTaskPool):
             dataloader_kwargs["shuffle"] = stage == "train"
         return DataLoader(dataset, **dataloader_kwargs)
 
+    @torch.no_grad()
     def _evaluate(
         self,
         classifier,
@@ -151,7 +177,7 @@ class ImageClassificationTaskPool(BaseTaskPool):
         for batch in pbar:
             inputs, targets = batch
             outputs = classifier(inputs)
-            logits: Tensor = outputs["logits"]
+            logits = _get_logits_from_model_output(outputs)
             if logits.device != targets.device:
                 targets = targets.to(logits.device)
 
