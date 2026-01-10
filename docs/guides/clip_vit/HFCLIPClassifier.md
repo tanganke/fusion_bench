@@ -114,9 +114,6 @@ dataset = ImageClassificationDataset(dataset, transform)
 Where `dataset` is your original dataset and `transform` is the transform you want to apply to the images.
 Below is the reference code for these two classes:
 
-::: fusion_bench.dataset.clip_dataset.CLIPDataset
-::: fusion_bench.dataset.image_dataset.ImageClassificationDataset
-
 ## Inference
 
 Perform inference on your dataset:
