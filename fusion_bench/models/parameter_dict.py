@@ -114,6 +114,15 @@ class ParameterDictModel(nn.Module):
             param_reprs.append(param_repr)
         return f"{self.__class__.__name__}({', '.join(param_reprs)})"
 
+    def __iter__(self) -> Iterator[str]:
+        """
+        Iterate over the model's parameters.
+
+        Yields:
+            Tuples of (parameter name, parameter tensor).
+        """
+        yield from self.keys()
+
     def __getitem__(
         self, key: str
     ) -> Union[nn.Parameter, torch.Tensor, "ParameterDictModel"]:
@@ -129,6 +138,9 @@ class ParameterDictModel(nn.Module):
         Raises:
             KeyError: If the key is not found in the model.
         """
+        assert isinstance(
+            key, str
+        ), f"Key must be a string, but got {type(key)}: {key}."
         if not has_nested_attr(self, key.split(".")):
             raise KeyError(f"Key {key} not found in {self}")
         key_parts = key.split(".")

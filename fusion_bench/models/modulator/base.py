@@ -1,3 +1,4 @@
+import logging
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Generic, Optional
 
@@ -5,6 +6,8 @@ import torch
 from torch import nn
 
 from fusion_bench import TorchModelType
+
+log = logging.getLogger(__name__)
 
 
 class ModulatedModel(nn.Module, Generic[TorchModelType]):
@@ -29,7 +32,20 @@ class ModulatedModel(nn.Module, Generic[TorchModelType]):
 
     def add_modulator(self, task_name: str, modulator: "TaskModulator[TorchModelType]"):
         """Add a new task-specific modulator."""
+        if task_name in self.modulators:
+            raise ValueError(f"Modulator for task '{task_name}' already exists.")
         self.modulators[task_name] = modulator
+
+    def remove_modulator(self, task_name: str):
+        """Remove an existing task-specific modulator."""
+        if task_name not in self.modulators:
+            raise ValueError(f"Modulator for task '{task_name}' does not exist.")
+        if self._current_task == task_name:
+            log.warning(
+                f"Removing modulator for current task '{task_name}'. "
+                "This will make unset the current task unpredictable."
+            )
+        del self.modulators[task_name]
 
     def set_task(self, task_name: str):
         """Set the current task for inference."""
@@ -43,6 +59,9 @@ class ModulatedModel(nn.Module, Generic[TorchModelType]):
         # unset previous task
         if self._current_task is not None:
             self.modulators[self._current_task].remove(self)
+            assert (
+                self._current_task is None
+            ), "Current task should be None after removal."
 
         # set new task
         self.modulators[task_name].apply(self)
@@ -92,6 +111,7 @@ class TaskModulator(nn.Module, Generic[TorchModelType], ABC):
         """
         raise NotImplementedError("Subclasses must implement the apply method.")
 
+    @abstractmethod
     def remove(self, modulated_model: "ModulatedModel[TorchModelType]"):
         """
         Remove task-specific modulation from the backbone model.
@@ -100,4 +120,4 @@ class TaskModulator(nn.Module, Generic[TorchModelType], ABC):
         Args:
             modulated_model: The modulated model
         """
-        pass
+        raise NotImplementedError("Subclasses must implement the remove method.")

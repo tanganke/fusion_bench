@@ -1228,3 +1228,63 @@ def state_dict_hadamard_product(a: StateDictType, b: StateDictType) -> StateDict
     """
     _validate_state_dict_same_keys([a, b])
     return OrderedDict((key, a[key] * b[key]) for key in a)
+
+
+def state_dict_max(
+    state_dicts: List[StateDictType],
+) -> StateDictType:
+    """
+    Compute the element-wise maximum across multiple state dicts.
+
+    Args:
+        state_dicts: List of state dicts to compute the maximum from.
+
+    Returns:
+        A state dict containing the element-wise maximums.
+    """
+    _validate_state_dict_list_not_empty(state_dicts)
+    _validate_state_dict_same_keys(state_dicts)
+
+    max_state_dict = OrderedDict()
+
+    for key in state_dicts[0]:
+        # Initialize with the first tensor
+        max_tensor = state_dicts[0][key].clone()
+
+        # Compute element-wise maximum
+        for state_dict in state_dicts[1:]:
+            max_tensor = torch.max(max_tensor, state_dict[key])
+
+        max_state_dict[key] = max_tensor
+
+    return max_state_dict
+
+
+def state_dict_max_abs(
+    state_dicts: List[StateDictType],
+) -> StateDictType:
+    """
+    Compute the element-wise maximum absolute value across multiple state dicts.
+
+    Args:
+        state_dicts: List of state dicts to compute the maximum absolute values from.
+
+    Returns:
+        A state dict containing the element-wise maximum absolute values.
+    """
+    _validate_state_dict_list_not_empty(state_dicts)
+    _validate_state_dict_same_keys(state_dicts)
+
+    max_abs_state_dict = OrderedDict()
+
+    for key in state_dicts[0]:
+        # Initialize with the absolute values of the first tensor
+        max_abs_tensor = state_dicts[0][key].abs()
+
+        # Compute element-wise maximum absolute value
+        for state_dict in state_dicts[1:]:
+            max_abs_tensor = torch.max(max_abs_tensor, state_dict[key].abs())
+
+        max_abs_state_dict[key] = max_abs_tensor
+
+    return max_abs_state_dict

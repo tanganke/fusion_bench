@@ -7,11 +7,12 @@ from omegaconf import DictConfig, OmegaConf, UnsupportedValueType
 from torch import nn
 from torch.utils.data import Dataset
 
-from fusion_bench import TorchModelType
+from fusion_bench import StateDictType, TorchModelType
 from fusion_bench.mixins import BaseYAMLSerializable, HydraConfigMixin
 from fusion_bench.utils import (
     ValidationError,
     instantiate,
+    state_dict_sub,
     timeit_context,
     validate_model_name,
 )
@@ -348,6 +349,21 @@ class BaseModelPool(
     def named_models(self) -> Generator[Tuple[str, nn.Module], None, None]:
         for model_name in self.model_names:
             yield model_name, self.load_model(model_name)
+
+    def load_pretrained_model_and_task_vectors(
+        self,
+    ) -> Tuple[TorchModelType, List[StateDictType]]:
+        pretrained_model = self.load_pretrained_model()
+
+        task_vectors = []
+        for model_name in self.model_names:
+            finetuned_model = self.load_model(model_name)
+            task_vector = state_dict_sub(
+                finetuned_model.state_dict(), pretrained_model.state_dict()
+            )
+            task_vectors.append(task_vector)
+
+        return pretrained_model, task_vectors
 
     @property
     def has_train_dataset(self) -> bool:
