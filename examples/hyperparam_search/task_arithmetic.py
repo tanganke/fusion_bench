@@ -2,34 +2,31 @@ import os
 
 import lightning as L
 import optuna
-from hydra import compose, initialize
 
 from fusion_bench import instantiate
 from fusion_bench.method import TaskArithmeticAlgorithm
 from fusion_bench.modelpool import CLIPVisionModelPool
-from fusion_bench.scripts.cli import get_default_config_path
 from fusion_bench.taskpool import CLIPVisionModelTaskPool
+from fusion_bench.utils.hydra_utils import (
+    get_default_config_path,
+    initialize_hydra_config,
+)
 
 # Initialize Lightning Fabric for efficient computation
 fabric = L.Fabric(accelerator="auto", devices=1)
 
 # Load configuration using Hydra
-with initialize(
-    version_base=None,
-    config_path=os.path.relpath(
-        get_default_config_path(), start=os.path.dirname(__file__)
-    ),
-):
-    cfg = compose(
-        config_name="fabric_model_fusion",
-        overrides=[
-            "modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8",
-            "taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8",
-        ],
-    )
-    modelpool: CLIPVisionModelPool = instantiate(cfg.modelpool)
-    taskpool: CLIPVisionModelTaskPool = instantiate(cfg.taskpool)
-    taskpool._fabric_instance = fabric
+cfg = initialize_hydra_config(
+    config_path=get_default_config_path(),
+    config_name="fabric_model_fusion",
+    overrides=[
+        "modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8",
+        "taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8",
+    ],
+)
+modelpool: CLIPVisionModelPool = instantiate(cfg.modelpool)
+taskpool: CLIPVisionModelTaskPool = instantiate(cfg.taskpool)
+taskpool._fabric_instance = fabric
 
 
 def average_accuracy(trial: optuna.Trial) -> float:
@@ -54,6 +51,7 @@ study = optuna.create_study(
     storage="sqlite:///hyperparam_search.db",
     study_name="arithmetic_task_on_eight_clip_models",
     direction=optuna.study.StudyDirection.MAXIMIZE,
+    load_if_exists=True,  # Allow resuming existing studies and parallel launching multiple processes
 )
 
 # Optimize for 20 trials
