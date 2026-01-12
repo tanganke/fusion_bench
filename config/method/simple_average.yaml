@@ -1,0 +1,10 @@
+# =============================================================================
+# FusionBench Method Configuration: Simple Average
+# =============================================================================
+# Equally averages parameters of all models in the model pool.
+#
+# Usage notes
+# - No hyperparameters required; behavior is deterministic given model order.
+# - Ensure models are architecture-compatible (same shapes) before merging.
+# =============================================================================
+_target_: fusion_bench.method.SimpleAverageAlgorithm

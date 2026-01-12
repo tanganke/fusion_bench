@@ -1,0 +1,25 @@
+_target_: fusion_bench.method.classification.ImageClassificationFineTuning
+max_epochs: 10
+max_steps: null
+# if ``save_top_k == k``,
+# the best k models according to the quantity monitored will be saved.
+# If ``save_top_k == 0``, no models are saved.
+# If ``save_top_k == -1``, all models are saved.
+save_top_k: 1
+# Interval (in epochs or steps, determined by `max_epochs` and `max_steps`) between checkpoints.
+save_interval: 1
+save_on_train_epoch_end: true
+training_data_ratio: null
+label_smoothing: 0
+optimizer:
+  _target_: torch.optim.SGD
+  lr: 0.001
+  momentum: 0.9
+  weight_decay: 1e-4
+lr_scheduler:
+  _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+  T_max: ${..max_epochs}
+dataloader_kwargs:
+  batch_size: 256 # batch size per GPU
+  num_workers: 8
+  pin_memory: true

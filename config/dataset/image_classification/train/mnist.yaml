@@ -1,0 +1,4 @@
+mnist:
+  _target_: datasets.load_dataset
+  path: mnist
+  split: train

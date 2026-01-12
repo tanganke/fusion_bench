@@ -1,0 +1,4 @@
+cifar10:
+  _target_: datasets.load_dataset
+  path: tanganke/cifar10
+  split: train

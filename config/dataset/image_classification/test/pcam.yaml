@@ -1,0 +1,4 @@
+pcam:
+  _target_: datasets.load_dataset
+  path: 1aurent/PatchCamelyon
+  split: test

@@ -1,0 +1,11 @@
+# The 14 task used in the paper: 
+# Wang et al. Localizing Task Information for Improved Model Merging and Compression
+# http://arxiv.org/abs/2405.07813
+defaults:
+  - CLIPVisionModelPool@: _template
+  - /model/clip-vit@models: clip-vit-base-patch16_TALL14
+  - /dataset/image_classification/train@train_datasets: TALL14
+  - /dataset/image_classification/test@test_datasets: TALL14
+processor:
+  _target_: transformers.CLIPProcessor.from_pretrained
+  pretrained_model_name_or_path: openai/clip-vit-base-patch16

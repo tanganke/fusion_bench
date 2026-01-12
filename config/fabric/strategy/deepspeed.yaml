@@ -1,0 +1,9 @@
+# https://lightning.ai/docs/fabric/2.4.0/api/generated/lightning.fabric.strategies.DeepSpeedStrategy.html#deepspeedstrategy
+_target_: lightning.fabric.strategies.DeepSpeedStrategy
+accelerator: null
+zero_optimization: true
+stage: 2
+offload_optimizer: false
+offload_parameters: false
+offload_params_device: "cpu"
+offload_optimizer_device: "cpu"

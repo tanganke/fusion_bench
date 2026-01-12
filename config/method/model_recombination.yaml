@@ -1,0 +1,11 @@
+# =============================================================================
+# FusionBench Method Configuration: Model Recombination
+# =============================================================================
+# Recombines submodules/layers from multiple models to form a new model.
+#
+# - return_modelpool: override run() argument to return model pool instead of merged model.
+#   Set to null to respect runtime argument; set to true/false to force behavior.
+# =============================================================================
+_target_: fusion_bench.method.ModelRecombinationAlgorithm
+# if `return_model_pool` is not null, the argument `return_modelpool` passed to the `run` method will be ignored.
+return_modelpool: null

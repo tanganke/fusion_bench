@@ -1,0 +1,28 @@
+# The 20 task used in the paper: 
+# Wang et al. Localizing Task Information for Improved Model Merging and Compression
+# http://arxiv.org/abs/2405.07813
+defaults:
+  # eight tasks in the task arithmetic paper
+  - sun397
+  - stanford-cars
+  - resisc45
+  - eurosat
+  - svhn
+  - gtsrb
+  - mnist
+  - dtd
+  # additional 6 tasks in the TALL mask paper (TALL 14)
+  - oxford_flowers102
+  - pcam
+  - fer2013
+  - oxford-iiit-pet
+  - stl10
+  - cifar100
+  # additional 6 tasks in the TALL mask paper (TALL 20)
+  - cifar10
+  - food101
+  - fashion_mnist
+  - emnist_letters
+  # - kmnist
+  # - rendered-sst2
+

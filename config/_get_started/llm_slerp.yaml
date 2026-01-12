@@ -1,0 +1,12 @@
+_target_: fusion_bench.programs.FabricModelFusionProgram
+_recursive_: false
+method:
+  _target_: fusion_bench.method.SlerpForCausalLM
+  t: 0.5
+modelpool:
+  _target_: fusion_bench.modelpool.CausalLMPool
+  models:
+    model_1: ibivibiv/alpaca-dragon-72b-v1
+    model_2: moreh/MoMo-72B-lora-1.8.7-DPO
+  tokenizer: ibivibiv/alpaca-dragon-72b-v1
+  enable_lazy_loading: true # load model as LazyStateDict

@@ -1,0 +1,7 @@
+# =============================================================================
+# FusionBench Method Configuration: WUDI Merging
+# =============================================================================
+_target_: fusion_bench.method.WUDIMerging
+
+iter_num: 400
+exclude_keys: null

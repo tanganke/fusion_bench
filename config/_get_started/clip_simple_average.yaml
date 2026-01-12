@@ -1,0 +1,23 @@
+_target_: fusion_bench.programs.FabricModelFusionProgram # (1)!
+_recursive_: false
+method: # (2)!
+  _target_: fusion_bench.method.SimpleAverageAlgorithm
+modelpool: # (3)!
+  _target_: fusion_bench.modelpool.CLIPVisionModelPool
+  models:
+    _pretrained_: openai/clip-vit-base-patch32
+    sun397: tanganke/clip-vit-base-patch32_sun397
+    stanford-cars: tanganke/clip-vit-base-patch32_stanford-cars
+taskpool: # (4)!
+  _target_: fusion_bench.taskpool.CLIPVisionModelTaskPool
+  test_datasets:
+    sun397:
+      _target_: datasets.load_dataset
+      path: tanganke/sun397
+      split: test
+    stanford-cars:
+      _target_: datasets.load_dataset
+      path: tanganke/stanford_cars
+      split: test
+  clip_model: openai/clip-vit-base-patch32
+  processor: openai/clip-vit-base-patch32
