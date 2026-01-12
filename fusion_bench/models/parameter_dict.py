@@ -1,12 +1,12 @@
-from typing import List, Mapping, Optional, Tuple
+from typing import Iterator, List, Mapping, Optional, Tuple, Union
 
 import torch
 from torch import nn
 
-__all__ = "ParamterDictModel"
+__all__ = ["ParameterDictModel"]
 
 
-def _set_attr(
+def set_nested_attr(
     obj,
     names: List[str],
     val,
@@ -27,7 +27,7 @@ def _set_attr(
     else:
         if check_parent and not hasattr(obj, names[0]):
             setattr(obj, names[0], parent_builder())
-        _set_attr(
+        set_nested_attr(
             getattr(obj, names[0]),
             names[1:],
             val,
@@ -36,7 +36,7 @@ def _set_attr(
         )
 
 
-def has_attr(obj, names: List[str]):
+def has_nested_attr(obj, names: List[str]):
     """
     Checks if an attribute exists in an object recursively.
 
@@ -50,26 +50,49 @@ def has_attr(obj, names: List[str]):
     if len(names) == 1:
         return hasattr(obj, names[0])
     else:
-        return has_attr(getattr(obj, names[0]), names[1:])
+        if not hasattr(obj, names[0]):
+            return False
+        return has_nested_attr(getattr(obj, names[0]), names[1:])
 
 
 class ParameterDictModel(nn.Module):
     """
-    This model is used to create a model with parameters from a dictionary.
-    It behaves like a normal `nn.ParameterDict`, but support keys with dots.
+    A module that stores parameters in a nested dictionary structure.
+
+    This model behaves similarly to `nn.ParameterDict`, but supports hierarchical keys
+    with dots (e.g., "layer1.weight"). Parameters are stored as nested attributes,
+    allowing for structured parameter access and manipulation.
+
+    Example:
+        >>> params = {
+        ...     "encoder.weight": nn.Parameter(torch.randn(10, 5)),
+        ...     "decoder.bias": nn.Parameter(torch.randn(5)),
+        ... }
+        >>> model = ParameterDictModel(params)
+        >>> model["encoder.weight"].shape
+        torch.Size([10, 5])
+        >>> "encoder.weight" in model
+        True
     """
 
     def __init__(
         self,
-        parameters: Optional[Mapping[str, nn.Parameter]] = None,
-    ):
+        parameters: Optional[Mapping[str, Union[nn.Parameter, torch.Tensor]]] = None,
+    ) -> None:
+        """
+        Args:
+            parameters: Optional mapping of parameter names to parameter tensors.
+                Keys can contain dots to create nested structures.
+                Values must be `nn.Parameter` or `nn.Buffer` instances.
+        """
+
         super().__init__()
         if parameters is not None:
             for name, param in parameters.items():
                 assert isinstance(
                     param, (nn.Parameter, nn.Buffer)
                 ), f"{name} is not a nn.Parameter or nn.Buffer"
-                _set_attr(
+                set_nested_attr(
                     self,
                     name.split("."),
                     param,
@@ -77,12 +100,13 @@ class ParameterDictModel(nn.Module):
                     parent_builder=__class__,
                 )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Generate a string representation of the model's parameters.
 
         Returns:
-            str: A string representation of the model's parameters.
+            A string representation of the model's parameters in the format:
+            "ParameterDictModel(name1: shape1, name2: shape2, ...)"
         """
         param_reprs = []
         for name, param in self.named_parameters():
@@ -90,32 +114,98 @@ class ParameterDictModel(nn.Module):
             param_reprs.append(param_repr)
         return f"{self.__class__.__name__}({', '.join(param_reprs)})"
 
-    def __getitem__(self, key: str):
-        if not has_attr(self, key.split(".")):
+    def __iter__(self) -> Iterator[str]:
+        """
+        Iterate over the model's parameters.
+
+        Yields:
+            Tuples of (parameter name, parameter tensor).
+        """
+        yield from self.keys()
+
+    def __getitem__(
+        self, key: str
+    ) -> Union[nn.Parameter, torch.Tensor, "ParameterDictModel"]:
+        """
+        Retrieve a parameter or nested submodule by key.
+
+        Args:
+            key: Parameter name, which can contain dots for nested access.
+
+        Returns:
+            The parameter, tensor, or nested ParameterDictModel at the specified key.
+
+        Raises:
+            KeyError: If the key is not found in the model.
+        """
+        assert isinstance(
+            key, str
+        ), f"Key must be a string, but got {type(key)}: {key}."
+        if not has_nested_attr(self, key.split(".")):
             raise KeyError(f"Key {key} not found in {self}")
-        key = key.split(".")
+        key_parts = key.split(".")
         obj = self
-        for k in key:
+        for k in key_parts:
             obj = getattr(obj, k)
         return obj
 
-    def __setitem__(self, key: str, value: nn.Parameter):
-        if not has_attr(self, key.split(".")):
-            _set_attr(self, key.split("."), value, check_parent=True)
-        else:
-            _set_attr(self, key.split("."), value, check_parent=False)
+    def __setitem__(self, key: str, value: Union[nn.Parameter, torch.Tensor]) -> None:
+        """
+        Set a parameter at the specified key, creating nested structure if needed.
 
-    def __contains__(self, key: str):
-        return has_attr(self, key.split("."))
+        Args:
+            key: Parameter name, which can contain dots for nested assignment.
+            value: Parameter or tensor to assign.
+        """
+        if not has_nested_attr(self, key.split(".")):
+            set_nested_attr(self, key.split("."), value, check_parent=True)
+        else:
+            set_nested_attr(self, key.split("."), value, check_parent=False)
+
+    def __contains__(self, key: str) -> bool:
+        """
+        Check if a parameter key exists in the model.
+
+        Args:
+            key: Parameter name, which can contain dots for nested checking.
+
+        Returns:
+            True if the key exists, False otherwise.
+        """
+        return has_nested_attr(self, key.split("."))
 
     def keys(self):
-        return [name for name, _ in self.named_parameters()]
+        """
+        Return a list of all parameter names in the model.
 
-    def items(self) -> List[Tuple[str, nn.Parameter]]:
-        return [(name, self[name]) for name in self.keys()]
+        Returns:
+            List of parameter names (including nested names with dots).
+        """
+        return self.state_dict().keys()
 
-    def values(self) -> List[nn.Parameter]:
-        return [self[name] for name in self.keys()]
+    def items(self):
+        """
+        Return a list of (name, parameter) tuples.
 
-    def __len__(self):
+        Returns:
+            List of tuples containing parameter names and their corresponding tensors.
+        """
+        yield from self.state_dict().items()
+
+    def values(self):
+        """
+        Return a list of all parameter values in the model.
+
+        Returns:
+            List of parameter tensors.
+        """
+        yield from self.state_dict().values()
+
+    def __len__(self) -> int:
+        """
+        Return the number of parameters in the model.
+
+        Returns:
+            The total number of parameters.
+        """
         return len(self.keys())
