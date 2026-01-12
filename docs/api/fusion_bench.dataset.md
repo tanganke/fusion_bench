@@ -15,7 +15,7 @@
         show_root_full_path: true
         heading_level: 4
 
-::: fusion_bench.dataset.image_dataset.TransformedImageDataset
+::: fusion_bench.dataset.image_dataset.ImageClassificationDataset
     options:
         show_root_full_path: true
         heading_level: 4

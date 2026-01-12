@@ -34,6 +34,7 @@ nav:
           - Task Singular Vector: algorithms/task_singular_vector.md
           - Isotropic Merging: algorithms/isotropic_merging.md
           - WUDI-Merging: algorithms/wudi_merging.md
+          - EMR Merging: algorithms/emr_merging.md
       - Model Mixing:
           - Depth Upscaling: algorithms/depth_upscaling.md
           - MoE-based Upscaling: algorithms/moe_based_upscaling.md
@@ -51,20 +52,20 @@ nav:
   - Model Pool (Benchmark Models):
       - modelpool/README.md
       - Computer Vision Tasks:
-        - CLIP-ViT Models: modelpool/clip_vit.md
-        - ResNet Models for Scene Understanding: modelpool/nyuv2.md
-        - modelpool/resnet_for_image_classification.md
-        - modelpool/convnext_for_image_classification.md
-        - modelpool/dinov2_for_image_classification.md
+          - CLIP-ViT Models: modelpool/clip_vit.md
+          - ResNet Models for Scene Understanding: modelpool/nyuv2.md
+          - modelpool/resnet_for_image_classification.md
+          - modelpool/convnext_for_image_classification.md
+          - modelpool/dinov2_for_image_classification.md
       - Natural Language Processing Tasks:
-        - GPT-2 Models for Text Classification: modelpool/gpt2_classification.md
-        - Flan-T5 Models for Text Generation: modelpool/flan-t5_generation.md
-        - Large Language Models:
-            - modelpool/llm/index.md
-            - modelpool/llm/llama-2.md
-            - modelpool/llm/llama-3.md
-            - modelpool/llm/Qwen2.5.md
-            - modelpool/llm/gemma-2.md
+          - GPT-2 Models for Text Classification: modelpool/gpt2_classification.md
+          - Flan-T5 Models for Text Generation: modelpool/flan-t5_generation.md
+          - Large Language Models:
+              - modelpool/llm/index.md
+              - modelpool/llm/llama-2.md
+              - modelpool/llm/llama-3.md
+              - modelpool/llm/Qwen2.5.md
+              - modelpool/llm/gemma-2.md
   - Task Pool (Evaluation):
       - taskpool/README.md
       - taskpool/dummy.md
@@ -74,8 +75,8 @@ nav:
       - GPT-2 Sequence Classification Tasks: taskpool/gpt2_classification.md
       - Flan-T5 Models for Text Generation: taskpool/flan-t5_generation.md
       - Large Language Model:
-        - Task Pool for Language Model Evaluation Harness: taskpool/lm_eval_harness.md
-        - taskpool/lm_eval_harness_cli.md
+          - Task Pool for Language Model Evaluation Harness: taskpool/lm_eval_harness.md
+          - taskpool/lm_eval_harness_cli.md
     # - fusion_bench: cli/fusion_bench.md
   - API Reference:
       - api/index.md

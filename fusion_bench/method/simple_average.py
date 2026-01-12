@@ -8,6 +8,11 @@ from torch import nn
 from fusion_bench.method.base_algorithm import BaseAlgorithm
 from fusion_bench.mixins import SimpleProfilerMixin, auto_register_config
 from fusion_bench.modelpool import BaseModelPool
+from fusion_bench.models.utils import (
+    get_target_state_dict,
+    load_state_dict_into_target_modules,
+    validate_target_modules_equal,
+)
 from fusion_bench.utils import LazyStateDict
 from fusion_bench.utils.state_dict_arithmetic import (
     state_dict_add,
@@ -29,6 +34,8 @@ def simple_average(
 
     This function takes a list of PyTorch modules or state dictionaries and returns a new module with the averaged parameters, or a new state dictionary with the averaged parameters.
 
+    If `_fusion_bench_target_modules` attribute is set on the modules, only the parameters of the specified target submodules will be averaged.
+
     Args:
         modules (List[Union[nn.Module, StateDictType]]): A list of PyTorch modules or state dictionaries.
         base_module (Optional[nn.Module]): A base module to use for the new module. If provided, the averaged parameters will be loaded into this module. If not provided, a new module will be created by copying the first module in the list.
@@ -47,23 +54,24 @@ def simple_average(
         >>> averaged_state_dict = simple_average([state_dict1, state_dict2])
     """
     assert len(modules) > 0, "modules must be a non-empty list"
+    validate_target_modules_equal(modules)
+
     if isinstance(modules[0], nn.Module):
         if base_module is None:
             new_module = deepcopy(modules[0])
         else:
             new_module = base_module
-        state_dict = state_dict_avg([module.state_dict() for module in modules])
-        new_module.load_state_dict(state_dict)
+        state_dict = state_dict_avg(
+            [get_target_state_dict(module) for module in modules]
+        )
+        load_state_dict_into_target_modules(new_module, state_dict)
         return new_module
     elif isinstance(modules[0], Mapping):
         return state_dict_avg(modules)
 
 
 @auto_register_config
-class SimpleAverageAlgorithm(
-    SimpleProfilerMixin,
-    BaseAlgorithm,
-):
+class SimpleAverageAlgorithm(SimpleProfilerMixin, BaseAlgorithm):
     def __init__(self, show_pbar: bool = False, inplace: bool = True, **kwargs):
         """
         Args:
@@ -87,13 +95,20 @@ class SimpleAverageAlgorithm(
         Returns:
             The fused model obtained by simple averaging.
         """
-        if isinstance(modelpool, dict):
+        if not isinstance(modelpool, BaseModelPool):
             modelpool = BaseModelPool(modelpool)
 
         log.info(
             f"Fusing models using simple average on {len(modelpool.model_names)} models. "
             f"models: {modelpool.model_names}"
         )
+        if modelpool.has_instance_models and self.inplace:
+            log.warning(
+                "The model pool contains instance models, and inplace is set to True. "
+                "Therefore, the weights of the first model will be overwritten. "
+                "If this is desired behavior, this warning can be ignored."
+            )
+
         sd: Optional[StateDictType] = None
         forward_model = None
         merged_model_names = []
@@ -106,12 +121,12 @@ class SimpleAverageAlgorithm(
             with self.profile("merge weights"):
                 if sd is None:
                     # Initialize the state dictionary with the first model's state dictionary
-                    sd = model.state_dict()
+                    sd = get_target_state_dict(model)
                     forward_model = model if self.inplace else deepcopy(model)
                 else:
                     # Add the current model's state dictionary to the accumulated state dictionary
                     sd = state_dict_add(
-                        sd, model.state_dict(), show_pbar=self.show_pbar
+                        sd, get_target_state_dict(model), show_pbar=self.show_pbar
                     )
         with self.profile("merge weights"):
             # Divide the accumulated state dictionary by the number of models to get the average
@@ -124,11 +139,13 @@ class SimpleAverageAlgorithm(
             forward_model = deepcopy(forward_model.meta_module).to_empty(
                 device=forward_model._device
             )
-        result = forward_model.load_state_dict(sd, strict=False)
+
+        result = load_state_dict_into_target_modules(forward_model, sd, strict=False)
         if result.unexpected_keys:
             raise ValueError(f"Unexpected keys in state dict: {result.unexpected_keys}")
         if result.missing_keys:
             log.warning(f"Missing keys in state dict: {result.missing_keys}")
+
         # print profile report and log the merged models
         self.print_profile_summary()
         log.info(f"merged {len(merged_model_names)} models:")
