@@ -34,6 +34,7 @@ nav:
           - Task Singular Vector: algorithms/task_singular_vector.md
           - Isotropic Merging: algorithms/isotropic_merging.md
           - WUDI-Merging: algorithms/wudi_merging.md
+          - EMR Merging: algorithms/emr_merging.md
       - Model Mixing:
           - Depth Upscaling: algorithms/depth_upscaling.md
           - MoE-based Upscaling: algorithms/moe_based_upscaling.md
@@ -46,7 +47,6 @@ nav:
       - Model Compression:
           - Task Vector Compression:
               - BitDelta: algorithms/bitdelta.md
-              - EMR Merging: algorithms/emr_merging.md
           - Parameter Pruning:
               - Magnitude Pruning: algorithms/pruning/magnitude_pruning.md
   - Model Pool (Benchmark Models):
