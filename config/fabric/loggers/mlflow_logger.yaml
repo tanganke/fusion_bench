@@ -1,2 +1,6 @@
 # https://mlflow.org/
 _target_: lightning.pytorch.loggers.MLFlowLogger
+tracking_uri: "sqlite:///${path.output_dir}/mlflow.db"
+experiment_name: ${hydra:job.config_name}
+run_name: ${now:%Y-%m-%d_%H-%M-%S}
+save_dir: ${path.log_dir}
