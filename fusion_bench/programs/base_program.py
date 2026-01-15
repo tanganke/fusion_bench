@@ -75,6 +75,12 @@ class BaseHydraProgram(BaseYAMLSerializable):
     - FusionBench CLI documentation for program execution details
     """
 
+    _program = None
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._program = self
+
     @abstractmethod
     def run(self):
         """

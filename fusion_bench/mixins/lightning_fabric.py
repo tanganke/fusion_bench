@@ -1,6 +1,7 @@
 import functools
 import logging
 import os
+import sys
 from typing import TYPE_CHECKING, Any, List, Mapping, Optional, TypeVar
 
 import lightning as L
@@ -12,11 +13,14 @@ from omegaconf import DictConfig, OmegaConf
 
 from fusion_bench.constants import RuntimeConstants
 from fusion_bench.utils import import_object
+from fusion_bench.utils.hydra_utils import get_hydra_output_dir
 from fusion_bench.utils.instantiate_utils import instantiate
 
 if TYPE_CHECKING:
     import lightning.fabric.loggers.tensorboard
     from lightning.fabric.strategies import FSDPStrategy
+    from lightning.pytorch.loggers import MLFlowLogger
+    from mlflow.tracking.client import MlflowClient
 
 log = logging.getLogger(__name__)
 
@@ -41,6 +45,19 @@ def get_size_based_auto_wrap_policy(*args, **kwargs):
 
     policy = functools.partial(size_based_auto_wrap_policy, *args, **kwargs)
     return policy
+
+
+def _is_mlflow_logger(fabric: L.Fabric) -> bool:
+    """
+    Check if the fabric's logger is an instance of MLFlowLogger.
+
+    Args:
+        fabric (L.Fabric): The Lightning Fabric instance.
+
+    Returns:
+        bool: True if the logger is an instance of MLFlowLogger, False otherwise.
+    """
+    return fabric.logger.__class__.__name__ == "MLFlowLogger"
 
 
 class LightningFabricMixin:
@@ -123,7 +140,10 @@ class LightningFabricMixin:
         Retrieves the log directory from the fabric's logger.
         """
         if self.fabric is not None and len(self.fabric._loggers) > 0:
-            log_dir = self.fabric.logger.log_dir
+            if hasattr(self.fabric.logger, "log_dir"):
+                log_dir = self.fabric.logger.log_dir
+            else:
+                log_dir = None
 
             # Special handling for SwanLabLogger to get the correct log directory
             if (
@@ -131,6 +151,20 @@ class LightningFabricMixin:
                 and self.fabric.logger.__class__.__name__ == "SwanLabLogger"
             ):
                 log_dir = self.fabric.logger.save_dir or self.fabric.logger._logdir
+
+            if (
+                log_dir is None
+                and self.fabric.logger.__class__.__name__ == "MLFlowLogger"
+            ):
+                log_dir = self.fabric.logger.save_dir
+                if log_dir is None:
+                    try:
+                        log_dir = self._program.config.path.log_dir
+                    except Exception:
+                        log.error(
+                            "Failed to get log_dir from program config for MLFlowLogger."
+                        )
+                        log_dir = "outputs"
 
             assert log_dir is not None, "log_dir should not be None"
             if self.fabric.is_global_zero and not os.path.exists(log_dir):
@@ -246,3 +280,60 @@ class LightningFabricMixin:
         """
         for i, param_group in enumerate(optimizer.param_groups):
             self.fabric.log(name_template.format(i), param_group["lr"], step=step)
+
+    def log_artifact(self, local_path: str, artifact_path: str | None = None):
+        """
+        Logs a file as an artifact to the fabric's logger.
+
+        Args:
+            local_dir: The path to the directory to log as an artifact.
+            artifact_path: The directory within the logger's artifact storage to save the file.
+        """
+        if _is_mlflow_logger(self.fabric):
+            logger: "MLFlowLogger" = self.fabric.logger
+            experiment: "MlflowClient" = logger.experiment
+            experiment.log_artifact(
+                logger.run_id,
+                local_path=local_path,
+                artifact_path=(artifact_path),
+            )
+
+    def log_artifacts(self, local_dir: str, artifact_path: str | None = None):
+        """
+        Logs a directory as artifacts to the fabric's logger.
+
+        Args:
+            local_dir: The path to the directory to log as artifacts.
+            artifact_path: The directory within the logger's artifact storage to save the files.
+        """
+        if _is_mlflow_logger(self.fabric):
+            logger: "MLFlowLogger" = self.fabric.logger
+            experiment: "MlflowClient" = logger.experiment
+            experiment.log_artifacts(
+                logger.run_id,
+                local_dir=local_dir,
+                artifact_path=artifact_path,
+            )
+
+    def finalize(self):
+        """
+        Destructor to ensure proper cleanup of the Lightning Fabric instance.
+        """
+        if self._fabric_instance is None:
+            return
+
+        if _is_mlflow_logger(self.fabric):
+            if sys.exc_info()[0] is None:
+                status = "success"
+            else:
+                status = "failed"
+            self.fabric.logger.finalize(status)
+
+        del self._fabric_instance
+        self._fabric_instance = None
+
+    def __del__(self):
+        """
+        Destructor to ensure proper cleanup of the Lightning Fabric instance.
+        """
+        self.finalize()

@@ -294,6 +294,7 @@ class FabricModelFusionProgram(
                         )
                     os.makedirs(os.path.dirname(self.report_save_path), exist_ok=True)
                     json.dump(report, open(self.report_save_path, "w"))
+                    self.log_artifact(local_path=self.report_save_path)
             else:
                 log.info("No task pool specified. Skipping evaluation.")
 

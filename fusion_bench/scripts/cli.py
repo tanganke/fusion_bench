@@ -71,8 +71,10 @@ def main(cfg: DictConfig) -> None:
     try:
         program_result = program.run()
         return program_result
-    except Exception as e:
+    except BaseException as e:
         # Log the exception before exiting
+        if hasattr(program, "finalize") and callable(getattr(program, "finalize")):
+            program.finalize()
         log.error(e, exc_info=True)
         raise e
 
