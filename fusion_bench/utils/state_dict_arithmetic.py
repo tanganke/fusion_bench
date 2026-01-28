@@ -1,6 +1,16 @@
 from collections import OrderedDict
 from numbers import Number
-from typing import Callable, Dict, List, Literal, Optional, Union, cast
+from typing import (
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Literal,
+    Mapping,
+    Optional,
+    Union,
+    cast,
+)
 
 import torch
 from torch import Tensor
@@ -460,6 +470,118 @@ class ArithmeticStateDict(OrderedDict):
         """
         result_dict = state_dict_avg(state_dicts)
         return cls(result_dict)
+
+
+class LazyStateDictExpr(Mapping[str, torch.Tensor]):
+    """
+    A lazy, key-wise expression over state_dict-like objects.
+    """
+
+    # ---- core Mapping API ----
+    def __getitem__(self, key: str) -> torch.Tensor:
+        raise NotImplementedError
+
+    def __iter__(self) -> Iterator[str]:
+        raise NotImplementedError
+
+    def __len__(self) -> int:
+        raise NotImplementedError
+
+    # ---- arithmetic (build graph only) ----
+    def __add__(self, other):
+        return BinaryOp(torch.add, self, ensure_expr(other))
+
+    def __sub__(self, other):
+        return BinaryOp(torch.sub, self, ensure_expr(other))
+
+    def __mul__(self, scalar):
+        return UnaryOp(lambda x: x * scalar, self)
+
+    def __rmul__(self, scalar):
+        return self.__mul__(scalar)
+
+    def __truediv__(self, scalar):
+        return UnaryOp(lambda x: x / scalar, self)
+
+    # ---- eager escape hatch ----
+    def materialize(
+        self, device=None, dtype=None, non_blocking=False, copy=False
+    ) -> Dict[str, torch.Tensor]:
+        """
+        Eagerly evaluate into an OrderedDict.
+        """
+        out = {}
+        for k in self:
+            v = self[k]
+            out[k] = v.to(
+                device=device,
+                dtype=dtype,
+                non_blocking=non_blocking,
+                copy=copy,
+            )
+        return out
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(lazy)"
+
+
+class StateDictLeaf(LazyStateDictExpr):
+    def __init__(self, state_dict: Mapping[str, torch.Tensor]):
+        self._sd = state_dict
+
+    def __getitem__(self, key: str) -> torch.Tensor:
+        return self._sd[key]
+
+    def __iter__(self):
+        return iter(self._sd)
+
+    def __len__(self):
+        return len(self._sd)
+
+
+class UnaryOp(LazyStateDictExpr):
+    def __init__(self, op: Callable[[torch.Tensor], torch.Tensor], child):
+        self.op = op
+        self.child = child
+
+    def __getitem__(self, key: str):
+        return self.op(self.child[key])
+
+    def __iter__(self):
+        return iter(self.child)
+
+    def __len__(self):
+        return len(self.child)
+
+
+class BinaryOp(LazyStateDictExpr):
+    def __init__(
+        self,
+        op: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
+        left,
+        right,
+    ):
+        self.op = op
+        self.left = left
+        self.right = right
+
+    def __getitem__(self, key: str):
+        return self.op(self.left[key], self.right[key])
+
+    def __iter__(self):
+        # assume key sets are aligned
+        return iter(self.left)
+
+    def __len__(self):
+        return len(self.left)
+
+
+def ensure_expr(x):
+    if isinstance(x, LazyStateDictExpr):
+        return x
+    if isinstance(x, Mapping):
+        return StateDictLeaf(x)
+    raise TypeError(f"Unsupported operand type: {type(x)}")
 
 
 def _validate_state_dict_list_not_empty(state_dicts: List[StateDictType]) -> None:
