@@ -57,6 +57,8 @@ def _is_mlflow_logger(fabric: L.Fabric) -> bool:
     Returns:
         bool: True if the logger is an instance of MLFlowLogger, False otherwise.
     """
+    if fabric.logger is None:
+        return False
     return fabric.logger.__class__.__name__ == "MLFlowLogger"
 
 
