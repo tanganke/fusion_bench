@@ -152,7 +152,7 @@ class DOPMerging(BaseAlgorithm, LightningFabricMixin):
                 )
             else:
                 raise ImportError(
-                    "Ray is not installed. Please install ray to use this feature."
+                    "Ray is not installed. Please install ray to use this feature. Install with `pip install 'ray[default]'`."
                 )
 
         model_names = modelpool.model_names
