@@ -26,6 +26,7 @@ from fusion_bench.models.utils import named_leaf_modules
 from fusion_bench.utils import seed_everything_by_time
 from fusion_bench.utils.dtype import dtype_support_svd
 from fusion_bench.utils.json import save_to_json
+from fusion_bench.utils.packages import is_ray_available
 
 from .min_norm_solvers import MinNormSolver, gradient_normalizers
 from .utils import is_leaf_module, print_params, svd
@@ -65,6 +66,7 @@ class DOPMerging(BaseAlgorithm, LightningFabricMixin):
         svd_epsilon: float = 1.0,
         svd_proj_space: str = "uv",
         exclude_keys: List[str] | None = None,
+        num_ray_actors: int = 0,
         **kwargs,
     ):
         """
@@ -87,6 +89,7 @@ class DOPMerging(BaseAlgorithm, LightningFabricMixin):
                         variance to preserve in the projection space.
             svd_proj_space: SVD projection space to use: 'u', 'v', or 'uv' (both).
             exclude_keys: List of module names to exclude from optimization.
+            num_ray_actors: Number of Ray actors to use for parallel processing. If 0, ray is not used.
             **kwargs: Additional arguments passed to BaseAlgorithm.
         """
         self.lr = lr
@@ -128,6 +131,26 @@ class DOPMerging(BaseAlgorithm, LightningFabricMixin):
         Returns:
             The final merged model after sequentially merging all models in the pool.
         """
+        if self.num_ray_actors > 0:
+            if is_ray_available():
+                import ray
+                from ray.util.actor_pool import ActorPool
+
+                if not ray.is_initialized():
+                    ray.init()
+
+                # create actors
+                self.ray_actor_pool = ActorPool(
+                    [
+                        DOPMergingActor.remote(**self.config)
+                        for _ in range(self.num_ray_actors)
+                    ]
+                )
+            else:
+                raise ImportError(
+                    "Ray is not installed. Please install ray to use this feature."
+                )
+
         model_names = modelpool.model_names
         if self.shuffle_order:
             random.shuffle(model_names)
@@ -170,9 +193,9 @@ class DOPMerging(BaseAlgorithm, LightningFabricMixin):
                 model_idx,
             )
             merged_weight = merged_weight.to(dtype=original_dtype)
-            module.weight.data = merged_weight.data
         else:
-            module.weight.data = simple_average(list(finetuned_weights.values()))
+            merged_weight = simple_average(list(finetuned_weights.values()))
+        return module_name, merged_weight
 
     def _layer_wise_optimize(
         self,
@@ -204,22 +227,51 @@ class DOPMerging(BaseAlgorithm, LightningFabricMixin):
                 for model_name in model_names
             }
             if isinstance(module, nn.Linear):
+                # process weight
                 finetuned_weights = {
                     model_name: finetuned_modules[model_name].weight
                     for model_name in model_names
                 }
-                self._optimize_linear_layer(
-                    module_name,
-                    module=module,
-                    finetuned_weights=finetuned_weights,
-                    model_idx=model_idx,
-                )
+                if self.num_ray_actors == 0:
+                    _, merged_weight = self._optimize_linear_layer(
+                        module_name,
+                        module=module,
+                        finetuned_weights=finetuned_weights,
+                        model_idx=model_idx,
+                    )
+                    module.weight.data = merged_weight.data
+                else:
+                    if not self.ray_actor_pool.has_free():
+                        module_name, merged_weight = (
+                            self.ray_actor_pool.get_next_unordered()
+                        )
+                        pretrained_model.get_submodule(module_name).weight.data = (
+                            merged_weight
+                        )
+                    self.ray_actor_pool.submit(
+                        lambda actor, kwargs: actor._optimize_linear_layer.remote(
+                            *kwargs
+                        ),
+                        {
+                            "module_name": module_name,
+                            "module": module,
+                            "finetuned_weights": finetuned_weights,
+                            "model_idx": model_idx,
+                        },
+                    )
+
+                # process bias if exists
                 if module.bias is not None:
                     module.bias.data = simple_average(
                         [m.bias for m in finetuned_modules.values()]
                     )
             else:
                 simple_average(list(finetuned_modules.values()), base_module=module)
+
+        if self.num_ray_actors > 0:
+            while self.ray_actor_pool.has_next():
+                module_name, merged_weight = self.ray_actor_pool.get_next_unordered()
+                pretrained_model.get_submodule(module_name).weight.data = merged_weight
 
         return pretrained_model
 
@@ -412,3 +464,9 @@ class DOPMerging(BaseAlgorithm, LightningFabricMixin):
             raise ValueError("Invalid svd_proj_space")
 
         return loss_i
+
+
+if is_ray_available():
+    import ray
+
+    DOPMergingActor = ray.remote(DOPMerging)
