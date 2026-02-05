@@ -79,28 +79,6 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
         ), "The alpha should be in the range of [0, 1]"
         super().__init__(**kwargs)
 
-    def print_params(self, pretrained_model):
-        total_params = 0
-        linear_params = 0
-        linear_weight_params = 0
-        for module_name, module in pretrained_model.named_modules():
-            if not is_leaf_module(module):
-                continue
-            if isinstance(module, nn.Linear):
-                linear_params += sum(p.numel() for n, p in module.named_parameters())
-                linear_weight_params += sum(
-                    p.numel() for n, p in module.named_parameters() if "weight" in n
-                )
-            total_params += sum(p.numel() for p in module.parameters())
-
-        linear_ratio = linear_params / total_params * 100
-        linear_weight_ratio = linear_weight_params / total_params * 100
-        print(f"Total Parameters: {total_params}")
-        print(f"Linear Parameters: {linear_params}")
-        print(f"Linear Weight Parameters: {linear_weight_params}")
-        print(f"Linear Ratio: {linear_ratio:.2f}%")
-        print(f"Linear Weight Ratio: {linear_weight_ratio:.2f}%")
-
     def run(self, modelpool: BaseModelPool):
         if self.seed is not None:
             L.seed_everything(self.seed)

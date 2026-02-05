@@ -110,8 +110,8 @@ class LightningFabricMixin:
         """
         if self._fabric_instance is None:
             if config.get("fabric", None) is None:
-                log.warning("No fabric configuration found. use default settings.")
-                self._fabric_instance = L.Fabric()
+                log.warning("No fabric configuration found. use default settings. By default, use 1 device.")
+                self._fabric_instance = L.Fabric(devices=1)
             else:
                 self._fabric_instance = instantiate(config.fabric)
             if not _is_using_cli():  # if not using cli, launch the fabric

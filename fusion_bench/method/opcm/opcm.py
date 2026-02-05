@@ -16,13 +16,14 @@ from transformers import CLIPVisionModel
 
 from fusion_bench import BaseAlgorithm, BaseModelPool
 from fusion_bench.mixins import LightningFabricMixin, SimpleProfilerMixin
+from fusion_bench.models.utils import is_leaf_module
 from fusion_bench.taskpool import CLIPVisionModelTaskPool
 from fusion_bench.utils import instantiate
 from fusion_bench.utils.json import load_from_json, save_to_json
 from fusion_bench.utils.parameters import state_dict_to_vector
 from fusion_bench.utils.state_dict_arithmetic import state_dict_sub
 
-from .utils import frobenius_inner_product, get_task_vector_norm, is_leaf_module, svd
+from .utils import frobenius_inner_product, get_task_vector_norm, svd
 
 if TYPE_CHECKING:
     from torch.utils.tensorboard import SummaryWriter
