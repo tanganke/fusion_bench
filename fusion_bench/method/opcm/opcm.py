@@ -30,9 +30,9 @@ if TYPE_CHECKING:
 
 
 class OPCMForCLIP(
-    BaseAlgorithm,
     LightningFabricMixin,
     SimpleProfilerMixin,
+    BaseAlgorithm,
 ):
     def __init__(
         self,
