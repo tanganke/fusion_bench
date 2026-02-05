@@ -12,14 +12,13 @@ import torch
 from omegaconf import DictConfig
 from torch import Tensor, nn
 from tqdm.auto import tqdm
-from transformers import CLIPVisionModel
 
-from fusion_bench import BaseAlgorithm, BaseModelPool
+from fusion_bench import BaseAlgorithm, BaseModelPool, auto_register_config
 from fusion_bench.mixins import LightningFabricMixin, SimpleProfilerMixin
-from fusion_bench.models.utils import is_leaf_module
-from fusion_bench.taskpool import CLIPVisionModelTaskPool
+from fusion_bench.models.utils import is_leaf_module, named_leaf_modules
 from fusion_bench.utils import instantiate
 from fusion_bench.utils.json import load_from_json, save_to_json
+from fusion_bench.utils.packages import is_ray_available
 from fusion_bench.utils.parameters import state_dict_to_vector
 from fusion_bench.utils.state_dict_arithmetic import state_dict_sub
 
@@ -29,7 +28,8 @@ if TYPE_CHECKING:
     from torch.utils.tensorboard import SummaryWriter
 
 
-class OPCMForCLIP(
+@auto_register_config
+class OPCM(
     LightningFabricMixin,
     SimpleProfilerMixin,
     BaseAlgorithm,
@@ -41,6 +41,7 @@ class OPCMForCLIP(
         seed: Optional[int] = None,
         save_on_every_step: bool = True,
         evaluate_on_every_step: bool = False,
+        num_ray_actors: int = 0,
         **kwargs,
     ):
         """
@@ -62,9 +63,28 @@ class OPCMForCLIP(
 
     @torch.no_grad()
     def run(self, modelpool: BaseModelPool):
+        if self.num_ray_actors > 0:
+            if is_ray_available():
+                import ray
+                from ray.util.actor_pool import ActorPool
+
+                if not ray.is_initialized():
+                    ray.init()
+
+                # create actors
+                if self.fabric.device.type == "cuda":
+                    actor_options = {"num_gpus": 1}
+                else:
+                    actor_options = {}
+                self.ray_actor_pool = ActorPool(
+                    [
+                        OPCMActor.options(**actor_options).remote(**self.config)
+                        for _ in range(self.num_ray_actors)
+                    ]
+                )
+
         if self.seed is not None:
             L.seed_everything(self.seed)
-        accelerator = self.fabric.device
 
         with self.profile("loading model"):
             pretrained_model = modelpool.load_pretrained_model()
@@ -72,10 +92,6 @@ class OPCMForCLIP(
         model_names = modelpool.model_names
         if self.shuffle_order:
             random.shuffle(model_names)
-
-        self.taskpool = cast(CLIPVisionModelTaskPool, self._program.taskpool)
-        self._test_datasets = deepcopy(self.taskpool._test_datasets)
-        """Configuration for the test datasets"""
 
         # log the model names
         if self.log_dir is not None:
@@ -87,17 +103,9 @@ class OPCMForCLIP(
 
         # get the average model
         with self.profile("loading model"):
+            print("Using the first model as the initial merged model.")
             merged_model = modelpool.load_model(model_names[0])
             assert merged_model is not None, "Failed to load the first model"
-
-        if self.evaluate_on_every_step:
-            with self.profile("evaluating model"):
-                self.taskpool._is_setup = False
-                self.taskpool._test_datasets = DictConfig(
-                    {model_names[0]: self._test_datasets[model_names[0]]}
-                )
-                report = self.taskpool.evaluate(deepcopy(merged_model))
-                save_to_json(report, Path(self.log_dir) / "report_0.json")
 
         self.avg_task_vector_norm = get_task_vector_norm(merged_model, pretrained_model)
         self.all_task_vector_norm = [self.avg_task_vector_norm]
@@ -140,44 +148,12 @@ class OPCMForCLIP(
 
                 self.lambda_t = 1  # temporary value
 
-                for module_name, module in tqdm(
-                    list(merged_model.named_modules()),
-                    desc=f"Processing {model_name}",
-                    leave=False,
-                ):
-                    if not is_leaf_module(module):
-                        continue
-
-                    if isinstance(module, nn.Linear):
-                        module.weight.data = self.merge_linear_weights(
-                            module.weight,
-                            pretrained_model.get_submodule(module_name).weight,
-                            task_model.get_submodule(module_name).weight,
-                            param_name=".".join([module_name, "weight"]),
-                            alpha=self.alpha,
-                            accelerator=accelerator,
-                        )
-                        if module.bias is not None:
-                            module.bias.data = self.merge_other_parameters(
-                                module.bias,
-                                pretrained_model.get_submodule(module_name).bias,
-                                task_model.get_submodule(module_name).bias,
-                                param_name=".".join([module_name, "bias"]),
-                                accelerator=accelerator,
-                            )
-                    else:
-                        for param_name, param in module.named_parameters():
-                            param.data = self.merge_other_parameters(
-                                merged_W=param,
-                                pretrained_W=pretrained_model.get_submodule(
-                                    module_name
-                                ).get_parameter(param_name),
-                                task_W=task_model.get_submodule(
-                                    module_name
-                                ).get_parameter(param_name),
-                                param_name=".".join([module_name, param_name]),
-                                accelerator=accelerator,
-                            )
+                self._layer_wise_merge(
+                    merged_model=merged_model,
+                    pretrained_model=pretrained_model,
+                    task_model=task_model,
+                    model_name=model_name,
+                )
 
                 task_vector_norm = get_task_vector_norm(merged_model, pretrained_model)
                 self.lambda_t *= task_vector_norm / self.avg_task_vector_norm
@@ -202,24 +178,78 @@ class OPCMForCLIP(
                 with self.profile("saving model"):
                     self.save_merged_model(merged_model, model_idx)
 
-            if self.evaluate_on_every_step:
-                with self.profile("evaluating model"):
-                    self.taskpool._is_setup = False
-                    self.taskpool._test_datasets = DictConfig(
-                        {
-                            n: self._test_datasets[n]
-                            for n in model_names[: model_idx + 1]
-                        }
-                    )
-                    report = self.taskpool.evaluate(deepcopy(merged_model))
-                    save_to_json(
-                        report, Path(self.log_dir) / f"report_{model_idx}.json"
-                    )
-
         self.print_profile_summary()
         return merged_model
 
-    def save_merged_model(self, merged_model: CLIPVisionModel, step: int):
+    def _layer_wise_merge(self, merged_model, pretrained_model, task_model, model_name):
+        if self.num_ray_actors > 0:
+            self._update_attributes_across_ray()
+
+        for module_name, module in tqdm(
+            list(named_leaf_modules(merged_model, ignore_empty=True)),
+            desc=f"Processing {model_name}",
+            leave=False,
+            disable=self.num_ray_actors > 0,
+        ):
+            if isinstance(module, nn.Linear):
+                # processing linear layers
+                merge_kwargs = {
+                    "merged_W": module.weight,
+                    "pretrained_W": pretrained_model.get_submodule(module_name).weight,
+                    "task_W": task_model.get_submodule(module_name).weight,
+                    "param_name": ".".join([module_name, "weight"]),
+                    "alpha": self.alpha,
+                }
+                if not self.num_ray_actors > 0:
+                    _, merged_weight = self.merge_linear_weights(**merge_kwargs)
+                    module.weight.data = merged_weight
+                else:
+                    if not self.ray_actor_pool.has_free():
+                        returned_module_name, merged_weight = (
+                            self.ray_actor_pool.get_next_unordered()
+                        )
+                        print(f"merged weight {returned_module_name} from ray actors.")
+                        pretrained_model.get_submodule(
+                            returned_module_name
+                        ).weight.data = merged_weight
+                    self.ray_actor_pool.submit(
+                        lambda actor, kwargs: actor.merge_linear_weights.remote(
+                            **kwargs
+                        ),
+                        merge_kwargs,
+                    )
+                # processing bias if exists
+                if module.bias is not None:
+                    module.bias.data = self.merge_other_parameters(
+                        module.bias,
+                        pretrained_model.get_submodule(module_name).bias,
+                        task_model.get_submodule(module_name).bias,
+                        param_name=".".join([module_name, "bias"]),
+                    )
+            else:
+                for param_name, param in module.named_parameters():
+                    param.data = self.merge_other_parameters(
+                        merged_W=param,
+                        pretrained_W=pretrained_model.get_submodule(
+                            module_name
+                        ).get_parameter(param_name),
+                        task_W=task_model.get_submodule(module_name).get_parameter(
+                            param_name
+                        ),
+                        param_name=".".join([module_name, param_name]),
+                    )
+
+        if self.num_ray_actors > 0:
+            while self.ray_actor_pool.has_next():
+                returned_module_name, merged_weight = (
+                    self.ray_actor_pool.get_next_unordered()
+                )
+                print(f"merged weight {returned_module_name} from ray actors.")
+                merged_model.get_submodule(returned_module_name).weight.data = (
+                    merged_weight
+                )
+
+    def save_merged_model(self, merged_model, step: int):
         if self.log_dir is None:
             print("Log dir is None, skip saving merged model.")
             return
@@ -228,6 +258,23 @@ class OPCMForCLIP(
             Path(self.log_dir) / "checkpoints" / f"merged_model_{step}"
         )
 
+    def _update_attributes_across_ray(self, attr_dict=None):
+        if attr_dict is None:
+            # called on master
+            attrs_to_sync = ["previous_lambda_t", "lambda_t"]
+            assert (
+                not self.ray_actor_pool.has_next()
+            ), "All previous tasks must be merged before syncing attributes."
+
+            for actor in self.ray_actor_pool._idle_actors:
+                actor._update_attributes_across_ray.remote(
+                    {attr: getattr(self, attr) for attr in attrs_to_sync}
+                )
+        else:
+            # called on ray actors
+            for attr, value in attr_dict.items():
+                setattr(self, attr, value)
+
     def merge_linear_weights(
         self,
         merged_W: Tensor,
@@ -235,8 +282,9 @@ class OPCMForCLIP(
         task_W: Tensor,
         param_name: str,
         alpha: float,
-        accelerator: str = "cpu",
     ):
+        accelerator = self.fabric.device
+
         original_device = merged_W.device
         merged_W = merged_W.to(accelerator)
         pretrained_W = pretrained_W.to(accelerator)
@@ -262,7 +310,8 @@ class OPCMForCLIP(
             pretrained_W
             + (previous_lambda_t * previous_merged_tv + cleaned_task_tv) / lambda_t
         )
-        return new_merged_W.to(original_device)
+        module_name = param_name[: param_name.rfind(".")]
+        return module_name, new_merged_W.to(original_device)
 
     def merge_other_parameters(
         self,
@@ -270,8 +319,9 @@ class OPCMForCLIP(
         pretrained_W: Tensor,
         task_W: Tensor,
         param_name: str,
-        accelerator: str = "cpu",
     ):
+        accelerator = self.fabric.device
+
         original_device = merged_W.device
         merged_W = merged_W.to(accelerator)
         pretrained_W = pretrained_W.to(accelerator)
@@ -298,3 +348,9 @@ class OPCMForCLIP(
             previous_lambda_t * previous_merged_tv + task_tv
         ) / torch.linalg.vector_norm(previous_merged_tv)
         return lambda_t.item()
+
+
+if is_ray_available():
+    import ray
+
+    OPCMActor = ray.remote(OPCM)
