@@ -37,12 +37,11 @@ def simple_average(
     If `_fusion_bench_target_modules` attribute is set on the modules, only the parameters of the specified target submodules will be averaged.
 
     Args:
-        modules (List[Union[nn.Module, StateDictType]]): A list of PyTorch modules or state dictionaries.
-        base_module (Optional[nn.Module]): A base module to use for the new module. If provided, the averaged parameters will be loaded into this module. If not provided, a new module will be created by copying the first module in the list.
+        modules (List[Union[nn.Module, StateDictType, Tensor]]): A list of PyTorch modules or state dictionaries.
+        base_module (Optional[Union[nn.Module, StateDictType, Tensor]]): A base module to use for the new module. If provided, the averaged parameters will be loaded into this module. If not provided, a new module will be created by copying the first module in the list.
 
     Returns:
-        module_or_state_dict (Union[nn.Module, StateDictType]): A new PyTorch module with the averaged parameters, or a new state dictionary with the averaged parameters.
-
+        module_or_state_dict (Union[nn.Module, StateDictType, Tensor]): A new PyTorch module with the averaged parameters, or a new state dictionary with the averaged parameters.
     Examples:
         >>> import torch.nn as nn
         >>> model1 = nn.Linear(10, 10)
