@@ -12,7 +12,6 @@ import torch
 from omegaconf import DictConfig
 from torch import Tensor, nn
 from tqdm.auto import tqdm
-from transformers import CLIPVisionModel
 
 from fusion_bench import BaseAlgorithm, BaseModelPool, auto_register_config
 from fusion_bench.mixins import LightningFabricMixin, SimpleProfilerMixin
