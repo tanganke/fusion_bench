@@ -3,7 +3,7 @@ from copy import deepcopy
 from typing import Dict, List, Mapping, Optional, Union
 
 import torch
-from torch import nn
+from torch import Tensor, nn
 
 from fusion_bench.method.base_algorithm import BaseAlgorithm
 from fusion_bench.mixins import SimpleProfilerMixin, auto_register_config
@@ -26,8 +26,8 @@ log = logging.getLogger(__name__)
 
 
 def simple_average(
-    modules: List[Union[nn.Module, StateDictType]],
-    base_module: Optional[nn.Module] = None,
+    modules: List[Union[nn.Module, StateDictType, Tensor]],
+    base_module: Optional[Union[nn.Module, StateDictType, Tensor]] = None,
 ):
     R"""
     Averages the parameters of a list of PyTorch modules or state dictionaries.
@@ -67,7 +67,25 @@ def simple_average(
         load_state_dict_into_target_modules(new_module, state_dict)
         return new_module
     elif isinstance(modules[0], Mapping):
-        return state_dict_avg(modules)
+        # if the modules are state dicts
+        # compute the average state dict
+        avg_state_dict = state_dict_avg(modules)
+        # load into base_module if provided
+        if base_module is not None:
+            for k in avg_state_dict:
+                base_module[k] = avg_state_dict[k]
+            return base_module
+        else:
+            return avg_state_dict
+    elif isinstance(modules[0], Tensor):
+        mean_tensor = torch.stack(modules, dim=0).mean(dim=0)
+        if base_module is not None:
+            base_module.data = mean_tensor
+            return base_module
+        else:
+            return mean_tensor
+    else:
+        raise ValueError(f"Unsupported type: {type(modules[0])}")
 
 
 @auto_register_config
