@@ -8,6 +8,29 @@ from fusion_bench.utils.dict import dict_merge
 from fusion_bench.utils.type import StateDictType, TorchModelType
 
 
+def is_leaf_module(module: nn.Module) -> bool:
+    return len(list(module.children())) == 0
+
+
+def named_leaf_modules(
+    module: nn.Module,
+    prefix: str = "",
+) -> Iterable[tuple[str, nn.Module]]:
+    """
+    Recursively find the leaf modules in a module.
+
+    Args:
+        module (nn.Module): PyTorch module.
+        prefix (str): A prefix to add to the layer names.
+
+    Returns:
+        Iterable[tuple[str, nn.Module]]: An iterable of (name, module) tuples for each leaf module.
+    """
+    for name, submodule in module.named_modules(prefix=prefix):
+        if is_leaf_module(submodule):
+            yield name, submodule
+
+
 def del_attr(obj, names: List[str]):
     """
     Deletes an attribute from an object recursively.

@@ -3,6 +3,7 @@ from typing import Tuple
 import torch
 from torch import Tensor, nn
 
+from fusion_bench.models.utils import is_leaf_module
 from fusion_bench.utils.parameters import state_dict_to_vector
 from fusion_bench.utils.state_dict_arithmetic import state_dict_sub
 
@@ -49,10 +50,6 @@ def svd(
 
 def frobenius_inner_product(w1: Tensor, w2: Tensor) -> Tensor:
     return torch.trace(w1.T @ w2)
-
-
-def is_leaf_module(module: nn.Module) -> bool:
-    return len(list(module.children())) == 0
 
 
 def get_task_vector_norm(model: nn.Module, pretrained_model: nn.Module) -> Tensor:

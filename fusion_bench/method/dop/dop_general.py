@@ -1,18 +1,12 @@
 """
 Continual Model Merging without Data: Dual Projections for Balancing Stability and Plasticity. NeurIPS, 2025.
-
-
-Example:
-
-fusion_bench \
-    method=dop/dop \
-    modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8_model_only \
-    taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
+(Architecture agnostic implementation)
 """
 
 import logging
 import os
 import random
+import time
 from copy import deepcopy
 from pathlib import Path
 from typing import Dict, List, Literal, Optional, Tuple, cast
@@ -24,23 +18,37 @@ from omegaconf import DictConfig
 from torch import Tensor, nn
 from torch.autograd import Variable
 from tqdm.auto import tqdm
-from transformers import CLIPVisionModel
 
 from fusion_bench import BaseAlgorithm, BaseModelPool, auto_register_config
 from fusion_bench.method.simple_average import simple_average
 from fusion_bench.mixins import LightningFabricMixin
-from fusion_bench.taskpool import CLIPVisionModelTaskPool
+from fusion_bench.models.utils import named_leaf_modules
 from fusion_bench.utils import seed_everything_by_time
+from fusion_bench.utils.dtype import dtype_support_svd
 from fusion_bench.utils.json import save_to_json
 
 from .min_norm_solvers import MinNormSolver, gradient_normalizers
-from .utils import is_leaf_module, svd
+from .utils import is_leaf_module, print_params, svd
 
 log = logging.getLogger(__name__)
 
 
 @auto_register_config
-class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
+class DOPMerging(BaseAlgorithm, LightningFabricMixin):
+    """
+    Dual Projections for Balancing Stability and Plasticity (DOP) merging algorithm.
+
+    This method implements continual model merging without data by using dual projections
+    in the SVD space to balance stability (preserving previously merged model's knowledge)
+    and plasticity (incorporating new model's knowledge).
+
+    The algorithm merges models sequentially, optimizing each merge using gradient descent
+    with optional multi-gradient descent algorithm (MGDA) for better trade-offs.
+
+    Reference:
+        Continual Model Merging without Data: Dual Projections for Balancing Stability and Plasticity.
+        NeurIPS, 2025.
+    """
 
     def __init__(
         self,
@@ -56,8 +64,31 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
         alpha: float = None,
         svd_epsilon: float = 1.0,
         svd_proj_space: str = "uv",
+        exclude_keys: List[str] | None = None,
         **kwargs,
     ):
+        """
+        Initialize the DOP merging algorithm.
+
+        Args:
+            seed: Random seed for reproducibility. If None, uses time-based seeding.
+            shuffle_order: Whether to shuffle the order of models before merging.
+            save_on_every_step: Whether to save the model after each merge step.
+            evaluate_on_every_step: Whether to evaluate the model after each merge step.
+            lr: Learning rate for the optimization process.
+            num_steps: Number of optimization steps per layer.
+            mgda: Whether to use Multi-Gradient Descent Algorithm for balancing losses.
+            ema: Whether to use exponential moving average for MGDA weights.
+            ema_beta: EMA decay rate for MGDA weights (only used if ema=True).
+            alpha: Weight for balancing between stability and plasticity (0-1).
+                   When mgda=False, used as a fixed weight. When mgda=True with ema=True,
+                   used as initial weight.
+            svd_epsilon: Threshold for SVD rank selection (0-1). Determines how much
+                        variance to preserve in the projection space.
+            svd_proj_space: SVD projection space to use: 'u', 'v', or 'uv' (both).
+            exclude_keys: List of module names to exclude from optimization.
+            **kwargs: Additional arguments passed to BaseAlgorithm.
+        """
         self.lr = lr
         self.num_steps = num_steps
         self.mgda = mgda
@@ -71,6 +102,10 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
         self.save_on_every_step = save_on_every_step
         self.evaluate_on_every_step = evaluate_on_every_step
 
+        if exclude_keys is None:
+            exclude_keys = []
+        self.exclude_keys = exclude_keys
+
         assert (
             self.svd_epsilon >= 0 and self.svd_epsilon <= 1
         ), "The svd_epsilon should be in the range of [0, 1]"
@@ -80,23 +115,22 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
         super().__init__(**kwargs)
 
     def run(self, modelpool: BaseModelPool):
-        if self.seed is not None:
-            L.seed_everything(self.seed)
-        else:
-            seed_everything_by_time(self.fabric)
+        """
+        Execute the DOP merging algorithm on a pool of models.
 
-        # get the model names, shuffle if needed
-        # the model names will be saved to the log directory as `model_names.json`
+        Merges models sequentially, where each new model is merged with the
+        previously merged result. The first model is used as-is, and subsequent
+        models are merged using layer-wise optimization.
+
+        Args:
+            modelpool: The model pool containing models to merge and the pretrained model.
+
+        Returns:
+            The final merged model after sequentially merging all models in the pool.
+        """
         model_names = modelpool.model_names
         if self.shuffle_order:
             random.shuffle(model_names)
-        if self.log_dir is not None:
-            save_to_json(model_names, os.path.join(self.log_dir, "model_names.json"))
-
-        if self.evaluate_on_every_step:
-            """Configuration for the test datasets"""
-            self.taskpool = cast(CLIPVisionModelTaskPool, self._program.taskpool)
-            self._test_datasets = deepcopy(self.taskpool._test_datasets)
 
         pretrained_model = modelpool.load_pretrained_model()
 
@@ -118,18 +152,27 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
                     model_idx=model_idx,
                 )
 
-            if self.save_on_every_step:
-                self.save_merged_model(merged_model, model_idx)
-
-            if self.evaluate_on_every_step:
-                self.taskpool._is_setup = False
-                self.taskpool._test_datasets = DictConfig(
-                    {n: self._test_datasets[n] for n in model_names[: model_idx + 1]}
-                )
-                report = self.taskpool.evaluate(deepcopy(merged_model))
-                save_to_json(report, Path(self.log_dir) / f"report_{model_idx}.json")
-
         return merged_model
+
+    def _optimize_linear_layer(
+        self,
+        module_name: str,
+        module: nn.Linear,
+        finetuned_weights: Dict[str, nn.Linear],
+        model_idx: int,
+    ):
+        if module.weight.requires_grad and module_name not in self.exclude_keys:
+            original_dtype = module.weight.dtype
+            merged_weight = self._optimize_weight(
+                module.weight,
+                finetuned_weights,
+                module_name,
+                model_idx,
+            )
+            merged_weight = merged_weight.to(dtype=original_dtype)
+            module.weight.data = merged_weight.data
+        else:
+            module.weight.data = simple_average(list(finetuned_weights.values()))
 
     def _layer_wise_optimize(
         self,
@@ -138,54 +181,45 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
         finetuned_models: Dict[str, nn.Module],
         model_idx: int,
     ):
-        time_cost = []
-        for module_name, module in pretrained_model.named_modules():
-            if not is_leaf_module(module):
-                continue
+        """
+        Optimize model parameters layer by layer.
 
+        Iterates through all leaf modules in the pretrained model and merges their weights
+        with the corresponding modules in the finetuned models. Linear layers with trainable
+        weights (not in exclude_keys) are optimized using gradient descent, while other
+        parameters are simply averaged.
+
+        Args:
+            model_names: List of model names to merge (e.g., ['merged', 'new_model']).
+            pretrained_model: The base pretrained model (structure modified in-place).
+            finetuned_models: Dictionary mapping model names to their finetuned versions.
+            model_idx: Index of the current model being merged (for tracking/logging).
+
+        Returns:
+            The pretrained_model with optimized/merged weights from finetuned models.
+        """
+        for module_name, module in named_leaf_modules(pretrained_model):
+            finetuned_modules = {
+                model_name: finetuned_models[model_name].get_submodule(module_name)
+                for model_name in model_names
+            }
             if isinstance(module, nn.Linear):
-                if module.weight.requires_grad:
-                    import time
-
-                    start_time = time.time()
-                    merged_weight = self._optimize_weight(
-                        module.weight,
-                        {
-                            model_name: finetuned_models[model_name]
-                            .get_submodule(module_name)
-                            .weight
-                            for model_name in model_names
-                        },
-                        module_name,
-                        model_idx,
-                    )
-                    end_time = time.time()
-                    time_cost.append(end_time - start_time)
-                    module.weight.data = merged_weight.data
-                else:
-                    module.weight.data = simple_average(
-                        [
-                            finetuned_models[model_name]
-                            .get_submodule(module_name)
-                            .weight
-                            for model_name in model_names
-                        ]
-                    )
+                finetuned_weights = {
+                    model_name: finetuned_modules[model_name].weight
+                    for model_name in model_names
+                }
+                self._optimize_linear_layer(
+                    module_name,
+                    module=module,
+                    finetuned_weights=finetuned_weights,
+                    model_idx=model_idx,
+                )
                 if module.bias is not None:
                     module.bias.data = simple_average(
-                        [
-                            finetuned_models[model_name].get_submodule(module_name).bias
-                            for model_name in model_names
-                        ]
+                        [m.bias for m in finetuned_modules.values()]
                     )
             else:
-                simple_average(
-                    [
-                        finetuned_models[model_name].get_submodule(module_name)
-                        for model_name in model_names
-                    ],
-                    base_module=module,
-                )
+                simple_average(list(finetuned_modules.values()), base_module=module)
 
         return pretrained_model
 
@@ -196,27 +230,54 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
         module_name: str,
         model_idx: int,
     ):
+        """
+        Optimize a single weight matrix by balancing projections in SVD space.
+
+        Performs gradient-based optimization to find merged weights that minimize
+        the projection loss in the SVD space of task vectors. Uses either MGDA
+        for automatic weight balancing or fixed alpha weighting.
+
+        The algorithm:
+        1. Computes SVD of each task vector (finetuned - pretrained)
+        2. Projects the difference between merged and finetuned weights onto SVD subspaces
+        3. Optimizes merged weights to minimize projection losses
+
+        Args:
+            pretrained_weight: The original pretrained weight matrix.
+            finetuned_weights: Dictionary mapping model names to their finetuned weight matrices.
+            module_name: Name of the module being optimized (for logging).
+            model_idx: Index of the current model being merged (for tracking).
+
+        Returns:
+            Optimized merged weight matrix on CPU.
+        """
         assert (
             self.fabric.world_size == 1
         ), "This algorithm is not currently supported in distributed training"
 
-        pretrained_weight = self.fabric.to_device(pretrained_weight.detach())
-        finetuned_weights = {
-            model_name: self.fabric.to_device(finetuned_weight.detach())
-            for model_name, finetuned_weight in finetuned_weights.items()
-        }
+        with torch.no_grad():
+            # Convert weights to float if original dtype does not support SVD
+            original_dtype = pretrained_weight.dtype
+            if not dtype_support_svd(original_dtype):
+                pretrained_weight = pretrained_weight.float()
+                finetuned_weights = {
+                    model_name: finetuned_weight.float()
+                    for model_name, finetuned_weight in finetuned_weights.items()
+                }
 
-        merged_weight = self.fabric.to_device(
-            nn.Parameter(
-                simple_average(
-                    [
-                        finetuned_weight.detach()
-                        for finetuned_weight in finetuned_weights.values()
-                    ]
-                ),
-                requires_grad=True,
+            # Move weights to the appropriate device
+            pretrained_weight = self.fabric.to_device(pretrained_weight.detach())
+            finetuned_weights = {
+                model_name: self.fabric.to_device(finetuned_weight.detach())
+                for model_name, finetuned_weight in finetuned_weights.items()
+            }
+
+            # Initialize merged weight as simple average of finetuned weights
+            merged_weight = self.fabric.to_device(
+                nn.Parameter(
+                    simple_average(list(finetuned_weights.values())), requires_grad=True
+                )
             )
-        )
 
         # Compute SVD of the difference between the finetuned and pretrained weights
         proj_u_dict = {}
@@ -319,9 +380,24 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
                 loss.backward()
                 optimizer.step()
 
-        return merged_weight.detach().cpu()
+        return merged_weight.detach().to(dtype=original_dtype, device="cpu")
 
     def cal_loss_i(self, delta_tv, proj_s, proj_u, proj_v):
+        """
+        Calculate the projection loss for a single task.
+
+        Computes the Frobenius norm of the projection of the weight difference
+        onto the SVD subspace(s) defined by U and/or V matrices.
+
+        Args:
+            delta_tv: Difference between merged weight and finetuned weight (task vector difference).
+            proj_s: Singular values from SVD of the task vector.
+            proj_u: Left singular vectors (U) from SVD.
+            proj_v: Right singular vectors (V) from SVD.
+
+        Returns:
+            Scalar loss value representing the projection distance.
+        """
         proj_delta_1 = torch.diag(proj_s) @ proj_u.T @ delta_tv
         proj_delta_2 = delta_tv @ proj_v @ torch.diag(proj_s)
         loss_i_u = torch.linalg.matrix_norm(proj_delta_1, ord="fro") ** 2
@@ -336,9 +412,3 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
             raise ValueError("Invalid svd_proj_space")
 
         return loss_i
-
-    def save_merged_model(self, merged_model: CLIPVisionModel, step: int):
-        os.makedirs(Path(self.log_dir) / "checkpoints", exist_ok=True)
-        merged_model.save_pretrained(
-            Path(self.log_dir) / "checkpoints" / f"merged_model_{step}"
-        )

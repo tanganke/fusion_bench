@@ -146,3 +146,22 @@ def validate_expected_param_dtype(
             raise ValueError(
                 f"Parameter {name} has dtype {param.dtype}, but expected {dtype}"
             )
+
+
+def dtype_support_svd(dtype: torch.dtype) -> bool:
+    """
+    Check if the given dtype is supported for SVD operation in PyTorch.
+
+    Args:
+        dtype (torch.dtype): The data type to check.
+
+    Returns:
+        bool: True if the dtype is supported for SVD, False otherwise.
+    """
+    supported_dtypes = {
+        torch.float32,
+        torch.float64,
+        torch.complex64,
+        torch.complex128,
+    }
+    return dtype in supported_dtypes
