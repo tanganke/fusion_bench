@@ -27,6 +27,18 @@ log = logging.getLogger(__name__)
 TensorOrModule = TypeVar("TensorOrModule", torch.Tensor, torch.nn.Module, Any)
 
 
+def _fabric_has_logger(fabric: L.Fabric) -> bool:
+    """
+    Check if the fabric has a logger.
+
+    Args:
+        fabric (L.Fabric): The Lightning Fabric instance.
+    Returns:
+        bool: True if the fabric has a logger, False otherwise.
+    """
+    return fabric._loggers is not None and len(fabric._loggers) > 0
+
+
 def get_policy(*args: str) -> set:
     """
     Get the policy from the provided list of policy names.
@@ -57,7 +69,7 @@ def _is_mlflow_logger(fabric: L.Fabric) -> bool:
     Returns:
         bool: True if the logger is an instance of MLFlowLogger, False otherwise.
     """
-    if fabric.logger is None:
+    if not _fabric_has_logger(fabric):
         return False
     return fabric.logger.__class__.__name__ == "MLFlowLogger"
 
@@ -324,13 +336,12 @@ class LightningFabricMixin:
         if self._fabric_instance is None:
             return
 
-        if _is_mlflow_logger(self.fabric):
+        if _fabric_has_logger(self.fabric) and _is_mlflow_logger(self.fabric):
             if sys.exc_info()[0] is None:
                 status = "success"
             else:
                 status = "failed"
-            if self.fabric.logger is not None:
-                self.fabric.logger.finalize(status)
+            self.fabric.logger.finalize(status)
 
         del self._fabric_instance
         self._fabric_instance = None
