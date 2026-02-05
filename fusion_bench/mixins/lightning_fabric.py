@@ -329,7 +329,8 @@ class LightningFabricMixin:
                 status = "success"
             else:
                 status = "failed"
-            self.fabric.logger.finalize(status)
+            if self.fabric.logger is not None:
+                self.fabric.logger.finalize(status)
 
         del self._fabric_instance
         self._fabric_instance = None
