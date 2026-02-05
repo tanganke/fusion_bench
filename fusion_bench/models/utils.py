@@ -15,6 +15,7 @@ def is_leaf_module(module: nn.Module) -> bool:
 def named_leaf_modules(
     module: nn.Module,
     prefix: str = "",
+    ignore_empty: bool = True,
 ) -> Iterable[tuple[str, nn.Module]]:
     """
     Recursively find the leaf modules in a module.
@@ -28,6 +29,8 @@ def named_leaf_modules(
     """
     for name, submodule in module.named_modules(prefix=prefix):
         if is_leaf_module(submodule):
+            if ignore_empty and len(list(submodule.parameters())) == 0:
+                continue
             yield name, submodule
 
 

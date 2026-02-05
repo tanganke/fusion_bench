@@ -140,9 +140,13 @@ class DOPMerging(BaseAlgorithm, LightningFabricMixin):
                     ray.init()
 
                 # create actors
+                if self.fabric.device.type == "cuda":
+                    actor_options = {"num_gpus": 1}
+                else:
+                    actor_options = {}
                 self.ray_actor_pool = ActorPool(
                     [
-                        DOPMergingActor.remote(**self.config)
+                        DOPMergingActor.options(**actor_options).remote(**self.config)
                         for _ in range(self.num_ray_actors)
                     ]
                 )
@@ -250,7 +254,7 @@ class DOPMerging(BaseAlgorithm, LightningFabricMixin):
                         )
                     self.ray_actor_pool.submit(
                         lambda actor, kwargs: actor._optimize_linear_layer.remote(
-                            *kwargs
+                            **kwargs
                         ),
                         {
                             "module_name": module_name,
