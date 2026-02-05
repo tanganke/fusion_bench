@@ -86,7 +86,6 @@ class OPCM(
 
         if self.seed is not None:
             L.seed_everything(self.seed)
-        accelerator = self.fabric.device
 
         with self.profile("loading model"):
             pretrained_model = modelpool.load_pretrained_model()
