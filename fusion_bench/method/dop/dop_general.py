@@ -21,7 +21,7 @@ from tqdm.auto import tqdm
 
 from fusion_bench import BaseAlgorithm, BaseModelPool, auto_register_config
 from fusion_bench.method.simple_average import simple_average
-from fusion_bench.mixins import LightningFabricMixin
+from fusion_bench.mixins import LightningFabricMixin, SimpleProfilerMixin
 from fusion_bench.models.utils import named_leaf_modules
 from fusion_bench.utils import seed_everything_by_time
 from fusion_bench.utils.dtype import dtype_support_svd
@@ -35,7 +35,7 @@ log = logging.getLogger(__name__)
 
 
 @auto_register_config
-class DOPMerging(BaseAlgorithm, LightningFabricMixin):
+class DOPMerging(LightningFabricMixin, SimpleProfilerMixin, BaseAlgorithm):
     """
     Dual Projections for Balancing Stability and Plasticity (DOP) merging algorithm.
 
@@ -167,18 +167,25 @@ class DOPMerging(BaseAlgorithm, LightningFabricMixin):
                 f"--------- Optimizing {model_idx + 1}/{len(model_names)}-th with {model_name} ---------"
             )
             if model_idx == 0:
-                merged_model = modelpool.load_model(model_names[0])
+                print("Using the first model as the initial merged model.")
+                with self.profile("loading models"):
+                    merged_model = modelpool.load_model(model_names[0])
             else:
-                merged_model = self._layer_wise_optimize(
-                    model_names=["merged", model_name],
-                    pretrained_model=deepcopy(pretrained_model),
-                    finetuned_models={
-                        "merged": merged_model,
-                        model_name: modelpool.load_model(model_name),
-                    },
-                    model_idx=model_idx,
-                )
+                with self.profile("loading models"):
+                    finetuned_model = modelpool.load_model(model_name)
+                with self.profile("DOP merging"):
+                    merged_model = self._layer_wise_optimize(
+                        model_names=["merged", model_name],
+                        pretrained_model=deepcopy(pretrained_model),
+                        finetuned_models={
+                            "merged": merged_model,
+                            model_name: finetuned_model,
+                        },
+                        model_idx=model_idx,
+                    )
+                del finetuned_model
 
+        self.print_profile_summary()
         return merged_model
 
     def _optimize_linear_layer(
@@ -246,12 +253,13 @@ class DOPMerging(BaseAlgorithm, LightningFabricMixin):
                     module.weight.data = merged_weight.data
                 else:
                     if not self.ray_actor_pool.has_free():
-                        module_name, merged_weight = (
+                        returned_module_name, merged_weight = (
                             self.ray_actor_pool.get_next_unordered()
                         )
-                        pretrained_model.get_submodule(module_name).weight.data = (
-                            merged_weight
-                        )
+                        print(f"merged weight {returned_module_name} from ray actors.")
+                        pretrained_model.get_submodule(
+                            returned_module_name
+                        ).weight.data = merged_weight
                     self.ray_actor_pool.submit(
                         lambda actor, kwargs: actor._optimize_linear_layer.remote(
                             **kwargs
@@ -275,6 +283,7 @@ class DOPMerging(BaseAlgorithm, LightningFabricMixin):
         if self.num_ray_actors > 0:
             while self.ray_actor_pool.has_next():
                 module_name, merged_weight = self.ray_actor_pool.get_next_unordered()
+                print(f"merged weight {module_name} from ray actors.")
                 pretrained_model.get_submodule(module_name).weight.data = merged_weight
 
         return pretrained_model
@@ -360,7 +369,9 @@ class DOPMerging(BaseAlgorithm, LightningFabricMixin):
             all_losses = [[], []]
             all_alphas = [[], []]
             for step_idx in tqdm(
-                range(self.num_steps), desc=f"Optimizing {module_name} weight"
+                range(self.num_steps),
+                desc=f"Optimizing {module_name} weight",
+                disable=self.num_ray_actors > 0,
             ):
                 # Scaling the loss functions based on the algorithm choice
                 loss_data = {}
@@ -421,7 +432,9 @@ class DOPMerging(BaseAlgorithm, LightningFabricMixin):
             # This is a naive weighted optimization
             optimizer = torch.optim.Adam([merged_weight], lr=self.lr)
             for step_idx in tqdm(
-                range(self.num_steps), desc=f"Optimizing {module_name} weight"
+                range(self.num_steps),
+                desc=f"Optimizing {module_name} weight",
+                disable=self.num_ray_actors > 0,
             ):
                 loss = 0
                 for i, finetuned_weight in enumerate(finetuned_weights.values()):

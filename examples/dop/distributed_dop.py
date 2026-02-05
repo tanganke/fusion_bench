@@ -20,5 +20,5 @@ with timeit_context("loading models"):
     }
 
 algo: DOPMerging = DOPMerging.from_yaml(config_file)
-algo.num_ray_actors = 2  # set the number of ray actors to use for parallel merging
+algo.num_ray_actors = 2 # set the number of ray actors to use for parallel merging
 algo.run(BaseModelPool(models))
