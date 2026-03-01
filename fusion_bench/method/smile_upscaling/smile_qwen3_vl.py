@@ -102,8 +102,8 @@ class SmileQwen3VLUpscalingAlgorithm(
             if os.path.dirname(self.model_save_path):
                 os.makedirs(os.path.dirname(self.model_save_path), exist_ok=True)
             log.info(f"Saving model to {self.model_save_path}")
-            tokenizer = self.modelpool.load_tokenizer()
-            tokenizer.save_pretrained(self.model_save_path)
+            # tokenizer = self.modelpool.load_tokenizer()
+            # tokenizer.save_pretrained(self.model_save_path)
             if not self.save_with_remote_code:
                 model.save_pretrained(self.model_save_path)
             else:
