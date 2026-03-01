@@ -36,6 +36,7 @@ _import_structure = {
         "auto_register_config",
     ],
     "modelpool": [
+        "ModelPoolType",
         "AutoModelPool",
         "BaseModelPool",
         "CausalLMBackbonePool",
@@ -116,6 +117,7 @@ if TYPE_CHECKING:
         Dinov2ForImageClassificationPool,
         GPT2ForSequenceClassificationPool,
         HuggingFaceGPT2ClassificationPool,
+        ModelPoolType,
         NYUv2ModelPool,
         OpenCLIPVisionModelPool,
         PeftModelForSeq2SeqLMPool,

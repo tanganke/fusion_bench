@@ -1,6 +1,6 @@
 import logging
 from copy import deepcopy
-from typing import Any, Dict, Generator, List, Optional, Tuple, Union
+from typing import Any, Dict, Generator, List, Optional, Tuple, TypeVar, Union
 
 import torch
 from omegaconf import DictConfig, OmegaConf, UnsupportedValueType
@@ -17,7 +17,7 @@ from fusion_bench.utils import (
     validate_model_name,
 )
 
-__all__ = ["BaseModelPool"]
+__all__ = ["BaseModelPool", "ModelPoolType"]
 
 log = logging.getLogger(__name__)
 
@@ -475,3 +475,6 @@ class BaseModelPool(
             raise RuntimeError("Model pool is not initialized")
         validate_model_name(model_name, allow_special=True)
         return model_name in self._models
+
+
+ModelPoolType = TypeVar("ModelPoolType", bound=BaseModelPool)

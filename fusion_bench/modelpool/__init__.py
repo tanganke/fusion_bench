@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from fusion_bench.utils.lazy_imports import LazyImporter
 
 _import_structure = {
-    "base_pool": ["BaseModelPool"],
+    "base_pool": ["BaseModelPool", "ModelPoolType"],
     "causal_lm": ["CausalLMPool", "CausalLMBackbonePool"],
     "clip_vision": ["CLIPVisionModelPool"],
     "convnext_for_image_classification": [
@@ -34,7 +34,7 @@ _import_structure = {
 
 
 if TYPE_CHECKING:
-    from .base_pool import BaseModelPool
+    from .base_pool import BaseModelPool, ModelPoolType
     from .causal_lm import CausalLMBackbonePool, CausalLMPool
     from .clip_vision import CLIPVisionModelPool
     from .convnext_for_image_classification import (
