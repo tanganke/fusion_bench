@@ -59,6 +59,7 @@ class SingularValueCalibration(BaseAlgorithm):
             desc="Calibrating merged model",
         ):
             if param.dim() == 2:  # Only calibrate weight matrices
+                tqdm.write(f"Calibrating parameter: {name}, shape: {param.shape}")
                 base_weight = pretrained_model.get_parameter(name).data
                 task_weights = [
                     task_model.get_parameter(name).data for task_model in task_models

@@ -43,8 +43,8 @@ def project_onto_singular_vectors(
     for r in range(num_subspaces):
         u_r = U[:, r]  # Shape: (m,)
         # a_r^i = u_r^T @ ΔW_i -> Shape: (n,)
-        a_r = u_r @ task_matrix  # Equivalent to u_r^T @ task_matrix
-        subspace_responses.append(a_r)
+        a_r = u_r.view(1, -1) @ task_matrix  # Equivalent to u_r^T @ task_matrix
+        subspace_responses.append(a_r.squeeze(0))  # Shape: (n,)
 
     return subspace_responses
 
