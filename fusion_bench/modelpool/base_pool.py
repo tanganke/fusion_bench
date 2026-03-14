@@ -353,7 +353,17 @@ class BaseModelPool(
                 f"Existing models: {list(self._models.keys())}"
             )
 
-        self._models[model_name] = model_or_config
+        try:
+            self._models[model_name] = model_or_config
+        except UnsupportedValueType as e:
+            # convert to dict if it's a dataclass or other unsupported type
+            log.info(
+                f"Model configuration for '{model_name}' is of unsupported type {type(model_or_config)}. "
+                "Attempting to convert to dict."
+            )
+            self._models = OmegaConf.to_container(self._models, resolve=True)
+            self._models[model_name] = model_or_config
+
         log.debug(f"Added model '{model_name}' to the pool.")
 
     def load_pretrained_model(self, *args, **kwargs):

@@ -1,4 +1,5 @@
 import torch
+from tqdm import tqdm
 
 from fusion_bench import BaseAlgorithm, BaseModelPool, auto_register_config
 
@@ -53,7 +54,10 @@ class SingularValueCalibration(BaseAlgorithm):
             modelpool.load_model(model_name) for model_name in modelpool.model_names
         ]
 
-        for name, param in merged_model.named_parameters():
+        for name, param in tqdm(
+            tuple(merged_model.named_parameters()),
+            desc="Calibrating merged model",
+        ):
             if param.dim() == 2:  # Only calibrate weight matrices
                 base_weight = pretrained_model.get_parameter(name).data
                 task_weights = [
@@ -69,5 +73,8 @@ class SingularValueCalibration(BaseAlgorithm):
                     accelerator=self.accelerator,
                 )
                 param.data.copy_(calibrated_weight, non_blocking=True)
+            else:
+                # For non-weight parameters (e.g., biases, LayerNorm weights), we keep them unchanged.
+                pass
 
         return merged_model
