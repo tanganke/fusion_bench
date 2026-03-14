@@ -132,7 +132,13 @@ def subspace_consistency_spectral_calibration(
         Calibrated merged matrix W_calibrated of shape (m, n)
     """
     if accelerator is None:
-        accelerator = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if torch.cuda.is_available():
+            accelerator = torch.device("cuda")
+        elif torch.mps.is_available():
+            accelerator = torch.device("mps")
+        else:
+            accelerator = base_weight.device
+
     original_device = base_weight.device
 
     base_weight = base_weight.to(accelerator)
