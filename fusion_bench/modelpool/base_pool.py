@@ -357,7 +357,7 @@ class BaseModelPool(
             self._models[model_name] = model_or_config
         except UnsupportedValueType as e:
             # convert to dict if it's a dataclass or other unsupported type
-            log.info(
+            log.warning(
                 f"Model configuration for '{model_name}' is of unsupported type {type(model_or_config)}. "
                 "Attempting to convert to dict."
             )
