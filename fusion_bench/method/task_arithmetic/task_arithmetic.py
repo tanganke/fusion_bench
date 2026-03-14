@@ -101,12 +101,17 @@ class TaskArithmeticAlgorithm(
         scaling_factor (int): The factor by which the task vectors will be scaled before merging.
     """
 
-    def __init__(self, scaling_factor: int, **kwargs):
+    def __init__(
+        self,
+        scaling_factor: float,
+        inplace: bool = True,
+        **kwargs,
+    ):
         """
         Initializes the TaskArithmeticAlgorithm with the given scaling factor.
 
         Args:
-            scaling_factor (int): The factor by which the task vectors will be scaled before merging.
+            scaling_factor (float): The factor by which the task vectors will be scaled before merging.
         """
         super().__init__(**kwargs)
 
@@ -160,7 +165,7 @@ class TaskArithmeticAlgorithm(
 
         # apply state dict to model
         if isinstance(pretrained_model, nn.Module):
-            model = pretrained_model
+            model = pretrained_model if self.inplace else deepcopy(pretrained_model)
             model.load_state_dict(state_dict)
         elif isinstance(pretrained_model, LazyStateDict):
             model = deepcopy(pretrained_model.meta_module)
