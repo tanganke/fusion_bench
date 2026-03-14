@@ -113,6 +113,16 @@ class BaseModelPool(
         return "_pretrained_" in self._models
 
     @property
+    def has_merged(self) -> bool:
+        """
+        Check if the model pool contains a merged model.
+
+        Returns:
+            bool: True if a merged model is available, False otherwise.
+        """
+        return "_merged_" in self._models
+
+    @property
     def all_model_names(self) -> List[str]:
         """
         Get the names of all models in the pool, including special models.
@@ -328,6 +338,40 @@ class BaseModelPool(
         ), "No pretrained model available. Check `_pretrained_` is in the `models` key."
         model = self.load_model("_pretrained_", *args, **kwargs)
         return model
+
+    def add_model(
+        self, model_name: str, model_or_config: Union[nn.Module, DictConfig, str]
+    ):
+        """
+        Add a model to the model pool.
+
+        Args:
+            model_name (str): The name of the model to add.
+            model_or_config (Union[nn.Module, DictConfig, str]): The model instance or configuration to add.
+
+        Raises:
+            ValidationError: If model_name is invalid or already exists in the pool.
+        """
+        validate_model_name(model_name, allow_special=True)
+
+        if model_name in self._models:
+            raise ValidationError(
+                f"Model name '{model_name}' already exists in the pool. "
+                f"Existing models: {list(self._models.keys())}"
+            )
+
+        try:
+            self._models[model_name] = model_or_config
+        except UnsupportedValueType:
+            # convert to dict if it's a dataclass or other unsupported type
+            log.info(
+                f"Model configuration for '{model_name}' is of unsupported type {type(model_or_config)}. "
+                "Attempting to convert to dict."
+            )
+            self._models = OmegaConf.to_container(self._models, resolve=True)
+            self._models[model_name] = model_or_config
+
+        log.debug(f"Added model '{model_name}' to the pool.")
 
     def load_pretrained_or_first_model(self, *args, **kwargs):
         """
