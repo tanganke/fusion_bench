@@ -151,16 +151,20 @@ def subspace_consistency_spectral_calibration(
     delta_merged_matrix = merged_weight - base_weight
 
     # Project each task's ΔW_i onto the singular vectors U to get subspace responses
+    U_merged, S_merged, Vh_merged = torch.linalg.svd(
+        delta_merged_matrix,
+        full_matrices=False,
+    )
+
     task_responses = []
     for i in range(len(delta_task_matrices)):
-        U, _, _ = torch.svd(delta_task_matrices[i])
         task_responses.append(
-            project_onto_singular_vectors(task_matrix=delta_task_matrices[i], U=U)
+            project_onto_singular_vectors(
+                task_matrix=delta_task_matrices[i], U=U_merged
+            )  # Use merged U for consistent subspace basis
         )
-        del U  # Free memory
 
     # Project ΔW_merge onto the singular vectors U to get merged responses
-    U_merged, S_merged, V_merged = torch.svd(delta_merged_matrix)
     merged_responses = project_onto_singular_vectors(
         task_matrix=delta_merged_matrix, U=U_merged
     )
@@ -187,8 +191,8 @@ def subspace_consistency_spectral_calibration(
         calibration_factors.append(gamma_r)
 
     # Apply calibration factors to the merged matrix in the spectral domain
-    S_calibrated = torch.tensor(calibration_factors) * S_merged
-    delta_merged_matrix_calibrated = U_merged @ torch.diag(S_calibrated) @ V_merged.t()
+    S_calibrated = torch.as_tensor(calibration_factors, device=accelerator) * S_merged
+    delta_merged_matrix_calibrated = U_merged @ torch.diag(S_calibrated) @ Vh_merged
     W_calibrated = delta_merged_matrix_calibrated + base_weight
 
     return W_calibrated.to(original_device, non_blocking=True)
