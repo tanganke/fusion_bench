@@ -4,7 +4,7 @@ Merging loss defined in the paper :
 Mar. 10, 2026, arXiv: arXiv:2603.09463. doi: 10.48550/arXiv.2603.09463.
 """
 
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Literal, Optional, Union
 
 
 def _merging_loss_scalar(merged: float, individual: float) -> float:
@@ -18,6 +18,7 @@ def compute_merging_loss(
     merged_performance: Union[float, Dict[str, float]],
     individual_performance: Union[float, Dict[str, float]],
     task_names: Optional[List[str]] = None,
+    reduction: Optional[Literal["mean"]] = None,
 ) -> Union[float, Dict[str, float]]:
     """Compute the merging loss for one or more tasks.
 
@@ -40,6 +41,8 @@ def compute_merging_loss(
             performance values. Must match the type/keys of ``merged_performance``.
         task_names: Optional list of task names to restrict computation to a subset
             of keys when both inputs are dicts.
+        reduction: Optional reduction method to apply when inputs are dicts. If
+            ``"mean"``, returns the average merging loss across tasks instead of a dict.
 
     Returns:
         The merging loss as a percentage in :math:`[-100, 0]`. Returns a single
@@ -74,12 +77,18 @@ def compute_merging_loss(
         missing = set(keys) - individual_performance.keys()
         if missing:
             raise ValueError(f"Keys missing from individual_performance: {missing}")
-        return {
+        result = {
             task: _merging_loss_scalar(
                 merged_performance[task], individual_performance[task]
             )
             for task in keys
         }
+        if reduction is not None:
+            if reduction == "mean":
+                return sum(result.values()) / len(result)
+            else:
+                raise ValueError(f"Unsupported reduction method: {reduction}")
+        return result
     else:
         return _merging_loss_scalar(
             float(merged_performance), float(individual_performance)
