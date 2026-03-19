@@ -304,7 +304,7 @@ The WebUI is particularly useful for exploring available configurations, experim
 If you find this benchmark useful, please consider citing our work:
 
 ```bibtex
-@article{tang2024fusionbench,
+@article{tang2025fusionbench,
   title={Fusionbench: A comprehensive benchmark of deep model fusion},
   author={Tang, Anke and Shen, Li and Luo, Yong and Yang, Enneng and Hu, Han and Zhang, Lefei and Du, Bo and Tao, Dacheng},
   journal={Journal of Machine Learning Research},
