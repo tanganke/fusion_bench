@@ -1,9 +1,14 @@
+import os
+
 import torch
 from tqdm import tqdm
 
 from fusion_bench import BaseAlgorithm, BaseModelPool, auto_register_config
 
-from .utils import subspace_consistency_spectral_calibration
+from .utils import (
+    subspace_consistency_spectral_calibration,
+    subspace_consistency_spectral_calibration_accelerated,
+)
 
 
 @auto_register_config
@@ -26,6 +31,12 @@ class SingularValueCalibration(BaseAlgorithm):
         super().__init__(**kwargs)
         self.alpha = alpha
         self.accelerator = accelerator
+
+    def _calibration_impl(self):
+        impl = os.environ.get("FUSION_BENCH_SVC_IMPL", "accelerated").lower()
+        if impl in {"original"}:
+            return subspace_consistency_spectral_calibration
+        return subspace_consistency_spectral_calibration_accelerated
 
     @torch.no_grad()
     def run(self, modelpool):
@@ -53,6 +64,7 @@ class SingularValueCalibration(BaseAlgorithm):
         task_models = [
             modelpool.load_model(model_name) for model_name in modelpool.model_names
         ]
+        calibration_impl = self._calibration_impl()
 
         for name, param in tqdm(
             tuple(merged_model.named_parameters()),
@@ -66,7 +78,7 @@ class SingularValueCalibration(BaseAlgorithm):
                 ]
                 merged_weight = param.data
 
-                calibrated_weight = subspace_consistency_spectral_calibration(
+                calibrated_weight = calibration_impl(
                     base_weight=base_weight,
                     task_weights=task_weights,
                     merged_weight=merged_weight,
