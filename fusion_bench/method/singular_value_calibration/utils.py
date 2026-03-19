@@ -196,3 +196,80 @@ def subspace_consistency_spectral_calibration(
     W_calibrated = delta_merged_matrix_calibrated + base_weight
 
     return W_calibrated.to(original_device, non_blocking=True)
+
+
+def subspace_consistency_spectral_calibration_accelerated(
+    base_weight: torch.Tensor,
+    task_weights: List[torch.Tensor],
+    merged_weight: torch.Tensor,
+    alpha: float = 1.0,
+    accelerator: Optional[torch.device] = None,
+) -> torch.Tensor:
+    """
+    Vectorized SVC implementation.
+
+    Compared with ``subspace_consistency_spectral_calibration``, this version keeps
+    the same core calibration rule but computes per-rank and per-task projection
+    coefficients in parallel instead of Python loops.
+    """
+    if accelerator is None:
+        if torch.cuda.is_available():
+            accelerator = torch.device("cuda")
+        elif torch.mps.is_available():
+            accelerator = torch.device("mps")
+        else:
+            accelerator = base_weight.device
+
+    original_device = base_weight.device
+    original_dtype = merged_weight.dtype
+
+    compute_dtype = torch.float64
+    base_weight = base_weight.to(accelerator, dtype=compute_dtype)
+    merged_weight = merged_weight.to(accelerator, dtype=compute_dtype)
+    task_weights = [
+        task_weight.to(accelerator, dtype=compute_dtype) for task_weight in task_weights
+    ]
+
+    delta_task_matrices = torch.stack(
+        [task_weight - base_weight for task_weight in task_weights], dim=0
+    )  # [K, m, n]
+    delta_merged_matrix = merged_weight - base_weight  # [m, n]
+
+    U_merged, S_merged, Vh_merged = torch.linalg.svd(
+        delta_merged_matrix,
+        full_matrices=False,
+    )
+
+    # Use the merged singular vectors as the shared subspace basis and compute all
+    # task/merged subspace responses in parallel.
+    U_sel = U_merged.transpose(0, 1).contiguous()  # [R, m]
+    merged_responses = U_sel @ delta_merged_matrix  # [R, n]
+    task_responses = torch.einsum(
+        "rm,kmn->rkn", U_sel, delta_task_matrices
+    )  # [R, K, n]
+
+    denom = (task_responses * task_responses).sum(dim=-1).clamp_min(1e-12)  # [R, K]
+    projection_coefficients = (
+        torch.einsum("rn,rkn->rk", merged_responses, task_responses) / denom
+    )  # [R, K]
+    projection_coefficients = torch.nan_to_num(
+        projection_coefficients,
+        nan=alpha,
+        neginf=alpha,
+    )
+
+    alpha_t = torch.as_tensor(
+        alpha,
+        device=projection_coefficients.device,
+        dtype=projection_coefficients.dtype,
+    )
+    calibration_factors = (
+        delta_task_matrices.shape[0]
+        / torch.maximum(projection_coefficients, alpha_t).sum(dim=1)
+    )  # [R]
+
+    S_calibrated = calibration_factors.to(S_merged.dtype) * S_merged
+    delta_merged_matrix_calibrated = (U_merged * S_calibrated.unsqueeze(0)) @ Vh_merged
+    W_calibrated = delta_merged_matrix_calibrated + base_weight
+
+    return W_calibrated.to(original_device, dtype=original_dtype, non_blocking=False)
