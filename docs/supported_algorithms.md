@@ -52,8 +52,7 @@ Here is a table of supported algorithms in the benchmark:
 
     | Algorithm Name  | Class                                                | Description            |
     | --------------- | ---------------------------------------------------- | ---------------------- |
-    | Dummy Algorithm | [`DummyAlgorithm`][fusion_bench.method.DummyAlgorithm] | Return model as it is. |
-    | `dummy`         | `.dummy.DummyAlgorithm`                              | Dummy algorithm for testing. |
+    | Dummy Algorithm | [`DummyAlgorithm`][fusion_bench.method.DummyAlgorithm] | Return model as it is, for testing. |
 
 
 You can find the implementation of these algorithms in the corresponding files.
