@@ -1,0 +1,6 @@
+svhn:
+  _target_: datasets.load_dataset
+  _args_:
+    - svhn
+    - cropped_digits
+  split: train

@@ -1,0 +1,9 @@
+defaults:
+  - fabric_model_fusion
+  - override modelpool: CLIPVisionModelPool/clip-vit-base-patch32_robustness_corrupted
+  - override method: dummy # change this to the method you want to use
+  - override taskpool: CLIPVisionModelTaskPool/clip-vit-base-patch32_robustness_corrupted
+  - _self_
+# `corruption` can be one of:
+# contrast, gaussian_noise, impulse_noise, jpeg_compression, motion_blur, pixelate, spatter
+corruption: gaussian_noise

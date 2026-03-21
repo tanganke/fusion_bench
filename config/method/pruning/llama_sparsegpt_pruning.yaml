@@ -1,0 +1,16 @@
+_target_: fusion_bench.method.SparseGPTPruningForLlama
+nsamples: 128
+seed: 0
+use_variant: false
+# `prune_type` can be either `unstructured` or `semistructured`
+prune_type: unstructured
+# device and dtype to compute the pruning mask
+device: cuda
+dtype: null
+# === options for unstructured pruning ===
+# `sparsity_ratio` is the ratio of weights to be pruned, 1 means all weights are pruned
+sparsity_ratio: 0.5
+# === options for semistructured pruning ===
+# 2:4 means 2 out of 4 weights are pruned
+n: 2
+m: 4

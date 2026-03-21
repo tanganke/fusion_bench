@@ -1,0 +1,11 @@
+_target_: fusion_bench.modelpool.CausalLMPool
+models:
+  _pretrained_: meta-llama/Llama-3.1-8B
+  instruction: MergeBench/Llama-3.1-8B_instruction
+  math: MergeBench/Llama-3.1-8B_math
+  coding: MergeBench/Llama-3.1-8B_coding
+  multilingual: MergeBench/Llama-3.1-8B_multilingual
+  safety: MergeBench/Llama-3.1-8B_safety
+model_kwargs:
+  torch_dtype: bfloat16
+tokenizer: meta-llama/Llama-3.1-8B

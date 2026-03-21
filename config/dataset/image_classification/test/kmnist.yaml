@@ -1,0 +1,4 @@
+kmnist:
+  _target_: datasets.load_dataset
+  path: tanganke/kmnist
+  split: test

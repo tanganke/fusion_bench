@@ -1,0 +1,14 @@
+_target_: fusion_bench.taskpool.llama.reward_model.RewardModelEvaluationTaskPool
+test_datasets:
+  preference_700k:
+    _target_: fusion_bench.dataset.llama.preference_700k.load_tokenized_preference_700k_for_rlhf
+    tokenizer: ${...tokenizer}
+    path: hendrydong/preference_700K
+    split: train
+    cache_path: null
+dataloader_kwargs:
+  shuffle: False
+  batch_size: 16
+tokenizer: ${..modelpool.tokenizer}
+max_num_samples: 1000
+seed: 42
