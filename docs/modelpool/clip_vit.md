@@ -855,6 +855,8 @@ We provide the experimental results of the CLIP-ViT models for open vocabulary i
     | Layer-wise AdaMerging ($\lambda=0.3$)          | 67.9   | 71.3 | 83.5     | 92.7    | 87.4 | 92.9  | 98.2  | 67.0 | 82.6    |
     | Concrete Layer-wise AdaMerging ($\lambda=0.3$) | 69.1   | 72.7 | 85.9     | 94.7    | 91.3 | 95.7  | 98.7  | 66.8 | 84.4    |
     | WUDI-Merging                                   | 68.0   | 72.5 | 85.0     | 94.6    | 94.8 | 94.9  | 99.3  | 66.6 | 84.5    |
+    | ISO-C (scaling factor=1.5)                     | 69.8   | 72.9 | 86.0     | 89.8    | 87.6 | 92.4  | 98.5  | 65.5 | 82.8    |
+    | ISO-CTS (scaling factor=1.5)                   | 71.1   | 74.6 | 86.5     | 89.0    | 83.4 | 90.4  | 98.1  | 68.5 | 82.7    |
     | Model Mixing                                   |
     | Efficient Weight-Ensembling MoE ($90\%$)       | 74.3   | 76.3 | 92.7     | 97.9    | 96.1 | 98.6  | 99.5  | 77.8 | 89.1    |
     | Weight-Ensembling MoE                          | 73.7   | 76.8 | 93.4     | 98.2    | 96.8 | 98.2  | 99.6  | 76.6 | 89.2    |
