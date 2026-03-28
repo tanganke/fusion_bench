@@ -1,0 +1,13 @@
+# Subspace Boosting with TIES as base method
+_target_: fusion_bench.method.SubspaceBoostingAlgorithm
+
+scaling_factor: 1.0
+beta: 0.01
+attn_beta: null
+base_method: ties
+apply_to_attn: per_qkv
+
+ties_threshold: 20
+ties_merge_func: sum
+
+remove_keys: []

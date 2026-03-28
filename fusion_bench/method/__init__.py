@@ -39,6 +39,7 @@ _import_structure = {
     "slerp": ["SlerpMergeAlgorithm", "SlerpForCausalLM"],
     "simple_average": ["SimpleAverageAlgorithm"],
     "weighted_average": ["WeightedAverageAlgorithm", "WeightedAverageForLLama"],
+    "subspace_boosting": ["SubspaceBoostingAlgorithm"],
     "task_arithmetic": ["TaskArithmeticAlgorithm"],
     "ties_merging": ["TiesMergingAlgorithm"],
     "dare": ["DareSimpleAverage", "DareTaskArithmetic", "DareTiesMerging"],
@@ -257,6 +258,7 @@ if TYPE_CHECKING:
         SparseLoForLlama,
     )
     from .tall_mask import TallMaskTaskArithmeticAlgorithm
+    from .subspace_boosting import SubspaceBoostingAlgorithm
     from .task_arithmetic import TaskArithmeticAlgorithm
     from .task_singular_vector import TaskSingularVectorMerging
     from .ties_merging import TiesMergingAlgorithm

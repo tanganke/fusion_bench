@@ -1,0 +1,47 @@
+# =============================================================================
+# FusionBench Method Configuration: Subspace Boosting
+# =============================================================================
+# Subspace Boosting for Model Merging
+#
+# Mitigates rank collapse in merged task vectors by boosting underutilized
+# singular values. Applied as post-processing after base merging.
+#
+# Reference: Skorobogat et al., "Subspace-Boosted Model Merging"
+#            arXiv:2506.16506
+#
+# Example:
+#   fusion_bench method=subspace_boosting \\
+#       method.base_method=task_arithmetic \\
+#       modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8_model_only \\
+#       taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
+# =============================================================================
+
+_target_: fusion_bench.method.SubspaceBoostingAlgorithm
+
+# Scaling factor for the merged task vector
+scaling_factor: 1.0
+
+# Cumulative sum threshold for boosting (beta).
+# Singular values whose cumulative sum ratio < beta get clamped to the cutoff.
+# Lower values = more aggressive boosting.
+# Recommended: 0.01 for vision, 0.02 for language
+beta: 0.01
+
+# Threshold for attention layers. If null, uses beta.
+attn_beta: null
+
+# Base merging method: "task_arithmetic" or "ties"
+base_method: task_arithmetic
+
+# How to process attention in_proj weights:
+# "per_qkv" (recommended), "full_attn", or "none"
+apply_to_attn: per_qkv
+
+# --- TIES-specific parameters (only used if base_method="ties") ---
+# Threshold for TIES magnitude pruning
+ties_threshold: 20
+# Merge function for TIES: "sum", "mean", or "max"
+ties_merge_func: sum
+
+# Keys to exclude from processing
+remove_keys: []
