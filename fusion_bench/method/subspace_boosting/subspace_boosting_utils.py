@@ -18,7 +18,7 @@ import logging
 from typing import List, Optional
 
 import torch
-from torch import Tensor
+from torch import Tensor, nn
 
 log = logging.getLogger(__name__)
 
@@ -145,6 +145,9 @@ def subspace_boosting(
             result[key] = param
             continue
 
+        # Remember if original was a Parameter
+        is_param = isinstance(param, nn.Parameter)
+
         # Check if this key should be processed
         should_process = False
         is_attn_in_proj = False
@@ -164,8 +167,13 @@ def subspace_boosting(
 
         # Apply subspace boosting
         if is_attn_in_proj and apply_to_attn == "per_qkv":
-            result[key] = _per_qkv_subspace_boosting(param, current_beta)
+            boosted = _per_qkv_subspace_boosting(param, current_beta)
         else:
-            result[key] = subspace_boosting_single_matrix(param, current_beta)
+            boosted = subspace_boosting_single_matrix(param, current_beta)
+
+        # Preserve Parameter type if original was a Parameter
+        if is_param:
+            boosted = nn.Parameter(boosted, requires_grad=param.requires_grad)
+        result[key] = boosted
 
     return result
