@@ -123,10 +123,10 @@ class SubspaceBoostingAlgorithm(SimpleProfilerMixin, BaseAlgorithm):
         with self.profile("loading models"):
             pretrained_model = modelpool.load_model("_pretrained_")
             ft_checks: List[StateDictType] = [
-                modelpool.load_model(model_name).state_dict(keep_vars=True)
+                modelpool.load_model(model_name).state_dict()
                 for model_name in modelpool.model_names
             ]
-            ptm_check: StateDictType = pretrained_model.state_dict(keep_vars=True)
+            ptm_check: StateDictType = pretrained_model.state_dict()
 
         with self.profile("computing task vectors"):
             # Compute task vectors: tau_i = theta_i - theta_base
@@ -179,7 +179,9 @@ class SubspaceBoostingAlgorithm(SimpleProfilerMixin, BaseAlgorithm):
         self.print_profile_summary()
         return model
 
-    def _task_arithmetic_merge(self, task_vectors: List[StateDictType]) -> StateDictType:
+    def _task_arithmetic_merge(
+        self, task_vectors: List[StateDictType]
+    ) -> StateDictType:
         """Merge task vectors using simple averaging (Task Arithmetic)."""
         merged = None
         for tv in task_vectors:
