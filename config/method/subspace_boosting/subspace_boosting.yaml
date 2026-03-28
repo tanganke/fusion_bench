@@ -10,9 +10,9 @@
 #            arXiv:2506.16506
 #
 # Example:
-#   fusion_bench method=subspace_boosting \\
-#       method.base_method=task_arithmetic \\
-#       modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8_model_only \\
+#   fusion_bench method=subspace_boosting/subspace_boosting \
+#       method.base_method=task_arithmetic \
+#       modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8_model_only \
 #       taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
 # =============================================================================
 
