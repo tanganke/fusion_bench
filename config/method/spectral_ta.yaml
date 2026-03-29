@@ -1,0 +1,4 @@
+_target_: fusion_bench.method.spectral_merging.SpectralTA
+energy_threshold: 0.95
+conflict_threshold: 0.3
+clip_mode: sign_elect

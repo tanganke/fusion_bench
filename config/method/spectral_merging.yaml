@@ -1,0 +1,5 @@
+_target_: fusion_bench.method.spectral_merging.SpectralMerging
+energy_threshold: 0.95
+alignment_threshold: 0.3
+calibration_strength: 1.0
+elect_threshold: 0.05
