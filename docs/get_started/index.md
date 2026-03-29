@@ -1,10 +1,18 @@
 # Get Started with FusionBench
 
-## General Structure of FusionBench
+FusionBench is a comprehensive benchmark and toolkit for **deep model fusion** — merging, ensembling, or mixing multiple neural networks into unified models. It supports various fusion techniques across computer vision (CLIP, ResNet, DINOv2) and NLP (GPT-2, Llama, Flan-T5, Gemma) tasks.
+
+## What is Model Fusion?
+
+Model fusion combines multiple pre-trained models to create a single model that inherits strengths from each source. FusionBench supports three main fusion paradigms:
+
+- **Ensemble**: Combine models via voting or averaging predictions
+- **Merge**: Merge model weights into a single model (e.g., averaging, task arithmetic)
+- **Mix**: Create MoE-style mixtures that selectively activate components
 
 <figure markdown="span">
-![alt text](../images/framework_of_model_fusion.png){ width="800px" }
-<figcaption>Framework of FusionBench</figcaption>
+![Framework of FusionBench](../images/framework_of_model_fusion.png){ width="800" }
+<figcaption>Overview of the FusionBench framework</figcaption>
 </figure>
 
 FusionBench is a pioneering project that provides a comprehensive benchmark for deep model fusion, facilitating the evaluation and comparison of various model fusion techniques. The project is meticulously designed to support rigorous analysis and experimentation in the field of model fusion, offering a versatile and modular codebase tailored for advanced research and development.

@@ -1,6 +1,17 @@
 # Basic Examples
 
-## Get Started with FusionBench CLI
+Start here to learn the fundamentals of FusionBench through hands-on examples.
+
+## Getting Started with FusionBench CLI
+
+The quickest way to get started is to run your first fusion experiment:
+
+```bash
+fusion_bench \
+    method=simple_average \
+    modelpool=CLIPVisionModelPool/clip-vit-base-patch32_TA8 \
+    taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8
+```
 
 <div class="grid cards" markdown style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
 
@@ -69,3 +80,11 @@
     [:octicons-arrow-right-24: Read More](parallel_clip_ensemble.md)
 
 </div>
+
+## Prerequisites
+
+Before running these examples, make sure you:
+
+1. Have FusionBench installed: `pip install fusion-bench`
+2. Have PyTorch and Transformers installed.
+3. Familiarize yourself with [Hydra basics](https://hydra.cc/docs/intro/)

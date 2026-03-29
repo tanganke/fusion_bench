@@ -64,11 +64,11 @@ You can experiment with different scaling factors by overriding the configuratio
 ```bash
 # More conservative fusion (less task-specific influence)
 fusion_bench --config-path $PWD/config/_get_started --config-name clip_task_arithmetic \
-    method.scale_factor=0.5
+    method.scaling_factor=0.5
 
 # More aggressive fusion (stronger task-specific influence)  
 fusion_bench --config-path $PWD/config/_get_started --config-name clip_task_arithmetic \
-    method.scale_factor=1.0
+    method.scaling_factor=1.0
 ```
 
 ## 🐛 Debugging Configuration (VS Code)

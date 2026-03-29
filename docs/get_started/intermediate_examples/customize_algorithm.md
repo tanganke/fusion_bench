@@ -72,6 +72,51 @@ class CustomMergingAlgorithm(BaseAlgorithm):
         return merged_model
 ```
 
+### Using `@auto_register_config` (Recommended)
+
+FusionBench provides the [`@auto_register_config`][fusion_bench.mixins.auto_register_config] decorator as a modern, boilerplate-free alternative to manually defining `_config_mapping`. It automatically registers all `__init__` parameters and sets them as instance attributes:
+
+```python linenums="1" hl_lines="5 9"
+from typing import Union, Dict
+from torch import nn
+
+from fusion_bench.method import BaseAlgorithm
+from fusion_bench.mixins import auto_register_config
+from fusion_bench.modelpool import BaseModelPool
+
+
+@auto_register_config
+class CustomMergingAlgorithm(BaseAlgorithm):
+    """
+    Custom algorithm using auto_register_config decorator.
+    Parameters are automatically registered and set as instance attributes.
+    """
+
+    def __init__(self, custom_param: float = 0.5, another_param: bool = True):
+        super().__init__()
+        # No need to manually set self.custom_param = custom_param etc.
+        # @auto_register_config handles this automatically
+    
+    def run(self, modelpool: Union[BaseModelPool, Dict[str, nn.Module]]) -> nn.Module:
+        if isinstance(modelpool, dict):
+            modelpool = BaseModelPool(modelpool)
+        
+        # Access parameters via self attributes (set automatically)
+        print(f"custom_param={self.custom_param}, another_param={self.another_param}")
+        
+        merged_model = ...
+        return merged_model
+```
+
+The `@auto_register_config` approach is used throughout the FusionBench codebase (e.g., [`TiesMergingAlgorithm`][fusion_bench.method.TiesMergingAlgorithm], [`TaskArithmeticAlgorithm`][fusion_bench.method.TaskArithmeticAlgorithm]) and is the **recommended pattern for new algorithms**.
+
+**Comparison:**
+
+| Approach | Boilerplate | Explicit mapping | Suitable for |
+|----------|------------|-----------------|--------------|
+| Manual `_config_mapping` | More | Yes | Complex custom mappings |
+| `@auto_register_config` | Minimal | Automatic | Most new algorithms |
+
 ## 📁 File Organization
 
 Organize your algorithm files following FusionBench conventions:

@@ -113,7 +113,7 @@ You can use Hydra's defaults system to compose configurations:
 defaults:
   - method: simple_average
   - modelpool: CLIPVisionModelPool/clip-vit-base-patch32_TA8
-  - taskpool: CLIPVisionModelTaskPool/clip-vit-classification_TA8.yaml
+  - taskpool: CLIPVisionModelTaskPool/clip-vit-classification_TA8
   - _self_
 
 _target_: fusion_bench.programs.FabricModelFusionProgram
