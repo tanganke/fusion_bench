@@ -6,10 +6,11 @@ The mixins module provides reusable functionality through mixin classes that can
 
 ```python
 from fusion_bench.mixins import (
-    LightningFabricMixin, 
+    LightningFabricMixin,
     SimpleProfilerMixin,
     auto_register_config
 )
+from fusion_bench import BaseAlgorithm
 
 @auto_register_config
 class MyAlgorithm(
@@ -21,7 +22,8 @@ class MyAlgorithm(
         super().__init__(**kwargs)
 
     def run(self, modelpool):
-        # ... implement the algorithm here
+        # implement the fusion logic here
+        pass
 ```
 
 ## Class Definitions
