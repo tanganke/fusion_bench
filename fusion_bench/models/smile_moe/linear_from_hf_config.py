@@ -303,7 +303,7 @@ class SmileLinear(nn.Module):
 
     def __repr__(self):
         return (
-            f"SingularMoELinear("
+            f"SmileLinear("
             f"in_features={self.shared_linear.in_features}, "
             f"out_features={self.shared_linear.out_features}, "
             f"num_local_experts={self.num_local_experts}, "
