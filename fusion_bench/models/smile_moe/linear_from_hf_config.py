@@ -234,15 +234,19 @@ class SmileLinear(nn.Module):
                 ]
             )
 
-    def forward(self, hidden_states: Tensor):
+    def forward(self, hidden_states: Tensor, routing_weights=None):
         pretrained_out = self.shared_linear(hidden_states)
 
         input_shape = hidden_states.size()
         hidden_states = hidden_states.view(-1, self.in_features)
 
-        router_logits = self.gate(hidden_states)
-        routing_weights = F.softmax(router_logits, dim=1)
-        # sample the expert according to the routing weights
+        if routing_weights is None:
+            # if routing weights is not provided, compute the routing weights using the gate network
+            # else, we assume the routing weights is already computed and provided as an input to this forward function.
+            router_logits = self.gate(hidden_states)
+            routing_weights = F.softmax(router_logits, dim=1)
+            # sample the expert according to the routing weights
+
         routing_weights, selected_experts = torch.topk(
             routing_weights, self.num_experts_per_tok, dim=-1
         )
