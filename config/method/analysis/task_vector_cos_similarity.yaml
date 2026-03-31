@@ -1,0 +1,5 @@
+_target_: fusion_bench.method.TaskVectorCosSimilarity
+plot_heatmap: true
+trainable_only: true
+max_points_per_model: null
+output_path: null

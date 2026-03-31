@@ -1,0 +1,13 @@
+# =============================================================================
+# FusionBench Method Configuration: Spherical Linear Interpolation (SLERP)
+# =============================================================================
+# Interpolates between two parameter vectors on a hypersphere.
+#
+# - t in [0,1]: interpolation factor; 0 returns model0; 1 returns model1.
+# - DOT_THRESHOLD: threshold to switch to linear interpolation when vectors are near-aligned.
+# - epsilon: small constant to avoid division by zero.
+# =============================================================================
+_target_: fusion_bench.method.SlerpMergeAlgorithm
+t: 0.5 # interpolation factor
+DOT_THRESHOLD: 0.9995
+epsilon: 1e-8

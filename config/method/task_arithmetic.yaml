@@ -1,0 +1,11 @@
+# =============================================================================
+# FusionBench Method Configuration: Task Arithmetic
+# =============================================================================
+# Performs task vector arithmetic: base + lambda * \sum_i (task_i - base).
+#
+# Notes
+# - scaling_factor controls the contribution of the task delta.
+# - Model compatibility is required (matching parameter shapes).
+# =============================================================================
+_target_: fusion_bench.method.TaskArithmeticAlgorithm
+scaling_factor: 0.3

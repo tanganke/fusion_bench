@@ -1,0 +1,4 @@
+_target_: fusion_bench.method.singular_value_calibration.task_arithmetic.SingularValueCalibrationArithmeticTask
+scaling_factor: 0.3
+alpha: 0.1
+accelerator: null

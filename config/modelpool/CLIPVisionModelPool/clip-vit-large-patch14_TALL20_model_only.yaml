@@ -1,0 +1,29 @@
+# The 20 task used in the paper:
+# Wang et al. Localizing Task Information for Improved Model Merging and Compression
+# http://arxiv.org/abs/2405.07813
+_target_: fusion_bench.modelpool.CLIPVisionModelPool
+_recursive_: False
+processor: openai/clip-vit-large-patch14
+models:
+  _pretrained_: openai/clip-vit-large-patch14
+  sun397: tanganke/clip-vit-large-patch14_sun397
+  stanford-cars: tanganke/clip-vit-large-patch14_stanford-cars
+  resisc45: tanganke/clip-vit-large-patch14_resisc45
+  eurosat: tanganke/clip-vit-large-patch14_eurosat
+  svhn: tanganke/clip-vit-large-patch14_svhn
+  gtsrb: tanganke/clip-vit-large-patch14_gtsrb
+  mnist: tanganke/clip-vit-large-patch14_mnist
+  dtd: tanganke/clip-vit-large-patch14_dtd
+  oxford_flowers102: tanganke/clip-vit-large-patch14_oxford_flowers102
+  pcam: tanganke/clip-vit-large-patch14_pcam
+  fer2013: tanganke/clip-vit-large-patch14_fer2013
+  oxford-iiit-pet: tanganke/clip-vit-large-patch14_oxford-iiit-pet
+  stl10: tanganke/clip-vit-large-patch14_stl10
+  cifar100: tanganke/clip-vit-large-patch14_cifar100
+  cifar10: tanganke/clip-vit-large-patch14_cifar10
+  food101: tanganke/clip-vit-large-patch14_food101
+  fashion_mnist: tanganke/clip-vit-large-patch14_fashion_mnist
+  emnist_letters: tanganke/clip-vit-large-patch14_emnist_letters
+  kmnist: tanganke/clip-vit-large-patch14_kmnist
+  rendered-sst2: tanganke/clip-vit-large-patch14_rendered-sst2
+platform: hf
