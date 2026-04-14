@@ -4,7 +4,7 @@ import torch
 from omegaconf import DictConfig
 from torch import nn
 
-from fusion_bench.compat.modelpool.base_pool import ModelPool
+from fusion_bench.modelpool.base_pool import BaseModelPool
 from fusion_bench.dataset.nyuv2 import NYUv2
 from fusion_bench.models.nyuv2.aspp import DeepLabHead
 from fusion_bench.models.nyuv2.lightning_module import NYUv2Model
@@ -13,7 +13,7 @@ from fusion_bench.models.nyuv2.resnet_dilated import ResnetDilated, resnet_dilat
 log = logging.getLogger(__name__)
 
 
-class NYUv2ModelPool(ModelPool):
+class NYUv2ModelPool(BaseModelPool):
     def load_model(
         self, model_config: str | DictConfig, encoder_only: bool = True
     ) -> ResnetDilated | NYUv2Model:
