@@ -32,6 +32,7 @@ from fusion_bench.mixins import LightningFabricMixin
 from fusion_bench.taskpool import CLIPVisionModelTaskPool
 from fusion_bench.utils import seed_everything_by_time
 from fusion_bench.utils.json import save_to_json
+from fusion_bench.utils.parameters import count_parameters
 
 from .min_norm_solvers import MinNormSolver, gradient_normalizers
 from .utils import is_leaf_module, svd
@@ -179,6 +180,8 @@ class ContinualDOPForCLIP(BaseAlgorithm, LightningFabricMixin):
                         ]
                     )
             else:
+                if count_parameters(module)[1] == 0:
+                    continue  # skip modules with no parameters
                 simple_average(
                     [
                         finetuned_models[model_name].get_submodule(module_name)
