@@ -1,26 +1,26 @@
-type: NYUv2ModelPool
+_target_: fusion_bench.modelpool.nyuv2_modelpool.NYUv2ModelPool
 models:
-  - name: _pretrained_
+  _pretrained_:
     encoder: resnet50
     decoders:
       - segmentation
       - depth
       - normal
     ckpt_path: null
-  - name: segmentation
+  segmentation:
     encoder: resnet50
     # decoders is a list of tasks that the model can perform
     # can be any of segmentation, depth, normal
     decoders:
       - segmentation
-    ckpt_path: lightning_logs/version_0/checkpoints/last.ckpt
-  - name: depth
+    ckpt_path: lightning_logs/segmentation/checkpoints/last.ckpt
+  depth:
     encoder: resnet50
     decoders:
       - depth
-    ckpt_path: lightning_logs/version_1/checkpoints/last.ckpt
-  - name: normal
+    ckpt_path: lightning_logs/depth/checkpoints/last.ckpt
+  normal:
     encoder: resnet50
     decoders:
       - normal
-    ckpt_path: lightning_logs/version_2/checkpoints/last.ckpt
+    ckpt_path: lightning_logs/normal/checkpoints/last.ckpt
