@@ -15,6 +15,7 @@
         members:
         - SimpleAverageAlgorithm
         - SimpleAverageForLlama
+        - SimpleAverageForCausalLM
 
 ### Weighted Average
 
@@ -46,6 +47,7 @@
         members:
         - TaskArithmeticAlgorithm
         - TaskArithmeticForLlama
+        - TaskArithmeticForCausalLM
 
 ### Ties-Merging
 
@@ -55,6 +57,7 @@
         heading_level: 4
         members:
         - TiesMergingAlgorithm
+        - TiesMergingForCausalLM
 
 ### Fisher Merging
 
@@ -108,6 +111,8 @@
         - CLIPLayerWiseAdaMergingAlgorithm
         - GPT2LayerWiseAdaMergingAlgorithm
         - FlanT5LayerWiseAdaMergingAlgorithm
+        - ResNetLayerWiseAdamerging
+        - ResNetTaskWiseAdamerging
 
 
 ## Optimization-based Methods
@@ -163,6 +168,10 @@
         - ConcreteTaskArithmeticAlgorithmForCLIP
         - ConcreteTaskWiseAdaMergingForCLIP
         - ConcreteLayerWiseAdaMergingForCLIP
+        - ConcreteSafeLayerWiseAdaMergingForCLIP
+        - ConcreteSafeTaskWiseAdaMergingForCLIP
+        - PostDefenseAWMAlgorithmForCLIP
+        - PostDefenseSAUAlgorithmForCLIP
 
 ### Task Singular Vector Merging (TSVM)
 
@@ -172,6 +181,33 @@
         heading_level: 4
         members:
         - TaskSingularVectorMerging
+
+### AdaSVD
+
+::: fusion_bench.method
+    options:
+        show_root_heading: false
+        heading_level: 4
+        members:
+        - AdaSVDMergingForCLIPVisionModel
+
+### Model Stock
+
+::: fusion_bench.method
+    options:
+        show_root_heading: false
+        heading_level: 4
+        members:
+        - ModelStock
+
+### Tall Mask
+
+::: fusion_bench.method
+    options:
+        show_root_heading: false
+        heading_level: 4
+        members:
+        - TallMaskTaskArithmeticAlgorithm
 
 ### Isotropic Merging
 

@@ -2,27 +2,43 @@
 
 ## Base Class
 
-::: fusion_bench.BaseModelPool
+### BaseModelPool
 
-## Vision Model Pool
-
-### NYUv2 Tasks (ResNet)
-
-::: fusion_bench.modelpool.NYUv2ModelPool
+::: fusion_bench.modelpool
     options:
+        show_root_heading: false
         heading_level: 4
+        members:
+        - BaseModelPool
+
+## Vision Model Pools
 
 ### CLIP Vision Encoder
 
-::: fusion_bench.modelpool.CLIPVisionModelPool
+::: fusion_bench.modelpool
     options:
+        show_root_heading: false
         heading_level: 4
+        members:
+        - CLIPVisionModelPool
 
 ### OpenCLIP Vision Encoder
 
-::: fusion_bench.modelpool.OpenCLIPVisionModelPool
+::: fusion_bench.modelpool
     options:
+        show_root_heading: false
         heading_level: 4
+        members:
+        - OpenCLIPVisionModelPool
+
+### NYUv2 Model Pool
+
+::: fusion_bench.modelpool
+    options:
+        show_root_heading: false
+        heading_level: 4
+        members:
+        - NYUv2ModelPool
 
 ### ResNet for Image Classification
 
@@ -55,9 +71,9 @@
         - load_transformers_dinov2
         - Dinov2ForImageClassificationPool
 
-## NLP Model Pool
+## NLP Model Pools
 
-### GPT-2
+### GPT-2 for Sequence Classification
 
 ::: fusion_bench.modelpool
     options:
@@ -67,7 +83,7 @@
         - HuggingFaceGPT2ClassificationPool
         - GPT2ForSequenceClassificationPool
 
-## Seq2Seq Language Models (Flan-T5)
+### Seq2Seq Language Models (Flan-T5)
 
 ::: fusion_bench.modelpool
     options:
@@ -75,10 +91,18 @@
         heading_level: 4
         members:
         - Seq2SeqLMPool
-        - SequenceClassificationModelPool
         - PeftModelForSeq2SeqLMPool
 
-## Causal Language Models (Llama, Mistral, Qwen...)
+### Sequence Classification Language Models
+
+::: fusion_bench.modelpool
+    options:
+        show_root_heading: false
+        heading_level: 4
+        members:
+        - SequenceClassificationModelPool
+
+### Causal Language Models (Llama, Mistral, Qwen...)
 
 ::: fusion_bench.modelpool
     options:
@@ -92,7 +116,7 @@
     options:
         heading_level: 4
 
-## Others
+## Generic Model Pools
 
 ### Transformers AutoModel
 

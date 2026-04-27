@@ -8,9 +8,12 @@
 ::: fusion_bench.method
     options:
         show_root_heading: false
+        heading_level: 4
         members:
-            - ImageClassificationFineTuningForCLIP
-            - ContinualImageClassificationFineTuningForCLIP
+        - ImageClassificationFineTuning
+        - ImageClassificationFineTuning_Test
+        - ImageClassificationFineTuningForCLIP
+        - ContinualImageClassificationFineTuningForCLIP
 
 
 ## LLM Fine-tuning
@@ -29,3 +32,11 @@
         show_root_heading: false
         members:
         - BradleyTerryRewardModeling
+
+## LLM Fine-tuning with AdaMerging
+
+::: fusion_bench.method
+    options:
+        show_root_heading: false
+        members:
+        - LayerWiseAdaMergingForLlamaSFT

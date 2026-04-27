@@ -19,8 +19,9 @@ nav:
           - Simple Ensemble: algorithms/simple_ensemble.md
           - Weighted Ensemble: algorithms/weighted_ensemble.md
           - Max-Model Predictor: algorithms/max-model_predictor.md
-            # - Model Specification: algorithms/specification_ensemble.md
+          - DAWE: algorithms/dawe.md
       - Model Merging:
+          - Linear/ExPO: algorithms/linear.md
           - Simple Averaging: algorithms/simple_averaging.md
           - Weighted Averaging: algorithms/weighted_averaging.md
           - algorithms/slerp.md
@@ -30,11 +31,24 @@ nav:
           - AdaMerging: algorithms/adamerging.md
           - RegMean: algorithms/regmean.md
           - RegMean++: algorithms/regmean_plusplus.md
+          - DARE: algorithms/dare.md
+          - OPCM: algorithms/opcm.md
+          - Model Stock: algorithms/model_stock.md
+          - RandES: algorithms/randes.md
           - Concrete Subspace: algorithms/concrete_subspace.md
           - Task Singular Vector: algorithms/task_singular_vector.md
           - Isotropic Merging: algorithms/isotropic_merging.md
           - WUDI-Merging: algorithms/wudi_merging.md
           - EMR Merging: algorithms/emr_merging.md
+          - Gossip: algorithms/gossip.md
+          - DoP: algorithms/dop.md
+          - FW Merging: algorithms/fw_merging.md
+          - DogeTA: algorithms/doge_ta.md
+          - AdaSVD: algorithms/ada_svd.md
+          - Singular Value Calibration: algorithms/singular_value_calibration.md
+          - Surgery: algorithms/surgery.md
+          - Tall Mask: algorithms/tall_mask.md
+          - Trust Region: algorithms/trust_region.md
       - Model Mixing:
           - Depth Upscaling: algorithms/depth_upscaling.md
           - MoE-based Upscaling: algorithms/moe_based_upscaling.md
@@ -42,13 +56,22 @@ nav:
           - Weight-Ensembling MoE: algorithms/weight_ensembling_moe.md
           - PWE MoE: algorithms/pwe_moe.md
           - SMILE Upscaling: algorithms/smile_upscaling.md
-          # - Model Stitching: algorithms/model_stitching.md
+          - RankOne MoE: algorithms/rankone_moe.md
           - Model Recombination: algorithms/model_recombination.md
       - Model Compression:
           - Task Vector Compression:
               - BitDelta: algorithms/bitdelta.md
           - Parameter Pruning:
               - Magnitude Pruning: algorithms/pruning/magnitude_pruning.md
+              - SparseLo: algorithms/sparselo_pruning.md
+          - Expert/Model Pruning:
+              - MoE Pruner: algorithms/moe_pruner.md
+              - Expert Sparsity: algorithms/expert_sparsity.md
+      - Fine-tuning:
+          - Classification: algorithms/classification_finetune.md
+          - Language Models: algorithms/lm_finetune.md
+      - Analysis:
+          - Task Vector Analysis: algorithms/analysis_tools.md
   - Model Pool (Benchmark Models):
       - modelpool/README.md
       - Computer Vision Tasks:
@@ -77,7 +100,6 @@ nav:
       - Large Language Model:
           - Task Pool for Language Model Evaluation Harness: taskpool/lm_eval_harness.md
           - taskpool/lm_eval_harness_cli.md
-    # - fusion_bench: cli/fusion_bench.md
   - API Reference:
       - api/index.md
       - api/fusion_bench.mixins.md
@@ -102,6 +124,7 @@ nav:
           - api/fusion_bench.utils/torch.md
           - api/fusion_bench.utils/filesystem.md
           - api/fusion_bench.utils/modelscope.md
+          - api/fusion_bench.utils/misc.md
           - api/fusion_bench.utils/package_management.md
       - api/fusion_bench.models.md
       - api/fusion_bench.dataset.md
@@ -112,6 +135,9 @@ nav:
       - api/fusion_bench.compat.md
   - Guides:
       - guides/docs.md
+      - Extending FusionBench:
+          - Custom ModelPool: guides/custom_modelpool.md
+          - Custom TaskPool: guides/custom_taskpool.md
       - FusionBench Programming Guide:
           - Overview: guides/fusion_bench/README.md
           - Mixins:
@@ -127,9 +153,6 @@ nav:
       - Natural Language Processing:
           - Tasks:
               - guides/nlp/question_answering.md
-              # - Reading Lists:
-      # - readinglist/README.md
-      # - Mode Connectivity: readinglist/mode_connectivity.md
       - CLI Tools:
           - cli/fusion_bench.md
           - cli/fusion_bench_webui.md

@@ -23,6 +23,15 @@
         - SparseWEMoECLIPVisionModelTaskPool
         - RankoneMoECLIPVisionModelTaskPool
 
+### OpenCLIP Vision Tasks
+
+::: fusion_bench.taskpool
+    options:
+        heading_level: 4
+        show_root_heading: false
+        members:
+        - OpenCLIPVisionModelTaskPool
+
 ### ResNet for Image Classification
 
 ::: fusion_bench.taskpool
@@ -37,6 +46,12 @@
 ### GPT-2
 
 ::: fusion_bench.taskpool.GPT2TextClassificationTaskPool
+    options:
+        heading_level: 4
+
+### Llama
+
+::: fusion_bench.taskpool.LlamaTestGenerationTaskPool
     options:
         heading_level: 4
 

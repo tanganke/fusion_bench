@@ -8,3 +8,5 @@
         - SimpleEnsembleAlgorithm
         - WeightedEnsembleAlgorithm
         - MaxModelPredictorAlgorithm
+        - DataAdaptiveWeightEnsemblingForCLIP
+        - FlanT5WeightEnsemblingMoEAlgorithm
