@@ -5,7 +5,7 @@ It provides a flexible way to configure and execute various fusion algorithms on
 
 ## Details and Options
 
-`fusion_bench` takes a configuration file as input, which specifies the models, fusion method to be used, and the datasets to be evaluated. running `fusion_bench` is equivalent to running `python fusion_bench/scripts/cli.py`.
+`fusion_bench` takes a configuration file as input, which specifies the models, fusion method to be used, and the datasets to be evaluated. Running `fusion_bench` is equivalent to running `python fusion_bench/scripts/cli.py`.
 
 ```bash
 fusion_bench [--config-path CONFIG_PATH] [--config-name CONFIG_NAME] \
@@ -16,9 +16,23 @@ python fusion_bench/scripts/cli.py [--config-path CONFIG_PATH] [--config-name CO
     OPTION_1=VALUE_1 OPTION_2=VALUE_2 ...
 ```
 
-`fusion_bench` has the following options, `method`, `modelpool`, and `taskpool` are the most important ones among these options:
+The entry point is defined in `fusion_bench/scripts/cli.py` using Hydra's `@hydra.main` decorator. The default config path is `config/` and the default config name is `fabric_model_fusion.yaml`.
 
-### Hydra options
+```python
+@hydra.main(
+    config_path=get_default_config_path(),
+    config_name="fabric_model_fusion",
+    version_base=None,
+)
+def _hydra_main(cfg: DictConfig) -> None:
+    main(cfg)
+```
+
+The `main()` function resolves config interpolations, instantiates the program via `fusion_bench.utils.instantiate`, and calls `program.run()`.
+
+## Hydra Options
+
+### Help and Info
 
 - **--help, -h**: Application's help. Print help message and exit.
 
@@ -28,177 +42,335 @@ python fusion_bench/scripts/cli.py [--config-path CONFIG_PATH] [--config-name CO
 
 - **--hydra-help**: Hydra's help.
 - **--version**: Show Hydra's version and exit.
-- **--cfg, -c**: Show config instead of running [job|hydra|all].
-  This is useful for debugging the configuration. However, this just prints plain text configuration without color highlighting or formatting.
+- **--info, -i**: Print Hydra information. Accepts: `all`, `config`, `defaults`, `defaults-tree`, `plugins`, `searchpath`.
 
   ```bash
-  fusion_bench --cfg
+  fusion_bench --info defaults-tree
   ```
 
-  Or equivalently with the following options:
+### Configuration Inspection
+
+- **--cfg, -c**: Show config instead of running. Accepts: `job`, `hydra`, or `all` (default).
+  This prints plain text configuration without color highlighting.
 
   ```bash
-  # this will print the configuration using rich library, which provides syntax highlighting and better formatting
+  fusion_bench --cfg job
+  ```
+
+  For a beautifully formatted output with syntax highlighting, use:
+
+  ```bash
   fusion_bench print_config=true dry_run=true
   ```
 
-- **--resolve**: Used in conjunction with --cfg, resolve config interpolations before printing.
-- **--package, -p**: Config package to show. For example, when you only want to see the configuration for `method`.
+- **--resolve**: Used in conjunction with `--cfg`, resolves config interpolations (e.g., `${path.data_dir}`) before printing.
+
+  ```bash
+  fusion_bench --cfg job --resolve
+  ```
+
+- **--package, -p**: Config package to show. For example, when you only want to see the configuration for `method`:
 
   ```bash
   fusion_bench --cfg job -p method
   ```
 
-- **--info, -i**: Print Hydra information [all|config|defaults|defaults-tree|plugins|searchpath]
-- **--config-path, -cp**: Overrides the config_path specified in hydra.main(). The config_path is absolute or relative to the Python file declaring @hydra.main().
-By default, the config path is the `config` or `fusion_bench_config` directory in the project root.
-- **--config-name, -cn**: Overrides the config_name specified in hydra.main(). By default, the config name is `example_config` so `config/example_config.yaml` will be loaded.
-You can also specify another config name, for example:
+### Config Path Overrides
+
+- **--config-path, -cp**: Overrides the `config_path` specified in `@hydra.main()`. The path is absolute or relative to the Python file declaring the decorator (i.e., `fusion_bench/scripts/cli.py`).
+  By default, the config path is the `config` directory in the project root.
 
   ```bash
-  # this will load the config from `config/llama_weighted_average.yaml`
-  fusion_bench --config-name llama_weighted_average.yaml
+  fusion_bench --config-path /path/to/custom/configs method=my_method
   ```
 
-- **--config-dir, -cd**: Adds an additional config dir to the config search path
-- **--multirun, -m**: Run multiple jobs with the configured launcher and sweeper. For more information, see [Hydra documentation](https://hydra.cc/docs/1.3/tutorials/basic/running_your_app/multi-run/).
-- **--experimental-rerun**: Rerun a job from a previous config pickle
+- **--config-name, -cn**: Overrides the `config_name` specified in `@hydra.main()`. By default, the config name is `fabric_model_fusion` so `config/fabric_model_fusion.yaml` is loaded.
 
-#### Shell Completion
+  ```bash
+  fusion_bench --config-name custom_config.yaml
+  ```
 
-This is useful for tab completion in the shell. You can install shell completion for Bash, Fish, and Zsh.
+- **--config-dir, -cd**: Adds an additional config directory to the config search path.
 
-<figure markdown="span">
-![alt text](images/tab_completion.png){ width="850" }
-<figcaption> Screenshot of tab completion in the shell. </figcaption>
-</figure>
+  ```bash
+  fusion_bench --config-dir ./my_configs method=my_method modelpool=my_models
+  ```
 
-- **--shell-completion, -sc**: Install or Uninstall shell completion:
-  - **Bash - Install**:
+### Multi-Run and Sweeps
 
-    ```bash
-    eval "$(fusion_bench -sc install=bash)"
-    ```
+- **--multirun, -m**: Run multiple jobs with the configured launcher and sweeper. This is the primary way to run hyperparameter sweeps or compare multiple configurations in a single command.
 
-  - **Bash - Uninstall**:
+  See [Hydra multi-run documentation](https://hydra.cc/docs/1.3/tutorials/basic/running_your_app/multi-run/) for details.
 
-    ```bash
-    eval "$(fusion_bench -sc uninstall=bash)"
-    ```
+  ```bash
+  # Sweep scaling_factor across values
+  fusion_bench -m \
+    method=task_arithmetic \
+    method.scaling_factor=0.1,0.3,0.5,1.0 \
+    modelpool=ConvNextForImageClassification/convnext-base-224_8-tasks \
+    taskpool=dummy
 
-  - **Fish - Install**:
+  # Sweep across methods
+  fusion_bench -m \
+    method=task_arithmetic,simple_average \
+    modelpool=ConvNextForImageClassification/convnext-base-224_8-tasks \
+    taskpool=dummy
+  ```
 
-    ```fish
-    fusion_bench -sc install=fish | source
-    ```
+- **--experimental-rerun**: Rerun a job from a previous config pickle.
 
-  - **Fish - Uninstall**:
+### Shell Completion
 
-    ```fish
-    fusion_bench -sc uninstall=fish | source
-    ```
+Install shell completion for tab-completing arguments:
 
-  - **Zsh - Install**:
-    Zsh is compatible with the Bash shell completion, see the [documentation](https://hydra.cc/docs/1.2/tutorials/basic/running_your_app/tab_completion#zsh-instructions) for details.
+- **Bash - Install**:
 
-    ```zsh
-    eval "$(fusion_bench -sc install=bash)"
-    ```
+  ```bash
+  eval "$(fusion_bench -sc install=bash)"
+  ```
 
-  - **Zsh - Uninstall**:
+- **Bash - Uninstall**:
 
-    ```zsh
-    eval "$(fusion_bench -sc uninstall=bash)"
-    ```
+  ```bash
+  eval "$(fusion_bench -sc uninstall=bash)"
+  ```
 
-### Application Options
+- **Fish - Install**:
 
-- **report_save_path**: The path to save the report. If not specified or is `false`, the report will not be saved. The report will be saved as a JSON file. Default is `false`.
-    For example, to save the report to `outputs/report.json`:
+  ```fish
+  fusion_bench -sc install=fish | source
+  ```
 
-    ```bash
-    fusion_bench report_save_path=outputs/report.json
-    ```
+- **Fish - Uninstall**:
 
-- **print_config**: Whether to print the configuration to the console. If not specified or is `false`, the configuration will not be printed. Default is `true`.
-    For example, to print the configuration:
+  ```fish
+  fusion_bench -sc uninstall=fish | source
+  ```
 
-    ```bash
-    fusion_bench print_config=true
-    ```
+- **Zsh - Install/Uninstall**: Compatible with Bash shell completion.
 
-- **dry_run**: Perform a dry run.
-    This will only validate the configuration without running the actual code. Default is `false`.
-    For example, to perform a dry run and print the configuration:
+  ```zsh
+  eval "$(fusion_bench -sc install=bash)"
+  ```
 
-    ```bash
-    fusion_bench dry_run=true print_config=true
-    ```
+## Application Options
 
-- **merged_model_save_path**: The path to save the merged model. If specified, the merged model will be saved to this path by calling `modelpool.save_model`.
-    For example, to save the merged model to `outputs/merged_model.pt`:
+These options are defined in the main configuration file (`config/fabric_model_fusion.yaml`) and can be overridden from the command line.
 
-    ```bash
-    fusion_bench merged_model_save_path=outputs/merged_model.pt
-    ```
+### Execution Control
 
-    Note that the behavior of `modelpool.save_model` depends on the implementation of the model pool. Take `AutoModelForCausalLMPool` as an example, it will save the model to the specified path as a directory containing the model configuration and safetensor files, i.e., calling `model.save_pretrained(merged_model_save_path)`.
+- **dry_run**: Perform a dry run. Validates the configuration without running the actual fusion code. Default is `false`.
 
-    ??? example "Example of `modelpool.save_model`"
+  ```bash
+  fusion_bench dry_run=true print_config=true
+  ```
 
-        `ModelPool` is the base class for model pools. The `save_model` method is defined in the `ModelPool` class and can be overridden in the derived classes. For example, `AutoModelForCausalLMPool` overrides the `save_model` method to save the model using the `save_pretrained` method of the model. The following is an example of the `save_model` method in the `ModelPool` class and the `AutoModelForCausalLMPool` class.
+- **fast_dev_run**: Quick testing mode. Runs on a single batch instead of the full dataset. Default is `false`. This is invaluable during development for rapid iteration.
 
-        By default, FusionBench will call `modelpool.save_model(model, merged_model_save_path, **merged_model_save_kwargs)` if the options below are provided. That is, additional keyword arguments can be forwarded when supported by the ModelPool implementation.
+  ```bash
+  fusion_bench --fast_dev_run
+  # or
+  fusion_bench fast_dev_run=true
+  ```
 
-- **merged_model_save_kwargs**: Extra keyword arguments forwarded to `modelpool.save_model` when saving the merged model. Provide a dict-like value.
+- **print_config**: Whether to print the resolved configuration before execution. Default is `true`.
 
-    Example (CausalLMPool): save to a local directory and also save the tokenizer and avoid pushing to the hub.
+  ```bash
+  fusion_bench print_config=true
+  ```
 
-    ```bash
-    fusion_bench -c job \
-        merged_model_save_path=outputs/merged_model \
-        merged_model_save_kwargs='{push_to_hub: false, save_tokenizer: true}' \
-        method=linear/weighted_average_for_llama \
-        modelpool=CausalLMPool/simle_mixtral_exp_v4 \
-        taskpool=dummy
-    ```
+- **print_function_call**: Show detailed instantiation calls. Default is `true`.
 
-    !!! note
+  ```bash
+  fusion_bench print_function_call=false
+  ```
 
-        The exact set of supported kwargs is defined by the chosen ModelPool. For example, [`CausalLMPool.save_model`][fusion_bench.modelpool.CausalLMPool.save_model] accepts `push_to_hub`, `save_tokenizer`, etc.
+- **seed**: Random seed for reproducibility. Default is `null` (no seed set).
 
-### method, modelpool and taskpool options
+  ```bash
+  fusion_bench seed=42
+  ```
 
-As mentioned earlier, `method`, `modelpool`, and `taskpool` are the most important options in `fusion_bench`.
-The basic usage is as follows:
+### Output and Logging
+
+- **report_save_path**: Path to save the evaluation report as a JSON file. Default is `{log_dir}/program_report.json`. Set to `false` to skip saving.
+
+  ```bash
+  fusion_bench report_save_path=outputs/my_report.json
+  # or disable
+  fusion_bench report_save_path=false
+  ```
+
+- **merged_model_save_path**: Path to save the merged model. If specified, calls `modelpool.save_model(merged_model, path)`. Default is `null` (no save).
+
+  ```bash
+  fusion_bench merged_model_save_path=outputs/merged_model.pt
+  ```
+
+  The exact save behavior depends on the ModelPool implementation:
+  - **BaseModelPool**: Saves `model.state_dict()` as a `.pt` file.
+  - **CLIPVisionModelPool**: Calls `model.save_pretrained(path)` (saves a directory).
+  - **ResNetForImageClassificationPool**: Saves state dict for torchvision models, `save_pretrained` for transformers models.
+  - **CausalLMPool**: Calls `model.save_pretrained(path)` with optional tokenizer saving.
+
+- **merged_model_save_kwargs**: Extra keyword arguments forwarded to `modelpool.save_model()`. Provide a dict-like value using YAML-style braces.
+
+  ```bash
+  fusion_bench \
+    merged_model_save_path=outputs/merged_model \
+    merged_model_save_kwargs='{push_to_hub: false, save_tokenizer: true}'
+  ```
+
+## Core Components: method, modelpool, taskpool
+
+These three options define the fusion experiment:
 
 ```bash
 fusion_bench method=<METHOD> modelpool=<MODELPOOL> taskpool=<TASKPOOL>
 ```
 
-To override the default configuration, you can specify additional options as follows:
+- **method**: Fusion algorithm (e.g., `simple_average`, `task_arithmetic`, `adamerging/clip`)
+- **modelpool**: Model pool configuration defining which models to merge
+- **taskpool**: Task pool configuration defining evaluation tasks
 
-```bash hl_lines="2-6"
+### Parameter Overrides
+
+Use dot-notation to override nested configuration values:
+
+```bash
 fusion_bench \
-  method=<METHOD> \
-    method.<OPTION_1>=<VALUE_1> \
-      method.<OPTION_1>.<SUBOPTION_1>=<VALUE_1_1> \
-      method.<OPTION_1>.<SUBOPTION_2>=<VALUE_1_2> \
-    method.<OPTION_2>=<VALUE_2> \
-  modelpool=<MODELPOOL> \
-    ...
-  taskpool=<TASKPOOL> \
-    ...
+  method=task_arithmetic \
+  method.scaling_factor=0.7 \
+  modelpool=ConvNextForImageClassification/convnext-base-224_8-tasks \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8_val
 ```
 
-**Paremeter Overrides**:
-In the above example, `<METHOD>`, `<MODELPOOL>`, and `<TASKPOOL>` are the names of the method, model pool, and task pool, respectively.
-`<OPTION_1>`, `<VALUE_1>`, `<SUBOPTION_1>`, `<VALUE_1_1>`, etc., are the options and values for the method.
-In particular, the options for the method are prefixed with `method.`, e.g., `method.<OPTION_1>`. And the suboptions are prefixed with `method.<OPTION_1>.`, e.g., `method.<OPTION_1>.<SUBOPTION_1>`.
+For deeply nested overrides:
+
+```bash
+fusion_bench \
+  method=task_arithmetic \
+  method.optimizer.lr=0.001 \
+  method.optimizer.weight_decay=0.01
+```
+
+To append to lists or set specific indices:
+
+```bash
+fusion_bench taskpool.test_datasets.0.my_field=new_value
+```
+
+## Hydra Override Syntax
+
+Hydra provides powerful syntax for configuration overrides:
+
+### Adding to Dictionaries
+
+```bash
+# Add a new key-value pair
+fusion_bench +method.new_param=value
+
+# Add a new nested section
+fusion_bench ++modelpool.new_section='{key: value}'
+```
+
+### Removing Keys
+
+```bash
+# Remove a config key
+fusion_bench ~method.unwanted_param
+```
+
+### Special Values
+
+```bash
+# Set to null
+fusion_bench method.some_param=null
+
+# Set boolean
+fusion_bench dry_run=true
+
+# Set float with scientific notation
+fusion_bench method.learning_rate=1e-4
+```
+
+### Null vs False
+
+```bash
+# Setting to null (YAML null)
+fusion_bench merged_model_save_path=null
+
+# Setting to false (YAML boolean)
+fusion_bench report_save_path=false
+```
+
+## Multi-Run with Hydra (Sweeps)
+
+Hydra's multi-run mode (`-m`) enables parameter sweeps. Combine with the `launchers` configuration for parallel execution.
+
+### Basic Sweep
+
+```bash
+fusion_bench -m method.scaling_factor=0.1,0.3,0.5,1.0
+```
+
+This runs 4 jobs, one for each value.
+
+### Grid Sweep
+
+```bash
+fusion_bench -m \
+  method.scaling_factor=0.1,0.5,1.0 \
+  method.another_param=true,false
+```
+
+This runs 6 jobs (3 x 2 combinations).
+
+### Using Hydra Launcher
+
+For parallel execution with joblib:
+
+```yaml
+# In your Hydra config
+hydra:
+  launcher:
+    _target_: hydra._internal.core_plugins.basic_launcher.BasicLauncher
+  sweeper:
+    _target_: hydra._internal.core_plugins.basic_sweeper.BasicSweeper
+```
+
+Or use the built-in parallel launcher:
+
+```bash
+fusion_bench -m hydra.launcher.n_jobs=4 method.scaling_factor=0.1,0.3,0.5,1.0
+```
+
+### Output Directory Structure
+
+Multi-run jobs are organized in timestamped directories:
+
+```
+outputs/
+  fusion_bench/
+    2024-01-15/
+      12-00-00/
+        job0/    # scaling_factor=0.1
+        job1/    # scaling_factor=0.3
+        job2/    # scaling_factor=0.5
+        job3/    # scaling_factor=1.0
+```
+
+Use `${now:...}` interpolation in paths for custom organization:
+
+```bash
+fusion_bench -m \
+  report_save_path=outputs/sweep_\${now:%Y%m%d}/\${method_name}/report.json \
+  method.scaling_factor=0.1,0.3,0.5
+```
 
 ## Basic Examples
 
-merge two CLIP models using task arithmetic:
+### Merge Two CLIP Models Using Task Arithmetic
 
 ```bash
 fusion_bench method=task_arithmetic \
@@ -206,36 +378,30 @@ fusion_bench method=task_arithmetic \
   taskpool=clip-vit-base-patch32_svhn_and_mnist
 ```
 
-The overall configuration is as follows:
-
-```yaml linenums="1" hl_lines="1 3 5"
-method: # (1)!
-  ...
-modelpool: # (2)!
-  ...
-taskpool: # (3)!
-  ...
-fast_dev_run: false
-print_config: true
-report_save_path: false
-```
-
-1. Configuration for method, `fusion_bench.method.load_algorithm_from_config` checks the 'name' attribute of the configuration and returns an instance of the corresponding algorithm.
-2. Configuration for model pool, `fusion_bench.modelpool.load_modelpool_from_config` checks the 'type' attribute of the configuration and returns an instance of the corresponding model pool.
-3. Configuration for task pool, `fusion_bench.taskpool.load_taskpool_from_config` checks the 'type' attribute of the configuration and returns an instance of the corresponding task pool.
-
-merge multiple CLIP models using simple averaging:
+### Merge Multiple CLIP Models Using Simple Averaging
 
 ```bash
-fusion_bench method=simple_average modelpool=clip-vit-base-patch32_TA8.yaml taskpool=dummy
+fusion_bench method=simple_average \
+  modelpool=clip-vit-base-patch32_TA8.yaml \
+  taskpool=dummy
+```
+
+### Full Experiment with Model Saving
+
+```bash
+fusion_bench \
+  method=task_arithmetic \
+  method.scaling_factor=0.5 \
+  modelpool=ConvNextForImageClassification/convnext-base-224_8-tasks \
+  taskpool=CLIPVisionModelTaskPool/clip-vit-classification_TA8_val \
+  merged_model_save_path=outputs/final_model \
+  report_save_path=outputs/final_report.json \
+  seed=42
 ```
 
 ## Running in Offline Mode
 
-In the offline mode, the model pool will not download the models from the internet.
-Instead, it will use the models that are already downloaded to the local cache.
-
-To run `fusion_bench` in offline mode, you can run the following command before running `fusion_bench`:
+In offline mode, the model pool does not download models from the internet. Instead, it uses models from the local cache.
 
 ```bash
 source offline_mode.sh
@@ -245,15 +411,35 @@ Or set the environment variable according to the content of `offline_mode.sh`.
 
 ## Debugging and Troubleshooting
 
-During algorithm development, you may want to debug the code or inspect the configuration.
-Here are some tips for debugging and troubleshooting.
+### Quick Validation
+
+Use `--cfg` to inspect the resolved configuration without running anything:
+
+```bash
+fusion_bench --cfg job method=task_arithmetic modelpool=my_pool taskpool=dummy
+```
+
+Use `--resolve` to expand interpolations:
+
+```bash
+fusion_bench --cfg job --resolve
+```
+
+### Fast Development Cycle
+
+Use `--fast_dev_run` for rapid iteration during algorithm development:
+
+```bash
+fusion_bench --fast_dev_run method=task_arithmetic ...
+```
+
+This evaluates on a single batch, drastically reducing runtime while still testing the full pipeline.
 
 ### Debugging in VSCode
 
-Visual Studio Code (VSCode) is a popular code editor that supports debugging Python code with Python extension.
-To debug the code using VSCode, you can use the following configuration in your `.vscode/launch.json`:
+Configure `.vscode/launch.json`:
 
-```json linenums="1" hl_lines="8-9"
+```json
 {
     "version": "0.2.0",
     "configurations": [
@@ -261,8 +447,8 @@ To debug the code using VSCode, you can use the following configuration in your 
             "name": "FusionBench with Arguments",
             "type": "debugpy",
             "request": "launch",
-            "module": "fusion_bench.scripts.cli", // (1)!
-            "args": "${command:pickArgs}", // (2)!
+            "module": "fusion_bench.scripts.cli",
+            "args": "${command:pickArgs}",
             "console": "integratedTerminal",
             "justMyCode": true
         }
@@ -270,20 +456,32 @@ To debug the code using VSCode, you can use the following configuration in your 
 }
 ```
 
-1. The `module` field specifies the module to run. In this case, it is `fusion_bench.scripts.cli`. You can also specify the path to the script directly with `program` filed, e.g., `"program": ${workspaceFolder}/fusion_bench/scripts/cli.py`.
-2. The `args` field specifies the arguments to pass to the script. You can use `${command:pickArgs}` to pick the arguments interactively when you run the debugger. Or you can specify the arguments directly, e.g., `"args": ["--config-name", "example_config"]`.
+The `module` field specifies `fusion_bench.scripts.cli`. Use `${command:pickArgs}` to pick arguments interactively, or hardcode them:
 
-Once you have the configuration in your `launch.json`, you can start debugging by selecting the `FusionBench with Arguments` configuration and pressing `F5`.
-
-![alt text](images/vscode_debug.png){ width="200pt" }
+```json
+"args": ["method=simple_average", "modelpool=my_pool", "taskpool=dummy"]
+```
 
 ### Debugging in PyCharm
 
-Debugging in PyCharm with arguments needs to be configured in the `Run/Debug Configurations`.
+1. Click `Run` > `Edit Configurations...`
+2. Click `+` and select `Python`
+3. Set:
+   - **Script path**: Absolute path to `fusion_bench/scripts/cli.py`
+   - **Parameters**: `method=simple_average modelpool=my_pool taskpool=dummy`
+   - **Python interpreter**: Your project's virtual environment
 
-1. Click on the `Run` menu click `Edit Configurations...`
-    ![alt text](images/pycharm_debug_1.png)
-2. Select `+` in top right corner and select `Python`  
-    ![alt text](images/pycharm_debug_2.png)
-3. Provide the name, absolute path of the script (`fusion_bench/scripts/cli.py`) or select the script by clicking three dots (green arrow), script parameters, and python interpreter.  
-    ![alt text](images/pycharm_debug_3.png)
+### Common Errors
+
+- **Missing `_target_`**: Every instantiated component needs a `_target_` field pointing to its Python class. Check the error message for the missing component.
+- **`KeyError` on model name**: The model name does not exist in the pool. Use `--cfg job` to inspect available models.
+- **`ValidationError` on model name**: Model names must follow naming conventions. Special names (`_pretrained_`, `_merged_`) must start and end with underscores.
+- **Import errors with lazy loading**: FusionBench uses `LazyImporter` to defer heavy imports. If you see import errors, ensure dependencies are installed: `pip install fusion-bench[all]`.
+
+### Logging
+
+FusionBench uses Python's `logging` module. Increase verbosity by setting the `LOG_LEVEL` environment variable:
+
+```bash
+LOG_LEVEL=DEBUG fusion_bench method=task_arithmetic ...
+```

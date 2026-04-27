@@ -6,6 +6,16 @@
 
 ::: fusion_bench.method.DummyAlgorithm
 
+## Base Algorithm Classes
+
+::: fusion_bench.method
+    options:
+        show_root_heading: false
+        heading_level: 3
+        members:
+        - BaseAlgorithm
+        - BaseModelFusionAlgorithm
+
 ## Analysis Purpose
 
 - [TaskVectorCosSimilarity][fusion_bench.method.TaskVectorCosSimilarity]: Computes the cosine similarity between task vectors.

@@ -1,5 +1,8 @@
-# fusion_bench.optim
+# Optim
 
-## MeZO optimizer
+Custom optimizers and optimizer utilities for model fusion.
 
-::: fusion_bench.optim.MeZO
+::: fusion_bench.optim
+    options:
+      show_source: false
+      show_submodules: true
