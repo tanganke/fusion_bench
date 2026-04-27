@@ -85,6 +85,25 @@ A variant that incorporates DARE (Drop And REscale) techniques for improved perf
 
 The DARE variant is particularly useful when dealing with fine-tuned models that may have redundant or conflicting parameters.
 
+## Troubleshooting
+
+### Vocabulary size mismatch with LLMs
+
+Loading fine-tuned LLMs may fail with:
+
+```
+model.embed_tokens.weight | MISMATCH | Reinit due to size mismatch - ckpt: torch.Size([128320, 3072]) vs model:torch.Size([128256, 3072])
+```
+
+Because these fine-tuned models with different tokenizer vocab size, thus `embed_tokens.weight` and `lm_head.weight` shapes conflict.
+
+**Fix:** Use `linear/simple_average_for_causallm.yaml` with `merge_backbone=true` for LLMs. This averages only the transformer backbone layers, keeping embeddings and LM head from the pretrained base model — avoiding vocab size mismatch.
+
+```bash
+fusion_bench method=linear/simple_average_for_causallm method.merge_backbone=true \
+    modelpool=...
+``` 
+
 ## Implementation Details
 
 - [fusion_bench.method.simple_average.SimpleAverageAlgorithm][]
