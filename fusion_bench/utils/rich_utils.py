@@ -1,6 +1,9 @@
 import logging
+import os
+import re
+import sys
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Tuple
 
 import rich
 import rich.syntax
@@ -24,6 +27,125 @@ from fusion_bench.utils.packages import _is_package_available
 install_rich_traceback()
 
 log = pylogger.RankedLogger(__name__, rank_zero_only=True)
+
+# Syntax highlighting themes optimized for dark and light terminals
+_DARK_THEME = "monokai"
+_LIGHT_THEME = "solarized-light"
+
+# Cache the detection result (avoids repeated TTY probes)
+_terminal_theme_cache: Optional[str] = None
+
+
+def _detect_terminal_theme() -> str:
+    """Detect whether the terminal uses a light or dark background.
+
+    Returns ``"light"`` or ``"dark"``.  Detection order:
+    1. Environment variable (``TERM_COLOR_SCHEME``, ``CLAUDE_COLOR_SCHEME``,
+       ``VSCODE_COLOR_THEME``).
+    2. Actual terminal background colour probed via OSC 11 query (works in
+       Kitty, Alacritty, GNOME Terminal, and most modern xterm-compatible
+       terminals).
+    3. Fall back to ``"dark"`` for non-TTY / pipes / unknown environments.
+    """
+    # 1. Explicit env override
+    for env_var in ("TERM_COLOR_SCHEME", "CLAUDE_COLOR_SCHEME", "VSCODE_COLOR_THEME"):
+        value = os.environ.get(env_var, "").lower().strip()
+        if value in ("light", "dark"):
+            return value
+
+    # 2. Probe terminal background colour via OSC 11
+    #    Only attempt on real TTYs; otherwise fall back.
+    if not os.isatty(sys.stdout.fileno()):
+        return "dark"
+
+    try:
+        import select
+        import termios
+        import tty
+
+        # Send OSC 11 query: "what is my background color?"
+        query = b"\x1b]11;?\x1b\\"
+        os.write(sys.stdout.fileno(), query)
+        sys.stdout.flush()
+
+        old_settings = termios.tcgetattr(sys.stdin.fileno())
+        try:
+            tty.setraw(sys.stdin.fileno())
+            response = b""
+            while True:
+                r, _, _ = select.select([sys.stdin], [], [], 0.1)
+                if not r:
+                    break
+                ch = os.read(sys.stdin.fileno(), 1)
+                response += ch
+                # Stop when we see the OSC 11 response marker or have enough data
+                if b"\x1b]11;" in response or len(response) > 200:
+                    break
+        finally:
+            termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, old_settings)
+
+        # Parse response. Terminals reply in various formats:
+        #   OSC 11 ; #RRGGBB ST
+        #   OSC 11 ; R,G,B ST  (values 0-65535)
+        #   OSC 11 ; rgb:RRRR/GGGG/BBBB ST
+        ESC = b"\x1b"
+
+        # Try #RRGGBB format
+        match = re.search(ESC + b"]11;#([0-9a-fA-F]{6})", response)
+        if match:
+            hex_color = match.group(1).decode()
+            r, g, b = (
+                int(hex_color[0:2], 16),
+                int(hex_color[2:4], 16),
+                int(hex_color[4:6], 16),
+            )
+        else:
+            # Try R,G,B (0-65535) format
+            match = re.search(ESC + rb"]11;([0-9]+),([0-9]+),([0-9]+)", response)
+            if match:
+                r, g, b = (
+                    int(match.group(1)) // 257,
+                    int(match.group(2)) // 257,
+                    int(match.group(3)) // 257,
+                )
+            else:
+                # Try rgb:RRRR/GGGG/BBBB (16-bit values)
+                match = re.search(
+                    ESC + rb"]11;rgb:([0-9a-fA-F]{4})/([0-9a-fA-F]{4})/([0-9a-fA-F]{4})", response
+                )
+                if match:
+                    r, g, b = (
+                        int(match.group(1).decode(), 16) // 257,
+                        int(match.group(2).decode(), 16) // 257,
+                        int(match.group(3).decode(), 16) // 257,
+                    )
+                else:
+                    return "dark"  # couldn't parse response
+
+    except (OSError, ImportError, ValueError):
+        return "dark"
+
+    # Luminance heuristic: average > 128 -> light
+    if (r + g + b) / 3 > 128:
+        return "light"
+    return "dark"
+
+
+def get_syntax_theme() -> Tuple[str, Optional[str]]:
+    """Return ``(theme_name, background_color)`` suited to the current terminal.
+
+    Use this instead of hard-coding ``"monokai"`` when creating
+    :class:`rich.syntax.Syntax` objects.
+    """
+    global _terminal_theme_cache
+
+    if _terminal_theme_cache is None:
+        _terminal_theme_cache = _detect_terminal_theme()
+
+    if _terminal_theme_cache == "light":
+        return _LIGHT_THEME, "default"
+    return _DARK_THEME, "default"
+
 
 # List of available styles
 AVAILABLE_STYLES = [
@@ -84,7 +206,7 @@ def print_bordered(
     code_style=None,
     *,
     expand: bool = True,
-    theme: str = "monokai",
+    theme: Optional[str] = None,
     background_color: Optional[str] = "default",
     print_fn=print,
     format_code: bool = True,
@@ -98,7 +220,12 @@ def print_bordered(
         style (str, optional): The color style for the border. Defaults to "cyan".
         code_style (str, optional): The syntax highlighting style if the message is code.
                                     Set to None for plain text. Defaults to "python".
+        theme (str, optional): Syntax highlighting theme. Defaults to auto-detection
+            based on terminal background (dark theme for dark terminals, light theme
+            for light terminals).
     """
+    if theme is None:
+        theme, background_color = get_syntax_theme()
     if code_style:
         if format_code:
             message = format_code_str(message, code_style)
@@ -122,7 +249,7 @@ def print_code(
     code_style=None,
     *,
     expand: bool = True,
-    theme: str = "monokai",
+    theme: Optional[str] = None,
     background_color: Optional[str] = "default",
     print_fn=print,
 ):
@@ -139,12 +266,15 @@ def print_code(
         expand (bool, optional): Placeholder flag for API symmetry with other printing
             helpers. It is not used in the current implementation. Defaults to True.
         theme (str, optional): Name of the Rich syntax highlighting theme to use when
-            ``code_style`` is provided. Defaults to ``"monokai"``.
+            ``code_style`` is provided. Defaults to auto-detection based on terminal
+            background.
         background_color (str, optional): Background color style to apply to the code
             block when using syntax highlighting. Defaults to ``"default"``.
         print_fn (Callable, optional): Function used to render the resulting Rich
             object. Defaults to :func:`rich.print`.
     """
+    if theme is None:
+        theme, background_color = get_syntax_theme()
     if code_style:
         content = Syntax(
             message,
@@ -174,7 +304,7 @@ def print_config_tree(
     resolve: bool = False,
     save_to_file: bool = False,
     *,
-    theme: str = "monokai",
+    theme: Optional[str] = None,
     background_color: Optional[str] = "default",
 ) -> None:
     """Prints the contents of a DictConfig as a tree structure using the Rich library.
@@ -187,13 +317,16 @@ def print_config_tree(
             Defaults to ``False``.
         save_to_file (bool, optional): Whether to export config to the hydra output folder.
             Defaults to ``False``.
-        theme (str, optional): The theme to use for syntax highlighting. Defaults to "monokai".
+        theme (str, optional): The theme to use for syntax highlighting. Defaults to
+            auto-detection based on terminal background.
         background_color (str, optional): The background color to use for syntax highlighting.
             Defaults to "default".
 
     Returns:
         None
     """
+    if theme is None:
+        theme, background_color = get_syntax_theme()
     style = "tree"
     tree = rich.tree.Tree("CONFIG", style=style, guide_style=style)
 
@@ -262,7 +395,7 @@ def print_config_yaml(
     resolve: bool = False,
     output_path: Optional[str] = False,
     *,
-    theme: str = "monokai",
+    theme: Optional[str] = None,
     background_color: Optional[str] = "default",
 ) -> None:
     """
@@ -272,7 +405,11 @@ def print_config_yaml(
         cfg: A DictConfig composed by Hydra.
         resolve: Whether to resolve reference fields of DictConfig. Default is ``False``.
         output_path: Optional path to export the config YAML to. If provided, the file is written to this path.
+        theme (str, optional): The theme to use for syntax highlighting. Defaults to
+            auto-detection based on terminal background.
     """
+    if theme is None:
+        theme, background_color = get_syntax_theme()
     config_yaml = OmegaConf.to_yaml(cfg, resolve=resolve)
     syntax = rich.syntax.Syntax(
         config_yaml, "yaml", theme=theme, background_color=background_color
