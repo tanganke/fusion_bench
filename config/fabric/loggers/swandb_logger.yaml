@@ -1,0 +1,5 @@
+#https://github.com/SwanHubX/SwanLab/blob/main/swanlab/integration/pytorch_lightning.py
+_target_: swandb.integration.pytorch_lightning.SwanLabLogger
+project: ${hydra:job.config_name}
+description: "SwanLab logger with FusionBench"
+save_dir: ${path.log_dir}

@@ -1,0 +1,23 @@
+defaults:
+  - /dataset/image_classification/train@train_datasets:
+      - sun397
+      - dtd
+  - /dataset/image_classification/test@test_datasets:
+      - sun397
+      - dtd
+_target_: fusion_bench.modelpool.OpenCLIPVisionModelPool
+_recursive_: false
+model_dir: ./.cache/task_vectors_checkpoints/
+models:
+  _pretrained_:
+    model_name: ViT-B-32
+    pickle_path: ${...model_dir}/ViT-B-32/zeroshot.pt
+  sun397:
+    model_name: ViT-B-32
+    pickle_path: ${...model_dir}/ViT-B-32/SUN397/finetuned.pt
+  dtd:
+    model_name: ViT-B-32
+    pickle_path: ${...model_dir}/ViT-B-32/DTD/finetuned.pt
+classification_heads:
+  sun397: ${..model_dir}/ViT-B-32/head_SUN397.pt
+  dtd: ${..model_dir}/ViT-B-32/head_DTD.pt

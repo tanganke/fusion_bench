@@ -1,0 +1,15 @@
+_target_: fusion_bench.modelpool.ConvNextForImageClassificationPool
+_recursive_: False
+models:
+  _pretrained_: facebook/convnext-base-224
+  sun397: tanganke/convnext-base-224_sun397_sgd_batch-size-64_lr-0.01_steps-4000
+  stanford-cars: tanganke/convnext-base-224_stanford-cars_sgd_batch-size-64_lr-0.01_steps-4000
+  resisc45: tanganke/convnext-base-224_resisc45_sgd_batch-size-64_lr-0.01_steps-4000
+  eurosat: tanganke/convnext-base-224_eurosat_sgd_batch-size-64_lr-0.01_steps-4000
+  svhn: tanganke/convnext-base-224_svhn_sgd_batch-size-64_lr-0.01_steps-4000
+  gtsrb: tanganke/convnext-base-224_gtsrb_sgd_batch-size-64_lr-0.01_steps-4000
+  mnist: tanganke/convnext-base-224_mnist_sgd_batch-size-64_lr-0.01_steps-4000
+  dtd: tanganke/convnext-base-224_dtd_sgd_batch-size-64_lr-0.01_steps-4000
+train_datasets: null
+val_datasets: null
+test_datasets: null

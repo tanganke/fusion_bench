@@ -1,0 +1,18 @@
+# for layer-wise adamerging, use fusion_bench.method.ResNetLayerWiseAdamerging
+_target_: fusion_bench.method.ResNetTaskWiseAdamerging
+max_steps: 1000
+init_values: null
+resume_weights_path: null
+# if `clamp_weights` is true, the weights will be clamped to [0, 1]
+clamp_weights: false
+# arguments of `functional_call`
+tie_weights: true
+strict: false
+# optimizer and lr scheduler for test-time adaptation training
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 1e-3
+lr_scheduler: null
+dataloader_kwargs:
+  batch_size: 16
+  num_workers: 4
