@@ -41,6 +41,7 @@ _import_structure = {
     "weighted_average": ["WeightedAverageAlgorithm", "WeightedAverageForLLama"],
     "task_arithmetic": ["TaskArithmeticAlgorithm"],
     "ties_merging": ["TiesMergingAlgorithm"],
+    "magmax": ["MagMaxAlgorithm", "magmax_merge"],
     "dare": ["DareSimpleAverage", "DareTaskArithmetic", "DareTiesMerging"],
     "fisher_merging": [
         "FisherMergingAlgorithm",
@@ -257,6 +258,7 @@ if TYPE_CHECKING:
         SparseLoForLlama,
     )
     from .tall_mask import TallMaskTaskArithmeticAlgorithm
+    from .magmax import MagMaxAlgorithm, magmax_merge
     from .task_arithmetic import TaskArithmeticAlgorithm
     from .task_singular_vector import TaskSingularVectorMerging
     from .ties_merging import TiesMergingAlgorithm
