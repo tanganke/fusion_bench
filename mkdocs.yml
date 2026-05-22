@@ -28,6 +28,7 @@ nav:
           - Fisher Merging: algorithms/fisher_merging.md
           - Task Arithmetic: algorithms/task_arithmetic.md
           - Ties-Merging: algorithms/ties_merging.md
+          - MagMax: algorithms/magmax.md
           - AdaMerging: algorithms/adamerging.md
           - RegMean: algorithms/regmean.md
           - RegMean++: algorithms/regmean_plusplus.md
