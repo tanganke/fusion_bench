@@ -2,6 +2,10 @@ mlruns/
 profile_report.html
 !*.template
 
+.claude/
+ara/
+ara-output/
+tmp/
 *.local.*
 
 # ignore datasets
@@ -162,6 +166,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.python/
 env/
 venv/
 ENV/
