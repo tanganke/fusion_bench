@@ -61,9 +61,9 @@ def expo_(
         sft_p = rlhf_p + extrapolation_factor * delta_p
 
         if merge_dtype is not None:
-            merged_state_dict[n] = rlhf_p.to(dtype=orignal_dtype)
+            merged_state_dict[n] = sft_p.to(dtype=orignal_dtype)
         else:
-            merged_state_dict[n] = rlhf_p
+            merged_state_dict[n] = sft_p
 
     rlhf_model.load_state_dict(merged_state_dict)
     return rlhf_model

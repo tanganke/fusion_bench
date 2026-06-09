@@ -95,7 +95,7 @@ def slerp(
     else:
         # Calculate initial angle between v0 and v1
         theta_0 = torch.arccos(dot)
-        sin_theta_0 = np.sin(theta_0)
+        sin_theta_0 = torch.sin(theta_0)
         # Angle at timestep t
         theta_t = theta_0 * t
         sin_theta_t = torch.sin(theta_t)

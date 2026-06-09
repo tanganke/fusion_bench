@@ -161,6 +161,7 @@ class MinNormSolver:
             if np_sum(np.abs(change)) < MinNormSolver.STOP_CRIT:
                 return sol_vec, nd
             sol_vec = new_sol_vec
+            iter_count += 1
 
     def find_min_norm_element_FW(vecs):
         R"""
@@ -204,6 +205,7 @@ class MinNormSolver:
             if np_sum(np.abs(change)) < MinNormSolver.STOP_CRIT:
                 return sol_vec, nd
             sol_vec = new_sol_vec
+            iter_count += 1
 
 
 def gradient_normalizers(grads, losses, normalization_type):

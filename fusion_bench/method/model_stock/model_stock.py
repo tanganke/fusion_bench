@@ -287,9 +287,9 @@ class ModelStock(SimpleProfilerMixin, BaseAlgorithm):
         if self.model_save_path is not None:
             with self.profile("model saving"):
                 modelpool.save_model(
-                    model, path=self.model_save_path, **self.model_save_kwargs
+                    result_model, path=self.model_save_path, **self.model_save_kwargs
                 )
-                if isinstance(model, PreTrainedModel):
+                if isinstance(result_model, PreTrainedModel):
                     modelcard = create_default_model_card(
                         models=[
                             modelpool.get_model_path(m)
