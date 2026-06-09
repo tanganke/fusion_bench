@@ -29,7 +29,7 @@ class NYUv2ModelPool(BaseModelPool):
         )
         model = NYUv2Model(encoder=encoder, decoders=decoders)
         if model_config.get("ckpt_path", None) is not None:
-            ckpt = torch.load(model_config.ckpt_path, map_location="cpu")
+            ckpt = torch.load(model_config.ckpt_path, map_location="cpu", weights_only=True)
             if "state_dict" in ckpt:
                 ckpt = ckpt["state_dict"]
             model.load_state_dict(ckpt, strict=False)

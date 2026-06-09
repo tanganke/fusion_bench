@@ -45,7 +45,7 @@ class TaskWiseAdaMergingAlgorithm(ModelFusionAlgorithm):
                 # self.config.weights is a path to a .np or .pt file
                 if self.config.weights.endswith(".pt"):
                     task_wise_weight = torch.load(
-                        self.config.weights, map_location="cpu"
+                        self.config.weights, map_location="cpu", weights_only=True
                     ).detach_()
                 elif self.config.weights.endswith(".np"):
                     task_wise_weight = torch.from_numpy(

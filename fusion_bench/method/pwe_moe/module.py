@@ -305,5 +305,5 @@ class ParetoWeightEnsemblingModule(nn.Module):
             f"ParetoWeightEnsemblingModule(base_model=<{type(self.base_model)}>, "
             f"num_expert_models={len(self.expert_params)}, "
             f"fix_base_model_and_experts={self.fix_base_model_and_experts}, "
-            f"router_hidden_layers={self.router_hidden_layers})",
+            f"router_hidden_layers={self.router_hidden_layers})"
         )

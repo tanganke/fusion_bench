@@ -85,7 +85,7 @@ class CLIPLayerWiseAdaMergingSurgeryAlgorithm(
 
         if self.config.weights is not None:
             # skip the test-time adaptation
-            merge_weight: torch.Tensor = torch.load(self.config.weights)
+            merge_weight: torch.Tensor = torch.load(self.config.weights, weights_only=True, map_location="cpu")
             module.merge_weight.data = merge_weight.to(
                 device=module.merge_weight.device
             )

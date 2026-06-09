@@ -144,11 +144,12 @@ def load_tensor_from_file(
 
     if file_path.endswith(".np"):
         tensor = torch.from_numpy(np.load(file_path)).detach_()
-    if file_path.endswith((".pt", ".pth")):
-        tensor = torch.load(file_path, map_location="cpu").detach_()
+    elif file_path.endswith((".pt", ".pth")):
+        tensor = torch.load(file_path, map_location="cpu", weights_only=True).detach_()
     else:
         try:
-            tensor = pickle.load(open(file_path, "rb"))
+            with open(file_path, "rb") as f:
+                tensor = pickle.load(f)
         except Exception:
             raise ValueError(f"Unsupported file format: {file_path}")
 

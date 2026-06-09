@@ -80,7 +80,9 @@ def separate_load(
     dtype = parse_dtype(dtype)
 
     model: nn.Module = (
-        torch.load(os.path.join(load_dir, model_file))
+        torch.load(
+            os.path.join(load_dir, model_file), weights_only=True, map_location="cpu"
+        )
         .to(dtype=dtype)
         .to_empty(device=device or "cpu")
     )
@@ -89,6 +91,7 @@ def separate_load(
             state_dict = torch.load(
                 os.path.join(load_dir, state_dict_file),
                 map_location="cpu",
+                weights_only=True,
             )
         else:
             state_dict = {}

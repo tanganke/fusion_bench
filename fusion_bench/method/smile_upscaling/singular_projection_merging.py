@@ -97,7 +97,7 @@ class SingularProjectionMergingAlgorithm(ModelFusionAlgorithm, SimpleProfilerMix
             self.config.model_path
         ):
             log.info(f"loading merged model from {self.config.model_path}")
-            model = torch.load(self.config.model_path)
+            model = torch.load(self.config.model_path, weights_only=True, map_location="cpu")
 
         with self.profile("load pretrained model"):
             pretrained_model = modelpool.load_model("_pretrained_").to(

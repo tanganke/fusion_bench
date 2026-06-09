@@ -142,7 +142,7 @@ class OpenCLIPVisionModelPool(BaseModelPool):
             # this is the original usage in the task arithmetic codebase
             _check_and_redirect_open_clip_modeling()
             log.info(f"loading ImageEncoder from {model_config}")
-            weights_only = kwargs["weights_only"] if "weights_only" in kwargs else False
+            weights_only = kwargs["weights_only"] if "weights_only" in kwargs else True
             try:
                 encoder = torch.load(
                     model_config, weights_only=weights_only, *args, **kwargs
@@ -159,7 +159,7 @@ class OpenCLIPVisionModelPool(BaseModelPool):
             log.info(
                 f"loading ImageEncoder of {model_config['model_name']} from {model_config['pickle_path']}"
             )
-            weights_only = kwargs["weights_only"] if "weights_only" in kwargs else False
+            weights_only = kwargs["weights_only"] if "weights_only" in kwargs else True
             try:
                 encoder = torch.load(
                     model_config["pickle_path"],

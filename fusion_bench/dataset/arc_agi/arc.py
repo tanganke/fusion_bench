@@ -50,7 +50,7 @@ class Example:
         return max(self.input_size(), self.output_size())
 
     def __hash__(self) -> int:
-        return hash((self.input.tobytes(), self.output.tobytes()))
+        return hash((self.input.tobytes(), self.input.dtype, self.output.tobytes(), self.output.dtype))
 
     def __repr__(self) -> str:
         return f"Example(input={self.input}, output={self.output})"

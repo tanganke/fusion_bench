@@ -195,7 +195,7 @@ class LazyStateDict(Mapping[str, torch.Tensor], Generic[TorchModelType]):
         ):
             # PyTorch .bin file: load entire state dict immediately
             log.info(f"Loading full state dict from {WEIGHTS_NAME}")
-            self._state_dict_cache = torch.load(self._checkpoint_files[0])
+            self._state_dict_cache = torch.load(self._checkpoint_files[0], weights_only=True, map_location="cpu")
             # if meta_module is provided, remove the keys that are not in the meta_module
             if self.meta_module is not None:
                 meta_module_state_dict = self.meta_module.state_dict()
@@ -329,7 +329,7 @@ class LazyStateDict(Mapping[str, torch.Tensor], Generic[TorchModelType]):
                 return tensor
         else:
             # PyTorch .bin file: load entire state dict
-            state_dict = torch.load(checkpoint_file, map_location=self._device)
+            state_dict = torch.load(checkpoint_file, map_location=self._device, weights_only=True)
             if update_cache:
                 if self._state_dict_cache is not None:
                     self._state_dict_cache.update(state_dict)
@@ -427,7 +427,7 @@ class LazyStateDict(Mapping[str, torch.Tensor], Generic[TorchModelType]):
                     return len(tuple(f.keys()))
             else:
                 return len(
-                    tuple(torch.load(checkpoint_file, map_location="cpu").keys())
+                    tuple(torch.load(checkpoint_file, map_location="cpu", weights_only=True).keys())
                 )
         raise RuntimeError(
             "Unexpected error: cannot determine the number of keys in the state dict."

@@ -93,7 +93,7 @@ def save_diff(finetuned_compressed_model, save_dir):
 @torch.no_grad()
 def load_diff(model, diff_dir):
     device = model.device
-    diff_dict = torch.load(diff_dir)
+    diff_dict = torch.load(diff_dir, weights_only=True, map_location="cpu")
 
     for name, module in model.named_modules():
         if name + ".mask" in diff_dict:

@@ -109,7 +109,7 @@ class SmileUpscalingAlgorithm(
             self.config.model_path
         ):
             log.info(f"Loading model from {self.config.model_path}")
-            model = torch.load(self.config.model_path)
+            model = torch.load(self.config.model_path, weights_only=True, map_location="cpu")
             print_parameters(model)
             return model
 

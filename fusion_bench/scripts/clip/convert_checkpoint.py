@@ -26,7 +26,7 @@ if __name__ == "__main__":
     model = CLIPVisionModel.from_pretrained(args.model)
     processor = CLIPProcessor.from_pretrained(args.model)
 
-    checkpoint = torch.load(args.checkpoint, map_location="cpu")
+    checkpoint = torch.load(args.checkpoint, map_location="cpu", weights_only=True)
     # remove the prefix from the keys
     state_dict = {}
     for key in checkpoint[args.key]:

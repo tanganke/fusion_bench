@@ -174,14 +174,16 @@ def load_tall_mask(remove_keys, ptm_check, config):
                     mask_location,
                     config.model,
                     f"TALL_mask_{config.num_tasks}task_use_ties.npy",
-                )
+                ),
+                weights_only=True,
             )
         else:
             print("==== Loading TALL Masks built with Task Arithmetic ====")
             tall_masks = torch.load(
                 os.path.join(
                     mask_location, config.model, f"TALL_mask_{config.num_tasks}task.npy"
-                )
+                ),
+                weights_only=True,
             )
     except:
         raise Exception("TALL Masks are not constructed yet.")
