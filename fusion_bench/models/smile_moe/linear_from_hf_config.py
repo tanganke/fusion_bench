@@ -25,7 +25,7 @@ def _svd(w: Tensor, full_matrices=False) -> Tuple[Tensor, Tensor, Tensor]:
         Tuple[Tensor, Tensor, Tensor]: The U, S, and V matrices from SVD.
     """
     dtype = w.dtype
-    if w.dtype != torch.float32 or w.dtype != torch.float64:
+    if w.dtype != torch.float32 and w.dtype != torch.float64:
         w = w.float()
 
     u, s, vh = torch.linalg.svd(
@@ -366,7 +366,10 @@ def upscale_to_smile_linear(
             v = v[:, :rank_of_expert]
             state_dict = {"u": u, "svh": (s * v).T}
             if experts[expert_idx].bias is not None:
-                state_dict["bias"] = experts[expert_idx].bias.data
+                bias_diff = experts[expert_idx].bias.data
+                if base.bias is not None:
+                    bias_diff = bias_diff - base.bias.data
+                state_dict["bias"] = bias_diff
             target_expert.load_state_dict(state_dict)
     else:
         for expert_idx, target_expert in enumerate(target.experts):
