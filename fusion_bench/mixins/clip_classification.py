@@ -56,6 +56,22 @@ def vision_backbone(model: nn.Module) -> nn.Module:
     return model if is_transformers_version_greater_than_5_0() else model.vision_model
 
 
+# `CLIPVisionTransformer` no longer exists as a separate class in `transformers >= 5`
+# (`CLIPVisionModel` itself is the flattened transformer -- see `VISION_MODEL_PREFIX`
+# above), so it's only importable, and only worth including in an `isinstance` check,
+# on older versions -- otherwise importing it outright breaks any module that does so at
+# import time under `transformers >= 5`. Shared here for the same reason as
+# `VISION_MODEL_PREFIX`/`vision_backbone`: multiple `fusion_bench.taskpool.clip_vision.*`
+# modules need this exact isinstance check.
+VISION_MODEL_TYPES: Tuple[type, ...] = (CLIPVisionModel,)
+if not is_transformers_version_greater_than_5_0():
+    from transformers.models.clip.modeling_clip import (
+        CLIPVisionTransformer as _CLIPVisionTransformer,
+    )
+
+    VISION_MODEL_TYPES = (CLIPVisionModel, _CLIPVisionTransformer)
+
+
 class CLIPClassificationMixin(LightningFabricMixin):
     """
     This mixin provides methods to classify images using the CLIP model.

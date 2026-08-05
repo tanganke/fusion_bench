@@ -25,11 +25,11 @@ from torchmetrics import Accuracy, MeanMetric
 from torchmetrics.classification.accuracy import MulticlassAccuracy
 from tqdm.autonotebook import tqdm
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
-from transformers.models.clip.modeling_clip import CLIPVisionTransformer
 
 from fusion_bench import RuntimeConstants, auto_register_config
 from fusion_bench.dataset import CLIPDataset
 from fusion_bench.mixins import HydraConfigMixin, LightningFabricMixin
+from fusion_bench.mixins.clip_classification import VISION_MODEL_TYPES
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.taskpool import BaseTaskPool
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
@@ -37,6 +37,7 @@ from fusion_bench.utils import count_parameters, instantiate
 
 if TYPE_CHECKING:
     from fusion_bench.models.surgery.surgerymodelwrapper import SurgeryModelWrapper
+    from transformers.models.clip.modeling_clip import CLIPVisionTransformer
 
 # disable tokenizers parallelism by default to avoid deadlocks
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -297,7 +298,7 @@ class CLIPVisionModelTaskPool(
 
     def evaluate(
         self,
-        model: Union[CLIPVisionModel, CLIPVisionTransformer],
+        model: Union[CLIPVisionModel, "CLIPVisionTransformer"],
         name=None,
         **kwargs,
     ):
@@ -399,7 +400,7 @@ class CLIPVisionModelTaskPool(
             # setup hooks for saving layer-wise features
             assert isinstance(
                 classifier.clip_model.vision_model,
-                (CLIPVisionTransformer, CLIPVisionModel),
+                VISION_MODEL_TYPES,
             ), "Vision model is expected to be a CLIPVisionTransformer"
             vision_model = classifier.clip_model.vision_model
             if isinstance(vision_model, CLIPVisionModel):

@@ -1,18 +1,21 @@
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 import torch
 from torch import Tensor
 from torch.utils.hooks import RemovableHandle
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
-from transformers.models.clip.modeling_clip import CLIPVisionTransformer
 
 from fusion_bench.method.smile_upscaling import SmileMoELinear
+from fusion_bench.mixins.clip_classification import VISION_MODEL_TYPES
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 
 from .taskpool import CLIPVisionModelTaskPool
 from .utils.routing_analysis_utils import LayerWiseRoutingWeightSaver
+
+if TYPE_CHECKING:
+    from transformers.models.clip.modeling_clip import CLIPVisionTransformer
 
 
 class SmileCLIPVisionModelTaskPool(CLIPVisionModelTaskPool):
@@ -61,7 +64,7 @@ class SmileCLIPVisionModelTaskPool(CLIPVisionModelTaskPool):
             # setup hooks for saving layer-wise routing weights
             assert isinstance(
                 classifier.clip_model.vision_model,
-                (CLIPVisionTransformer, CLIPVisionModel),
+                VISION_MODEL_TYPES,
             ), "Vision model is expected to be a CLIPVisionTransformer"
             vision_model = classifier.clip_model.vision_model
             if isinstance(vision_model, CLIPVisionModel):

@@ -1,13 +1,13 @@
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import torch
 from torch import Tensor
 from torch.utils.hooks import RemovableHandle
 from transformers import CLIPModel, CLIPProcessor, CLIPVisionModel
-from transformers.models.clip.modeling_clip import CLIPVisionTransformer
 
+from fusion_bench.mixins.clip_classification import VISION_MODEL_TYPES
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.models.sparse_we_moe import (
     SparseWeightEnsemblingMoE,
@@ -16,6 +16,9 @@ from fusion_bench.models.sparse_we_moe import (
 
 from .taskpool import CLIPVisionModelTaskPool
 from .utils.routing_analysis_utils import LayerWiseRoutingWeightSaver
+
+if TYPE_CHECKING:
+    from transformers.models.clip.modeling_clip import CLIPVisionTransformer
 
 
 class SparseWEMoECLIPVisionModelTaskPool(CLIPVisionModelTaskPool):
@@ -52,7 +55,7 @@ class SparseWEMoECLIPVisionModelTaskPool(CLIPVisionModelTaskPool):
             # setup hooks for saving layer-wise routing weights
             assert isinstance(
                 classifier.clip_model.vision_model,
-                (CLIPVisionTransformer, CLIPVisionModel),
+                VISION_MODEL_TYPES,
             ), "Vision model is expected to be a CLIPVisionTransformer"
             vision_model = classifier.clip_model.vision_model
             if isinstance(vision_model, CLIPVisionModel):
