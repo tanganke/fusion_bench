@@ -11,24 +11,24 @@ from torch.utils.data import DataLoader
 from tqdm.autonotebook import tqdm
 
 from fusion_bench.dataset.clip_dataset import CLIPDataset
-from fusion_bench.mixins import CLIPClassificationMixin
+from fusion_bench.mixins import CLIPClassificationMixin, auto_register_config
+from fusion_bench.mixins.clip_classification import (
+    VISION_MODEL_PREFIX,
+    vision_backbone,
+)
 
 from .regmean_plusplus import RegMeanAlgorithmPlusPlus
 
 log = logging.getLogger(__name__)
 
 
+@auto_register_config
 class RegMeanAlgorithmForCLIPPlusPlus(
     RegMeanAlgorithmPlusPlus,
     CLIPClassificationMixin,
 ):
-    _config_mapping = {
-        "_dataloader_kwargs": "dataloader_kwargs",
-    }
-
     def __init__(self, *, dataloader_kwargs: DictConfig, **kwargs):
         super().__init__(**kwargs)
-        self.dataloader_kwargs = dataloader_kwargs
 
     def on_regmean_start(self):
         self.setup_zero_shot_classification_head()
@@ -125,9 +125,9 @@ class RegMeanAlgorithmForCLIPPlusPlus(
 
             param_dict = {}
             for name, param in model_to_merge_state_dict.items():
-                if name.startswith("vision_model.embeddings") or name.startswith(
-                    "vision_model.pre_layrnorm"
-                ):
+                if name.startswith(
+                    f"{VISION_MODEL_PREFIX}embeddings"
+                ) or name.startswith(f"{VISION_MODEL_PREFIX}pre_layrnorm"):
                     param_dict[name] = param
 
             for param_name in param_dict.keys():
@@ -153,8 +153,9 @@ class RegMeanAlgorithmForCLIPPlusPlus(
             images, _ = batch
 
             images = images.to(model.device)
-            image_embeds = model.vision_model.embeddings(images)
-            image_embeds = model.vision_model.pre_layrnorm(image_embeds)
+            backbone = vision_backbone(model)
+            image_embeds = backbone.embeddings(images)
+            image_embeds = backbone.pre_layrnorm(image_embeds)
             image_embeds = image_embeds.detach().cpu()
 
             return image_embeds
@@ -172,13 +173,13 @@ class RegMeanAlgorithmForCLIPPlusPlus(
         return batches_input
 
     def get_layers(self, model: nn.Module):
-        return model.vision_model.encoder.layers
+        return vision_backbone(model).encoder.layers
 
     def update_merged_params_dict(
         self, merged_params_dict, new_merged_params, layer_idx
     ):
         for key, value in new_merged_params.items():
-            key = f"vision_model.encoder.layers.{layer_idx}.{key}"
+            key = f"{VISION_MODEL_PREFIX}encoder.layers.{layer_idx}.{key}"
             merged_params_dict[key] = value
 
         return merged_params_dict
@@ -190,10 +191,20 @@ class RegMeanAlgorithmForCLIPPlusPlus(
         for batch in batches_input:
             device = next(layer.parameters()).device
             batch = batch.to(device)
-            logits = (
-                layer(batch, attention_mask=None, causal_attention_mask=None)[0]
-                .detach()
-                .cpu()
-            )
+            # `causal_attention_mask` is a required, no-default param on
+            # `CLIPEncoderLayer.forward` in `transformers < 5`; passing it here is a
+            # harmless no-op on `transformers >= 5`, which absorbs it into
+            # `**kwargs: Unpack[TransformersKwargs]` instead of declaring it -- so
+            # always passing it (rather than gating it on `VISION_MODEL_PREFIX`)
+            # keeps this call valid on both.
+            output = layer(batch, attention_mask=None, causal_attention_mask=None)
+            # `transformers < 5` returns `(hidden_states, ...)`, so `[0]` unpacked the
+            # tuple; `transformers >= 5` returns a bare tensor, where indexing `[0]`
+            # would instead slice away the batch dimension -- so check the type rather
+            # than gating on the version flag, since this needs no version lookup to
+            # get right.
+            if isinstance(output, tuple):
+                output = output[0]
+            logits = output.detach().cpu()
             batches_output.append(logits)
         return batches_output

@@ -29,6 +29,7 @@ from fusion_bench.modelpool import CLIPVisionModelPool
 from fusion_bench.models.hf_clip import HFCLIPClassifier
 from fusion_bench.tasks.clip_classification import get_classnames_and_templates
 from fusion_bench.utils.data import InfiniteDataLoader
+from fusion_bench.utils.packages import is_transformers_version_greater_than_5_0
 
 if TYPE_CHECKING:
     from transformers.models.clip.modeling_clip import CLIPVisionTransformer
@@ -37,6 +38,22 @@ log = logging.getLogger(__name__)
 
 # disable tokenizers parallelism by default to avoid deadlocks
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+# `transformers < 5` nests a `.vision_model` submodule inside `CLIPVisionModel`
+# (embeddings/pre_layrnorm/encoder live under it, and its state-dict keys are prefixed
+# `"vision_model."`); `transformers >= 5` flattens `CLIPVisionModel` so those
+# submodules -- and state-dict keys -- sit directly on the model. Shared here (not
+# defined per-caller) since any code walking a `CLIPVisionModel`'s internals by
+# attribute or reading/writing its state dict by key needs the same version check --
+# see e.g. `fusion_bench.method.regmean_plusplus.clip_regmean_plusplus`.
+VISION_MODEL_PREFIX = "" if is_transformers_version_greater_than_5_0() else "vision_model."
+
+
+def vision_backbone(model: nn.Module) -> nn.Module:
+    """The vision-transformer submodule of a CLIP vision model, regardless of
+    `transformers` version -- see `VISION_MODEL_PREFIX`.
+    """
+    return model if is_transformers_version_greater_than_5_0() else model.vision_model
 
 
 class CLIPClassificationMixin(LightningFabricMixin):

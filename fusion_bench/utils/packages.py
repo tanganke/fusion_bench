@@ -69,6 +69,11 @@ def is_transformers_version_greater_than_4_43():
     return _get_package_version("transformers") >= version.parse("4.43.0")
 
 
+@lru_cache
+def is_transformers_version_greater_than_5_0():
+    return _get_package_version("transformers") >= version.parse("5.0.0")
+
+
 def is_uvicorn_available():
     return _is_package_available("uvicorn")
 
