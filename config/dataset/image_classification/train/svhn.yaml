@@ -1,6 +1,6 @@
 svhn:
   _target_: datasets.load_dataset
   _args_:
-    - svhn
+    - ufldl-stanford/svhn
     - cropped_digits
   split: train
