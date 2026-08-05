@@ -1,0 +1,20 @@
+_target_: fusion_bench.method.randes.SuperposedTaskArithmeticLoRAAlgorithm
+#* === base randes options ===
+mode: random_binary_diagonal_matrix
+# weights for all mlp and attn layers
+target_layer:
+  - mlp_w
+  - attn_w
+random_seed: 42 # for random_binary_diagonal_matrix
+different_across_layers: True
+joint_matrix_mode: flatten_hstack
+rank: 1 # for columnwise svd
+random_components: False
+shift_layers: 0
+debug: 0
+verbose: 0
+dropout_rate: 1
+#* === task arithmetic options ===
+scaling_factor: 0.5
+# path to save/load the model
+model_path: null

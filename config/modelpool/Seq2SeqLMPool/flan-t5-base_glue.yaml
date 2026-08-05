@@ -1,0 +1,12 @@
+defaults:
+  - Seq2SeqLMPool@: _template
+  - /model/flan-t5@models:
+      - flan-t5-base
+      - flan-t5-base_glue-cola
+      - flan-t5-base_glue-mnli
+      - flan-t5-base_glue-mrpc
+      - flan-t5-base_glue-qnli
+      - flan-t5-base_glue-qqp
+      - flan-t5-base_glue-rte
+      - flan-t5-base_glue-sst2
+      - flan-t5-base_glue-stsb

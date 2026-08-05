@@ -1,0 +1,24 @@
+name: ??? # this can be
+# the path for loading the model weights, if specified, skip the test-time adaptation training
+checkpoint: False
+# the path for saving the model weights.
+save_checkpoint: False
+router_hidden_layers: 1
+init_lambda: 0.3
+batch_reduce: true
+# device to compute svd
+svd_accelerator: cuda
+rank_k: 32 # How many experts are added to the pool per task?
+select_k: -1 # How many experts are selected from the pool to merge? Range is (1, rank_k*task_num). In particular -1: All the experts in the pool
+# learning rate
+lr: 1e-4
+optimizer: adam
+# this is overrided by `fabric.devices` if launched from the `fusion_bench` CLI.
+devices: 1
+batch_size: 16
+num_workers: 16
+max_steps: 1000 # default: 1000
+# if true, we will use the gradient accumulation across tasks to save memory
+use_grad_accumulate: true
+cache_dir: outputs
+fast_dev_run: ${fast_dev_run}

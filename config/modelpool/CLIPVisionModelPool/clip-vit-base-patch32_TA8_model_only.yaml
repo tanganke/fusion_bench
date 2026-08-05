@@ -1,0 +1,14 @@
+_target_: fusion_bench.modelpool.CLIPVisionModelPool
+_recursive_: False
+processor: openai/clip-vit-base-patch32
+models:
+  _pretrained_: openai/clip-vit-base-patch32
+  sun397: tanganke/clip-vit-base-patch32_sun397
+  stanford-cars: tanganke/clip-vit-base-patch32_stanford-cars
+  resisc45: tanganke/clip-vit-base-patch32_resisc45
+  eurosat: tanganke/clip-vit-base-patch32_eurosat
+  svhn: tanganke/clip-vit-base-patch32_svhn
+  gtsrb: tanganke/clip-vit-base-patch32_gtsrb
+  mnist: tanganke/clip-vit-base-patch32_mnist
+  dtd: tanganke/clip-vit-base-patch32_dtd
+platform: hf

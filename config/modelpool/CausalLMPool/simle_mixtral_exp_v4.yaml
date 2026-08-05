@@ -1,0 +1,10 @@
+_target_: fusion_bench.modelpool.CausalLMPool
+_recursive_: false
+models:
+  _pretrained_: mistralai/Mistral-7B-v0.1
+  expert_1: meta-math/MetaMath-Mistral-7B
+  expert_2: cognitivecomputations/dolphin-2.1-mistral-7b
+  expert_3: uukuguy/speechless-code-mistral-7b-v1.0
+model_kwargs:
+  torch_dtype: bfloat16
+tokenizer: mistralai/Mistral-7B-v0.1

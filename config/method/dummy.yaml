@@ -1,0 +1,7 @@
+# =============================================================================
+# FusionBench Method Configuration: Dummy
+# =============================================================================
+# No-op method for testing pipelines and wiring.
+# Instantiates and exits without modifying models.
+# =============================================================================
+_target_: fusion_bench.method.DummyAlgorithm

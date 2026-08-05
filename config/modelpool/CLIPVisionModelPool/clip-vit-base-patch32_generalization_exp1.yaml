@@ -1,0 +1,24 @@
+defaults:
+  - CLIPVisionModelPool@: _template
+  - /model/clip-vit@models:
+      - clip-vit-base-patch32
+      - clip-vit-base-patch32_sun397
+      - clip-vit-base-patch32_stanford-cars
+      - clip-vit-base-patch32_resisc45
+      - clip-vit-base-patch32_dtd
+      - clip-vit-base-patch32_svhn
+      - clip-vit-base-patch32_gtsrb
+  - /dataset/image_classification/train@train_datasets:
+      - sun397
+      - stanford-cars
+      - resisc45
+      - dtd
+      - svhn
+      - gtsrb
+  - /dataset/image_classification/test@test_datasets:
+      - sun397
+      - stanford-cars
+      - resisc45
+      - dtd
+      - svhn
+      - gtsrb

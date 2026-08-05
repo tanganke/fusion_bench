@@ -1,0 +1,5 @@
+defaults:
+  - CLIPVisionModelPool@: _template
+  - /model/clip-vit@models:
+      - clip-vit-base-patch32
+  - /dataset/image_classification/train@train_datasets: the_eight_tasks

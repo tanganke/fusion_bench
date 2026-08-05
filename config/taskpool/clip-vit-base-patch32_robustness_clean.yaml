@@ -1,0 +1,24 @@
+type: clip_vit_classification
+name: clip-vit-robustness_clean
+dataset_type: huggingface_image_classification
+tasks:
+  - name: stanford_cars
+    dataset:
+      name: tanganke/stanford_cars
+      split: test
+  - name: eurosat
+    dataset:
+      name: tanganke/eurosat
+      split: test
+  - name: resisc45
+    dataset:
+      name: tanganke/resisc45
+      split: test
+  - name: gtsrb
+    dataset:
+      name: tanganke/gtsrb
+      split: test
+clip_model: openai/clip-vit-base-patch32
+batch_size: 128
+num_workers: 16
+fast_dev_run: ${fast_dev_run}

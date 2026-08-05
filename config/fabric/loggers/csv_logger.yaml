@@ -1,0 +1,11 @@
+_target_: lightning.fabric.loggers.CSVLogger
+# the logs directory would be `root_dir/name/version_X`
+# for example, `outputs/logs/lightning_logs/version_0` and `outputs/logs/lightning_logs/version_1` by default
+
+# root directory for all logging
+root_dir: ${path.log_dir}
+# the name of the experiment
+name: ""
+version: ""
+prefix: ""
+flush_logs_every_n_steps: 100

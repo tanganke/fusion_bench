@@ -1,0 +1,33 @@
+defaults:
+  - hydra: default
+  - path: default
+  - _self_
+fast_dev_run: false
+exp_name: null
+version: null
+# path to nyuv2 data, assume the following structure:
+# nyuv2
+# ├── nyuv2
+# │   ├── train
+# │   ├── val
+data_dir: .cache
+tasks:
+  - segmentation
+  - depth
+  - normal
+# to enable single task training, set one of the following to 1 and the rest to 0
+task_weights:
+  - 1
+  - 1
+  - 1
+# per-GPU batch size
+batch_size: 16
+num_workers: 4
+trainer:
+  fast_dev_run: ${fast_dev_run}
+  max_epochs: 40
+  max_steps: -1
+  devices: 1
+# resume from a checkpoint
+ckpt_path: null
+print_config: true

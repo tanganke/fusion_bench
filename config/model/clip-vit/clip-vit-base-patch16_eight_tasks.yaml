@@ -1,0 +1,10 @@
+defaults:
+  - clip-vit-base-patch16
+  - clip-vit-base-patch16_sun397
+  - clip-vit-base-patch16_stanford-cars
+  - clip-vit-base-patch16_resisc45
+  - clip-vit-base-patch16_eurosat
+  - clip-vit-base-patch16_svhn
+  - clip-vit-base-patch16_gtsrb
+  - clip-vit-base-patch16_mnist
+  - clip-vit-base-patch16_dtd

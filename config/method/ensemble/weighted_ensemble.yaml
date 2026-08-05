@@ -1,0 +1,13 @@
+# =============================================================================
+# FusionBench Method Configuration: Weighted Ensemble
+# =============================================================================
+# Ensembles model predictions using specified per-model weights.
+#
+# - Set normalize=true to rescale weights to sum to 1.
+# - weights: one float per model in the pool (order-sensitive). If null, uses equal weights.
+# =============================================================================
+_target_: fusion_bench.method.WeightedEnsembleAlgorithm
+normalize: true
+# this should be a list of floats, one for each model in the ensemble
+# If weights is null, the ensemble will use the default weights, which are equal weights for all models.
+weights: null

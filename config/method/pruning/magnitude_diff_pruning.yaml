@@ -1,0 +1,5 @@
+_target_: fusion_bench.method.MagnitudeDiffPruningAlgorithm
+prune_ratio: 0.5
+rescale: false
+extract_names: null
+prune_type: minor

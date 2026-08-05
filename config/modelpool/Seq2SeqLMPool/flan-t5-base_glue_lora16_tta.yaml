@@ -1,0 +1,66 @@
+defaults:
+  - /model/flan-t5@models:
+      - flan-t5-base
+      - flan-t5-base_glue-cola_lora-16
+      - flan-t5-base_glue-mnli_lora-16
+      - flan-t5-base_glue-mrpc_lora-16
+      - flan-t5-base_glue-qnli_lora-16
+      - flan-t5-base_glue-qqp_lora-16
+      - flan-t5-base_glue-rte_lora-16
+      - flan-t5-base_glue-sst2_lora-16
+      - flan-t5-base_glue-stsb_lora-16
+_target_: fusion_bench.modelpool.Seq2SeqLMPool
+_recursive_: false
+_dataset_loader: fusion_bench.tasks.flan_t5_text_generation.glue_load_dataset.load_glue_dataset
+test_datasets:
+  glue-cola:
+    _target_: ${..._dataset_loader}
+    _recursive_: false
+    name: cola
+    tokenizer: ${...tokenizer}
+    split: validation
+  glue-mnli:
+    _target_: ${..._dataset_loader}
+    _recursive_: false
+    name: mnli
+    tokenizer: ${...tokenizer}
+    split: validation_matched
+  glue-mrpc:
+    _target_: ${..._dataset_loader}
+    _recursive_: false
+    name: mrpc
+    tokenizer: ${...tokenizer}
+    split: validation
+  glue-qnli:
+    _target_: ${..._dataset_loader}
+    _recursive_: false
+    name: qnli
+    tokenizer: ${...tokenizer}
+    split: validation
+  glue-qqp:
+    _target_: ${..._dataset_loader}
+    _recursive_: false
+    name: qqp
+    tokenizer: ${...tokenizer}
+    split: validation
+  glue-rte:
+    _target_: ${..._dataset_loader}
+    _recursive_: false
+    name: rte
+    tokenizer: ${...tokenizer}
+    split: validation
+  glue-sst2:
+    _target_: ${..._dataset_loader}
+    _recursive_: false
+    name: sst2
+    tokenizer: ${...tokenizer}
+    split: validation
+  glue-stsb:
+    _target_: ${..._dataset_loader}
+    _recursive_: false
+    name: stsb
+    tokenizer: ${...tokenizer}
+    split: validation
+tokenizer:
+  _target_: transformers.AutoTokenizer.from_pretrained
+  pretrained_model_name_or_path: google/flan-t5-base

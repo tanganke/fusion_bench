@@ -1,0 +1,7 @@
+_target_: fusion_bench.method.singular_value_calibration.generic.SingularValueCalibrationWithBaseMethod
+alpha: 0.1
+accelerator: null
+base_method:
+  _target_: fusion_bench.method.ISO_C_Merge
+  scaling_factor: 1.5
+  exclude_keys: null

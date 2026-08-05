@@ -1,0 +1,4 @@
+_target_: fusion_bench._get_started.greeting_program.GreetingProgram
+message: "Welcome to FusionBench"
+name: "Developer"
+repeat_count: 3

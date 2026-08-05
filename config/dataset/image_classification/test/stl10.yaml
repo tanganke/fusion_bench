@@ -1,0 +1,4 @@
+stl10:
+  _target_: datasets.load_dataset
+  path: tanganke/stl10
+  split: test

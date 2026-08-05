@@ -1,0 +1,3 @@
+ultrachat-200k:
+  _target_: fusion_bench.dataset.ultrachat.load_tokenized_ultrachat_200k
+  tokenizer: ???

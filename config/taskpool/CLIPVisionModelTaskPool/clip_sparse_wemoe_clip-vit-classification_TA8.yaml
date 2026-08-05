@@ -1,0 +1,16 @@
+defaults:
+  - CLIPVisionModelTaskPool@: _template
+  - /dataset/image_classification/test@test_datasets:
+      - sun397
+      - stanford-cars
+      - resisc45
+      - eurosat
+      - svhn
+      - gtsrb
+      - mnist
+      - dtd
+  - _self_
+_target_: fusion_bench.taskpool.SparseWEMoECLIPVisionModelTaskPool
+# === layer-wise routing weights saving ===
+layer_wise_routing_weights_save_path: null
+layer_wise_routing_weights_max_num: 1000

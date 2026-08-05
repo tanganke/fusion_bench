@@ -1,0 +1,28 @@
+# =============================================================================
+# FusionBench Path Configuration
+# =============================================================================
+# This configuration file defines the directory structure and path settings
+# used throughout the FusionBench framework for model fusion experiments.
+# All paths are configured using Hydra's variable interpolation syntax.
+# Root directory - uses FUSION_BENCH_PROJECT_ROOT env var or current directory
+#
+# By default:
+#
+# root_dir (defaults to current directory)
+# ├── outputs (output_dir)
+# │   ├── cache (cache_dir)
+# │   └── <config_name>
+# │       └── <timestamp> (log_dir)
+# └── data (data_dir)
+#
+root_dir: ${oc.env:FUSION_BENCH_PROJECT_ROOT,"."}
+# Output directory for experiment results and artifacts
+output_dir: ${.root_dir}/outputs
+# Data directory - uses FUSION_BENCH_DATA_DIR env var or root_dir/data
+data_dir: ${oc.env:FUSION_BENCH_DATA_DIR,${.root_dir}/data}
+# Cache directory - uses FUSION_BENCH_CACHE_DIR env var or output_dir/cache
+cache_dir: ${oc.env:FUSION_BENCH_CACHE_DIR,${.output_dir}/cache}
+# Log directory with timestamped subdirectories for each run
+log_dir: ${.output_dir}/${hydra:job.config_name}/${now:%Y-%m-%d_%H-%M-%S}
+# Current working directory at runtime
+work_dir: ${hydra:runtime.cwd}

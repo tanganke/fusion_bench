@@ -1,0 +1,12 @@
+# This is useful for evluate the performance of a single clip vision model
+#
+# fusion_bench \
+#   modelpool=CLIPVisionModelPool/clip-vit-large-patch14_individual \
+#   modelpool.models._pretrained_=${MODEL_PATH}
+#   ...
+_target_: fusion_bench.modelpool.CLIPVisionModelPool
+_recursive_: False
+models:
+  _pretrained_: openai/clip-vit-large-patch14
+processor: openai/clip-vit-large-patch14
+platform: hf

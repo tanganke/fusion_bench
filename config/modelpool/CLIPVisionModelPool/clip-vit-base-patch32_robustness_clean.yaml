@@ -1,0 +1,18 @@
+defaults:
+  - CLIPVisionModelPool@: _template
+  - /model/clip-vit@models:
+      - clip-vit-base-patch32
+      - clip-vit-base-patch32_stanford-cars
+      - clip-vit-base-patch32_eurosat
+      - clip-vit-base-patch32_resisc45
+      - clip-vit-base-patch32_gtsrb
+  - /dataset/image_classification/train@train_datasets:
+      - stanford-cars
+      - eurosat
+      - resisc45
+      - gtsrb
+  - /dataset/image_classification/test@test_datasets:
+      - stanford-cars
+      - eurosat
+      - resisc45
+      - gtsrb

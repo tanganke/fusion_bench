@@ -1,0 +1,18 @@
+_target_: fusion_bench.method.adamerging.gpt2_layer_wise_adamerging.GPT2LayerWiseAdaMergingAlgorithm
+_recursive_: false
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 1e-4
+dataloader_kwargs:
+  batch_size: 16
+  num_workers: 0
+init_values: 0.3
+max_steps: 1000
+# if `merging_weights_path` is specified, the merging weights will be loaded from the file and skip the training process
+merging_weights_load_path: null
+merging_weights_save_path: null
+variant: null
+clamp_weights: false
+tie_weights: true
+strict: false
+cache_dir: "outputs/cache"

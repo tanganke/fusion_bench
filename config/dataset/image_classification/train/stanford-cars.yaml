@@ -1,0 +1,4 @@
+stanford-cars:
+  _target_: datasets.load_dataset
+  path: tanganke/stanford_cars
+  split: train

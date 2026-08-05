@@ -1,0 +1,7 @@
+_target_: fusion_bench.modelpool.CLIPVisionModelPool
+_recursive_: False
+processor: openai/clip-vit-base-patch32
+models:
+  _pretrained_: openai/clip-vit-base-patch32
+  finetuned: tanganke/clip-vit-base-patch32_stanford-cars
+platform: hf

@@ -1,0 +1,11 @@
+# The 8 task used in the Task Arithmetic paper
+defaults:
+  - clip-vit-base-patch32
+  - clip-vit-base-patch32_sun397
+  - clip-vit-base-patch32_stanford-cars
+  - clip-vit-base-patch32_resisc45
+  - clip-vit-base-patch32_eurosat
+  - clip-vit-base-patch32_svhn
+  - clip-vit-base-patch32_gtsrb
+  - clip-vit-base-patch32_mnist
+  - clip-vit-base-patch32_dtd

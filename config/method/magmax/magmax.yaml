@@ -1,0 +1,17 @@
+# =============================================================================
+# FusionBench Method Configuration: MagMax
+# =============================================================================
+# Element-wise maximum-magnitude task-vector merging.
+#
+#   tau_t = theta_t - theta_0
+#   tau_max[j] = tau_{argmax_t |tau_t[j]|}[j]
+#   theta_merged = theta_0 + scaling_factor * tau_max
+#
+# Reference: Marczak et al., "MagMax: Leveraging Model Merging for Seamless
+# Continual Learning", ECCV 2024 (https://arxiv.org/abs/2407.06322).
+# =============================================================================
+# The default matches the official 8-dataset reproduction script
+# (scaling_coef=0.5 in merge_8datasets.py from the released code).
+_target_: fusion_bench.method.MagMaxAlgorithm
+scaling_factor: 0.5
+inplace: true

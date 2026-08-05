@@ -1,0 +1,15 @@
+_target_: fusion_bench.modelpool.CausalLMPool
+
+pretrained_model_name_or_path: deepseek-ai/DeepSeek-V2-Lite
+
+models:
+  _pretrained_:
+    _target_: fusion_bench.models.modeling_deepseek_v2.DeepseekV2ForCausalLM.from_pretrained
+    pretrained_model_name_or_path: ${...pretrained_model_name_or_path}
+    torch_dtype: bfloat16
+    device_map: auto
+    trust_remote_code: true
+
+tokenizer:
+  _target_: transformers.AutoTokenizer.from_pretrained
+  pretrained_model_name_or_path: ${..pretrained_model_name_or_path}

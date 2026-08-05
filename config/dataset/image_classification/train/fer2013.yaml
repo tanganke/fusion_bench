@@ -1,0 +1,3 @@
+fer2013:
+  _target_: fusion_bench.dataset.fer2013.load_fer2013
+  split: train

@@ -1,0 +1,11 @@
+_target_: fusion_bench.modelpool.CausalLMPool
+_recursive_: false
+enable_lazy_loading: true
+models:
+  _pretrained_: Qwen/Qwen2.5-1.5B
+  math: Qwen/Qwen2.5-Math-1.5B
+  code: Qwen/Qwen2.5-Coder-1.5B
+  instruction: Qwen/Qwen2.5-1.5B-Instruct
+model_kwargs:
+  torch_dtype: bfloat16
+tokenizer: Qwen/Qwen2.5-1.5B

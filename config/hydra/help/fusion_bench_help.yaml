@@ -1,0 +1,47 @@
+# App name, override to match the name your app is known by
+app_name: fusion_bench
+# Help header, customize to describe your app to your users
+header: == ${hydra.help.app_name} ==
+footer: |-
+  Powered by Hydra (https://hydra.cc)
+  Use --hydra-help to view Hydra specific help
+# Basic Hydra flags:
+#   $FLAGS_HELP
+#
+# Config groups, choose one of:
+#   $APP_CONFIG_GROUPS: All config groups that does not start with hydra/.
+#   $HYDRA_CONFIG_GROUPS: All the Hydra config groups (starts with hydra/)
+#
+# Configuration generated with overrides:
+#   $CONFIG : Generated config
+#
+template: |-
+  ${hydra.help.header}
+
+  fusion_bench is the command line interface for running model fusion benchmarks in the FusionBench project.
+  It provides a flexible way to configure and execute various fusion algorithms on different model pools and evaluate them across multiple tasks.
+
+  == Configuration groups ==
+  Compose your configuration from these groups (method, modelpool, taskpool are the most important):
+
+  $APP_CONFIG_GROUPS
+
+  == Config ==
+  You can override options, for example:
+  fusion_bench method=task_arithmetic modelpool=clip-vit-base-patch32_svhn_and_mnist taskpool=clip-vit-base-patch32_svhn_and_mnist
+
+  == Basic usage ==
+  fusion_bench [--config-path CONFIG_PATH] [--config-name CONFIG_NAME] OPTION_1=VALUE_1 OPTION_2=VALUE_2 ...
+
+  == Key options ==
+  --help, -h            : Print this help message and exit
+  --hydra-help          : Hydra's help
+  --cfg, -c             : Show config instead of running [job|hydra|all]
+  --config-path, -cp    : Overrides the config_path
+  --config-name, -cn    : Overrides the config_name
+  --shell-completion, -sc : Install or Uninstall shell completion
+
+  For more detailed information on options and usage, please refer to the online documentation:
+  https://tanganke.github.io/fusion_bench/cli/fusion_bench/
+
+  ${hydra.help.footer}

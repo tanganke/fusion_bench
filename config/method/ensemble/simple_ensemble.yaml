@@ -1,0 +1,9 @@
+# =============================================================================
+# FusionBench Method Configuration: Simple Ensemble
+# =============================================================================
+# Averages model predictions uniformly.
+#
+# device_map: leave null for single device or provide a mapping for multi-device setups.
+# =============================================================================
+_target_: fusion_bench.method.SimpleEnsembleAlgorithm
+device_map: null # Set to null for single device, or specify mapping

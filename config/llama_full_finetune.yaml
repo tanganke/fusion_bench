@@ -1,0 +1,6 @@
+defaults:
+  - fabric_model_fusion
+  - override fabric: llama_fsdp
+  - override method: lm_finetune/fullfinetune_sft.yaml
+  - override modelpool: CausalLMPool/llama_alpaca_cleaned.yaml
+  - _self_

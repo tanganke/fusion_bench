@@ -1,0 +1,17 @@
+defaults:
+  - loggers: tensorboard_logger
+  - _self_
+_target_: lightning.Fabric
+_recursive_: true
+# Number of devices to train on (``int``), which GPUs to train on (``list`` or ``str``), or ``"auto"``.
+# The value applies per node.
+devices: auto
+# Strategy for how to run across multiple devices. Possible choices are:
+# ``"dp"``, ``"ddp"``, ``"ddp_spawn"``, ``"deepspeed"``, ``"fsdp"``.
+strategy: ddp
+# The hardware to run on. Possible choices are:
+# ``"cpu"``, ``"cuda"``, ``"mps"``, ``"gpu"``, ``"tpu"``, ``"auto"``.
+# for example: fabric.accelerator=cpu
+accelerator: auto
+# reference to the precision policy: https://lightning.ai/docs/fabric/stable/api/fabric_args.html#precision
+precision: bf16-true

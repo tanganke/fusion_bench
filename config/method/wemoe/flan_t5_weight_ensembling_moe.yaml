@@ -1,0 +1,20 @@
+_target_: fusion_bench.method.we_moe.flan_t5_we_moe.FlanT5WeightEnsemblingMoEAlgorithm
+# the path for loading the model weights, if specified, skip the test-time adaptation training
+checkpoint: False
+# the path for saving the model weights.
+save_checkpoint: False
+router_hidden_layers: 2
+init_lambda: 0.3
+batch_reduce: true
+# learning rate
+lr: 1e-4
+optimizer: adam
+# this is overrided by `fabric.devices` if launched from the `fusion_bench` CLI.
+devices: 1
+batch_size: 4
+num_workers: 0
+max_steps: 200
+# if true, we will use the gradient accumulation across tasks to save memory
+use_grad_accumulate: true
+cache_dir: outputs
+fast_dev_run: ${fast_dev_run}

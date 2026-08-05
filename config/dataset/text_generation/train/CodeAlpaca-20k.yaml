@@ -1,0 +1,4 @@
+MetaMathQA:
+  _target_: datasets.load_dataset
+  path: sahil2801/CodeAlpaca-20k
+  split: train

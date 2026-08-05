@@ -1,0 +1,19 @@
+defaults:
+  - CLIPVisionModelTaskPool@: _template
+  - /dataset/image_classification/test@test_datasets:
+      # eight tasks in the task arithmetic paper
+      - sun397
+      - stanford-cars
+      - resisc45
+      - eurosat
+      - svhn
+      - gtsrb
+      - mnist
+      - dtd
+      # additional 6 tasks in the TALL mask paper (TALL 14)
+      - oxford_flowers102
+      - pcam
+      - fer2013
+      - oxford-iiit-pet
+      - stl10
+      - cifar100
