@@ -83,6 +83,7 @@ _import_structure = {
     "tall_mask": ["TallMaskTaskArithmeticAlgorithm"],
     "model_stock": ["ModelStock"],
     "wudi": ["wudi_merging", "WUDIMerging"],
+    "swudi": ["swudi_merging", "SWUDIMerging"],
     # plug-and-play model merging methods
     "concrete_subspace": [
         "ConcreteTaskArithmeticAlgorithmForCLIP",
@@ -257,6 +258,7 @@ if TYPE_CHECKING:
         PCPSparseLoForLlama,
         SparseLoForLlama,
     )
+    from .swudi import SWUDIMerging, swudi_merging
     from .tall_mask import TallMaskTaskArithmeticAlgorithm
     from .magmax import MagMaxAlgorithm, magmax_merge
     from .task_arithmetic import TaskArithmeticAlgorithm

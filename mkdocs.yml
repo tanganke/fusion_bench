@@ -40,6 +40,7 @@ nav:
           - Task Singular Vector: algorithms/task_singular_vector.md
           - Isotropic Merging: algorithms/isotropic_merging.md
           - WUDI-Merging: algorithms/wudi_merging.md
+          - SWUDI / ASWUDI: algorithms/swudi.md
           - EMR Merging: algorithms/emr_merging.md
           - Gossip: algorithms/gossip.md
           - DoP: algorithms/dop.md

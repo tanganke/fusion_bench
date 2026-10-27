@@ -156,6 +156,16 @@
         members:
         - WUDIMerging
 
+### SWUDI / ASWUDI
+
+::: fusion_bench.method
+    options:
+        show_root_heading: false
+        heading_level: 4
+        members:
+        - SWUDIMerging
+        - swudi_merging
+
 ## Subspace-based Methods
 
 ### Concrete Subspace

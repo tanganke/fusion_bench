@@ -1,0 +1,19 @@
+# =============================================================================
+# FusionBench Method Configuration: SWUDI
+# =============================================================================
+# Closed-form spectral regularization of WUDI-Merging (arXiv:2606.07289).
+# Each linear layer is merged in closed form with the spectral filter
+#
+#   h_k = 1[k <= ceil(rank_ratio * d_in)] * (1 - exp(-exp_time * lambda_k)),
+#
+# where lambda_k are the eigenvalues of C = sum_i tau_i^T tau_i / ||tau_i||_F^2.
+# Other parameters are averaged.
+#
+# Defaults are the CLIP-ViT-B/32 and ViT-L/14 values from the paper
+# (CLIP-ViT-B/16 uses exp_time=1800).
+# =============================================================================
+_target_: fusion_bench.method.SWUDIMerging
+exp_time: 1300
+rank_ratio: 0.65
+scaling_factor: 1.0
+exclude_keys: null
