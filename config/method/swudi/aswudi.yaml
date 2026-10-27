@@ -1,0 +1,17 @@
+# =============================================================================
+# FusionBench Method Configuration: ASWUDI (SWUDI-A in the paper)
+# =============================================================================
+# Hyperparameter-free variant of SWUDI (arXiv:2606.07289). Each linear layer
+# keeps its top-K eigendirections without soft filtering, where K is chosen
+# from the layer's own spectrum:
+#
+#   K = ceil((sum_k sqrt(lambda_k))^2 / sum_k lambda_k).
+#
+# `exp_time: null` disables the soft filter and `rank_ratio: null` enables the
+# per-layer rank.
+# =============================================================================
+_target_: fusion_bench.method.SWUDIMerging
+exp_time: null
+rank_ratio: null
+scaling_factor: 1.0
+exclude_keys: null
