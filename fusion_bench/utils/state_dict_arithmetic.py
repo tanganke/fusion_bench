@@ -911,9 +911,15 @@ def state_dict_avg(state_dicts: List[StateDictType]) -> StateDictType:
         for key in avg_state_dict:
             avg_state_dict[key] += state_dict[key]
 
-    # Divide by number of state dicts
+    # Divide by number of state dicts; integer tensors (e.g. BatchNorm's num_batches_tracked) cannot be divided in
+    # place, so they are floor-divided and keep their dtype
     for key in avg_state_dict:
-        avg_state_dict[key] /= num_state_dicts
+        if avg_state_dict[key].is_floating_point() or avg_state_dict[key].is_complex():
+            avg_state_dict[key] /= num_state_dicts
+        else:
+            avg_state_dict[key] = torch.div(
+                avg_state_dict[key], num_state_dicts, rounding_mode="floor"
+            )
 
     return avg_state_dict
 

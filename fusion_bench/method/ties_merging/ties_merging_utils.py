@@ -157,10 +157,14 @@ def topk_values_mask(M, K=0.7, return_mask=False):
     k = int(d * K)
     k = d - k  # Keep top k elements instead of bottom k elements
 
-    # Find the k-th smallest element by magnitude for each row
-    kth_values, _ = M.abs().kthvalue(k, dim=1, keepdim=True)
-    # Create a mask tensor with True for the top k elements in each row
-    mask = M.abs() >= kth_values
+    if k <= 0:
+        # K = 1 (or 100%): keep every element; kthvalue does not accept k = 0
+        mask = torch.ones_like(M, dtype=torch.bool)
+    else:
+        # Find the k-th smallest element by magnitude for each row
+        kth_values, _ = M.abs().kthvalue(k, dim=1, keepdim=True)
+        # Create a mask tensor with True for the top k elements in each row
+        mask = M.abs() >= kth_values
     final_mask = mask.squeeze() if original_shape == M.squeeze().shape else mask
 
     if return_mask:
