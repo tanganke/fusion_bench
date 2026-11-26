@@ -1,0 +1,4 @@
+emnist_letters:
+  _target_: datasets.load_dataset
+  path: tanganke/emnist_letters
+  split: test

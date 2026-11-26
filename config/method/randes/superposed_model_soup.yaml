@@ -1,0 +1,18 @@
+_target_: fusion_bench.method.randes.SuperposedModelSoupAlgorithm
+#* === base randes options ===
+mode: manual_absorption
+# weights for all mlp and attn layers
+target_layer:
+  - mlp_w
+  - attn_w
+random_seed: 42 # for random_binary_diagonal_matrix
+different_across_layers: True
+joint_matrix_mode: flatten_hstack
+rank: 1 # for columnwise svd
+random_components: False
+shift_layers: 0
+absorber: None
+debug: 0
+ms_mode: average
+verbose: 0 # level of verbosity
+dropout_rate: 1 # take the target layer per n target layers

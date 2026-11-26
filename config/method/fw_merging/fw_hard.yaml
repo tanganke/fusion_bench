@@ -1,0 +1,11 @@
+_target_: fusion_bench.method.FrankWolfeHardAlgorithm
+merge_fn: task_arithmetic
+max_iters: 10
+step_size: 0.1
+dataset_size: 100
+tasks: []
+init_weight: 
+loss_fn: cross_entropy
+scaling_factor: 0.3
+max_num_models: 100
+granularity: task

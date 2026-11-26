@@ -1,0 +1,24 @@
+defaults:
+  - /dataset/image_classification/test@test_datasets: the_eight_tasks
+  - _self_
+_target_: fusion_bench.taskpool.OpenCLIPVisionModelTaskPool
+_recursive_: false
+# name of the base model
+model_name: ViT-B-16
+# path of the checkpoint directory
+model_dir: ./.cache/task_vectors_checkpoints/
+classification_heads:
+  sun397: ${..model_dir}/ViT-B-16/head_SUN397.pt
+  stanford-cars: ${..model_dir}/ViT-B-16/head_Cars.pt
+  resisc45: ${..model_dir}/ViT-B-16/head_RESISC45.pt
+  eurosat: ${..model_dir}/ViT-B-16/head_EuroSAT.pt
+  svhn: ${..model_dir}/ViT-B-16/head_SVHN.pt
+  gtsrb: ${..model_dir}/ViT-B-16/head_GTSRB.pt
+  mnist: ${..model_dir}/ViT-B-16/head_MNIST.pt
+  dtd: ${..model_dir}/ViT-B-16/head_DTD.pt
+dataloader_kwargs:
+  batch_size: 128 # The batch size for the data loader
+  num_workers: 8 # The number of worker processes for data loading
+  pin_memory: True # Whether to pin memory in data loader
+  drop_last: False # Whether to drop the last incomplete batch
+  shuffle: False # Whether to shuffle the data

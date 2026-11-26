@@ -1,0 +1,25 @@
+_target_: fusion_bench.method.gossip.flan_t5_layer_wise_gossip.FlanT5LayerWiseGossipAlgorithm
+_recursive_: false
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 1e-3
+dataloader_kwargs:
+  batch_size: 4
+  num_workers: 0
+init_values: 0.3
+max_steps: 400
+# if `merging_weights_path` is specified, the merging weights will be loaded from the file and skip the training process
+merging_weights_load_path: null
+merging_weights_save_path: null
+variant: null
+clamp_weights: false
+tie_weights: false
+strict: false
+weights: null
+cache_dir: "outputs/cache"
+# this is the parameter about gossip
+gossip_max_steps: 20
+gossip_skip_adamerging: false
+accuracy_test_interval: 0 #if this value is equal to 1, we will evaluate all models each time after Gossip [1, 5, 10, 15, 20] it can also be a list #
+improve_dataset: true
+topo: ring

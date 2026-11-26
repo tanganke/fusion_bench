@@ -1,0 +1,19 @@
+_target_: fusion_bench.modelpool.CausalLMPool
+_recursive_: false
+# each model should have a name and a path, and the model is loaded from the path
+# this is equivalent to `AutoModelForCausalLM.from_pretrained(path)`
+models:
+  _pretrained_:
+    _target_: transformers.LlamaForCausalLM.from_pretrained
+    pretrained_model_name_or_path: meta-llama/Meta-Llama-3-8B
+  expert_1:
+    _target_: transformers.LlamaForCausalLM.from_pretrained
+    pretrained_model_name_or_path: meta-llama/Meta-Llama-3-8B
+  expert_2:
+    _target_: transformers.LlamaForCausalLM.from_pretrained
+    pretrained_model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
+model_kwargs:
+  torch_dtype: float16
+tokenizer:
+  _target_: transformers.AutoTokenizer.from_pretrained
+  pretrained_model_name_or_path: meta-llama/Meta-Llama-3-8B

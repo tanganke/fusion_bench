@@ -1,0 +1,10 @@
+_target_: fusion_bench.modelpool.Dinov2ForImageClassificationPool
+_recursive_: False
+models:
+  _pretrained_:
+    config_path: facebook/dinov2-base-imagenet1k-1-layer
+    pretrained: true
+    dataset_name: null
+train_datasets: null
+val_datasets: null
+test_datasets: null

@@ -1,0 +1,4 @@
+cub-200-2011:
+  _target_: datasets.load_dataset
+  path: Donghyun99/CUB-200-2011
+  split: test

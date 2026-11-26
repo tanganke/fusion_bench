@@ -1,0 +1,11 @@
+_target_: lightning.fabric.loggers.TensorBoardLogger
+# the logs directory would be `root_dir/name/version_X`
+# for example, `outputs/logs/lightning_logs/version_0` and `outputs/logs/lightning_logs/version_1` by default
+
+# root directory for all logging
+root_dir: ${path.log_dir}
+# the name of the experiment
+name: ""
+version: ""
+sub_dir: null
+default_hp_metric: false

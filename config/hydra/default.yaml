@@ -1,0 +1,14 @@
+defaults:
+  - override help: fusion_bench_help
+  - override job_logging: rich_logging
+run:
+  dir: ${path.log_dir}
+sweep:
+  # the directory where all multirun outputs are stored
+  # can not refer to ${path.log_dir} because this is evaluated before constructing the separate run configs
+  dir: ${oc.env:FUSION_BENCH_PROJECT_ROOT,"."}/outputs/multirun/${hydra.job.config_name}/${now:%Y-%m-%d_%H-%M-%S}
+  subdir: ${hydra.job.num}
+job:
+  env_set:
+    HYDRA_FULL_ERROR: ${oc.env:HYDRA_FULL_ERROR,1}
+output_subdir: ""

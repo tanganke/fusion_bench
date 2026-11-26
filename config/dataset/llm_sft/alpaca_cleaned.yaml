@@ -1,0 +1,6 @@
+alpaca-cleaned:
+  _target_: fusion_bench.dataset.llama.alpaca.load_tokenized_alpaca_dataset
+  tokenizer: ???
+  path: "yahma/alpaca-cleaned"
+  split: train
+  cache_path: null

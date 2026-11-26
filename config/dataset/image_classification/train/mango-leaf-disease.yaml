@@ -1,0 +1,4 @@
+mango-leaf-disease:
+  _target_: datasets.load_dataset
+  path: AfiqN/mango-leaf-disease
+  split: train

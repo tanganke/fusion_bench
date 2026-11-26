@@ -1,0 +1,50 @@
+_target_: fusion_bench.modelpool.CLIPVisionModelPool
+models:
+  _pretrained_:
+    _target_: fusion_bench.models.linearized.vision_model.load_fft_vision_model_hf
+    model_name: openai/clip-vit-base-patch16
+  sun397:
+    _target_: fusion_bench.models.linearized.vision_model.load_lora_vision_model_hf
+    base_model_name: openai/clip-vit-base-patch16
+    peft_name: tanganke/clip-vit-base-patch16_sun397_lora-16
+    merge_and_unload: true
+  stanford-cars:
+    _target_: fusion_bench.models.linearized.vision_model.load_lora_vision_model_hf
+    base_model_name: openai/clip-vit-base-patch16
+    peft_name: tanganke/clip-vit-base-patch16_stanford-cars_lora-16
+    merge_and_unload: true
+  resisc45:
+    _target_: fusion_bench.models.linearized.vision_model.load_lora_vision_model_hf
+    base_model_name: openai/clip-vit-base-patch16
+    peft_name: tanganke/clip-vit-base-patch16_resisc45_lora-16
+    merge_and_unload: true
+  eurosat:
+    _target_: fusion_bench.models.linearized.vision_model.load_lora_vision_model_hf
+    base_model_name: openai/clip-vit-base-patch16
+    peft_name: tanganke/clip-vit-base-patch16_eurosat_lora-16
+    merge_and_unload: true
+  svhn:
+    _target_: fusion_bench.models.linearized.vision_model.load_lora_vision_model_hf
+    base_model_name: openai/clip-vit-base-patch16
+    peft_name: tanganke/clip-vit-base-patch16_svhn_lora-16
+    merge_and_unload: true
+  gtsrb:
+    _target_: fusion_bench.models.linearized.vision_model.load_lora_vision_model_hf
+    base_model_name: openai/clip-vit-base-patch16
+    peft_name: tanganke/clip-vit-base-patch16_gtsrb_lora-16
+    merge_and_unload: true
+  mnist:
+    _target_: fusion_bench.models.linearized.vision_model.load_lora_vision_model_hf
+    base_model_name: openai/clip-vit-base-patch16
+    peft_name: tanganke/clip-vit-base-patch16_mnist_lora-16
+    merge_and_unload: true
+  dtd:
+    _target_: fusion_bench.models.linearized.vision_model.load_lora_vision_model_hf
+    base_model_name: openai/clip-vit-base-patch16
+    peft_name: tanganke/clip-vit-base-patch16_dtd_lora-16
+    merge_and_unload: true
+processor:
+  _target_: transformers.CLIPProcessor.from_pretrained
+  pretrained_model_name_or_path: openai/clip-vit-base-patch16
+train_datasets: null
+test_datasets: null

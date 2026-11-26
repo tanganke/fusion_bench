@@ -1,0 +1,4 @@
+resisc45:
+  _target_: datasets.load_dataset
+  path: tanganke/resisc45
+  split: test

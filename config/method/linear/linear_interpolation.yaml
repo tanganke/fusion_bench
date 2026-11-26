@@ -1,0 +1,10 @@
+# =============================================================================
+# FusionBench Method Configuration: Linear Interpolation
+# =============================================================================
+# Interpolates between two models: (1 - t) * model0 + t * model1
+#
+# - t in [0,1]: 0 returns model0; 1 returns model1.
+# - Only meaningful for two-model pools.
+# =============================================================================
+_target_: fusion_bench.method.LinearInterpolationAlgorithm
+t: 0.5

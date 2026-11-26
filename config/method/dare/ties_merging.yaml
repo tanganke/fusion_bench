@@ -1,0 +1,13 @@
+_target_: fusion_bench.method.dare.DareTiesMerging
+# === DARE parameters ===
+sparsity_ratio: 0.5
+only_on_linear_weights: false
+rescale: true
+# === Ties merging parameters ===
+# Scaling factor $\lambda$
+scaling_factor: 0.5
+threshold: 20
+# List of keys to remove from the state dict, default is empty
+remove_keys: []
+# Function to merge the models, default is sum. Options are 'sum', 'mean', and 'max'
+merge_func: sum

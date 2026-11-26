@@ -1,0 +1,4 @@
+glue-qnli:
+  _target_: fusion_bench.modelpool.seq2seq_lm.modelpool.load_lora_model
+  base_model_path: google/flan-t5-base
+  peft_model_path: tanganke/flan-t5-base_glue-qnli_lora-16

@@ -1,0 +1,12 @@
+type: AutoModelPool
+models:
+  - name: _pretrained_
+    path: path_to_your_pretrained_model
+  - name: model_1
+    path: path_to_your_model_1
+  - name: model_2
+    path: path_to_your_model_2
+  - name: model_3
+    path: path_to_your_model_3
+  - name: model_4
+    path: path_to_your_model_4

@@ -1,0 +1,76 @@
+# The 20 task used in the paper:
+# Wang et al. Localizing Task Information for Improved Model Merging and Compression
+# http://arxiv.org/abs/2405.07813
+defaults:
+  - /dataset/image_classification/train@train_datasets:
+      # -- begin of eight tasks in the task arithmetic paper ---
+      - sun397
+      - stanford-cars
+      - resisc45
+      - eurosat
+      - svhn
+      - gtsrb
+      - mnist
+      - dtd
+      # -- end of eight tasks in the task arithmetic paper ---
+      - oxford_flowers102
+      - pcam
+      - fer2013
+      - oxford-iiit-pet
+      - stl10
+      - cifar100
+      - cifar10
+      - food101
+      - fashion_mnist
+      - emnist_letters
+      - kmnist
+      - rendered-sst2
+  - /dataset/image_classification/test@test_datasets:
+      # -- begin of eight tasks in the task arithmetic paper ---
+      - sun397
+      - stanford-cars
+      - resisc45
+      - eurosat
+      - svhn
+      - gtsrb
+      - mnist
+      - dtd
+      # -- end of eight tasks in the task arithmetic paper ---
+      - oxford_flowers102
+      - pcam
+      - fer2013
+      - oxford-iiit-pet
+      - stl10
+      - cifar100
+      - cifar10
+      - food101
+      - fashion_mnist
+      - emnist_letters
+      - kmnist
+      - rendered-sst2
+_target_: fusion_bench.modelpool.CLIPVisionModelPool
+_recursive_: False
+processor: openai/clip-vit-base-patch16
+models:
+  _pretrained_: openai/clip-vit-base-patch16
+  sun397: tanganke/clip-vit-base-patch16_sun397
+  stanford-cars: tanganke/clip-vit-base-patch16_stanford-cars
+  resisc45: tanganke/clip-vit-base-patch16_resisc45
+  eurosat: tanganke/clip-vit-base-patch16_eurosat
+  svhn: tanganke/clip-vit-base-patch16_svhn
+  gtsrb: tanganke/clip-vit-base-patch16_gtsrb
+  mnist: tanganke/clip-vit-base-patch16_mnist
+  dtd: tanganke/clip-vit-base-patch16_dtd
+  oxford_flowers102: tanganke/clip-vit-base-patch16_oxford_flowers102
+  pcam: tanganke/clip-vit-base-patch16_pcam
+  fer2013: tanganke/clip-vit-base-patch16_fer2013
+  oxford-iiit-pet: tanganke/clip-vit-base-patch16_oxford-iiit-pet
+  stl10: tanganke/clip-vit-base-patch16_stl10
+  cifar100: tanganke/clip-vit-base-patch16_cifar100
+  cifar10: tanganke/clip-vit-base-patch16_cifar10
+  food101: tanganke/clip-vit-base-patch16_food101
+  fashion_mnist: tanganke/clip-vit-base-patch16_fashion_mnist
+  emnist_letters: tanganke/clip-vit-base-patch16_emnist_letters
+  kmnist: tanganke/clip-vit-base-patch16_kmnist
+  rendered-sst2: tanganke/clip-vit-base-patch16_rendered-sst2
+platform: hf

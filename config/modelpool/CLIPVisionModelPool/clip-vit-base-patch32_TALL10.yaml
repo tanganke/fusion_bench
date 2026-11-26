@@ -1,0 +1,42 @@
+# The 10 task used in the paper (TALL mask):
+# Wang et al. Localizing Task Information for Improved Model Merging and Compression
+# http://arxiv.org/abs/2405.07813
+defaults:
+  - /dataset/image_classification/train@train_datasets:
+      - sun397
+      - stanford-cars
+      - resisc45
+      - eurosat
+      - svhn
+      - gtsrb
+      - mnist
+      - dtd
+      - oxford_flowers102
+      - pcam
+  - /dataset/image_classification/test@test_datasets:
+      - sun397
+      - stanford-cars
+      - resisc45
+      - eurosat
+      - svhn
+      - gtsrb
+      - mnist
+      - dtd
+      - oxford_flowers102
+      - pcam
+_target_: fusion_bench.modelpool.CLIPVisionModelPool
+_recursive_: False
+processor: openai/clip-vit-base-patch32
+models:
+  _pretrained_: openai/clip-vit-base-patch32
+  sun397: tanganke/clip-vit-base-patch32_sun397
+  stanford-cars: tanganke/clip-vit-base-patch32_stanford-cars
+  resisc45: tanganke/clip-vit-base-patch32_resisc45
+  eurosat: tanganke/clip-vit-base-patch32_eurosat
+  svhn: tanganke/clip-vit-base-patch32_svhn
+  gtsrb: tanganke/clip-vit-base-patch32_gtsrb
+  mnist: tanganke/clip-vit-base-patch32_mnist
+  dtd: tanganke/clip-vit-base-patch32_dtd
+  oxford_flowers102: tanganke/clip-vit-base-patch32_oxford_flowers102
+  pcam: tanganke/clip-vit-base-patch32_pcam
+platform: hf

@@ -1,0 +1,30 @@
+_target_: fusion_bench.method.pwe_moe.openclip_pwe_moe.PWEMoEExactParetoOptimalForOpenCLIP
+#! === Model Architecture Arguments ===
+# if true, then we only apply the weight ensembling MoE to MLPs, else, we apply it to all layers
+partial: true
+# weight-ensembling MoE arguments
+# initial outputs for the routing gates and the merging weights for the remaining layers
+init_lambda: 0.3
+# number of hidden layers in the routing gate
+router_hidden_layers: 2
+# path to the checkpoint file, if not provided, then the training is performed
+checkpoint_path: null
+#! === Training Arguments ===
+# if false, the training is skipped
+run_train: true
+num_steps: 2000
+save_interval: 1000
+# learning rate
+lr: 1e-2
+alpha: 1 # alpha for dirichlet, if alpha=1, then it is uniform
+# dataloader arguments
+dataloader_kwargs:
+  # per-device batch size
+  batch_size: 16
+  num_workers: 0
+#! === Evaluation Arguments ===
+# if false, the evaluation is skipped
+run_eval: false
+# if true, then we only evaluate the model on the first 20 batches of the test dataset
+quick_evaluation: false
+num_evaluation_samples: equal_weight

@@ -1,0 +1,5 @@
+_target_: fusion_bench.modelpool.CLIPVisionModelPool
+_recursive_: False
+models:
+  _pretrained_: openai/clip-vit-base-patch32
+processor: ${.models._pretrained_}

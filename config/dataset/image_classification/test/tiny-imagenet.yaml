@@ -1,0 +1,4 @@
+tiny-imagenet:
+  _target_: datasets.load_dataset
+  path: zh-plus/tiny-imagenet
+  split: valid

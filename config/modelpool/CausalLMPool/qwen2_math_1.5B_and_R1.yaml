@@ -1,0 +1,9 @@
+_target_: fusion_bench.modelpool.CausalLMPool
+_recursive_: false
+models:
+  _pretrained_: Qwen/Qwen2.5-1.5B
+  expert_1: Qwen/Qwen2.5-Math-1.5B
+  expert_2: deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B
+model_kwargs:
+  torch_dtype: bfloat16
+tokenizer: Qwen/Qwen2.5-1.5B

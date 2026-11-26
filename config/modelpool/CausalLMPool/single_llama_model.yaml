@@ -1,0 +1,14 @@
+_target_: fusion_bench.modelpool.CausalLMPool
+_recursive_: false
+# each model should have a name and a path, and the model is loaded from the path
+# this is equivalent to `AutoModelForCausalLM.from_pretrained(path)`
+models:
+  _pretrained_:
+    _target_: transformers.LlamaForCausalLM.from_pretrained
+    pretrained_model_name_or_path: ${...base_model}
+model_kwargs:
+  torch_dtype: float16
+tokenizer:
+  _target_: transformers.AutoTokenizer.from_pretrained
+  pretrained_model_name_or_path: ${..base_model}
+base_model: decapoda-research/llama-7b-hf

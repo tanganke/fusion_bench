@@ -1,0 +1,61 @@
+_target_: fusion_bench.modelpool.HuggingFaceGPT2ClassificationPool
+_model_loader: transformers.GPT2Model.from_pretrained
+models:
+  _pretrained_:
+    _target_: ${..._model_loader}
+    pretrained_model_name_or_path: gpt2
+  cola:
+    _target_: ${..._model_loader}
+    pretrained_model_name_or_path: tanganke/gpt2_cola
+  mnli:
+    _target_: ${..._model_loader}
+    pretrained_model_name_or_path: tanganke/gpt2_mnli
+  mrpc:
+    _target_: ${..._model_loader}
+    pretrained_model_name_or_path: tanganke/gpt2_mrpc
+  qnli:
+    _target_: ${..._model_loader}
+    pretrained_model_name_or_path: tanganke/gpt2_qnli
+  qqp:
+    _target_: ${..._model_loader}
+    pretrained_model_name_or_path: tanganke/gpt2_qqp
+  rte:
+    _target_: ${..._model_loader}
+    pretrained_model_name_or_path: tanganke/gpt2_rte
+  sst2:
+    _target_: ${..._model_loader}
+    pretrained_model_name_or_path: tanganke/gpt2_sst2
+# train datasets for RegMean, Fisher Merging ...
+_dataset_loader: fusion_bench.modelpool.huggingface_gpt2_classification.load_gpt2_dataset
+train_datasets:
+  cola:
+    _target_: ${..._dataset_loader}
+    name: cola
+    split: train
+  mnli:
+    _target_: ${..._dataset_loader}
+    name: mnli
+    split: train
+  mrpc:
+    _target_: ${..._dataset_loader}
+    name: mrpc
+    split: train
+  qnli:
+    _target_: ${..._dataset_loader}
+    name: qnli
+    split: train
+  qqp:
+    _target_: ${..._dataset_loader}
+    name: qqp
+    split: train
+  rte:
+    _target_: ${..._dataset_loader}
+    name: rte
+    split: train
+  sst2:
+    _target_: ${..._dataset_loader}
+    name: sst2
+    split: train
+tokenizer:
+  _target_: fusion_bench.modelpool.huggingface_gpt2_classification.load_gpt2_tokenizer
+  pretrained_model_name_or_path: gpt2

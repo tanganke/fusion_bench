@@ -1,0 +1,4 @@
+gsm-hard:
+  _target_: datasets.load_dataset
+  path: reasoning-machines/gsm-hard
+  split: train # this dataset is used to evaluate math reasoning

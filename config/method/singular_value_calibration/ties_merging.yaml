@@ -1,0 +1,9 @@
+_target_: fusion_bench.method.singular_value_calibration.generic.SingularValueCalibrationWithBaseMethod
+alpha: 0.1
+accelerator: null
+base_method:
+  _target_: fusion_bench.method.TiesMergingAlgorithm
+  scaling_factor: 0.3
+  threshold: 20
+  remove_keys: []
+  merge_func: sum

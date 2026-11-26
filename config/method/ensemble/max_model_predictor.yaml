@@ -1,0 +1,7 @@
+# =============================================================================
+# FusionBench Method Configuration: Max Model Predictor
+# =============================================================================
+# Selects the model with maximum confidence or performance per example/task.
+# No additional hyperparameters are required.
+# =============================================================================
+_target_: fusion_bench.method.MaxModelPredictorAlgorithm

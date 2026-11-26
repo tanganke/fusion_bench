@@ -1,0 +1,3 @@
+qsm8k:
+  _target_: fusion_bench.dataset.gsm8k.load_gsm8k_question_label_dataset
+  dataset_name: test # this option can be 'train', 'test', 'train_socratic', and 'test_socratic'

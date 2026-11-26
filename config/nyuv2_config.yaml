@@ -1,0 +1,8 @@
+defaults:
+  - fabric_model_fusion
+  - override method: simple_average
+  - override modelpool: nyuv2_modelpool
+  - override taskpool: nyuv2_taskpool
+  - _self_
+trainer:
+  devices: 1

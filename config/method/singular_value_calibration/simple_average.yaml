@@ -1,0 +1,5 @@
+_target_: fusion_bench.method.singular_value_calibration.generic.SingularValueCalibrationWithBaseMethod
+alpha: 0.1
+accelerator: null
+base_method:
+  _target_: fusion_bench.method.SimpleAverageAlgorithm

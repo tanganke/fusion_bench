@@ -1,0 +1,20 @@
+version: 1
+formatters:
+  simple:
+    format: '[%(asctime)s][%(name)s][%(levelname)s] - %(message)s'
+  rich_handler:
+    format: '%(message)s'
+handlers:
+  console:
+    class: rich.logging.RichHandler
+    formatter: rich_handler
+  file:
+    class: logging.FileHandler
+    formatter: simple
+    filename: ${hydra.runtime.output_dir}/${hydra.job.name}.log
+root:
+  level: INFO
+  handlers:
+    - console
+    - file
+disable_existing_loggers: false
