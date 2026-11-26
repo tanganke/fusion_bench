@@ -105,6 +105,19 @@ class TestStateDictArithmetic(unittest.TestCase):
         with self.assertRaises(ValueError):
             state_dict_avg([])
 
+    def test_state_dict_avg_integer_tensors(self):
+        """Integer tensors (e.g. BatchNorm's num_batches_tracked) are averaged with floor division and keep their dtype."""
+        a = nn.BatchNorm1d(4).state_dict()
+        b = nn.BatchNorm1d(4).state_dict()
+        a["num_batches_tracked"].fill_(3)
+        b["num_batches_tracked"].fill_(6)
+        result = state_dict_avg([a, b])
+        self.assertEqual(result["num_batches_tracked"].dtype, torch.long)
+        self.assertEqual(result["num_batches_tracked"].item(), 4)
+        torch.testing.assert_close(
+            result["running_mean"], (a["running_mean"] + b["running_mean"]) / 2
+        )
+
     def test_state_dict_sub_validation(self):
         """Test state_dict_sub with enhanced validation."""
         # Valid case with strict=True
